@@ -6,6 +6,7 @@ import (
 	"database/sql/driver"
 	"encoding/hex"
 	"fmt"
+	"reflect"
 	"strconv"
 	"strings"
 	"time"
@@ -246,13 +247,14 @@ func Sprintf(dialect string, query string, args []interface{}) string {
 			}
 		}
 	}
+	if insideString {
+		// means something went wrong, unclosed quote somewhere
+	}
 	return buf.String()
 }
 
 func Sprint(v interface{}) string {
 	switch v := v.(type) {
-	case sql.NamedArg:
-		return Sprint(v.Value)
 	case nil:
 		return "NULL"
 	case bool:
@@ -291,6 +293,33 @@ func Sprint(v interface{}) string {
 		return strconv.FormatFloat(float64(v), 'g', -1, 64)
 	case float64:
 		return strconv.FormatFloat(v, 'g', -1, 64)
+	case sql.NamedArg:
+		return Sprint(v.Value)
+	case sql.NullBool:
+		if !v.Valid {
+			return "NULL"
+		} else {
+			if v.Bool {
+				return "TRUE"
+			} else {
+				return "FALSE"
+			}
+		}
+	case sql.NullFloat64:
+		if !v.Valid {
+			return "NULL"
+		} else {
+			return strconv.FormatFloat(v.Float64, 'g', -1, 64)
+		}
+	case sql.NullInt64:
+		if !v.Valid {
+			return "NULL"
+		} else {
+			return strconv.FormatInt(v.Int64, 10)
+		}
+	case sql.NullInt32:
+	case sql.NullString:
+	case sql.NullTime:
 	case driver.Valuer:
 		v2, err := v.Value()
 		if err != nil {
@@ -316,6 +345,27 @@ func Sprint(v interface{}) string {
 		default:
 			return fmt.Sprintf("%#v", v2)
 		}
+	}
+	var deref int
+	rv := reflect.ValueOf(v)
+	for {
+		if rv.Kind() != reflect.Ptr && rv.Kind() != reflect.Interface {
+			break
+		}
+		rv = rv.Elem()
+		deref++
+	}
+	if !rv.IsValid() {
+		return "%!(NO VALUE)"
+	}
+	if rv.Kind() == reflect.Chan {
+		return "%!(CHANNEL)"
+	}
+	if rv.Kind() == reflect.Func {
+		return "%!(FUNCTION)"
+	}
+	if deref > 0 {
+		return Sprint(rv.Interface())
 	}
 	return fmt.Sprintf("%#v", v)
 }

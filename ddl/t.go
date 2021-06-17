@@ -2,6 +2,7 @@ package ddl
 
 import (
 	"bytes"
+	"database/sql"
 	"fmt"
 	"runtime"
 
@@ -34,6 +35,7 @@ type T struct {
 type TColumn struct {
 	dialect     string
 	tbl         *Table
+	columnName  string
 	columnIndex int
 }
 
@@ -52,6 +54,7 @@ func (t *T) Column(field sq.Field) *TColumn {
 	return &TColumn{
 		dialect:     t.dialect,
 		tbl:         t.tbl,
+		columnName:  columnName,
 		columnIndex: columnIndex,
 	}
 }
@@ -68,6 +71,7 @@ func (f *TColumn) Type(columnType string) *TColumn {
 func (f *TColumn) Config(config func(col *Column)) {
 	col := f.tbl.Columns[f.columnIndex]
 	config(&col)
+	col.ColumnName = f.columnName
 	f.tbl.Columns[f.columnIndex] = col
 }
 
@@ -114,125 +118,293 @@ func (f *TColumn) Default(expr sq.Field) *TColumn {
 }
 
 func (f *TColumn) Autoincrement() *TColumn {
-	// if i := f.tbl.CachedColumnIndex(f.columnName); i >= 0 {
-	// 	f.tbl.Columns[i].Autoincrement = true
-	// }
+	f.tbl.Columns[f.columnIndex].Autoincrement = true
 	return f
 }
 
 func (f *TColumn) Identity() *TColumn {
-	// if i := f.tbl.CachedColumnIndex(f.columnName); i >= 0 {
-	// 	f.tbl.Columns[i].Identity = "BY DEFAULT AS IDENTITY"
-	// }
+	f.tbl.Columns[f.columnIndex].Identity = IDENTITY_DEFAULT
 	return f
 }
 
 func (f *TColumn) AlwaysIdentity() *TColumn {
-	// if i := f.tbl.CachedColumnIndex(f.columnName); i >= 0 {
-	// 	f.tbl.Columns[i].Identity = "ALWAYS AS IDENTITY"
-	// }
+	f.tbl.Columns[f.columnIndex].Identity = IDENTITY_ALWAYS
 	return f
 }
 
 func (f *TColumn) OnUpdateCurrentTimestamp() *TColumn {
-	// if i := f.tbl.CachedColumnIndex(f.columnName); i >= 0 {
-	// 	f.tbl.Columns[i].OnUpdateCurrentTimestamp = true
-	// }
+	f.tbl.Columns[f.columnIndex].OnUpdateCurrentTimestamp = true
 	return f
 }
 
 func (f *TColumn) NotNull() *TColumn {
-	// if i := f.tbl.CachedColumnIndex(f.columnName); i >= 0 {
-	// 	f.tbl.Columns[i].IsNotNull = true
-	// }
+	f.tbl.Columns[f.columnIndex].IsNotNull = true
 	return f
 }
 
 func (f *TColumn) PrimaryKey() *TColumn {
-	// constraintName := pgName("PRIMARY KEY", f.tbl.TableName, f.columnName)
-	// if i := f.tbl.CachedConstraintIndex(constraintName); i >= 0 {
-	// 	f.tbl.Constraints[i].ConstraintType = "PRIMARY KEY"
-	// 	f.tbl.Constraints[i].TableName = f.tbl.TableName
-	// 	f.tbl.Constraints[i].Columns = []string{f.columnName}
-	// } else {
-	// 	f.tbl.AppendConstraint(Constraint{
-	// 		ConstraintSchema: f.tbl.TableSchema,
-	// 		ConstraintName:   constraintName,
-	// 		ConstraintType:   "PRIMARY KEY",
-	// 		TableSchema:      f.tbl.TableSchema,
-	// 		TableName:        f.tbl.TableName,
-	// 		Columns:          []string{f.columnName},
-	// 	})
-	// }
+	constraintName := pgName(PRIMARY_KEY, f.tbl.TableName, f.columnName)
+	if i := f.tbl.CachedConstraintIndex(constraintName); i >= 0 {
+		f.tbl.Constraints[i].ConstraintType = PRIMARY_KEY
+		f.tbl.Constraints[i].TableName = f.tbl.TableName
+		f.tbl.Constraints[i].Columns = []string{f.columnName}
+	} else {
+		f.tbl.AppendConstraint(Constraint{
+			ConstraintSchema: f.tbl.TableSchema,
+			ConstraintName:   constraintName,
+			ConstraintType:   PRIMARY_KEY,
+			TableSchema:      f.tbl.TableSchema,
+			TableName:        f.tbl.TableName,
+			Columns:          []string{f.columnName},
+		})
+	}
 	return f
 }
 
 func (f *TColumn) Unique() *TColumn {
-	// constraintName := pgName("UNIQUE", f.tbl.TableName, f.columnName)
-	// if i := f.tbl.CachedConstraintIndex(constraintName); i >= 0 {
-	// 	f.tbl.Constraints[i].ConstraintType = "UNIQUE"
-	// 	f.tbl.Constraints[i].TableName = f.tbl.TableName
-	// 	f.tbl.Constraints[i].Columns = []string{f.columnName}
-	// } else {
-	// 	f.tbl.AppendConstraint(Constraint{
-	// 		ConstraintSchema: f.tbl.TableSchema,
-	// 		ConstraintName:   constraintName,
-	// 		ConstraintType:   "UNIQUE",
-	// 		TableSchema:      f.tbl.TableSchema,
-	// 		TableName:        f.tbl.TableName,
-	// 		Columns:          []string{f.columnName},
-	// 	})
-	// }
+	constraintName := pgName(UNIQUE, f.tbl.TableName, f.columnName)
+	if i := f.tbl.CachedConstraintIndex(constraintName); i >= 0 {
+		f.tbl.Constraints[i].ConstraintType = UNIQUE
+		f.tbl.Constraints[i].TableName = f.tbl.TableName
+		f.tbl.Constraints[i].Columns = []string{f.columnName}
+	} else {
+		f.tbl.AppendConstraint(Constraint{
+			ConstraintSchema: f.tbl.TableSchema,
+			ConstraintName:   constraintName,
+			ConstraintType:   UNIQUE,
+			TableSchema:      f.tbl.TableSchema,
+			TableName:        f.tbl.TableName,
+			Columns:          []string{f.columnName},
+		})
+	}
 	return f
 }
 
 func (f *TColumn) Collate(collation string) *TColumn {
-	// if i := f.tbl.CachedColumnIndex(f.columnName); i >= 0 {
-	// 	f.tbl.Columns[i].CollationName = sql.NullString{Valid: true, String: collation}
-	// }
+	f.tbl.Columns[f.columnIndex].CollationName.Valid = true
+	f.tbl.Columns[f.columnIndex].CollationName.String = collation
 	return f
 }
 
 type TConstraint struct {
-	dialect        string
-	tbl            *Table
-	constraintName string
+	dialect         string
+	tbl             *Table
+	constraintName  string
+	constraintIndex int
 }
 
-func (t *T) Check(name string, expr string, fields ...sq.Field) *TConstraint {
+func (tc *TConstraint) Config(config func(constraint *Constraint)) {
+	constraint := tc.tbl.Constraints[tc.constraintIndex]
+	config(&constraint)
+	constraint.ConstraintName = tc.constraintName
+	tc.tbl.Constraints[tc.constraintIndex] = constraint
+}
+
+func (t *T) Check(constraintName string, predicate sq.Predicate) *TConstraint {
+	buf := bufpool.Get().(*bytes.Buffer)
+	args := argspool.Get().([]interface{})
+	defer func() {
+		buf.Reset()
+		args = args[:0]
+		bufpool.Put(buf)
+		argspool.Put(args)
+	}()
+	err := predicate.AppendSQLExclude(t.dialect, buf, &args, make(map[string][]int), []string{t.tbl.TableName})
+	if err != nil {
+		panicf(err.Error())
+	}
+	exprString := sq.Sprintf(t.dialect, buf.String(), args)
 	tc := &TConstraint{
 		dialect:        t.dialect,
 		tbl:            t.tbl,
-		constraintName: name,
+		constraintName: constraintName,
 	}
-	// checkExpr := sql.NullString{Valid: true, String: Sprintf(expr, fields...)}
-	// if i := t.tbl.CachedConstraintIndex(name); i >= 0 {
-	// 	t.tbl.Constraints[i].ConstraintType = "CHECK"
-	// 	t.tbl.Constraints[i].TableName = t.tbl.TableName
-	// 	t.tbl.Constraints[i].CheckExpr = checkExpr
-	// } else {
-	// 	t.tbl.AppendConstraint(Constraint{
-	// 		ConstraintSchema: t.tbl.TableSchema,
-	// 		ConstraintName:   name,
-	// 		ConstraintType:   "UNIQUE",
-	// 		TableSchema:      t.tbl.TableSchema,
-	// 		TableName:        t.tbl.TableName,
-	// 		CheckExpr:        checkExpr,
-	// 	})
-	// }
+	if i := t.tbl.CachedConstraintIndex(constraintName); i >= 0 {
+		t.tbl.Constraints[i].ConstraintType = CHECK
+		t.tbl.Constraints[i].TableName = t.tbl.TableName
+		t.tbl.Constraints[i].CheckExpr.Valid = true
+		t.tbl.Constraints[i].CheckExpr.String = exprString
+		tc.constraintIndex = i
+	} else {
+		t.tbl.AppendConstraint(Constraint{
+			ConstraintSchema: t.tbl.TableSchema,
+			ConstraintName:   constraintName,
+			ConstraintType:   CHECK,
+			TableSchema:      t.tbl.TableSchema,
+			TableName:        t.tbl.TableName,
+			CheckExpr: sql.NullString{
+				Valid:  true,
+				String: exprString,
+			},
+		})
+		tc.constraintIndex = t.tbl.CachedConstraintIndex(constraintName)
+	}
+	if tc.constraintIndex < 0 {
+		panicf("could not create or update constraint '%s'", constraintName)
+	}
 	return tc
 }
 
-func (t *T) Unique(fields ...sq.Field) {
+func (t *T) Unique(fields ...sq.Field) *TConstraint {
+	var columnNames []string
+	for i, field := range fields {
+		if field == nil {
+			panicf("field at index %d is nil", i)
+		}
+		columnName := field.GetName()
+		if columnName == "" {
+			panicf("field at index %d has no name", i)
+		}
+		columnNames = append(columnNames, columnName)
+	}
+	constraintName := pgName(UNIQUE, t.tbl.TableName, columnNames...)
+	tc := &TConstraint{
+		dialect:        t.dialect,
+		tbl:            t.tbl,
+		constraintName: constraintName,
+	}
+	if i := t.tbl.CachedConstraintIndex(constraintName); i >= 0 {
+		t.tbl.Constraints[i].ConstraintType = UNIQUE
+		t.tbl.Constraints[i].TableSchema = t.tbl.TableSchema
+		t.tbl.Constraints[i].TableName = t.tbl.TableName
+		t.tbl.Constraints[i].Columns = columnNames
+		tc.constraintIndex = i
+	} else {
+		t.tbl.AppendConstraint(Constraint{
+			ConstraintSchema: t.tbl.TableSchema,
+			ConstraintName:   constraintName,
+			ConstraintType:   UNIQUE,
+			TableSchema:      t.tbl.TableSchema,
+			TableName:        t.tbl.TableName,
+			Columns:          columnNames,
+		})
+		tc.constraintIndex = t.tbl.CachedConstraintIndex(constraintName)
+	}
+	if tc.constraintIndex < 0 {
+		panicf("could not create or update constraint '%s'", constraintName)
+	}
+	return tc
 }
 
-func (t *T) PrimaryKey(fields ...sq.Field) {
+func (t *T) PrimaryKey(fields ...sq.Field) *TConstraint {
+	var columnNames []string
+	for i, field := range fields {
+		if field == nil {
+			panicf("field at index %d is nil", i)
+		}
+		columnName := field.GetName()
+		if columnName == "" {
+			panicf("field at index %d has no name", i)
+		}
+		columnNames = append(columnNames, columnName)
+	}
+	constraintName := pgName(PRIMARY_KEY, t.tbl.TableName, columnNames...)
+	tc := &TConstraint{
+		dialect:        t.dialect,
+		tbl:            t.tbl,
+		constraintName: constraintName,
+	}
+	if i := t.tbl.CachedConstraintIndex(constraintName); i >= 0 {
+		t.tbl.Constraints[i].ConstraintType = PRIMARY_KEY
+		t.tbl.Constraints[i].TableSchema = t.tbl.TableSchema
+		t.tbl.Constraints[i].TableName = t.tbl.TableName
+		t.tbl.Constraints[i].Columns = columnNames
+		tc.constraintIndex = i
+	} else {
+		t.tbl.AppendConstraint(Constraint{
+			ConstraintSchema: t.tbl.TableSchema,
+			ConstraintName:   constraintName,
+			ConstraintType:   PRIMARY_KEY,
+			TableSchema:      t.tbl.TableSchema,
+			TableName:        t.tbl.TableName,
+			Columns:          columnNames,
+		})
+		tc.constraintIndex = t.tbl.CachedConstraintIndex(constraintName)
+	}
+	if tc.constraintIndex < 0 {
+		panicf("could not create or update constraint '%s'", constraintName)
+	}
+	return tc
 }
 
-func (t *T) NameUnique(name string, fields ...sq.Field) {
+func (t *T) NameUnique(constraintName string, fields ...sq.Field) *TConstraint {
+	var columnNames []string
+	for i, field := range fields {
+		if field == nil {
+			panicf("field at index %d is nil", i)
+		}
+		columnName := field.GetName()
+		if columnName == "" {
+			panicf("field at index %d has no name", i)
+		}
+		columnNames = append(columnNames, columnName)
+	}
+	tc := &TConstraint{
+		dialect:        t.dialect,
+		tbl:            t.tbl,
+		constraintName: constraintName,
+	}
+	if i := t.tbl.CachedConstraintIndex(constraintName); i >= 0 {
+		t.tbl.Constraints[i].ConstraintType = UNIQUE
+		t.tbl.Constraints[i].TableSchema = t.tbl.TableSchema
+		t.tbl.Constraints[i].TableName = t.tbl.TableName
+		t.tbl.Constraints[i].Columns = columnNames
+		tc.constraintIndex = i
+	} else {
+		t.tbl.AppendConstraint(Constraint{
+			ConstraintSchema: t.tbl.TableSchema,
+			ConstraintName:   constraintName,
+			ConstraintType:   UNIQUE,
+			TableSchema:      t.tbl.TableSchema,
+			TableName:        t.tbl.TableName,
+			Columns:          columnNames,
+		})
+		tc.constraintIndex = t.tbl.CachedConstraintIndex(constraintName)
+	}
+	if tc.constraintIndex < 0 {
+		panicf("could not create or update constraint '%s'", constraintName)
+	}
+	return tc
 }
 
-func (t *T) NamePrimaryKey(name string, fields ...sq.Field) {
+func (t *T) NamePrimaryKey(constraintName string, fields ...sq.Field) *TConstraint {
+	var columnNames []string
+	for i, field := range fields {
+		if field == nil {
+			panicf("field at index %d is nil", i)
+		}
+		columnName := field.GetName()
+		if columnName == "" {
+			panicf("field at index %d has no name", i)
+		}
+		columnNames = append(columnNames, columnName)
+	}
+	tc := &TConstraint{
+		dialect:        t.dialect,
+		tbl:            t.tbl,
+		constraintName: constraintName,
+	}
+	if i := t.tbl.CachedConstraintIndex(constraintName); i >= 0 {
+		t.tbl.Constraints[i].ConstraintType = PRIMARY_KEY
+		t.tbl.Constraints[i].TableSchema = t.tbl.TableSchema
+		t.tbl.Constraints[i].TableName = t.tbl.TableName
+		t.tbl.Constraints[i].Columns = columnNames
+		tc.constraintIndex = i
+	} else {
+		t.tbl.AppendConstraint(Constraint{
+			ConstraintSchema: t.tbl.TableSchema,
+			ConstraintName:   constraintName,
+			ConstraintType:   PRIMARY_KEY,
+			TableSchema:      t.tbl.TableSchema,
+			TableName:        t.tbl.TableName,
+			Columns:          columnNames,
+		})
+		tc.constraintIndex = t.tbl.CachedConstraintIndex(constraintName)
+	}
+	if tc.constraintIndex < 0 {
+		panicf("could not create or update constraint '%s'", constraintName)
+	}
+	return tc
 }
 
 type TIndex struct {

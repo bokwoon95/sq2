@@ -20,6 +20,17 @@ var (
 	argspool = sync.Pool{New: func() interface{} { return make([]interface{}, 0) }}
 )
 
+const (
+	PRIMARY_KEY = "PRIMARY KEY"
+	FOREIGN_KEY = "FOREIGN KEY"
+	UNIQUE      = "UNIQUE"
+	CHECK       = "CHECK"
+	INDEX       = "INDEX"
+
+	IDENTITY_DEFAULT = "BY DEFAULT AS IDENTITY"
+	IDENTITY_ALWAYS  = "ALWAYS AS IDENTITY"
+)
+
 // I -don't- have to demand that the first field is some anonymous table
 // bullshit. Just skip struct fields that aren't UserDefinedColumns, but offer
 // to parse their struct tags as long as they declare a ddl:"" inside. Just
@@ -27,7 +38,11 @@ var (
 // non-UserDefinedColumn tags.
 
 func pgName(typ string, tableName string, columnNames ...string) string {
-	buf := &bytes.Buffer{}
+	buf := bufpool.Get().(*bytes.Buffer)
+	defer func() {
+		buf.Reset()
+		bufpool.Put(buf)
+	}()
 	buf.WriteString(strings.ReplaceAll(tableName, " ", "_"))
 	for _, columnName := range columnNames {
 		buf.WriteString("_" + strings.ReplaceAll(columnName, " ", "_"))
