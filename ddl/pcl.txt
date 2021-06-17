@@ -1,0 +1,139 @@
+{
+  "baseurl": "/",
+  "title": "Mainroad",
+  "languageCode": "en-us",
+  "paginate": "10",
+  "theme": "mainroad",
+  "disqusShortname": "",
+  "googleAnalytics": "",
+  "Author": {
+    "name": "John Doe",
+    "bio": "John Doe's true identity is unknown. Maybe he is a successful blogger or writer. Nobody knows it.",
+    "avatar": "img/avatar.png"
+  },
+  "Params": {
+    "subtitle": "Just another site",
+    "description": " John Doe's Personal blog about everything",
+    "opengraph": true,
+    "readmore": false,
+    "leftsidebar": false,
+    "authorbox": true,
+    "post_navigation": true,
+    "postSections": [
+      "post"
+    ],
+    "widgets": {
+      "search": true,
+      "recent_articles": true,
+      "categories": true,
+      "tags": true,
+      "tags_counter": false
+    }
+  }
+}
+
+baseurl=/
+title=Mainroad
+languageCode=en-us
+paginate=10
+theme=mainroad
+disqusShortname=
+googleAnalytics=
+Author={
+    name="John Doe"
+    bio={John Doe's true identity is unknown. Maybe he 
+    \\ is a successful blogger or writer. Nobody knows it.
+    \\}
+    avatar=img/avatar.png
+}
+Params={
+    subtitle="Just another site"
+    description="John Doe's Personal blog about everything"
+    opengraph=true
+    readmore=false
+    leftsidebar=false
+    authorbox=true
+    post_navigation=true
+    postSections={post}
+    widgets={
+        search=true
+        recent_articles=true
+        categories=true
+        tags=true
+        tags_counter=true
+    }
+}
+
+baseurl=/
+title=Mainroad
+languageCode=en-us
+paginate=10
+theme=mainroad
+disqusShortname=
+googleAnalytics=
+Author={
+    name="John Doe"
+    bio={John Doe's true identity is unknown. Maybe he 
+    \\ is a successful blogger or writer. Nobody knows it.
+    \\}
+    avatar=img/avatar.png
+}
+Params={
+    subtitle="Just another site"
+    description="John Doe's Personal blog about everything"
+    opengraph=true
+    readmore=false
+    leftsidebar=false
+    authorbox=true
+    post_navigation=true
+    postSections={post}
+    widgets={ search=true recent_articles=true categories=true tags=true tags_counter=true }
+}
+
+$Params = dict {
+    subtitle="Just another site"
+    description="John Doe's Personal blog about everything"
+    opengraph=true
+    readmore=false
+    leftsidebar=false
+    authorbox=true
+    post_navigation=true
+    postSections={post}
+    widgets={ search=true recent_articles=true categories=true tags=true tags_counter=true }
+}
+$Params.authorbox # true
+
+if $Params.authorbox { } elif "" { } elif "" { } else { }
+
+if [eq [get $Params.authorbox 0] {"" true}] {
+}
+
+if ([get $Params.authorbox 0] == {"" true}) {
+}
+
+func add-five {num} {
+    # sometimes you need a type switch to be procedural, sometimes you need a type switch to evaluate to an expression
+    # how does OCaml do it? How does it get away without having any explicit returns?
+    # 🤔 can type switches use comptime? all type switches must be comptime-evaluable?
+    type $num {
+    number { return ($num + 1) }
+    dict
+    }
+}
+
+func add-five {num} { switch $num { number num { return ($num + 1) } } }
+
+$Params.authorbox($var)
+
+ls film
+ls film where={title}
+
+func ls {table} {
+    let where=test
+    foreach $args {key value} {
+        case $key {
+        when where { $where = $value }
+        }
+    }
+    return SELECT * FROM $table [if ($buf != "") "WHERE $where"];
+}
