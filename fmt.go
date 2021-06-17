@@ -38,32 +38,32 @@ func BufferPrintf(dialect string, buf *bytes.Buffer, args *[]interface{}, params
 		if j < 0 {
 			break
 		}
-		parameterName := format[1:j]
+		paramName := format[1:j]
 		format = format[j+1:]
 		var value interface{}
-		if parameterName == "" {
+		if paramName == "" {
 			if runningValuesIndex >= len(values) {
 				return fmt.Errorf("too few values passed in, expected more than %d", runningValuesIndex)
 			}
 			value = values[runningValuesIndex]
 			runningValuesIndex++
 		} else {
-			num, err := strconv.Atoi(parameterName)
+			num, err := strconv.Atoi(paramName)
 			if err == nil {
 				if num-1 < 0 || num-1 >= len(values) {
 					return fmt.Errorf("ordinal parameter {%d} is out of bounds", num)
 				}
-				ordinalNames = append(ordinalNames, parameterName)
+				ordinalNames = append(ordinalNames, paramName)
 				value = values[num-1]
 			} else {
-				num, ok := valuesLookup[parameterName]
+				num, ok := valuesLookup[paramName]
 				if !ok {
-					return fmt.Errorf("named parameter {%s} not provided", parameterName)
+					return fmt.Errorf("named parameter {%s} not provided", paramName)
 				}
 				value = values[num]
 			}
 		}
-		err := BufferPrintValue(dialect, buf, args, params, excludedTableQualifiers, value, parameterName)
+		err := BufferPrintValue(dialect, buf, args, params, excludedTableQualifiers, value, paramName)
 		if err != nil {
 			return err
 		}
@@ -92,8 +92,10 @@ func BufferPrintValue(dialect string, buf *bytes.Buffer, args *[]interface{}, pa
 		switch dialect {
 		case DialectMSSQL:
 			buf.WriteString("@" + v.Name)
-		default:
+		case DialectSQLite:
 			buf.WriteString("$" + v.Name)
+		default:
+			buf.WriteString(":" + v.Name)
 		}
 		return nil
 	}

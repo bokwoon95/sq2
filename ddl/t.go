@@ -123,12 +123,12 @@ func (f *TColumn) Autoincrement() *TColumn {
 }
 
 func (f *TColumn) Identity() *TColumn {
-	f.tbl.Columns[f.columnIndex].Identity = IDENTITY_DEFAULT
+	f.tbl.Columns[f.columnIndex].Identity = BY_DEFAULT_AS_IDENTITY
 	return f
 }
 
 func (f *TColumn) AlwaysIdentity() *TColumn {
-	f.tbl.Columns[f.columnIndex].Identity = IDENTITY_ALWAYS
+	f.tbl.Columns[f.columnIndex].Identity = ALWAYS_AS_IDENTITY
 	return f
 }
 

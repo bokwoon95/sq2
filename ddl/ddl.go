@@ -27,8 +27,8 @@ const (
 	CHECK       = "CHECK"
 	INDEX       = "INDEX"
 
-	IDENTITY_DEFAULT = "BY DEFAULT AS IDENTITY"
-	IDENTITY_ALWAYS  = "ALWAYS AS IDENTITY"
+	BY_DEFAULT_AS_IDENTITY = "BY DEFAULT AS IDENTITY"
+	ALWAYS_AS_IDENTITY     = "ALWAYS AS IDENTITY"
 )
 
 // I -don't- have to demand that the first field is some anonymous table
