@@ -92,7 +92,7 @@ func BufferPrintValue(dialect string, buf *bytes.Buffer, args *[]interface{}, pa
 		case DialectMSSQL:
 			buf.WriteString("@" + v.Name)
 		default:
-			buf.WriteString(":" + v.Name)
+			buf.WriteString("$" + v.Name)
 		}
 		return nil
 	}

@@ -204,7 +204,7 @@ func Test_Fprintf(t *testing.T) {
 		tt.dialect = DialectSQLite
 		tt.format = "SELECT {} FROM {} WHERE {3} = {age} AND {3} > {age} AND {4} <> {email}"
 		tt.values = []interface{}{USERS.NAME, USERS, USERS.AGE, USERS.EMAIL, sql.Named("email", "bob@email.com"), sql.Named("age", 5)}
-		tt.wantQuery = "SELECT name FROM users WHERE age = :age AND age > :age AND email <> :email"
+		tt.wantQuery = "SELECT name FROM users WHERE age = $age AND age > $age AND email <> $email"
 		tt.wantArgs = []interface{}{sql.Named("age", 5), sql.Named("email", "bob@email.com")}
 		tt.wantParams = map[string][]int{"age": {0}, "email": {1}}
 		assert(t, tt)
@@ -215,7 +215,7 @@ func Test_Fprintf(t *testing.T) {
 		tt.dialect = DialectSQLite
 		tt.format = "SELECT {} FROM {} WHERE {3} = {age} AND {3} > {age} AND {4} <> {email}"
 		tt.values = []interface{}{USERS.NAME, USERS, USERS.AGE, USERS.EMAIL, Param("email", "bob@email.com"), sql.Named("age", 5)}
-		tt.wantQuery = "SELECT name FROM users WHERE age = :age AND age > :age AND email <> $2"
+		tt.wantQuery = "SELECT name FROM users WHERE age = $age AND age > $age AND email <> $2"
 		tt.wantArgs = []interface{}{sql.Named("age", 5), "bob@email.com"}
 		tt.wantParams = map[string][]int{"age": {0}, "email": {1}}
 		assert(t, tt)
@@ -226,7 +226,7 @@ func Test_Fprintf(t *testing.T) {
 		tt.dialect = DialectSQLite
 		tt.format = "SELECT {} FROM {} WHERE {4} <> {email} AND {3} = {age} AND {3} > {age}"
 		tt.values = []interface{}{USERS.NAME, USERS, USERS.AGE, USERS.EMAIL, sql.Named("age", 5), Param("email", "bob@email.com")}
-		tt.wantQuery = "SELECT name FROM users WHERE email <> $1 AND age = :age AND age > :age"
+		tt.wantQuery = "SELECT name FROM users WHERE email <> $1 AND age = $age AND age > $age"
 		tt.wantArgs = []interface{}{"bob@email.com", sql.Named("age", 5)}
 		tt.wantParams = map[string][]int{"age": {1}, "email": {0}}
 		assert(t, tt)
