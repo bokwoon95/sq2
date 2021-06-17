@@ -11,7 +11,7 @@ func (r RowValue) AppendSQLExclude(dialect string, buf *bytes.Buffer, args *[]in
 		if i > 0 {
 			buf.WriteString(", ")
 		}
-		err = Fprint(dialect, buf, args, params, excludedTableQualifiers, value, "")
+		err = BufferPrintValue(dialect, buf, args, params, excludedTableQualifiers, value, "")
 		if err != nil {
 			return err
 		}

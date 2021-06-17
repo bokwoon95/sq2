@@ -56,7 +56,7 @@ func (f NumberField) NullsFirst() NumberField {
 
 func (f NumberField) AppendSQLExclude(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int, excludedTableQualifiers []string) error {
 	if f.Format != "" {
-		err := Fprintf(dialect, buf, args, params, excludedTableQualifiers, f.Format, f.Values)
+		err := BufferPrintf(dialect, buf, args, params, excludedTableQualifiers, f.Format, f.Values)
 		if err != nil {
 			return err
 		}

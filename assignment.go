@@ -14,7 +14,7 @@ func Assign(LHS, RHS interface{}) Assignment {
 }
 
 func (a Assignment) AppendSQLExclude(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int, excludedTableQualifiers []string) error {
-	err := Fprint(dialect, buf, args, params, excludedTableQualifiers, a.LHS, "")
+	err := BufferPrintValue(dialect, buf, args, params, excludedTableQualifiers, a.LHS, "")
 	if err != nil {
 		return err
 	}
@@ -22,13 +22,13 @@ func (a Assignment) AppendSQLExclude(dialect string, buf *bytes.Buffer, args *[]
 	switch a.RHS.(type) {
 	case Query:
 		buf.WriteString("(")
-		err = Fprint(dialect, buf, args, params, excludedTableQualifiers, a.RHS, "")
+		err = BufferPrintValue(dialect, buf, args, params, excludedTableQualifiers, a.RHS, "")
 		if err != nil {
 			return err
 		}
 		buf.WriteString(")")
 	default:
-		err = Fprint(dialect, buf, args, params, excludedTableQualifiers, a.RHS, "")
+		err = BufferPrintValue(dialect, buf, args, params, excludedTableQualifiers, a.RHS, "")
 		if err != nil {
 			return err
 		}

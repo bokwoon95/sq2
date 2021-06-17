@@ -92,29 +92,34 @@ type Metadata struct {
 // - ExcludeConstraints, ExcludeIndices (ever relevant?)
 
 func NewMetadata(dialect string) Metadata {
-	return Metadata{
-		Dialect:      dialect,
-		schemasCache: make(map[string]int),
-	}
+	return Metadata{Dialect: dialect}
 }
 
 func (m *Metadata) CachedSchemaIndex(schemaName string) int {
-	i, ok := m.schemasCache[schemaName]
-	if ok && i >= 0 && i < len(m.Schemas) {
-		if schemaName != "" && m.Schemas[i].SchemaName == schemaName {
-			return i
-		}
+	if schemaName == "" {
+		delete(m.schemasCache, schemaName)
+		return -1
 	}
-	delete(m.schemasCache, schemaName)
-	return -1
+	i, ok := m.schemasCache[schemaName]
+	if !ok || i < 0 || i >= len(m.Schemas) {
+		delete(m.schemasCache, schemaName)
+		return -1
+	}
+	return i
 }
 
 func (m *Metadata) AppendSchema(schema Schema) {
 	m.Schemas = append(m.Schemas, schema)
+	if m.schemasCache == nil {
+		m.schemasCache = make(map[string]int)
+	}
 	m.schemasCache[schema.SchemaName] = len(m.Schemas) - 1
 }
 
 func (m *Metadata) RefreshSchemaCache() {
+	if m.schemasCache == nil {
+		m.schemasCache = make(map[string]int)
+	}
 	for i, schema := range m.Schemas {
 		m.schemasCache[schema.SchemaName] = i
 	}
@@ -129,30 +134,34 @@ type Schema struct {
 }
 
 func NewSchema(schemaName string) Schema {
-	return Schema{
-		SchemaName:  schemaName,
-		tablesCache: make(map[string]int),
-		viewsCache:  make(map[string]int),
-	}
+	return Schema{SchemaName: schemaName}
 }
 
 func (s *Schema) CachedTableIndex(tableName string) int {
-	i, ok := s.tablesCache[tableName]
-	if ok && i >= 0 && i < len(s.Tables) {
-		if tableName != "" && s.Tables[i].TableName == tableName {
-			return i
-		}
+	if tableName == "" {
+		delete(s.tablesCache, tableName)
+		return -1
 	}
-	delete(s.tablesCache, tableName)
-	return -1
+	i, ok := s.tablesCache[tableName]
+	if !ok || i < 0 || i >= len(s.Tables) {
+		delete(s.tablesCache, tableName)
+		return -1
+	}
+	return i
 }
 
 func (s *Schema) AppendTable(table Table) {
 	s.Tables = append(s.Tables, table)
+	if s.tablesCache == nil {
+		s.tablesCache = make(map[string]int)
+	}
 	s.tablesCache[table.TableName] = len(s.Tables) - 1
 }
 
 func (s *Schema) RefreshTableCache() {
+	if s.tablesCache == nil {
+		s.tablesCache = make(map[string]int)
+	}
 	for i, table := range s.Tables {
 		s.tablesCache[table.TableName] = i
 	}
@@ -171,13 +180,7 @@ type Table struct {
 }
 
 func NewTable(tableSchema, tableName string) Table {
-	return Table{
-		TableSchema:      tableSchema,
-		TableName:        tableName,
-		columnsCache:     make(map[string]int),
-		constraintsCache: make(map[string]int),
-		indicesCache:     make(map[string]int),
-	}
+	return Table{TableSchema: tableSchema, TableName: tableName}
 }
 
 func (tbl *Table) CachedColumnIndex(columnName string) int {
@@ -195,10 +198,16 @@ func (tbl *Table) CachedColumnIndex(columnName string) int {
 
 func (tbl *Table) AppendColumn(column Column) {
 	tbl.Columns = append(tbl.Columns, column)
+	if tbl.columnsCache == nil {
+		tbl.columnsCache = make(map[string]int)
+	}
 	tbl.columnsCache[column.ColumnName] = len(tbl.Columns) - 1
 }
 
 func (tbl *Table) RefreshColumnCache() {
+	if tbl.columnsCache == nil {
+		tbl.columnsCache = make(map[string]int)
+	}
 	for i, column := range tbl.Columns {
 		tbl.columnsCache[column.ColumnName] = i
 	}
@@ -219,10 +228,16 @@ func (tbl *Table) CachedConstraintIndex(constraintName string) int {
 
 func (tbl *Table) AppendConstraint(constraint Constraint) {
 	tbl.Constraints = append(tbl.Constraints, constraint)
+	if tbl.constraintsCache == nil {
+		tbl.constraintsCache = make(map[string]int)
+	}
 	tbl.constraintsCache[constraint.ConstraintName] = len(tbl.Constraints) - 1
 }
 
 func (tbl *Table) RefreshConstraintCache() {
+	if tbl.constraintsCache == nil {
+		tbl.constraintsCache = make(map[string]int)
+	}
 	for i, constraint := range tbl.Constraints {
 		tbl.constraintsCache[constraint.ConstraintName] = i
 	}
@@ -245,10 +260,16 @@ func (tbl *Table) CachedIndexIndex(indexName string) int {
 
 func (tbl *Table) AppendIndex(index Index) {
 	tbl.Indices = append(tbl.Indices, index)
+	if tbl.indicesCache == nil {
+		tbl.indicesCache = make(map[string]int)
+	}
 	tbl.indicesCache[index.IndexName] = len(tbl.Indices) - 1
 }
 
 func (tbl *Table) RefreshIndexCache() {
+	if tbl.indicesCache == nil {
+		tbl.indicesCache = make(map[string]int)
+	}
 	for i, index := range tbl.Indices {
 		tbl.indicesCache[index.IndexName] = i
 	}
@@ -271,6 +292,7 @@ type Column struct {
 	CollationName            sql.NullString
 	ColumnDefault            sql.NullString
 	Modifiers                string
+	Ignore                   bool
 }
 
 type Constraint struct {

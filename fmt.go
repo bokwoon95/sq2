@@ -3,12 +3,15 @@ package sq
 import (
 	"bytes"
 	"database/sql"
+	"database/sql/driver"
+	"encoding/hex"
 	"fmt"
 	"strconv"
 	"strings"
+	"time"
 )
 
-func Fprintf(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int, excludedTableQualifiers []string, format string, values []interface{}) error {
+func BufferPrintf(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int, excludedTableQualifiers []string, format string, values []interface{}) error {
 	buf.Grow(len(format))
 	runningValuesIndex := 0
 	valuesLookup := make(map[string]int)
@@ -59,7 +62,7 @@ func Fprintf(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[
 				value = values[num]
 			}
 		}
-		err := Fprint(dialect, buf, args, params, excludedTableQualifiers, value, parameterName)
+		err := BufferPrintValue(dialect, buf, args, params, excludedTableQualifiers, value, parameterName)
 		if err != nil {
 			return err
 		}
@@ -71,7 +74,7 @@ func Fprintf(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[
 	return nil
 }
 
-func Fprint(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int, excludedTableQualifiers []string, value interface{}, name string) error {
+func BufferPrintValue(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int, excludedTableQualifiers []string, value interface{}, name string) error {
 	if v, ok := value.(sql.NamedArg); ok {
 		if v.Name == "" {
 			return fmt.Errorf("sql.NamedArg name cannot be empty")
@@ -126,4 +129,73 @@ func Fprint(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[s
 	}
 	*args = append(*args, value)
 	return nil
+}
+
+func Sprint(v interface{}) string {
+	switch v := v.(type) {
+	case nil:
+		return "NULL"
+	case bool:
+		if v {
+			return "TRUE"
+		} else {
+			return "FALSE"
+		}
+	case []byte:
+		return `x'` + hex.EncodeToString(v) + `'`
+	case string:
+		return `'` + v + `'`
+	case time.Time:
+		return `'` + v.Format(time.RFC3339Nano) + `'`
+	case int:
+		return strconv.FormatInt(int64(v), 10)
+	case int8:
+		return strconv.FormatInt(int64(v), 10)
+	case int16:
+		return strconv.FormatInt(int64(v), 10)
+	case int32:
+		return strconv.FormatInt(int64(v), 10)
+	case int64:
+		return strconv.FormatInt(v, 10)
+	case uint:
+		return strconv.FormatUint(uint64(v), 10)
+	case uint8:
+		return strconv.FormatUint(uint64(v), 10)
+	case uint16:
+		return strconv.FormatUint(uint64(v), 10)
+	case uint32:
+		return strconv.FormatUint(uint64(v), 10)
+	case uint64:
+		return strconv.FormatUint(v, 10)
+	case float32:
+		return strconv.FormatFloat(float64(v), 'g', -1, 64)
+	case float64:
+		return strconv.FormatFloat(v, 'g', -1, 64)
+	case driver.Valuer:
+		v2, err := v.Value()
+		if err != nil {
+			return `:` + err.Error() + `:`
+		}
+		switch v2 := v2.(type) {
+		case int64:
+			return strconv.FormatInt(v2, 10)
+		case float64:
+			return strconv.FormatFloat(v2, 'g', -1, 64)
+		case bool:
+			if v2 {
+				return "TRUE"
+			} else {
+				return "FALSE"
+			}
+		case []byte:
+			return `x'` + hex.EncodeToString(v2) + `'`
+		case string:
+			return `'` + v2 + `'`
+		case time.Time:
+			return `'` + v2.Format(time.RFC3339Nano) + `'`
+		default:
+			return fmt.Sprintf("%#v", v2)
+		}
+	}
+	return fmt.Sprintf("%#v", v)
 }

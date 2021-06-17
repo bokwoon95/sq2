@@ -35,7 +35,7 @@ func (p CustomPredicate) AppendSQLExclude(dialect string, buf *bytes.Buffer, arg
 	if p.Negative {
 		buf.WriteString("NOT ")
 	}
-	return Fprintf(dialect, buf, args, params, excludedTableQualifiers, p.Format, p.Values)
+	return BufferPrintf(dialect, buf, args, params, excludedTableQualifiers, p.Format, p.Values)
 }
 
 func (p CustomPredicate) Not() Predicate {

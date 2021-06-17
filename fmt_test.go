@@ -40,7 +40,7 @@ func Test_Fprintf(t *testing.T) {
 			bufpool.Put(buf)
 		}()
 		gotArgs, gotParams := []interface{}{}, map[string][]int{}
-		err := Fprintf(tt.dialect, buf, &gotArgs, gotParams, nil, tt.format, tt.values)
+		err := BufferPrintf(tt.dialect, buf, &gotArgs, gotParams, nil, tt.format, tt.values)
 		is.NoErr(err)
 		is.Equal(tt.wantQuery, buf.String())
 		is.Equal(tt.wantArgs, gotArgs)
@@ -118,7 +118,7 @@ func Test_Fprintf(t *testing.T) {
 		tt.dialect = DialectMySQL
 		tt.format = "SELECT {} FROM {} WHERE {3} = {age} AND {3} > {age} AND {4} <> {email}"
 		tt.values = []interface{}{USERS.NAME, USERS, USERS.AGE, USERS.EMAIL, sql.Named("email", "bob@email.com"), sql.Named("age", 5)}
-		err := Fprintf(tt.dialect, new(bytes.Buffer), new([]interface{}), make(map[string][]int), nil, tt.format, tt.values)
+		err := BufferPrintf(tt.dialect, new(bytes.Buffer), new([]interface{}), make(map[string][]int), nil, tt.format, tt.values)
 		is := testutil.New(t)
 		is.True(err != nil)
 	})
@@ -161,7 +161,7 @@ func Test_Fprintf(t *testing.T) {
 		tt.dialect = DialectPostgres
 		tt.format = "SELECT {} FROM {} WHERE {3} = {age} AND {3} > {age} AND {4} <> {email}"
 		tt.values = []interface{}{USERS.NAME, USERS, USERS.AGE, USERS.EMAIL, sql.Named("email", "bob@email.com"), sql.Named("age", 5)}
-		err := Fprintf(tt.dialect, new(bytes.Buffer), new([]interface{}), make(map[string][]int), nil, tt.format, tt.values)
+		err := BufferPrintf(tt.dialect, new(bytes.Buffer), new([]interface{}), make(map[string][]int), nil, tt.format, tt.values)
 		is := testutil.New(t)
 		is.True(err != nil)
 	})

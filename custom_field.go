@@ -52,7 +52,7 @@ func (f CustomField) AppendSQLExclude(dialect string, buf *bytes.Buffer, args *[
 	if f.Format == "" {
 		return fmt.Errorf("CustomField is empty")
 	}
-	err := Fprintf(dialect, buf, args, params, excludedTableQualifiers, f.Format, f.Values)
+	err := BufferPrintf(dialect, buf, args, params, excludedTableQualifiers, f.Format, f.Values)
 	if err != nil {
 		return err
 	}
@@ -107,7 +107,7 @@ func (fs Fields) AppendSQLExclude(dialect string, buf *bytes.Buffer, args *[]int
 			buf.WriteString(", ")
 		}
 		if field == nil {
-			err = Fprint(dialect, buf, args, params, excludedTableQualifiers, nil, "")
+			err = BufferPrintValue(dialect, buf, args, params, excludedTableQualifiers, nil, "")
 			if err != nil {
 				return err
 			}
@@ -129,7 +129,7 @@ func (fs Fields) AppendSQLExcludeWithAlias(dialect string, buf *bytes.Buffer, ar
 			buf.WriteString(", ")
 		}
 		if f == nil {
-			Fprint(dialect, buf, args, params, excludedTableQualifiers, nil, "")
+			BufferPrintValue(dialect, buf, args, params, excludedTableQualifiers, nil, "")
 		} else {
 			err = f.AppendSQLExclude(dialect, buf, args, params, excludedTableQualifiers)
 			if err != nil {
