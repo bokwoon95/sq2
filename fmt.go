@@ -131,8 +131,128 @@ func BufferPrintValue(dialect string, buf *bytes.Buffer, args *[]interface{}, pa
 	return nil
 }
 
+func Sprintf(dialect string, query string, args []interface{}) string {
+	buf := bufpool.Get().(*bytes.Buffer)
+	defer func() {
+		buf.Reset()
+		bufpool.Put(buf)
+	}()
+	buf.Grow(len(query))
+	argsLookup := make(map[string]int)
+	for i, arg := range args {
+		if arg, ok := arg.(sql.NamedArg); ok {
+			argsLookup[arg.Name] = i
+		}
+	}
+	runningArgsIndex := 0
+	var insideString bool
+	var namebuf []rune
+	nameTerminatingChars := map[rune]bool{
+		',': true, '(': true, ')': true, ';': true,
+		'=': true, '>': true, '<': true,
+		'+': true, '-': true, '*': true, '/': true,
+		'\t': true, '\n': true, '\v': true, '\f': true, '\r': true, ' ': true, 0x85: true, 0xA0: true,
+	}
+	for _, char := range query {
+		if char == '\'' {
+			insideString = !insideString
+			buf.WriteRune(char)
+			continue
+		}
+		if insideString {
+			buf.WriteRune(char)
+			continue
+		}
+		if len(namebuf) > 0 && nameTerminatingChars[char] {
+			if namebuf[0] == '@' && dialect == DialectMSSQL {
+			}
+			name := string(namebuf[1:])
+			if name == "" {
+				if namebuf[0] == '?' {
+					buf.WriteString(Sprint(args[runningArgsIndex]))
+					runningArgsIndex++
+				} else {
+					buf.WriteString("%!(MISSING)")
+				}
+			} else if num, err := strconv.Atoi(name); err == nil {
+				if num-1 < 0 || num-1 >= len(args) {
+					buf.WriteString("%!(BADINDEX)")
+				} else {
+					buf.WriteString(Sprint(args[num-1]))
+				}
+			} else {
+				num, ok := argsLookup[name]
+				if dialect == DialectPostgres {
+					buf.WriteString("%!(INVALID)")
+				} else if !ok {
+					buf.WriteString("%!(MISSING)")
+				} else if num < 0 || num >= len(args) {
+					buf.WriteString("%!(BADINDEX)")
+				} else {
+					buf.WriteString(Sprint(args[num]))
+				}
+			}
+			buf.WriteRune(char)
+			namebuf = namebuf[:0]
+			continue
+		}
+		if len(namebuf) > 0 {
+			namebuf = append(namebuf, char)
+			continue
+		}
+		switch {
+		case char == '$' && (dialect == DialectSQLite || dialect == DialectPostgres),
+			char == ':' && dialect == DialectSQLite,
+			char == '@' && (dialect == DialectSQLite || dialect == DialectMSSQL),
+			char == '?' && dialect == DialectSQLite:
+			namebuf = append(namebuf, char)
+			continue
+		case char == '?' && dialect == DialectMySQL:
+			if runningArgsIndex < 0 || runningArgsIndex >= len(args) {
+				buf.WriteString("%!(BADINDEX)")
+			} else {
+				buf.WriteString(Sprint(args[runningArgsIndex]))
+				runningArgsIndex++
+			}
+			continue
+		}
+		buf.WriteRune(char)
+	}
+	if len(namebuf) > 0 {
+		name := string(namebuf[1:])
+		if name == "" {
+			if namebuf[0] == '?' {
+				buf.WriteString(Sprint(args[runningArgsIndex]))
+				runningArgsIndex++
+			} else {
+				buf.WriteString("%!(MISSING)")
+			}
+		} else if num, err := strconv.Atoi(name); err == nil {
+			if num-1 < 0 || num-1 >= len(args) {
+				buf.WriteString("%!(BADINDEX)")
+			} else {
+				buf.WriteString(Sprint(args[num-1]))
+			}
+		} else {
+			num, ok := argsLookup[name]
+			if dialect == DialectPostgres {
+				buf.WriteString("%!(INVALID)")
+			} else if !ok {
+				buf.WriteString("%!(MISSING)")
+			} else if num < 0 || num >= len(args) {
+				buf.WriteString("%!(BADINDEX)")
+			} else {
+				buf.WriteString(Sprint(args[num]))
+			}
+		}
+	}
+	return buf.String()
+}
+
 func Sprint(v interface{}) string {
 	switch v := v.(type) {
+	case sql.NamedArg:
+		return Sprint(v.Value)
 	case nil:
 		return "NULL"
 	case bool:
@@ -174,7 +294,7 @@ func Sprint(v interface{}) string {
 	case driver.Valuer:
 		v2, err := v.Value()
 		if err != nil {
-			return `:` + err.Error() + `:`
+			return `%!(` + err.Error() + `)`
 		}
 		switch v2 := v2.(type) {
 		case int64:

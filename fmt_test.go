@@ -298,3 +298,99 @@ func Test_Fprintf(t *testing.T) {
 		assert(t, tt)
 	})
 }
+
+func Test_Sprintf(t *testing.T) {
+	type TT struct {
+		dialect    string
+		query      string
+		args       []interface{}
+		wantString string
+	}
+
+	assert := func(t *testing.T, tt TT) {
+		is := testutil.New(t, testutil.Parallel)
+		gotString := Sprintf(tt.dialect, tt.query, tt.args)
+		is.Equal(tt.wantString, gotString)
+	}
+
+	t.Run("mysql empty", func(t *testing.T) {
+		var tt TT
+		tt.dialect = DialectMySQL
+		tt.query = ""
+		tt.args = []interface{}{}
+		tt.wantString = ""
+		assert(t, tt)
+	})
+
+	t.Run("mysql", func(t *testing.T) {
+		var tt TT
+		tt.dialect = DialectMySQL
+		tt.query = "SELECT name FROM users WHERE age = ? AND email <> ? AND name IN (?, ?, ?)"
+		tt.args = []interface{}{5, "bob@email.com", "tom", "dick", "harry"}
+		tt.wantString = "SELECT name FROM users WHERE age = 5 AND email <> 'bob@email.com' AND name IN ('tom', 'dick', 'harry')"
+		assert(t, tt)
+	})
+
+	t.Run("mysql insideString", func(t *testing.T) {
+		var tt TT
+		tt.dialect = DialectMySQL
+		tt.query = "SELECT name FROM users WHERE age = ? AND email <> '? ? ? ? ''bruh ?' AND name IN (?, ?) ?"
+		tt.args = []interface{}{5, "tom", "dick", "harry"}
+		tt.wantString = "SELECT name FROM users WHERE age = 5 AND email <> '? ? ? ? ''bruh ?' AND name IN ('tom', 'dick') 'harry'"
+		assert(t, tt)
+	})
+
+	t.Run("postgres", func(t *testing.T) {
+		var tt TT
+		tt.dialect = DialectPostgres
+		tt.query = "SELECT name FROM users WHERE age = $1 AND email <> $2 AND name IN ($2, $3, $4, $1)"
+		tt.args = []interface{}{5, "tom", "dick", "harry"}
+		tt.wantString = "SELECT name FROM users WHERE age = 5 AND email <> 'tom' AND name IN ('tom', 'dick', 'harry', 5)"
+		assert(t, tt)
+	})
+
+	t.Run("postgres insideString", func(t *testing.T) {
+		var tt TT
+		tt.dialect = DialectPostgres
+		tt.query = "SELECT name FROM users WHERE age = $1 AND email <> '$2 $2 $3 $4 ''bruh $1' AND name IN ($2, $3) $4"
+		tt.args = []interface{}{5, "tom", "dick", "harry"}
+		tt.wantString = "SELECT name FROM users WHERE age = 5 AND email <> '$2 $2 $3 $4 ''bruh $1' AND name IN ('tom', 'dick') 'harry'"
+		assert(t, tt)
+	})
+
+	t.Run("sqlite", func(t *testing.T) {
+		var tt TT
+		tt.dialect = DialectSQLite
+		tt.query = "SELECT name FROM users WHERE age = $1 AND email <> $2 AND name IN ($2, $3, $4, $1)"
+		tt.args = []interface{}{5, "tom", "dick", "harry"}
+		tt.wantString = "SELECT name FROM users WHERE age = 5 AND email <> 'tom' AND name IN ('tom', 'dick', 'harry', 5)"
+		assert(t, tt)
+	})
+
+	t.Run("sqlite insideString", func(t *testing.T) {
+		var tt TT
+		tt.dialect = DialectSQLite
+		tt.query = "SELECT name FROM users WHERE age = $1 AND email <> '$2 $2 $3 $4 ''bruh $1' AND name IN ($2, $3) $4"
+		tt.args = []interface{}{5, "tom", "dick", "harry"}
+		tt.wantString = "SELECT name FROM users WHERE age = 5 AND email <> '$2 $2 $3 $4 ''bruh $1' AND name IN ('tom', 'dick') 'harry'"
+		assert(t, tt)
+	})
+
+	t.Run("sqlite mixing ordinal param and named param", func(t *testing.T) {
+		var tt TT
+		tt.dialect = DialectSQLite
+		tt.query = "SELECT name FROM users WHERE age = $age AND age > $1 AND email <> $email"
+		tt.args = []interface{}{sql.Named("age", 5), sql.Named("email", "bob@email.com")}
+		tt.wantString = "SELECT name FROM users WHERE age = 5 AND age > 5 AND email <> 'bob@email.com'"
+		assert(t, tt)
+	})
+
+	t.Run("sqlite supports everything", func(t *testing.T) {
+		var tt TT
+		tt.dialect = DialectSQLite
+		tt.query = "SELECT name FROM users WHERE age = ?age AND email <> :email AND name IN (@3, ?4, $5, :5) ? ?"
+		tt.args = []interface{}{sql.Named("age", 5), sql.Named("email", "bob@email.com"), "tom", "dick", "harry"}
+		tt.wantString = "SELECT name FROM users WHERE age = 5 AND email <> 'bob@email.com' AND name IN ('tom', 'dick', 'harry', 'harry') 5 'bob@email.com'"
+		assert(t, tt)
+	})
+}
