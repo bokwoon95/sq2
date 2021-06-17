@@ -195,6 +195,7 @@ type Table struct {
 	Constraints      []Constraint
 	Indices          []Index
 	Modifiers        string
+	Comment          string
 	columnsCache     map[string]int
 	constraintsCache map[string]int
 	indicesCache     map[string]int
@@ -304,7 +305,7 @@ type Column struct {
 	NormalizedColumnType     string
 	Precision                int
 	Scale                    int
-	Identity                 string // NONE | BY DEFAULT AS IDENTITY | ALWAYS AS IDENTITY
+	Identity                 string
 	Autoincrement            bool
 	IsNotNull                bool
 	OnUpdateCurrentTimestamp bool
@@ -313,6 +314,7 @@ type Column struct {
 	CollationName            sql.NullString
 	ColumnDefault            sql.NullString
 	Modifiers                string
+	Comment                  string
 	Ignore                   bool
 }
 

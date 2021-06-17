@@ -132,6 +132,7 @@ func BufferPrintValue(dialect string, buf *bytes.Buffer, args *[]interface{}, pa
 	return nil
 }
 
+// TODO: change signature to include error output
 func Sprintf(dialect string, query string, args []interface{}) string {
 	buf := bufpool.Get().(*bytes.Buffer)
 	defer func() {
@@ -253,6 +254,7 @@ func Sprintf(dialect string, query string, args []interface{}) string {
 	return buf.String()
 }
 
+// TODO: change signature to include error output
 func Sprint(v interface{}) string {
 	switch v := v.(type) {
 	case nil:

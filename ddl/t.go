@@ -408,29 +408,21 @@ func (t *T) NamePrimaryKey(constraintName string, fields ...sq.Field) *TConstrai
 }
 
 type TIndex struct {
+	dialect    string
+	tbl        *Table
+	indexName  string
+	indexIndex int
 }
 
 func (t *T) Index(fields ...sq.Field) *TIndex {
 	return &TIndex{}
 }
 
-func (t *T) NameIndex(name string) *TIndex {
+func (t *T) NameIndex(indexName string, fields ...sq.Field) *TIndex {
 	return &TIndex{}
 }
 
-func (i *TIndex) Field(fields ...sq.Field) *TIndex {
-	return i
-}
-
-func (i *TIndex) Expr(expr string, fields ...sq.Field) *TIndex {
-	return i
-}
-
 func (i *TIndex) Unique() *TIndex {
-	return i
-}
-
-func (i *TIndex) Schema(schema string) *TIndex {
 	return i
 }
 
@@ -438,10 +430,13 @@ func (i *TIndex) Using(method string) *TIndex {
 	return i
 }
 
-func (i *TIndex) Where(expr string, fields ...sq.Field) *TIndex {
+func (i *TIndex) Where(predicate sq.Predicate) *TIndex {
 	return i
 }
 
 func (i *TIndex) Include(fields ...sq.Field) *TIndex {
 	return i
+}
+
+func (i *TIndex) Config(config func(index *Index)) {
 }
