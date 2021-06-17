@@ -1,6 +1,7 @@
 package ddl
 
 import (
+	"bytes"
 	"fmt"
 	"runtime"
 
@@ -71,24 +72,44 @@ func (f *TColumn) Config(config func(col *Column)) {
 }
 
 func (f *TColumn) Generated(expr sq.Field) *TColumn {
-	// if i := f.tbl.CachedColumnIndex(f.columnName); i >= 0 {
-	// 	f.tbl.Columns[i].GeneratedExpr = sql.NullString{Valid: true, String: Sprintf(expr, fields...)}
-	// }
-	// f.tbl.Columns[f.columnIndex].GeneratedExpr =
+	buf := bufpool.Get().(*bytes.Buffer)
+	args := argspool.Get().([]interface{})
+	defer func() {
+		buf.Reset()
+		args = args[:0]
+		bufpool.Put(buf)
+		argspool.Put(args)
+	}()
+	err := expr.AppendSQLExclude(f.dialect, buf, &args, make(map[string][]int), []string{f.tbl.TableName})
+	if err != nil {
+		panicf(err.Error())
+	}
+	f.tbl.Columns[f.columnIndex].GeneratedExpr.Valid = true
+	f.tbl.Columns[f.columnIndex].GeneratedExpr.String = sq.Sprintf(f.dialect, buf.String(), args)
 	return f
 }
 
 func (f *TColumn) Stored() *TColumn {
-	// if i := f.tbl.CachedColumnIndex(f.columnName); i >= 0 {
-	// 	f.tbl.Columns[i].GeneratedExprStored = sql.NullBool{Valid: true, Bool: true}
-	// }
+	f.tbl.Columns[f.columnIndex].GeneratedExprStored.Valid = true
+	f.tbl.Columns[f.columnIndex].GeneratedExprStored.Bool = true
 	return f
 }
 
-func (f *TColumn) Default(expr string, fields ...sq.Field) *TColumn {
-	// if i := f.tbl.CachedColumnIndex(f.columnName); i >= 0 {
-	// 	// f.tbl.Columns[i].ColumnDefault = sql.NullString{Valid: true, String: Sprintf(expr, fields...)}
-	// }
+func (f *TColumn) Default(expr sq.Field) *TColumn {
+	buf := bufpool.Get().(*bytes.Buffer)
+	args := argspool.Get().([]interface{})
+	defer func() {
+		buf.Reset()
+		args = args[:0]
+		bufpool.Put(buf)
+		argspool.Put(args)
+	}()
+	err := expr.AppendSQLExclude(f.dialect, buf, &args, make(map[string][]int), []string{f.tbl.TableName})
+	if err != nil {
+		panicf(err.Error())
+	}
+	f.tbl.Columns[f.columnIndex].ColumnDefault.Valid = true
+	f.tbl.Columns[f.columnIndex].ColumnDefault.String = sq.Sprintf(f.dialect, buf.String(), args)
 	return f
 }
 

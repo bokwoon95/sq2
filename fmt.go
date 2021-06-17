@@ -207,7 +207,7 @@ func Sprintf(dialect string, query string, args []interface{}) string {
 			char == '?' && dialect == DialectSQLite:
 			namebuf = append(namebuf, char)
 			continue
-		case char == '?' && dialect == DialectMySQL:
+		case char == '?' && dialect != DialectPostgres && dialect != DialectMSSQL:
 			if runningArgsIndex < 0 || runningArgsIndex >= len(args) {
 				buf.WriteString("%!(BADINDEX)")
 			} else {

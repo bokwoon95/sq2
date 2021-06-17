@@ -5,6 +5,7 @@ import (
 	"context"
 	"database/sql"
 	"strings"
+	"sync"
 
 	"github.com/bokwoon95/sq"
 )
@@ -13,6 +14,11 @@ type DB interface {
 	Query(query string, args ...interface{}) (*sql.Rows, error)
 	QueryContext(ctx context.Context, query string, args ...interface{}) (*sql.Rows, error)
 }
+
+var (
+	bufpool  = sync.Pool{New: func() interface{} { return new(bytes.Buffer) }}
+	argspool = sync.Pool{New: func() interface{} { return make([]interface{}, 0) }}
+)
 
 // I -don't- have to demand that the first field is some anonymous table
 // bullshit. Just skip struct fields that aren't UserDefinedColumns, but offer

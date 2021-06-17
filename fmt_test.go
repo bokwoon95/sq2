@@ -340,6 +340,15 @@ func Test_Sprintf(t *testing.T) {
 		assert(t, tt)
 	})
 
+	t.Run("omitted dialect insideString", func(t *testing.T) {
+		var tt TT
+		tt.dialect = ""
+		tt.query = "SELECT name FROM users WHERE age = ? AND email <> '? ? ? ? ''bruh ?' AND name IN (?, ?) ?"
+		tt.args = []interface{}{5, "tom", "dick", "harry"}
+		tt.wantString = "SELECT name FROM users WHERE age = 5 AND email <> '? ? ? ? ''bruh ?' AND name IN ('tom', 'dick') 'harry'"
+		assert(t, tt)
+	})
+
 	t.Run("postgres", func(t *testing.T) {
 		var tt TT
 		tt.dialect = DialectPostgres
