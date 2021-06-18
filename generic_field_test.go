@@ -8,18 +8,6 @@ import (
 )
 
 func Test_GenericField(t *testing.T) {
-	USERS := struct {
-		USER_ID GenericField
-		NAME    GenericField
-		EMAIL   GenericField
-		AGE     GenericField
-	}{
-		USER_ID: GenericField{FieldName: "user_id"},
-		NAME:    GenericField{FieldName: "name"},
-		EMAIL:   GenericField{FieldName: "email"},
-		AGE:     GenericField{FieldName: "age"},
-	}
-
 	type TT struct {
 		dialect                 string
 		item                    SQLExcludeAppender
@@ -117,70 +105,6 @@ func Test_GenericField(t *testing.T) {
 		}.Desc().NullsFirst()
 		tt.wantQuery = "users.user_id DESC NULLS FIRST"
 		tt.wantArgs = []interface{}{}
-		assert(t, tt)
-	})
-
-	t.Run("GenericField IS NULL", func(t *testing.T) {
-		var tt TT
-		f := GenericField{
-			TableName: "users",
-			FieldName: "user_id",
-		}
-		tt.item = f.IsNull()
-		tt.wantQuery = "users.user_id IS NULL"
-		tt.wantArgs = []interface{}{}
-		assert(t, tt)
-	})
-
-	t.Run("GenericField IS NOT NULL", func(t *testing.T) {
-		var tt TT
-		f := GenericField{
-			TableName: "users",
-			FieldName: "user_id",
-		}
-		tt.item = f.IsNotNull()
-		tt.wantQuery = "users.user_id IS NOT NULL"
-		tt.wantArgs = []interface{}{}
-		assert(t, tt)
-	})
-
-	t.Run("GenericField IN (rowvalues)", func(t *testing.T) {
-		var tt TT
-		f := GenericField{
-			TableName: "users",
-			FieldName: "user_id",
-		}
-		tt.item = f.In(RowValue{USERS.USER_ID, USERS.NAME, USERS.EMAIL})
-		tt.wantQuery = "users.user_id IN (user_id, name, email)"
-		tt.wantArgs = []interface{}{}
-		assert(t, tt)
-	})
-
-	t.Run("GenericField IN (slice)", func(t *testing.T) {
-		var tt TT
-		f := GenericField{TableName: "users", FieldName: "user_id"}
-		tt.item = f.In([]int{5, 6, 7})
-		tt.wantQuery = "users.user_id IN (?, ?, ?)"
-		tt.wantArgs = []interface{}{5, 6, 7}
-		assert(t, tt)
-	})
-
-	t.Run("GenericField Set", func(t *testing.T) {
-		var tt TT
-		f := GenericField{TableName: "users", FieldName: "user_id"}
-		tt.item = f.Set(99)
-		tt.wantQuery = "users.user_id = ?"
-		tt.wantArgs = []interface{}{99}
-		assert(t, tt)
-	})
-
-	t.Run("GenericField Set (excludedTableQualifiers)", func(t *testing.T) {
-		var tt TT
-		f := GenericField{TableName: "users", FieldName: "user_id"}
-		tt.item = f.Set(22)
-		tt.excludedTableQualifiers = []string{"users"}
-		tt.wantQuery = "user_id = ?"
-		tt.wantArgs = []interface{}{22}
 		assert(t, tt)
 	})
 

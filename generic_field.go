@@ -83,16 +83,3 @@ func (f GenericField) AppendSQLExclude(dialect string, buf *bytes.Buffer, args *
 	}
 	return nil
 }
-
-func (f GenericField) IsNull() Predicate { return IsNull(f) }
-
-func (f GenericField) IsNotNull() Predicate { return IsNotNull(f) }
-
-func (f GenericField) In(v interface{}) Predicate {
-	if v, ok := v.(RowValue); ok {
-		return Predicatef("{} IN {}", f, v)
-	}
-	return Predicatef("{} IN ({})", f, v)
-}
-
-func (f GenericField) Set(val interface{}) Assignment { return Assign(f, val) }
