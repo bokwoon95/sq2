@@ -166,18 +166,18 @@ func (t *TColumn) NotNull() *TColumn {
 
 func (t *TColumn) PrimaryKey() *TColumn {
 	constraintName := generateName(PRIMARY_KEY, t.tbl.TableName, t.columnName)
-	constraintIndex := createOrUpdateConstraint(t.tbl, PRIMARY_KEY, constraintName, []string{t.columnName}, "")
-	if constraintIndex < 0 {
-		panicf("could not create or update constraint '%s'", constraintName)
+	_, err := createOrUpdateConstraint(t.tbl, PRIMARY_KEY, constraintName, []string{t.columnName}, "")
+	if err != nil {
+		panicf(err.Error())
 	}
 	return t
 }
 
 func (t *TColumn) Unique() *TColumn {
 	constraintName := generateName(UNIQUE, t.tbl.TableName, t.columnName)
-	constraintIndex := createOrUpdateConstraint(t.tbl, UNIQUE, constraintName, []string{t.columnName}, "")
-	if constraintIndex < 0 {
-		panicf("could not create or update constraint '%s'", constraintName)
+	_, err := createOrUpdateConstraint(t.tbl, UNIQUE, constraintName, []string{t.columnName}, "")
+	if err != nil {
+		panicf(err.Error())
 	}
 	return t
 }
@@ -209,7 +209,10 @@ func getColumnNames(fields []sq.Field) ([]string, error) {
 	return columnNames, nil
 }
 
-func createOrUpdateConstraint(tbl *Table, constraintType, constraintName string, columns []string, checkExpr string) (constraintIndex int) {
+func createOrUpdateConstraint(tbl *Table, constraintType, constraintName string, columns []string, checkExpr string) (constraintIndex int, err error) {
+	if constraintName == "" {
+		return -1, fmt.Errorf("constraintName cannot be empty")
+	}
 	if constraintIndex = tbl.CachedConstraintIndex(constraintName); constraintIndex >= 0 {
 		constraint := tbl.Constraints[constraintIndex]
 		constraint.ConstraintType = constraintType
@@ -235,10 +238,9 @@ func createOrUpdateConstraint(tbl *Table, constraintType, constraintName string,
 		case CHECK:
 			constraint.CheckExpr = checkExpr
 		}
-		tbl.AppendConstraint(constraint)
-		constraintIndex = tbl.CachedConstraintIndex(constraintName)
+		constraintIndex = tbl.AppendConstraint(constraint)
 	}
-	return constraintIndex
+	return constraintIndex, nil
 }
 
 func (t *T) Check(constraintName string, format string, values ...interface{}) *TConstraint {
@@ -251,9 +253,9 @@ func (t *T) Check(constraintName string, format string, values ...interface{}) *
 		tbl:            t.tbl,
 		constraintName: constraintName,
 	}
-	tConstraint.constraintIndex = createOrUpdateConstraint(t.tbl, CHECK, constraintName, nil, expr)
-	if tConstraint.constraintIndex < 0 {
-		panicf("could not create or update constraint '%s'", constraintName)
+	tConstraint.constraintIndex, err = createOrUpdateConstraint(t.tbl, CHECK, constraintName, nil, expr)
+	if err != nil {
+		panicf(err.Error())
 	}
 	return tConstraint
 }
@@ -269,9 +271,9 @@ func (t *T) Unique(fields ...sq.Field) *TConstraint {
 		tbl:            t.tbl,
 		constraintName: constraintName,
 	}
-	tConstraint.constraintIndex = createOrUpdateConstraint(t.tbl, CHECK, constraintName, columnNames, "")
-	if tConstraint.constraintIndex < 0 {
-		panicf("could not create or update constraint '%s'", constraintName)
+	tConstraint.constraintIndex, err = createOrUpdateConstraint(t.tbl, UNIQUE, constraintName, columnNames, "")
+	if err != nil {
+		panicf(err.Error())
 	}
 	return tConstraint
 }
@@ -287,9 +289,9 @@ func (t *T) PrimaryKey(fields ...sq.Field) *TConstraint {
 		tbl:            t.tbl,
 		constraintName: constraintName,
 	}
-	tConstraint.constraintIndex = createOrUpdateConstraint(t.tbl, PRIMARY_KEY, constraintName, columnNames, "")
-	if tConstraint.constraintIndex < 0 {
-		panicf("could not create or update constraint '%s'", constraintName)
+	tConstraint.constraintIndex, err = createOrUpdateConstraint(t.tbl, PRIMARY_KEY, constraintName, columnNames, "")
+	if err != nil {
+		panicf(err.Error())
 	}
 	return tConstraint
 }
@@ -305,9 +307,9 @@ func (t *T) ForeignKey(fields ...sq.Field) *TConstraint {
 		tbl:            t.tbl,
 		constraintName: constraintName,
 	}
-	tConstraint.constraintIndex = createOrUpdateConstraint(t.tbl, FOREIGN_KEY, constraintName, columnNames, "")
-	if tConstraint.constraintIndex < 0 {
-		panicf("could not create or update constraint '%s'", constraintName)
+	tConstraint.constraintIndex, err = createOrUpdateConstraint(t.tbl, FOREIGN_KEY, constraintName, columnNames, "")
+	if err != nil {
+		panicf(err.Error())
 	}
 	return tConstraint
 }
@@ -322,9 +324,9 @@ func (t *T) NameUnique(constraintName string, fields ...sq.Field) *TConstraint {
 		tbl:            t.tbl,
 		constraintName: constraintName,
 	}
-	tConstraint.constraintIndex = createOrUpdateConstraint(t.tbl, UNIQUE, constraintName, columnNames, "")
-	if tConstraint.constraintIndex < 0 {
-		panicf("could not create or update constraint '%s'", constraintName)
+	tConstraint.constraintIndex, err = createOrUpdateConstraint(t.tbl, UNIQUE, constraintName, columnNames, "")
+	if err != nil {
+		panicf(err.Error())
 	}
 	return tConstraint
 }
@@ -339,9 +341,9 @@ func (t *T) NamePrimaryKey(constraintName string, fields ...sq.Field) *TConstrai
 		tbl:            t.tbl,
 		constraintName: constraintName,
 	}
-	tConstraint.constraintIndex = createOrUpdateConstraint(t.tbl, PRIMARY_KEY, constraintName, columnNames, "")
-	if tConstraint.constraintIndex < 0 {
-		panicf("could not create or update constraint '%s'", constraintName)
+	tConstraint.constraintIndex, err = createOrUpdateConstraint(t.tbl, PRIMARY_KEY, constraintName, columnNames, "")
+	if err != nil {
+		panicf(err.Error())
 	}
 	return tConstraint
 }
@@ -356,9 +358,9 @@ func (t *T) NameForeignKey(constraintName string, fields ...sq.Field) *TConstrai
 		tbl:            t.tbl,
 		constraintName: constraintName,
 	}
-	tConstraint.constraintIndex = createOrUpdateConstraint(t.tbl, FOREIGN_KEY, constraintName, columnNames, "")
-	if tConstraint.constraintIndex < 0 {
-		panicf("could not create or update constraint '%s'", constraintName)
+	tConstraint.constraintIndex, err = createOrUpdateConstraint(t.tbl, FOREIGN_KEY, constraintName, columnNames, "")
+	if err != nil {
+		panicf(err.Error())
 	}
 	return tConstraint
 }
@@ -446,7 +448,10 @@ func getColumnNamesAndExprs(dialect, tableName string, fields []sq.Field) (colum
 	return columnNames, exprs, nil
 }
 
-func createOrUpdateIndex(tbl *Table, indexName string, columns []string, exprs []string) (indexIndex int) {
+func createOrUpdateIndex(tbl *Table, indexName string, columns []string, exprs []string) (indexIndex int, err error) {
+	if indexName == "" {
+		return -1, fmt.Errorf("indexName cannot be empty")
+	}
 	if indexIndex = tbl.CachedIndexIndex(indexName); indexIndex >= 0 {
 		index := tbl.Indices[indexIndex]
 		index.TableSchema = tbl.TableSchema
@@ -465,9 +470,11 @@ func createOrUpdateIndex(tbl *Table, indexName string, columns []string, exprs [
 			Exprs:       exprs,
 		}
 		tbl.AppendIndex(index)
-		indexIndex = tbl.CachedIndexIndex(indexName)
+		if indexIndex = tbl.CachedIndexIndex(indexName); indexIndex < 0 {
+			return indexIndex, fmt.Errorf("could not create index '%s'", indexName)
+		}
 	}
-	return indexIndex
+	return indexIndex, nil
 }
 
 func (t *T) Index(fields ...sq.Field) *TIndex {
@@ -481,9 +488,9 @@ func (t *T) Index(fields ...sq.Field) *TIndex {
 		tbl:       t.tbl,
 		indexName: indexName,
 	}
-	tIndex.indexIndex = createOrUpdateIndex(t.tbl, indexName, columnNames, exprs)
-	if tIndex.indexIndex < 0 {
-		panicf("could not create or update index '%s'", indexName)
+	tIndex.indexIndex, err = createOrUpdateIndex(t.tbl, indexName, columnNames, exprs)
+	if err != nil {
+		panicf(err.Error())
 	}
 	return tIndex
 }
@@ -498,9 +505,9 @@ func (t *T) NameIndex(indexName string, fields ...sq.Field) *TIndex {
 		tbl:       t.tbl,
 		indexName: indexName,
 	}
-	tIndex.indexIndex = createOrUpdateIndex(t.tbl, indexName, columnNames, exprs)
-	if tIndex.indexIndex < 0 {
-		panicf("could not create or update index '%s'", indexName)
+	tIndex.indexIndex, err = createOrUpdateIndex(t.tbl, indexName, columnNames, exprs)
+	if err != nil {
+		panicf(err.Error())
 	}
 	return tIndex
 }
