@@ -309,10 +309,10 @@ type Column struct {
 	Autoincrement            bool
 	IsNotNull                bool
 	OnUpdateCurrentTimestamp bool
-	GeneratedExpr            sql.NullString
-	GeneratedExprStored      sql.NullBool
-	CollationName            sql.NullString
-	ColumnDefault            sql.NullString
+	GeneratedExpr            string
+	GeneratedExprStored      bool
+	CollationName            string
+	ColumnDefault            string
 	Modifiers                string
 	Comment                  string
 	Ignore                   bool
@@ -325,13 +325,13 @@ type Constraint struct {
 	TableSchema         string
 	TableName           string
 	Columns             []string
-	ReferencesSchema    sql.NullString
-	ReferencesTable     sql.NullString
+	ReferencesSchema    string
+	ReferencesTable     string
 	ReferencesColumns   []string
-	OnUpdate            sql.NullString
-	OnDelete            sql.NullString
-	MatchOption         sql.NullString
-	CheckExpr           sql.NullString
+	OnUpdate            string
+	OnDelete            string
+	MatchOption         string
+	CheckExpr           string
 	IsDeferrable        bool
 	IsInitiallyDeferred bool
 }
@@ -346,7 +346,7 @@ type Index struct {
 	Columns     []string
 	Exprs       []string
 	Include     []string
-	Predicate   sql.NullString
+	Predicate   string
 }
 
 type View struct {

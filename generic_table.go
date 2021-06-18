@@ -9,6 +9,14 @@ type GenericTable struct {
 	_           struct{}
 }
 
+func NewGenericTable(tableSchema, tableName, tableAlias string) GenericTable {
+	return GenericTable{
+		TableSchema: tableSchema,
+		TableName:   tableName,
+		TableAlias:  tableAlias,
+	}
+}
+
 var _ SQLAppender = GenericTable{}
 
 func (tbl GenericTable) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
