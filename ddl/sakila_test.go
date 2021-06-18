@@ -593,10 +593,11 @@ type DUMMY_TABLE struct {
 }
 
 func (tbl DUMMY_TABLE) DDL(dialect string, t *T) {
+	const indexName = "dummy_table_score_color_data_idx"
 	switch dialect {
 	case sq.DialectPostgres:
 		t.Column(tbl.COLOR).Collate("C")
-		t.NameIndex("dummy_table_score_color_data_idx",
+		t.NameIndex(indexName,
 			tbl.SCORE,
 			sq.Fieldf("SUBSTR({}, 1, 2)", tbl.COLOR),
 			sq.Fieldf("{} || {}", tbl.COLOR, " abcd"),
@@ -604,7 +605,7 @@ func (tbl DUMMY_TABLE) DDL(dialect string, t *T) {
 		).Where("{} = {}", tbl.COLOR, "red")
 	case sq.DialectMySQL:
 		t.Column(tbl.COLOR).Type("VARCHAR(50)").Collate("latin_swedish_ci")
-		t.NameIndex("dummy_table_score_color_data_idx",
+		t.NameIndex(indexName,
 			tbl.SCORE,
 			sq.Fieldf("SUBSTR({}, 1, 2)", tbl.COLOR),
 			sq.Fieldf("CONCAT({}, {})", tbl.COLOR, " abcd"),
@@ -612,7 +613,7 @@ func (tbl DUMMY_TABLE) DDL(dialect string, t *T) {
 		)
 	case sq.DialectSQLite:
 		t.Column(tbl.COLOR).Collate("nocase")
-		t.NameIndex("dummy_table_complex_idx",
+		t.NameIndex(indexName,
 			tbl.SCORE,
 			sq.Fieldf("SUBSTR({}, 1, 2)", tbl.COLOR),
 			sq.Fieldf("{} || {}", tbl.COLOR, " abcd"),

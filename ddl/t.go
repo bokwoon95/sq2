@@ -217,28 +217,19 @@ func createOrUpdateConstraint(tbl *Table, constraintType, constraintName string,
 		constraint := tbl.Constraints[constraintIndex]
 		constraint.ConstraintType = constraintType
 		constraint.TableName = tbl.TableName
-		switch constraintType {
-		case PRIMARY_KEY, FOREIGN_KEY, UNIQUE:
-			constraint.Columns = columns
-		case CHECK:
-			constraint.CheckExpr = checkExpr
-		}
+		constraint.Columns = columns
+		constraint.CheckExpr = checkExpr
 		tbl.Constraints[constraintIndex] = constraint
 	} else {
-		constraint := Constraint{
+		constraintIndex = tbl.AppendConstraint(Constraint{
 			ConstraintSchema: tbl.TableSchema,
 			ConstraintName:   constraintName,
 			ConstraintType:   constraintType,
 			TableSchema:      tbl.TableSchema,
 			TableName:        tbl.TableName,
-		}
-		switch constraintType {
-		case PRIMARY_KEY, FOREIGN_KEY, UNIQUE:
-			constraint.Columns = columns
-		case CHECK:
-			constraint.CheckExpr = checkExpr
-		}
-		constraintIndex = tbl.AppendConstraint(constraint)
+			Columns:          columns,
+			CheckExpr:        checkExpr,
+		})
 	}
 	return constraintIndex, nil
 }
@@ -460,7 +451,7 @@ func createOrUpdateIndex(tbl *Table, indexName string, columns []string, exprs [
 		index.Exprs = exprs
 		tbl.Indices[indexIndex] = index
 	} else {
-		index := Index{
+		indexIndex = tbl.AppendIndex(Index{
 			IndexSchema: tbl.TableSchema,
 			IndexName:   indexName,
 			IndexType:   "BTREE",
@@ -468,11 +459,7 @@ func createOrUpdateIndex(tbl *Table, indexName string, columns []string, exprs [
 			TableName:   tbl.TableName,
 			Columns:     columns,
 			Exprs:       exprs,
-		}
-		tbl.AppendIndex(index)
-		if indexIndex = tbl.CachedIndexIndex(indexName); indexIndex < 0 {
-			return indexIndex, fmt.Errorf("could not create index '%s'", indexName)
-		}
+		})
 	}
 	return indexIndex, nil
 }
@@ -532,16 +519,9 @@ func (t *TIndex) Where(format string, values ...interface{}) *TIndex {
 }
 
 func (t *TIndex) Include(fields ...sq.Field) *TIndex {
-	var columnNames []string
-	for i, field := range fields {
-		if field == nil {
-			panicf("field at index %d is nil", i)
-		}
-		columnName := field.GetName()
-		if columnName == "" {
-			panicf("field at index %d has no name", i)
-		}
-		columnNames = append(columnNames, columnName)
+	columnNames, err := getColumnNames(fields)
+	if err != nil {
+		panicf(err.Error())
 	}
 	t.tbl.Indices[t.indexIndex].Include = columnNames
 	return t
@@ -550,6 +530,8 @@ func (t *TIndex) Include(fields ...sq.Field) *TIndex {
 func (t *TIndex) Config(config func(index *Index)) {
 	index := t.tbl.Indices[t.indexIndex]
 	config(&index)
+	index.TableSchema = t.tbl.TableSchema
+	index.TableName = t.tbl.TableName
 	index.IndexName = t.indexName
 	t.tbl.Indices[t.indexIndex] = index
 }
