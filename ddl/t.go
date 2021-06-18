@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 	"runtime"
+	"strings"
 
 	"github.com/bokwoon95/sq"
 )
@@ -75,7 +76,7 @@ func (f *TColumn) Config(config func(col *Column)) {
 	f.tbl.Columns[f.columnIndex] = col
 }
 
-func (f *TColumn) Generated(expr sq.Field) *TColumn {
+func toString(dialect string, v sq.SQLExcludeAppender, excludedTableQualifiers []string) (string, error) {
 	buf := bufpool.Get().(*bytes.Buffer)
 	args := argspool.Get().([]interface{})
 	defer func() {
@@ -84,12 +85,21 @@ func (f *TColumn) Generated(expr sq.Field) *TColumn {
 		bufpool.Put(buf)
 		argspool.Put(args)
 	}()
-	err := expr.AppendSQLExclude(f.dialect, buf, &args, make(map[string][]int), []string{f.tbl.TableName})
+	err := v.AppendSQLExclude(dialect, buf, &args, make(map[string][]int), excludedTableQualifiers)
+	if err != nil {
+		return "", err
+	}
+	s := sq.Sprintf(dialect, buf.String(), args)
+	return s, nil
+}
+
+func (f *TColumn) Generated(expr sq.Field) *TColumn {
+	exprString, err := toString(f.dialect, expr, []string{f.tbl.TableName})
 	if err != nil {
 		panicf(err.Error())
 	}
 	f.tbl.Columns[f.columnIndex].GeneratedExpr.Valid = true
-	f.tbl.Columns[f.columnIndex].GeneratedExpr.String = sq.Sprintf(f.dialect, buf.String(), args)
+	f.tbl.Columns[f.columnIndex].GeneratedExpr.String = exprString
 	return f
 }
 
@@ -100,20 +110,15 @@ func (f *TColumn) Stored() *TColumn {
 }
 
 func (f *TColumn) Default(expr sq.Field) *TColumn {
-	buf := bufpool.Get().(*bytes.Buffer)
-	args := argspool.Get().([]interface{})
-	defer func() {
-		buf.Reset()
-		args = args[:0]
-		bufpool.Put(buf)
-		argspool.Put(args)
-	}()
-	err := expr.AppendSQLExclude(f.dialect, buf, &args, make(map[string][]int), []string{f.tbl.TableName})
+	exprString, err := toString(f.dialect, expr, []string{f.tbl.TableName})
+	if err != nil {
+		panicf(err.Error())
+	}
 	if err != nil {
 		panicf(err.Error())
 	}
 	f.tbl.Columns[f.columnIndex].ColumnDefault.Valid = true
-	f.tbl.Columns[f.columnIndex].ColumnDefault.String = sq.Sprintf(f.dialect, buf.String(), args)
+	f.tbl.Columns[f.columnIndex].ColumnDefault.String = exprString
 	return f
 }
 
@@ -415,28 +420,143 @@ type TIndex struct {
 }
 
 func (t *T) Index(fields ...sq.Field) *TIndex {
-	return &TIndex{}
+	var columnNames []string
+	var exprs []string
+	for i, field := range fields {
+		if field == nil {
+			panicf("field at index %d is nil", i)
+		}
+		var columnName, expr string
+		columnName = field.GetName()
+		if columnName == "" {
+			var err error
+			expr, err = toString(t.dialect, field, []string{t.tbl.TableName})
+			if err != nil {
+				panicf(err.Error())
+			}
+		}
+		columnNames = append(columnNames, columnName)
+		exprs = append(exprs, expr)
+	}
+	indexName := pgName(INDEX, t.tbl.TableName, columnNames...)
+	ti := &TIndex{
+		dialect:   t.dialect,
+		tbl:       t.tbl,
+		indexName: indexName,
+	}
+	if i := t.tbl.CachedIndexIndex(indexName); i >= 0 {
+		t.tbl.Indices[i].TableSchema = t.tbl.TableSchema
+		t.tbl.Indices[i].TableName = t.tbl.TableName
+		t.tbl.Indices[i].Columns = columnNames
+		t.tbl.Indices[i].Exprs = exprs
+		ti.indexIndex = i
+	} else {
+		t.tbl.AppendIndex(Index{
+			IndexSchema: t.tbl.TableSchema,
+			IndexName:   indexName,
+			IndexType:   "BTREE",
+			IsUnique:    false,
+			TableSchema: t.tbl.TableSchema,
+			TableName:   t.tbl.TableName,
+			Columns:     columnNames,
+			Exprs:       exprs,
+		})
+		ti.indexIndex = t.tbl.CachedIndexIndex(indexName)
+	}
+	if ti.indexIndex < 0 {
+		panicf("could not create or update index '%s'", indexName)
+	}
+	return ti
 }
 
 func (t *T) NameIndex(indexName string, fields ...sq.Field) *TIndex {
-	return &TIndex{}
+	var columnNames []string
+	var exprs []string
+	for i, field := range fields {
+		if field == nil {
+			panicf("field at index %d is nil", i)
+		}
+		var columnName, expr string
+		columnName = field.GetName()
+		if columnName == "" {
+			var err error
+			expr, err = toString(t.dialect, field, []string{t.tbl.TableName})
+			if err != nil {
+				panicf(err.Error())
+			}
+		}
+		columnNames = append(columnNames, columnName)
+		exprs = append(exprs, expr)
+	}
+	ti := &TIndex{
+		dialect:   t.dialect,
+		tbl:       t.tbl,
+		indexName: indexName,
+	}
+	if i := t.tbl.CachedIndexIndex(indexName); i >= 0 {
+		t.tbl.Indices[i].TableSchema = t.tbl.TableSchema
+		t.tbl.Indices[i].TableName = t.tbl.TableName
+		t.tbl.Indices[i].Columns = columnNames
+		t.tbl.Indices[i].Exprs = exprs
+		ti.indexIndex = i
+	} else {
+		t.tbl.AppendIndex(Index{
+			IndexSchema: t.tbl.TableSchema,
+			IndexName:   indexName,
+			IndexType:   "BTREE",
+			IsUnique:    false,
+			TableSchema: t.tbl.TableSchema,
+			TableName:   t.tbl.TableName,
+			Columns:     columnNames,
+			Exprs:       exprs,
+		})
+		ti.indexIndex = t.tbl.CachedIndexIndex(indexName)
+	}
+	if ti.indexIndex < 0 {
+		panicf("could not create or update index '%s'", indexName)
+	}
+	return ti
 }
 
-func (i *TIndex) Unique() *TIndex {
-	return i
+func (ti *TIndex) Unique() *TIndex {
+	ti.tbl.Indices[ti.indexIndex].IsUnique = true
+	return ti
 }
 
-func (i *TIndex) Using(method string) *TIndex {
-	return i
+func (ti *TIndex) Using(indexType string) *TIndex {
+	ti.tbl.Indices[ti.indexIndex].IndexType = strings.ToUpper(indexType)
+	return ti
 }
 
-func (i *TIndex) Where(predicate sq.Predicate) *TIndex {
-	return i
+func (ti *TIndex) Where(predicate sq.Predicate) *TIndex {
+	exprString, err := toString(ti.dialect, predicate, []string{ti.tbl.TableName})
+	if err != nil {
+		panicf(err.Error())
+	}
+	ti.tbl.Indices[ti.indexIndex].Predicate.Valid = true
+	ti.tbl.Indices[ti.indexIndex].Predicate.String = exprString
+	return ti
 }
 
-func (i *TIndex) Include(fields ...sq.Field) *TIndex {
-	return i
+func (ti *TIndex) Include(fields ...sq.Field) *TIndex {
+	var columnNames []string
+	for i, field := range fields {
+		if field == nil {
+			panicf("field at index %d is nil", i)
+		}
+		columnName := field.GetName()
+		if columnName == "" {
+			panicf("field at index %d has no name", i)
+		}
+		columnNames = append(columnNames, columnName)
+	}
+	ti.tbl.Indices[ti.indexIndex].Include = columnNames
+	return ti
 }
 
-func (i *TIndex) Config(config func(index *Index)) {
+func (ti *TIndex) Config(config func(index *Index)) {
+	index := ti.tbl.Indices[ti.indexIndex]
+	config(&index)
+	index.IndexName = ti.indexName
+	ti.tbl.Indices[ti.indexIndex] = index
 }
