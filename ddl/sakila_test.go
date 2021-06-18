@@ -80,10 +80,10 @@ func NEW_CATEGORY(dialect, alias string) CATEGORY {
 }
 
 type COUNTRY struct {
-	sq.GenericTable `sq:"name=country"`
-	COUNTRY_ID      sq.NumberField `ddl:"type=INTEGER primarykey"`
-	COUNTRY         sq.StringField `ddl:"notnull"`
-	LAST_UPDATE     sq.TimeField   `ddl:"default=DATETIME('now') notnull"`
+	sq.GenericTable
+	COUNTRY_ID  sq.NumberField `ddl:"type=INTEGER primarykey"`
+	COUNTRY     sq.StringField `ddl:"notnull"`
+	LAST_UPDATE sq.TimeField   `ddl:"default=DATETIME('now') notnull"`
 }
 
 func (tbl COUNTRY) DDL(dialect string, t *T) {
@@ -112,11 +112,11 @@ func NEW_COUNTRY(dialect, alias string) COUNTRY {
 }
 
 type CITY struct {
-	sq.GenericTable `sq:"name=city"`
-	CITY_ID         sq.NumberField `ddl:"type=INTEGER primarykey"`
-	CITY            sq.StringField `ddl:"notnull"`
-	COUNTRY_ID      sq.NumberField `ddl:"notnull references={country onupdate=cascade ondelete=restrict} index"`
-	LAST_UPDATE     sq.TimeField   `ddl:"default=DATETIME('now') notnull"`
+	sq.GenericTable
+	CITY_ID     sq.NumberField `ddl:"type=INTEGER primarykey"`
+	CITY        sq.StringField `ddl:"notnull"`
+	COUNTRY_ID  sq.NumberField `ddl:"notnull references={country onupdate=cascade ondelete=restrict} index"`
+	LAST_UPDATE sq.TimeField   `ddl:"default=DATETIME('now') notnull"`
 }
 
 func (tbl CITY) DDL(dialect string, t *T) {
@@ -145,15 +145,15 @@ func NEW_CITY(dialect, alias string) CITY {
 }
 
 type ADDRESS struct {
-	sq.GenericTable `sq:"name=address"`
-	ADDRESS_ID      sq.NumberField `ddl:"type=INTEGER primarykey"`
-	ADDRESS         sq.StringField `ddl:"notnull"`
-	ADDRESS2        sq.StringField
-	DISTRICT        sq.StringField `ddl:"notnull"`
-	CITY_ID         sq.NumberField `ddl:"notnull references={city onupdate=cascade ondelete=restrict} index"`
-	POSTAL_CODE     sq.StringField
-	PHONE           sq.StringField `ddl:"notnull"`
-	LAST_UPDATE     sq.TimeField   `ddl:"default=DATETIME('now') notnull"`
+	sq.GenericTable
+	ADDRESS_ID  sq.NumberField `ddl:"type=INTEGER primarykey"`
+	ADDRESS     sq.StringField `ddl:"notnull"`
+	ADDRESS2    sq.StringField
+	DISTRICT    sq.StringField `ddl:"notnull"`
+	CITY_ID     sq.NumberField `ddl:"notnull references={city onupdate=cascade ondelete=restrict} index"`
+	POSTAL_CODE sq.StringField
+	PHONE       sq.StringField `ddl:"notnull"`
+	LAST_UPDATE sq.TimeField   `ddl:"default=DATETIME('now') notnull"`
 }
 
 func (tbl ADDRESS) DDL(dialect string, t *T) {
@@ -186,10 +186,10 @@ func NEW_ADDRESS(dialect, alias string) ADDRESS {
 }
 
 type LANGUAGE struct {
-	sq.GenericTable `sq:"name=language"`
-	LANGUAGE_ID     sq.NumberField `ddl:"type=INTEGER primarykey"`
-	NAME            sq.StringField `ddl:"notnull"`
-	LAST_UPDATE     sq.TimeField   `ddl:"default=DATETIME('now') notnull"`
+	sq.GenericTable
+	LANGUAGE_ID sq.NumberField `ddl:"type=INTEGER primarykey"`
+	NAME        sq.StringField `ddl:"notnull"`
+	LAST_UPDATE sq.TimeField   `ddl:"default=DATETIME('now') notnull"`
 }
 
 func (tbl LANGUAGE) DDL(dialect string, t *T) {
@@ -218,7 +218,7 @@ func NEW_LANGUAGE(dialect, alias string) LANGUAGE {
 }
 
 type FILM struct {
-	sq.GenericTable      `sq:"name=film"`
+	sq.GenericTable
 	FILM_ID              sq.NumberField `ddl:"type=INTEGER primarykey"`
 	TITLE                sq.StringField `ddl:"notnull index"`
 	DESCRIPTION          sq.StringField
@@ -228,11 +228,11 @@ type FILM struct {
 	RENTAL_DURATION      sq.NumberField `ddl:"default=3 notnull"`
 	RENTAL_RATE          sq.NumberField `ddl:"type=DECIMAL(4,2) default=4.99 notnull"`
 	LENGTH               sq.NumberField
-	REPLACEMENT_COST     sq.NumberField `ddl:"type=DECIMAL(5,2) default=19.99 notnull"`
-	RATING               sq.StringField `ddl:"default='G'"`
-	SPECIAL_FEATURES     sq.JSONField
-	LAST_UPDATE          sq.TimeField   `ddl:"default=DATETIME('now') notnull"`
-	FULLTEXT             sq.StringField `ddl:"notnull"`
+	REPLACEMENT_COST     sq.NumberField  `ddl:"type=DECIMAL(5,2) default=19.99 notnull"`
+	RATING               sq.StringField  `ddl:"default='G'"`
+	SPECIAL_FEATURES     sq.GenericField `ddl:"type=JSON"`
+	LAST_UPDATE          sq.TimeField    `ddl:"default=DATETIME('now') notnull"`
+	FULLTEXT             sq.StringField  `ddl:"notnull"`
 }
 
 func (tbl FILM) DDL(dialect string, t *T) {
@@ -251,7 +251,7 @@ func (tbl FILM) DDL(dialect string, t *T) {
 		t.Column(tbl.RATING).Type("ENUM('G','PG','PG-13','R','NC-17')")
 		t.Column(tbl.LAST_UPDATE).Type("TIMESTAMP").Default("CURRENT_TIMESTAMP").OnUpdateCurrentTimestamp()
 		t.Check("film_release_year_check", "{1} >= 1901 AND {1} <= 2155", tbl.RELEASE_YEAR)
-	case "sqlite3":
+	case sq.DialectSQLite:
 		t.Check("film_release_year_check", "{1} >= 1901 AND {1} <= 2155", tbl.RELEASE_YEAR)
 		t.Check("film_rating_check", "{} IN ('G','PG','PG-13','R','NC-17')", tbl.RATING)
 	}
@@ -283,11 +283,8 @@ func (tbl FILM_TEXT) DDL(dialect string, t *T) {
 	case sq.DialectMySQL:
 		t.Column(tbl.TITLE).Type("VARCHAR(255)").NotNull()
 		t.Index(tbl.TITLE, tbl.DESCRIPTION).Using("FULLTEXT")
-	case "sqlite3":
+	case sq.DialectSQLite:
 		t.Column(tbl.FILM_ID).Ignore() // Ignore will literally delete the column from t.Table.Columns
-		// t.Field(tbl.FILM_ID).Config("notnull references") // don't allow for Config() otherwise it will give possible cause for errors
-		// i, _ := t.Table.GetColumn(tbl.FILM_ID.GetName())
-		// t.Table.DeleteColumns(i)
 	}
 }
 
@@ -305,7 +302,7 @@ func NEW_FILM_TEXT(dialect, alias string) FILM_TEXT {
 }
 
 type FILM_ACTOR struct {
-	sq.GenericTable `sq:"name=film_actor" ddl:"index={. cols=actor_id,film_id unique}"`
+	sq.GenericTable `ddl:"index={. cols=actor_id,film_id unique}"`
 	ACTOR_ID        sq.NumberField `ddl:"notnull references={actor onupdate=cascade ondelete=restrict}"`
 	FILM_ID         sq.NumberField `ddl:"notnull references={film onupdate=cascade ondelete=restrict} index"`
 	LAST_UPDATE     sq.TimeField   `ddl:"default=DATETIME('now') notnull"`
@@ -335,10 +332,10 @@ func NEW_FILM_ACTOR(dialect, alias string) FILM_ACTOR {
 }
 
 type FILM_CATEGORY struct {
-	sq.GenericTable `sq:"name=film_category"`
-	FILM_ID         sq.NumberField `ddl:"notnull references={film onupdate=cascade ondelete=restrict}"`
-	CATEGORY_ID     sq.NumberField `ddl:"notnull references={category onupdate=cascade ondelete=restrict}"`
-	LAST_UPDATE     sq.TimeField   `ddl:"default=DATETIME('now') notnull"`
+	sq.GenericTable
+	FILM_ID     sq.NumberField `ddl:"notnull references={film onupdate=cascade ondelete=restrict}"`
+	CATEGORY_ID sq.NumberField `ddl:"notnull references={category onupdate=cascade ondelete=restrict}"`
+	LAST_UPDATE sq.TimeField   `ddl:"default=DATETIME('now') notnull"`
 }
 
 func (tbl FILM_CATEGORY) DDL(dialect string, t *T) {
@@ -364,18 +361,18 @@ func NEW_FILM_CATEGORY(dialect, alias string) FILM_CATEGORY {
 }
 
 type STAFF struct {
-	sq.GenericTable `sq:"name=staff"`
-	STAFF_ID        sq.NumberField `ddl:"type=INTEGER primarykey"`
-	FIRST_NAME      sq.StringField `ddl:"notnull"`
-	LAST_NAME       sq.StringField `ddl:"notnull"`
-	ADDRESS_ID      sq.NumberField `ddl:"notnull references={address onupdate=cascade ondelete=restrict}"`
-	EMAIL           sq.StringField
-	STORE_ID        sq.NumberField  `ddl:"references=store"`
-	ACTIVE          sq.BooleanField `ddl:"default=TRUE notnull"`
-	USERNAME        sq.StringField  `ddl:"notnull"`
-	PASSWORD        sq.StringField
-	LAST_UPDATE     sq.TimeField `ddl:"default=DATETIME('now') notnull"`
-	PICTURE         sq.BlobField
+	sq.GenericTable
+	STAFF_ID    sq.NumberField `ddl:"type=INTEGER primarykey"`
+	FIRST_NAME  sq.StringField `ddl:"notnull"`
+	LAST_NAME   sq.StringField `ddl:"notnull"`
+	ADDRESS_ID  sq.NumberField `ddl:"notnull references={address onupdate=cascade ondelete=restrict}"`
+	EMAIL       sq.StringField
+	STORE_ID    sq.NumberField  `ddl:"references=store"`
+	ACTIVE      sq.BooleanField `ddl:"default=TRUE notnull"`
+	USERNAME    sq.StringField  `ddl:"notnull"`
+	PASSWORD    sq.StringField
+	LAST_UPDATE sq.TimeField `ddl:"default=DATETIME('now') notnull"`
+	PICTURE     sq.BlobField
 }
 
 func (tbl STAFF) DDL(dialect string, t *T) {
@@ -409,7 +406,7 @@ func NEW_STAFF(dialect, alias string) STAFF {
 }
 
 type STORE struct {
-	sq.GenericTable  `sq:"name=store"`
+	sq.GenericTable
 	STORE_ID         sq.NumberField `ddl:"type=INTEGER primarykey"`
 	MANAGER_STAFF_ID sq.NumberField `ddl:"notnull references={staff onupdate=cascade ondelete=restrict} index={. unique}"`
 	ADDRESS_ID       sq.NumberField `ddl:"notnull references={address onupdate=cascade ondelete=restrict}"`
@@ -516,7 +513,7 @@ func NEW_INVENTORY(dialect, alias string) INVENTORY {
 }
 
 type RENTAL struct {
-	sq.GenericTable `sq:"name=rental" ddl:"index={. cols=rental_date,inventory_id,customer_id unique}"`
+	sq.GenericTable `ddl:"index={. cols=rental_date,inventory_id,customer_id unique}"`
 	RENTAL_ID       sq.NumberField `ddl:"type=INTEGER primarykey"`
 	RENTAL_DATE     sq.TimeField   `ddl:"notnull"`
 	INVENTORY_ID    sq.NumberField `ddl:"notnull index references={inventory onupdate=cascade ondelete=restrict}"`
@@ -553,13 +550,13 @@ func NEW_RENTAL(dialect, alias string) RENTAL {
 }
 
 type PAYMENT struct {
-	sq.GenericTable `sq:"name=payment"`
-	PAYMENT_ID      sq.NumberField `ddl:"type=INTEGER primarykey"`
-	CUSTOMER_ID     sq.NumberField `ddl:"notnull index references={customer onupdate=cascade ondelete=restrict}"`
-	STAFF_ID        sq.NumberField `ddl:"notnull index references={staff onupdate=cascade ondelete=restrict}"`
-	RENTAL_ID       sq.NumberField `ddl:"references={rental onupdate=cascade ondelete=restrict}"`
-	AMOUNT          sq.NumberField `ddl:"type=DECIMAL(5,2) notnull"`
-	PAYMENT_DATE    sq.TimeField   `ddl:"notnull"`
+	sq.GenericTable
+	PAYMENT_ID   sq.NumberField `ddl:"type=INTEGER primarykey"`
+	CUSTOMER_ID  sq.NumberField `ddl:"notnull index references={customer onupdate=cascade ondelete=restrict}"`
+	STAFF_ID     sq.NumberField `ddl:"notnull index references={staff onupdate=cascade ondelete=restrict}"`
+	RENTAL_ID    sq.NumberField `ddl:"references={rental onupdate=cascade ondelete=restrict}"`
+	AMOUNT       sq.NumberField `ddl:"type=DECIMAL(5,2) notnull"`
+	PAYMENT_DATE sq.TimeField   `ddl:"notnull"`
 }
 
 func (tbl PAYMENT) DDL(dialect string, t *T) {
@@ -587,7 +584,7 @@ func NEW_PAYMENT(dialect, alias string) PAYMENT {
 }
 
 type DUMMY_TABLE struct {
-	sq.GenericTable `sq:"name=dummy_table" ddl:"primarykey={. cols=id1,id2} unique={. cols=score,color}"`
+	sq.GenericTable `ddl:"primarykey={. cols=id1,id2} unique={. cols=score,color}"`
 	ID1             sq.NumberField
 	ID2             sq.StringField
 	SCORE           sq.NumberField
@@ -596,33 +593,36 @@ type DUMMY_TABLE struct {
 }
 
 func (tbl DUMMY_TABLE) DDL(dialect string, t *T) {
-	t.Check("dummy_table_score_positive_check", "{} > 0", tbl.SCORE)
-	t.Check("dummy_table_score_id1_greater_than_check", "{} > {}", tbl.SCORE, tbl.ID1)
-	t.PrimaryKey(tbl.ID1, tbl.ID2)
-	t.Unique(tbl.SCORE, tbl.COLOR)
 	switch dialect {
 	case sq.DialectPostgres:
 		t.Column(tbl.COLOR).Collate("C")
 		t.NameIndex("dummy_table_score_color_data_idx",
 			tbl.SCORE,
+			sq.Fieldf("SUBSTR({}, 1, 2)", tbl.COLOR),
+			sq.Fieldf("{} || {}", tbl.COLOR, " abcd"),
 			sq.Fieldf("({}->>{})::INT", tbl.DATA, "age"),
-			tbl.COLOR,
 		).Where("{} = {}", tbl.COLOR, "red")
 	case sq.DialectMySQL:
 		t.Column(tbl.COLOR).Type("VARCHAR(50)").Collate("latin_swedish_ci")
 		t.NameIndex("dummy_table_score_color_data_idx",
 			tbl.SCORE,
+			sq.Fieldf("SUBSTR({}, 1, 2)", tbl.COLOR),
+			sq.Fieldf("CONCAT({}, {})", tbl.COLOR, " abcd"),
 			sq.Fieldf("CAST({}->>{} AS SIGNED)", tbl.DATA, "$.age"),
-			tbl.COLOR,
 		)
-	case "sqlite3":
+	case sq.DialectSQLite:
 		t.Column(tbl.COLOR).Collate("nocase")
-		t.NameIndex("dummy_table_score_color_data_idx",
+		t.NameIndex("dummy_table_complex_idx",
 			tbl.SCORE,
+			sq.Fieldf("SUBSTR({}, 1, 2)", tbl.COLOR),
+			sq.Fieldf("{} || {}", tbl.COLOR, " abcd"),
 			sq.Fieldf("CAST(JSON_EXTRACT({}, {}) AS INT)", tbl.DATA, "$.age"),
-			tbl.COLOR,
 		).Where("{} = {}", tbl.COLOR, "red")
 	}
+	t.Check("dummy_table_score_positive_check", "{} > 0", tbl.SCORE)
+	t.Check("dummy_table_score_id1_greater_than_check", "{} > {}", tbl.SCORE, tbl.ID1)
+	t.PrimaryKey(tbl.ID1, tbl.ID2)
+	t.Unique(tbl.SCORE, tbl.COLOR)
 }
 
 func NEW_DUMMY_TABLE(dialect, alias string) DUMMY_TABLE {
@@ -636,4 +636,13 @@ func NEW_DUMMY_TABLE(dialect, alias string) DUMMY_TABLE {
 	_ = sq.ReflectTable(&tbl)
 	tbl.GenericTable.TableAlias = alias
 	return tbl
+}
+
+type DUMMY_TABLE_2 struct {
+	sq.GenericTable
+	ID1 sq.NumberField
+	ID2 sq.StringField
+}
+
+func (tbl DUMMY_TABLE_2) DDL(dialect string, t *T) {
 }

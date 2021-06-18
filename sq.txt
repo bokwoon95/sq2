@@ -7,6 +7,8 @@ generic_table.go
 generic_field.go <-> custom_field.go <-> assignment.go
 blob_field.go | boolean_field.go | json_field.go | numberfield.go | string_field.go | time_field.go
 
+TODO: think about hiding the Format and Values fields in NumberField|StringField|TimeField because they get pretty annoying when autocompleting things. The IDE/LSP keeps thinking the Values slice as a valid argument to Fieldf/Predicatef/Sprintf etc.
+
 BeforeQuery Hook
 AfterQuery Hook
 Before the query gets run by Fetch/Exec, you have the option to reach in and manipulate that query into one or more queries which are then run one after the other.

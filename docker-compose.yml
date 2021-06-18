@@ -1,0 +1,71 @@
+version: '3.2'
+services:
+
+  postgres:
+    container_name: 'sq_postgres'
+    image: 'postgres'
+    ports:
+      - '5440:5432'
+    volumes:
+      - 'postgres_data:/var/lib/postgresql/data'
+    environment:
+      POSTGRES_USER: 'postgres'
+      POSTGRES_PASSWORD: 'postgres'
+      POSTGRES_DB: 'db'
+
+  mysql:
+    container_name: 'sq_mysql'
+    image: 'mysql'
+    ports:
+      - '3310:3306'
+    volumes:
+      - 'mysql_data:/var/lib/mysql'
+    environment:
+      MYSQL_ROOT_PASSWORD: 'root'
+      MYSQL_USER: 'mysql'
+      MYSQL_PASSWORD: 'mysql'
+      MYSQL_DATABASE: 'db'
+
+  # mssql:
+  #   container_name: 'sq_mssql'
+  #   image: 'mcr.microsoft.com/mssql/server:2019-latest'
+  #   ports:
+  #     - '1440:1433'
+  #   volumes:
+  #     - 'mssql_data:/var/opt/mssql/data'
+  #   environment:
+  #     ACCEPT_EULA: 'Y'
+  #     SA_PASSWORD: 'mssql-ABC10'
+  #
+  # postgres_9_5:
+  #   container_name: "sq_postgres_9_5"
+  #   image: 'postgres:9.5'
+  #   ports:
+  #     - "5441:5432"
+  #   volumes:
+  #     - 'postgres_data_9_5:/var/lib/postgresql/data'
+  #   environment:
+  #     POSTGRES_USER: 'postgres'
+  #     POSTGRES_PASSWORD: 'postgres'
+  #     POSTGRES_DB: 'db'
+  #
+  #
+  # mysql_5_7:
+  #   container_name: "sq_mysql_5_7"
+  #   image: 'mysql:5.7'
+  #   ports:
+  #     - "3311:3306"
+  #   volumes:
+  #     - 'mysql_data_5_7:/var/lib/mysql'
+  #   environment:
+  #     MYSQL_ROOT_PASSWORD: 'root'
+  #     MYSQL_USER: 'mysql'
+  #     MYSQL_PASSWORD: 'mysql'
+  #     MYSQL_DATABASE: 'db'
+
+volumes:
+  postgres_data:
+  mysql_data:
+  # mssql_data:
+  # postgres_data_9_5:
+  # mysql_data_5_7:
