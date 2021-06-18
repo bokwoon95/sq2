@@ -645,4 +645,19 @@ type DUMMY_TABLE_2 struct {
 }
 
 func (tbl DUMMY_TABLE_2) DDL(dialect string, t *T) {
+	ref := NEW_DUMMY_TABLE(dialect, "")
+	t.ForeignKey(tbl.ID1, tbl.ID2).References(ref, ref.ID1, ref.ID2).OnUpdate("CASCADE").OnDelete("RESTRICT")
+}
+
+func NEW_DUMMY_TABLE_2(dialect, alias string) DUMMY_TABLE_2 {
+	var tbl DUMMY_TABLE_2
+	switch dialect {
+	case sq.DialectPostgres:
+		tbl.GenericTable.TableSchema = "public"
+	case sq.DialectMySQL:
+		tbl.GenericTable.TableSchema = "db"
+	}
+	_ = sq.ReflectTable(&tbl)
+	tbl.GenericTable.TableAlias = alias
+	return tbl
 }

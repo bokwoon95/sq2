@@ -212,13 +212,6 @@ type TConstraint struct {
 	constraintIndex int
 }
 
-func (t *TConstraint) Config(config func(constraint *Constraint)) {
-	constraint := t.tbl.Constraints[t.constraintIndex]
-	config(&constraint)
-	constraint.ConstraintName = t.constraintName
-	t.tbl.Constraints[t.constraintIndex] = constraint
-}
-
 func (t *T) Check(constraintName string, format string, values ...interface{}) *TConstraint {
 	expr, err := sprintf(t.dialect, t.tbl.TableName, format, values)
 	if err != nil {
@@ -333,6 +326,47 @@ func (t *T) PrimaryKey(fields ...sq.Field) *TConstraint {
 	return tConstraint
 }
 
+func (t *T) ForeignKey(fields ...sq.Field) *TConstraint {
+	var columnNames []string
+	for i, field := range fields {
+		if field == nil {
+			panicf("field at index %d is nil", i)
+		}
+		columnName := field.GetName()
+		if columnName == "" {
+			panicf("field at index %d has no name", i)
+		}
+		columnNames = append(columnNames, columnName)
+	}
+	constraintName := pgName(FOREIGN_KEY, t.tbl.TableName, columnNames...)
+	tConstraint := &TConstraint{
+		dialect:        t.dialect,
+		tbl:            t.tbl,
+		constraintName: constraintName,
+	}
+	if i := t.tbl.CachedConstraintIndex(constraintName); i >= 0 {
+		t.tbl.Constraints[i].ConstraintType = PRIMARY_KEY
+		t.tbl.Constraints[i].TableSchema = t.tbl.TableSchema
+		t.tbl.Constraints[i].TableName = t.tbl.TableName
+		t.tbl.Constraints[i].Columns = columnNames
+		tConstraint.constraintIndex = i
+	} else {
+		t.tbl.AppendConstraint(Constraint{
+			ConstraintSchema: t.tbl.TableSchema,
+			ConstraintName:   constraintName,
+			ConstraintType:   FOREIGN_KEY,
+			TableSchema:      t.tbl.TableSchema,
+			TableName:        t.tbl.TableName,
+			Columns:          columnNames,
+		})
+		tConstraint.constraintIndex = t.tbl.CachedConstraintIndex(constraintName)
+	}
+	if tConstraint.constraintIndex < 0 {
+		panicf("could not create or update constraint '%s'", constraintName)
+	}
+	return tConstraint
+}
+
 func (t *T) NameUnique(constraintName string, fields ...sq.Field) *TConstraint {
 	var columnNames []string
 	for i, field := range fields {
@@ -411,6 +445,107 @@ func (t *T) NamePrimaryKey(constraintName string, fields ...sq.Field) *TConstrai
 		panicf("could not create or update constraint '%s'", constraintName)
 	}
 	return tConstraint
+}
+
+func (t *T) NameForeignKey(constraintName string, fields ...sq.Field) *TConstraint {
+	var columnNames []string
+	for i, field := range fields {
+		if field == nil {
+			panicf("field at index %d is nil", i)
+		}
+		columnName := field.GetName()
+		if columnName == "" {
+			panicf("field at index %d has no name", i)
+		}
+		columnNames = append(columnNames, columnName)
+	}
+	tConstraint := &TConstraint{
+		dialect:        t.dialect,
+		tbl:            t.tbl,
+		constraintName: constraintName,
+	}
+	if i := t.tbl.CachedConstraintIndex(constraintName); i >= 0 {
+		t.tbl.Constraints[i].ConstraintType = FOREIGN_KEY
+		t.tbl.Constraints[i].TableSchema = t.tbl.TableSchema
+		t.tbl.Constraints[i].TableName = t.tbl.TableName
+		t.tbl.Constraints[i].Columns = columnNames
+		tConstraint.constraintIndex = i
+	} else {
+		t.tbl.AppendConstraint(Constraint{
+			ConstraintSchema: t.tbl.TableSchema,
+			ConstraintName:   constraintName,
+			ConstraintType:   FOREIGN_KEY,
+			TableSchema:      t.tbl.TableSchema,
+			TableName:        t.tbl.TableName,
+			Columns:          columnNames,
+		})
+		tConstraint.constraintIndex = t.tbl.CachedConstraintIndex(constraintName)
+	}
+	if tConstraint.constraintIndex < 0 {
+		panicf("could not create or update constraint '%s'", constraintName)
+	}
+	return tConstraint
+}
+
+func (t *TConstraint) Config(config func(constraint *Constraint)) {
+	constraint := t.tbl.Constraints[t.constraintIndex]
+	config(&constraint)
+	constraint.ConstraintName = t.constraintName
+	t.tbl.Constraints[t.constraintIndex] = constraint
+}
+
+func (t *TConstraint) References(table sq.Table, fields ...sq.Field) *TConstraint {
+	constraint := t.tbl.Constraints[t.constraintIndex]
+	if table == nil {
+		panicf("referenced table is nil")
+	}
+	referencesTable := table.GetName()
+	if referencesTable == "" {
+		panicf("referenced table has no name")
+	}
+	var referencesColumns []string
+	for i, field := range fields {
+		if field == nil {
+			panicf("referenced field %d is nil", i+1)
+		}
+		columnName := field.GetName()
+		if columnName == "" {
+			panicf("referenced field %d has no name", i+1)
+		}
+		referencesColumns = append(referencesColumns, columnName)
+	}
+	constraint.ReferencesTable = referencesTable
+	constraint.ReferencesColumns = referencesColumns
+	t.tbl.Constraints[t.constraintIndex] = constraint
+	return t
+}
+
+func (t *TConstraint) OnUpdate(action string) *TConstraint {
+	constraint := t.tbl.Constraints[t.constraintIndex]
+	constraint.OnUpdate = action
+	t.tbl.Constraints[t.constraintIndex] = constraint
+	return t
+}
+
+func (t *TConstraint) OnDelete(action string) *TConstraint {
+	constraint := t.tbl.Constraints[t.constraintIndex]
+	constraint.OnDelete = action
+	t.tbl.Constraints[t.constraintIndex] = constraint
+	return t
+}
+
+func (t *TConstraint) Deferrable() *TConstraint {
+	constraint := t.tbl.Constraints[t.constraintIndex]
+	constraint.IsDeferrable = true
+	t.tbl.Constraints[t.constraintIndex] = constraint
+	return t
+}
+
+func (t *TConstraint) IsInitiallyDeferred() *TConstraint {
+	constraint := t.tbl.Constraints[t.constraintIndex]
+	constraint.IsInitiallyDeferred = true
+	t.tbl.Constraints[t.constraintIndex] = constraint
+	return t
 }
 
 type TIndex struct {
