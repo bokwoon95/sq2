@@ -29,15 +29,15 @@ const (
 
 	BY_DEFAULT_AS_IDENTITY = "BY DEFAULT AS IDENTITY"
 	ALWAYS_AS_IDENTITY     = "ALWAYS AS IDENTITY"
+
+	RESTRICT    = "RESTRICT"
+	CASCADE     = "CASCADE"
+	NO_ACTION   = "NO ACTION"
+	SET_NULL    = "SET NULL"
+	SET_DEFAULT = "SET DEFAULT"
 )
 
-// I -don't- have to demand that the first field is some anonymous table
-// bullshit. Just skip struct fields that aren't UserDefinedColumns, but offer
-// to parse their struct tags as long as they declare a ddl:"" inside. Just
-// that user can only define the constraint-related ddl inside the
-// non-UserDefinedColumn tags.
-
-func pgName(typ string, tableName string, columnNames ...string) string {
+func generateName(nameType string, tableName string, columnNames ...string) string {
 	buf := bufpool.Get().(*bytes.Buffer)
 	defer func() {
 		buf.Reset()
@@ -47,7 +47,7 @@ func pgName(typ string, tableName string, columnNames ...string) string {
 	for _, columnName := range columnNames {
 		buf.WriteString("_" + strings.ReplaceAll(columnName, " ", "_"))
 	}
-	switch typ {
+	switch nameType {
 	case "PRIMARY KEY":
 		buf.WriteString("_pkey")
 	case "FOREIGN KEY":

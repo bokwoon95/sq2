@@ -69,10 +69,12 @@ func (t *TColumn) Type(columnType string) *TColumn {
 }
 
 func (t *TColumn) Config(config func(c *Column)) {
-	col := t.tbl.Columns[t.columnIndex]
-	config(&col)
-	col.ColumnName = t.columnName
-	t.tbl.Columns[t.columnIndex] = col
+	column := t.tbl.Columns[t.columnIndex]
+	config(&column)
+	column.TableSchema = t.tbl.TableSchema
+	column.TableName = t.tbl.TableName
+	column.ColumnName = t.columnName
+	t.tbl.Columns[t.columnIndex] = column
 }
 
 func sprintf(dialect, tableName string, format string, values []interface{}) (string, error) {
@@ -163,39 +165,19 @@ func (t *TColumn) NotNull() *TColumn {
 }
 
 func (t *TColumn) PrimaryKey() *TColumn {
-	constraintName := pgName(PRIMARY_KEY, t.tbl.TableName, t.columnName)
-	if i := t.tbl.CachedConstraintIndex(constraintName); i >= 0 {
-		t.tbl.Constraints[i].ConstraintType = PRIMARY_KEY
-		t.tbl.Constraints[i].TableName = t.tbl.TableName
-		t.tbl.Constraints[i].Columns = []string{t.columnName}
-	} else {
-		t.tbl.AppendConstraint(Constraint{
-			ConstraintSchema: t.tbl.TableSchema,
-			ConstraintName:   constraintName,
-			ConstraintType:   PRIMARY_KEY,
-			TableSchema:      t.tbl.TableSchema,
-			TableName:        t.tbl.TableName,
-			Columns:          []string{t.columnName},
-		})
+	constraintName := generateName(PRIMARY_KEY, t.tbl.TableName, t.columnName)
+	constraintIndex := createOrUpdateConstraint(t.tbl, PRIMARY_KEY, constraintName, []string{t.columnName}, "")
+	if constraintIndex < 0 {
+		panicf("could not create or update constraint '%s'", constraintName)
 	}
 	return t
 }
 
 func (t *TColumn) Unique() *TColumn {
-	constraintName := pgName(UNIQUE, t.tbl.TableName, t.columnName)
-	if i := t.tbl.CachedConstraintIndex(constraintName); i >= 0 {
-		t.tbl.Constraints[i].ConstraintType = UNIQUE
-		t.tbl.Constraints[i].TableName = t.tbl.TableName
-		t.tbl.Constraints[i].Columns = []string{t.columnName}
-	} else {
-		t.tbl.AppendConstraint(Constraint{
-			ConstraintSchema: t.tbl.TableSchema,
-			ConstraintName:   constraintName,
-			ConstraintType:   UNIQUE,
-			TableSchema:      t.tbl.TableSchema,
-			TableName:        t.tbl.TableName,
-			Columns:          []string{t.columnName},
-		})
+	constraintName := generateName(UNIQUE, t.tbl.TableName, t.columnName)
+	constraintIndex := createOrUpdateConstraint(t.tbl, UNIQUE, constraintName, []string{t.columnName}, "")
+	if constraintIndex < 0 {
+		panicf("could not create or update constraint '%s'", constraintName)
 	}
 	return t
 }
@@ -212,6 +194,53 @@ type TConstraint struct {
 	constraintIndex int
 }
 
+func getColumnNames(fields []sq.Field) ([]string, error) {
+	var columnNames []string
+	for i, field := range fields {
+		if field == nil {
+			return nil, fmt.Errorf("field #%d is nil", i+1)
+		}
+		columnName := field.GetName()
+		if columnName == "" {
+			return nil, fmt.Errorf("field #%d has no name", i+1)
+		}
+		columnNames = append(columnNames, columnName)
+	}
+	return columnNames, nil
+}
+
+func createOrUpdateConstraint(tbl *Table, constraintType, constraintName string, columns []string, checkExpr string) (constraintIndex int) {
+	if constraintIndex = tbl.CachedConstraintIndex(constraintName); constraintIndex >= 0 {
+		constraint := tbl.Constraints[constraintIndex]
+		constraint.ConstraintType = constraintType
+		constraint.TableName = tbl.TableName
+		switch constraintType {
+		case PRIMARY_KEY, FOREIGN_KEY, UNIQUE:
+			constraint.Columns = columns
+		case CHECK:
+			constraint.CheckExpr = checkExpr
+		}
+		tbl.Constraints[constraintIndex] = constraint
+	} else {
+		constraint := Constraint{
+			ConstraintSchema: tbl.TableSchema,
+			ConstraintName:   constraintName,
+			ConstraintType:   constraintType,
+			TableSchema:      tbl.TableSchema,
+			TableName:        tbl.TableName,
+		}
+		switch constraintType {
+		case PRIMARY_KEY, FOREIGN_KEY, UNIQUE:
+			constraint.Columns = columns
+		case CHECK:
+			constraint.CheckExpr = checkExpr
+		}
+		tbl.AppendConstraint(constraint)
+		constraintIndex = tbl.CachedConstraintIndex(constraintName)
+	}
+	return constraintIndex
+}
+
 func (t *T) Check(constraintName string, format string, values ...interface{}) *TConstraint {
 	expr, err := sprintf(t.dialect, t.tbl.TableName, format, values)
 	if err != nil {
@@ -222,22 +251,7 @@ func (t *T) Check(constraintName string, format string, values ...interface{}) *
 		tbl:            t.tbl,
 		constraintName: constraintName,
 	}
-	if i := t.tbl.CachedConstraintIndex(constraintName); i >= 0 {
-		t.tbl.Constraints[i].ConstraintType = CHECK
-		t.tbl.Constraints[i].TableName = t.tbl.TableName
-		t.tbl.Constraints[i].CheckExpr = expr
-		tConstraint.constraintIndex = i
-	} else {
-		t.tbl.AppendConstraint(Constraint{
-			ConstraintSchema: t.tbl.TableSchema,
-			ConstraintName:   constraintName,
-			ConstraintType:   CHECK,
-			TableSchema:      t.tbl.TableSchema,
-			TableName:        t.tbl.TableName,
-			CheckExpr:        expr,
-		})
-		tConstraint.constraintIndex = t.tbl.CachedConstraintIndex(constraintName)
-	}
+	tConstraint.constraintIndex = createOrUpdateConstraint(t.tbl, CHECK, constraintName, nil, expr)
 	if tConstraint.constraintIndex < 0 {
 		panicf("could not create or update constraint '%s'", constraintName)
 	}
@@ -245,40 +259,17 @@ func (t *T) Check(constraintName string, format string, values ...interface{}) *
 }
 
 func (t *T) Unique(fields ...sq.Field) *TConstraint {
-	var columnNames []string
-	for i, field := range fields {
-		if field == nil {
-			panicf("field at index %d is nil", i)
-		}
-		columnName := field.GetName()
-		if columnName == "" {
-			panicf("field at index %d has no name", i)
-		}
-		columnNames = append(columnNames, columnName)
+	columnNames, err := getColumnNames(fields)
+	if err != nil {
+		panicf(err.Error())
 	}
-	constraintName := pgName(UNIQUE, t.tbl.TableName, columnNames...)
+	constraintName := generateName(UNIQUE, t.tbl.TableName, columnNames...)
 	tConstraint := &TConstraint{
 		dialect:        t.dialect,
 		tbl:            t.tbl,
 		constraintName: constraintName,
 	}
-	if i := t.tbl.CachedConstraintIndex(constraintName); i >= 0 {
-		t.tbl.Constraints[i].ConstraintType = UNIQUE
-		t.tbl.Constraints[i].TableSchema = t.tbl.TableSchema
-		t.tbl.Constraints[i].TableName = t.tbl.TableName
-		t.tbl.Constraints[i].Columns = columnNames
-		tConstraint.constraintIndex = i
-	} else {
-		t.tbl.AppendConstraint(Constraint{
-			ConstraintSchema: t.tbl.TableSchema,
-			ConstraintName:   constraintName,
-			ConstraintType:   UNIQUE,
-			TableSchema:      t.tbl.TableSchema,
-			TableName:        t.tbl.TableName,
-			Columns:          columnNames,
-		})
-		tConstraint.constraintIndex = t.tbl.CachedConstraintIndex(constraintName)
-	}
+	tConstraint.constraintIndex = createOrUpdateConstraint(t.tbl, CHECK, constraintName, columnNames, "")
 	if tConstraint.constraintIndex < 0 {
 		panicf("could not create or update constraint '%s'", constraintName)
 	}
@@ -286,40 +277,17 @@ func (t *T) Unique(fields ...sq.Field) *TConstraint {
 }
 
 func (t *T) PrimaryKey(fields ...sq.Field) *TConstraint {
-	var columnNames []string
-	for i, field := range fields {
-		if field == nil {
-			panicf("field at index %d is nil", i)
-		}
-		columnName := field.GetName()
-		if columnName == "" {
-			panicf("field at index %d has no name", i)
-		}
-		columnNames = append(columnNames, columnName)
+	columnNames, err := getColumnNames(fields)
+	if err != nil {
+		panicf(err.Error())
 	}
-	constraintName := pgName(PRIMARY_KEY, t.tbl.TableName, columnNames...)
+	constraintName := generateName(PRIMARY_KEY, t.tbl.TableName, columnNames...)
 	tConstraint := &TConstraint{
 		dialect:        t.dialect,
 		tbl:            t.tbl,
 		constraintName: constraintName,
 	}
-	if i := t.tbl.CachedConstraintIndex(constraintName); i >= 0 {
-		t.tbl.Constraints[i].ConstraintType = PRIMARY_KEY
-		t.tbl.Constraints[i].TableSchema = t.tbl.TableSchema
-		t.tbl.Constraints[i].TableName = t.tbl.TableName
-		t.tbl.Constraints[i].Columns = columnNames
-		tConstraint.constraintIndex = i
-	} else {
-		t.tbl.AppendConstraint(Constraint{
-			ConstraintSchema: t.tbl.TableSchema,
-			ConstraintName:   constraintName,
-			ConstraintType:   PRIMARY_KEY,
-			TableSchema:      t.tbl.TableSchema,
-			TableName:        t.tbl.TableName,
-			Columns:          columnNames,
-		})
-		tConstraint.constraintIndex = t.tbl.CachedConstraintIndex(constraintName)
-	}
+	tConstraint.constraintIndex = createOrUpdateConstraint(t.tbl, PRIMARY_KEY, constraintName, columnNames, "")
 	if tConstraint.constraintIndex < 0 {
 		panicf("could not create or update constraint '%s'", constraintName)
 	}
@@ -327,40 +295,17 @@ func (t *T) PrimaryKey(fields ...sq.Field) *TConstraint {
 }
 
 func (t *T) ForeignKey(fields ...sq.Field) *TConstraint {
-	var columnNames []string
-	for i, field := range fields {
-		if field == nil {
-			panicf("field at index %d is nil", i)
-		}
-		columnName := field.GetName()
-		if columnName == "" {
-			panicf("field at index %d has no name", i)
-		}
-		columnNames = append(columnNames, columnName)
+	columnNames, err := getColumnNames(fields)
+	if err != nil {
+		panicf(err.Error())
 	}
-	constraintName := pgName(FOREIGN_KEY, t.tbl.TableName, columnNames...)
+	constraintName := generateName(FOREIGN_KEY, t.tbl.TableName, columnNames...)
 	tConstraint := &TConstraint{
 		dialect:        t.dialect,
 		tbl:            t.tbl,
 		constraintName: constraintName,
 	}
-	if i := t.tbl.CachedConstraintIndex(constraintName); i >= 0 {
-		t.tbl.Constraints[i].ConstraintType = PRIMARY_KEY
-		t.tbl.Constraints[i].TableSchema = t.tbl.TableSchema
-		t.tbl.Constraints[i].TableName = t.tbl.TableName
-		t.tbl.Constraints[i].Columns = columnNames
-		tConstraint.constraintIndex = i
-	} else {
-		t.tbl.AppendConstraint(Constraint{
-			ConstraintSchema: t.tbl.TableSchema,
-			ConstraintName:   constraintName,
-			ConstraintType:   FOREIGN_KEY,
-			TableSchema:      t.tbl.TableSchema,
-			TableName:        t.tbl.TableName,
-			Columns:          columnNames,
-		})
-		tConstraint.constraintIndex = t.tbl.CachedConstraintIndex(constraintName)
-	}
+	tConstraint.constraintIndex = createOrUpdateConstraint(t.tbl, FOREIGN_KEY, constraintName, columnNames, "")
 	if tConstraint.constraintIndex < 0 {
 		panicf("could not create or update constraint '%s'", constraintName)
 	}
@@ -368,39 +313,16 @@ func (t *T) ForeignKey(fields ...sq.Field) *TConstraint {
 }
 
 func (t *T) NameUnique(constraintName string, fields ...sq.Field) *TConstraint {
-	var columnNames []string
-	for i, field := range fields {
-		if field == nil {
-			panicf("field at index %d is nil", i)
-		}
-		columnName := field.GetName()
-		if columnName == "" {
-			panicf("field at index %d has no name", i)
-		}
-		columnNames = append(columnNames, columnName)
+	columnNames, err := getColumnNames(fields)
+	if err != nil {
+		panicf(err.Error())
 	}
 	tConstraint := &TConstraint{
 		dialect:        t.dialect,
 		tbl:            t.tbl,
 		constraintName: constraintName,
 	}
-	if i := t.tbl.CachedConstraintIndex(constraintName); i >= 0 {
-		t.tbl.Constraints[i].ConstraintType = UNIQUE
-		t.tbl.Constraints[i].TableSchema = t.tbl.TableSchema
-		t.tbl.Constraints[i].TableName = t.tbl.TableName
-		t.tbl.Constraints[i].Columns = columnNames
-		tConstraint.constraintIndex = i
-	} else {
-		t.tbl.AppendConstraint(Constraint{
-			ConstraintSchema: t.tbl.TableSchema,
-			ConstraintName:   constraintName,
-			ConstraintType:   UNIQUE,
-			TableSchema:      t.tbl.TableSchema,
-			TableName:        t.tbl.TableName,
-			Columns:          columnNames,
-		})
-		tConstraint.constraintIndex = t.tbl.CachedConstraintIndex(constraintName)
-	}
+	tConstraint.constraintIndex = createOrUpdateConstraint(t.tbl, UNIQUE, constraintName, columnNames, "")
 	if tConstraint.constraintIndex < 0 {
 		panicf("could not create or update constraint '%s'", constraintName)
 	}
@@ -408,39 +330,16 @@ func (t *T) NameUnique(constraintName string, fields ...sq.Field) *TConstraint {
 }
 
 func (t *T) NamePrimaryKey(constraintName string, fields ...sq.Field) *TConstraint {
-	var columnNames []string
-	for i, field := range fields {
-		if field == nil {
-			panicf("field at index %d is nil", i)
-		}
-		columnName := field.GetName()
-		if columnName == "" {
-			panicf("field at index %d has no name", i)
-		}
-		columnNames = append(columnNames, columnName)
+	columnNames, err := getColumnNames(fields)
+	if err != nil {
+		panicf(err.Error())
 	}
 	tConstraint := &TConstraint{
 		dialect:        t.dialect,
 		tbl:            t.tbl,
 		constraintName: constraintName,
 	}
-	if i := t.tbl.CachedConstraintIndex(constraintName); i >= 0 {
-		t.tbl.Constraints[i].ConstraintType = PRIMARY_KEY
-		t.tbl.Constraints[i].TableSchema = t.tbl.TableSchema
-		t.tbl.Constraints[i].TableName = t.tbl.TableName
-		t.tbl.Constraints[i].Columns = columnNames
-		tConstraint.constraintIndex = i
-	} else {
-		t.tbl.AppendConstraint(Constraint{
-			ConstraintSchema: t.tbl.TableSchema,
-			ConstraintName:   constraintName,
-			ConstraintType:   PRIMARY_KEY,
-			TableSchema:      t.tbl.TableSchema,
-			TableName:        t.tbl.TableName,
-			Columns:          columnNames,
-		})
-		tConstraint.constraintIndex = t.tbl.CachedConstraintIndex(constraintName)
-	}
+	tConstraint.constraintIndex = createOrUpdateConstraint(t.tbl, PRIMARY_KEY, constraintName, columnNames, "")
 	if tConstraint.constraintIndex < 0 {
 		panicf("could not create or update constraint '%s'", constraintName)
 	}
@@ -448,39 +347,16 @@ func (t *T) NamePrimaryKey(constraintName string, fields ...sq.Field) *TConstrai
 }
 
 func (t *T) NameForeignKey(constraintName string, fields ...sq.Field) *TConstraint {
-	var columnNames []string
-	for i, field := range fields {
-		if field == nil {
-			panicf("field at index %d is nil", i)
-		}
-		columnName := field.GetName()
-		if columnName == "" {
-			panicf("field at index %d has no name", i)
-		}
-		columnNames = append(columnNames, columnName)
+	columnNames, err := getColumnNames(fields)
+	if err != nil {
+		panicf(err.Error())
 	}
 	tConstraint := &TConstraint{
 		dialect:        t.dialect,
 		tbl:            t.tbl,
 		constraintName: constraintName,
 	}
-	if i := t.tbl.CachedConstraintIndex(constraintName); i >= 0 {
-		t.tbl.Constraints[i].ConstraintType = FOREIGN_KEY
-		t.tbl.Constraints[i].TableSchema = t.tbl.TableSchema
-		t.tbl.Constraints[i].TableName = t.tbl.TableName
-		t.tbl.Constraints[i].Columns = columnNames
-		tConstraint.constraintIndex = i
-	} else {
-		t.tbl.AppendConstraint(Constraint{
-			ConstraintSchema: t.tbl.TableSchema,
-			ConstraintName:   constraintName,
-			ConstraintType:   FOREIGN_KEY,
-			TableSchema:      t.tbl.TableSchema,
-			TableName:        t.tbl.TableName,
-			Columns:          columnNames,
-		})
-		tConstraint.constraintIndex = t.tbl.CachedConstraintIndex(constraintName)
-	}
+	tConstraint.constraintIndex = createOrUpdateConstraint(t.tbl, FOREIGN_KEY, constraintName, columnNames, "")
 	if tConstraint.constraintIndex < 0 {
 		panicf("could not create or update constraint '%s'", constraintName)
 	}
@@ -490,30 +366,25 @@ func (t *T) NameForeignKey(constraintName string, fields ...sq.Field) *TConstrai
 func (t *TConstraint) Config(config func(constraint *Constraint)) {
 	constraint := t.tbl.Constraints[t.constraintIndex]
 	config(&constraint)
+	constraint.TableSchema = t.tbl.TableSchema
+	constraint.TableName = t.tbl.TableName
 	constraint.ConstraintName = t.constraintName
 	t.tbl.Constraints[t.constraintIndex] = constraint
 }
 
 func (t *TConstraint) References(table sq.Table, fields ...sq.Field) *TConstraint {
-	constraint := t.tbl.Constraints[t.constraintIndex]
 	if table == nil {
-		panicf("referenced table is nil")
+		panicf("table is nil")
 	}
 	referencesTable := table.GetName()
 	if referencesTable == "" {
-		panicf("referenced table has no name")
+		panicf("table has no name")
 	}
-	var referencesColumns []string
-	for i, field := range fields {
-		if field == nil {
-			panicf("referenced field %d is nil", i+1)
-		}
-		columnName := field.GetName()
-		if columnName == "" {
-			panicf("referenced field %d has no name", i+1)
-		}
-		referencesColumns = append(referencesColumns, columnName)
+	referencesColumns, err := getColumnNames(fields)
+	if err != nil {
+		panicf(err.Error())
 	}
+	constraint := t.tbl.Constraints[t.constraintIndex]
 	constraint.ReferencesTable = referencesTable
 	constraint.ReferencesColumns = referencesColumns
 	t.tbl.Constraints[t.constraintIndex] = constraint
@@ -555,99 +426,79 @@ type TIndex struct {
 	indexIndex int
 }
 
-func (t *T) Index(fields ...sq.Field) *TIndex {
-	var columnNames []string
-	var exprs []string
+func getColumnNamesAndExprs(dialect, tableName string, fields []sq.Field) (columnNames, exprs []string, err error) {
 	for i, field := range fields {
 		if field == nil {
-			panicf("field at index %d is nil", i)
+			return nil, nil, fmt.Errorf("field #%d is nil", i+1)
 		}
 		var columnName, expr string
 		columnName = field.GetName()
 		if columnName == "" {
 			var err error
-			expr, err = appendSQLExclude(t.dialect, t.tbl.TableName, field)
+			expr, err = appendSQLExclude(dialect, tableName, field)
 			if err != nil {
-				panicf(err.Error())
+				return nil, nil, err
 			}
 		}
 		columnNames = append(columnNames, columnName)
 		exprs = append(exprs, expr)
 	}
-	indexName := pgName(INDEX, t.tbl.TableName, columnNames...)
-	tindex := &TIndex{
+	return columnNames, exprs, nil
+}
+
+func createOrUpdateIndex(tbl *Table, indexName string, columns []string, exprs []string) (indexIndex int) {
+	if indexIndex = tbl.CachedIndexIndex(indexName); indexIndex >= 0 {
+		index := tbl.Indices[indexIndex]
+		index.TableSchema = tbl.TableSchema
+		index.TableName = tbl.TableName
+		index.Columns = columns
+		index.Exprs = exprs
+		tbl.Indices[indexIndex] = index
+	} else {
+		index := Index{
+			IndexSchema: tbl.TableSchema,
+			IndexName:   indexName,
+			IndexType:   "BTREE",
+			TableSchema: tbl.TableSchema,
+			TableName:   tbl.TableName,
+			Columns:     columns,
+			Exprs:       exprs,
+		}
+		tbl.AppendIndex(index)
+		indexIndex = tbl.CachedIndexIndex(indexName)
+	}
+	return indexIndex
+}
+
+func (t *T) Index(fields ...sq.Field) *TIndex {
+	columnNames, exprs, err := getColumnNamesAndExprs(t.dialect, t.tbl.TableName, fields)
+	if err != nil {
+		panicf(err.Error())
+	}
+	indexName := generateName(INDEX, t.tbl.TableName, columnNames...)
+	tIndex := &TIndex{
 		dialect:   t.dialect,
 		tbl:       t.tbl,
 		indexName: indexName,
 	}
-	if i := t.tbl.CachedIndexIndex(indexName); i >= 0 {
-		t.tbl.Indices[i].TableSchema = t.tbl.TableSchema
-		t.tbl.Indices[i].TableName = t.tbl.TableName
-		t.tbl.Indices[i].Columns = columnNames
-		t.tbl.Indices[i].Exprs = exprs
-		tindex.indexIndex = i
-	} else {
-		t.tbl.AppendIndex(Index{
-			IndexSchema: t.tbl.TableSchema,
-			IndexName:   indexName,
-			IndexType:   "BTREE",
-			IsUnique:    false,
-			TableSchema: t.tbl.TableSchema,
-			TableName:   t.tbl.TableName,
-			Columns:     columnNames,
-			Exprs:       exprs,
-		})
-		tindex.indexIndex = t.tbl.CachedIndexIndex(indexName)
-	}
-	if tindex.indexIndex < 0 {
+	tIndex.indexIndex = createOrUpdateIndex(t.tbl, indexName, columnNames, exprs)
+	if tIndex.indexIndex < 0 {
 		panicf("could not create or update index '%s'", indexName)
 	}
-	return tindex
+	return tIndex
 }
 
 func (t *T) NameIndex(indexName string, fields ...sq.Field) *TIndex {
-	var columnNames []string
-	var exprs []string
-	for i, field := range fields {
-		if field == nil {
-			panicf("field at index %d is nil", i)
-		}
-		var columnName, expr string
-		columnName = field.GetName()
-		if columnName == "" {
-			var err error
-			expr, err = appendSQLExclude(t.dialect, t.tbl.TableName, field)
-			if err != nil {
-				panicf(err.Error())
-			}
-		}
-		columnNames = append(columnNames, columnName)
-		exprs = append(exprs, expr)
+	columnNames, exprs, err := getColumnNamesAndExprs(t.dialect, t.tbl.TableName, fields)
+	if err != nil {
+		panicf(err.Error())
 	}
 	tIndex := &TIndex{
 		dialect:   t.dialect,
 		tbl:       t.tbl,
 		indexName: indexName,
 	}
-	if i := t.tbl.CachedIndexIndex(indexName); i >= 0 {
-		t.tbl.Indices[i].TableSchema = t.tbl.TableSchema
-		t.tbl.Indices[i].TableName = t.tbl.TableName
-		t.tbl.Indices[i].Columns = columnNames
-		t.tbl.Indices[i].Exprs = exprs
-		tIndex.indexIndex = i
-	} else {
-		t.tbl.AppendIndex(Index{
-			IndexSchema: t.tbl.TableSchema,
-			IndexName:   indexName,
-			IndexType:   "BTREE",
-			IsUnique:    false,
-			TableSchema: t.tbl.TableSchema,
-			TableName:   t.tbl.TableName,
-			Columns:     columnNames,
-			Exprs:       exprs,
-		})
-		tIndex.indexIndex = t.tbl.CachedIndexIndex(indexName)
-	}
+	tIndex.indexIndex = createOrUpdateIndex(t.tbl, indexName, columnNames, exprs)
 	if tIndex.indexIndex < 0 {
 		panicf("could not create or update index '%s'", indexName)
 	}
