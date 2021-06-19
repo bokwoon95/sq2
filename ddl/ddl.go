@@ -15,6 +15,10 @@ type DB interface {
 	QueryContext(ctx context.Context, query string, args ...interface{}) (*sql.Rows, error)
 }
 
+type DDLer interface {
+	DDL(dialect string, t *T)
+}
+
 var (
 	bufpool  = sync.Pool{New: func() interface{} { return new(bytes.Buffer) }}
 	argspool = sync.Pool{New: func() interface{} { return make([]interface{}, 0) }}
@@ -117,10 +121,6 @@ func NewMetadata(dialect string) Metadata {
 }
 
 func (m *Metadata) CachedSchemaIndex(schemaName string) (schemaIndex int) {
-	if schemaName == "" {
-		delete(m.schemasCache, schemaName)
-		return -1
-	}
 	schemaIndex, ok := m.schemasCache[schemaName]
 	if !ok || schemaIndex < 0 || schemaIndex >= len(m.Schemas) {
 		delete(m.schemasCache, schemaName)
