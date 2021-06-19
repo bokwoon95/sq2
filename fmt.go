@@ -158,6 +158,52 @@ func Sprintf(dialect string, query string, args []interface{}) (string, error) {
 		'+': true, '-': true, '*': true, '/': true,
 		'\t': true, '\n': true, '\v': true, '\f': true, '\r': true, ' ': true, 0x85: true, 0xA0: true,
 	}
+	lookupParam := func(namebuf *[]rune) (string, error) {
+		defer func() { *namebuf = (*namebuf)[:0] }()
+		if (*namebuf)[0] == '@' && dialect == DialectMSSQL {
+			// TODO: implement MSSQL support
+		}
+		name := string((*namebuf)[1:])
+		if name == "" {
+			if (*namebuf)[0] != '?' {
+				return "", fmt.Errorf("sq: parameter name missing")
+			}
+			paramValue, err := Sprint(args[runningArgsIndex])
+			if err != nil {
+				return "", err
+			}
+			runningArgsIndex++
+			return paramValue, nil
+		}
+		num, err := strconv.Atoi(name)
+		if err == nil {
+			num-- // decrement because ordinal numbers always lead the index by 1 (e.g. $1 corresponds to index 0)
+			if num < 0 || num >= len(args) {
+				return "", fmt.Errorf("sq: args index %d out of bounds", num)
+			}
+			paramValue, err := Sprint(args[num])
+			if err != nil {
+				return "", err
+			}
+			return paramValue, nil
+		}
+		if dialect == DialectPostgres {
+			return "", fmt.Errorf("sq: Postgres does not support $%s named parameter", name)
+		}
+		num, ok := argsLookup[name]
+		if !ok {
+			return "", fmt.Errorf("sq: named parameter $%s not provided", name)
+		}
+		if num < 0 || num >= len(args) {
+			return "", fmt.Errorf("sq: args index %d out of bounds", num)
+		}
+		paramValue, err := Sprint(args[num])
+		if err != nil {
+			return "", err
+		}
+		return paramValue, nil
+	}
+	_ = lookupParam
 	for _, char := range query {
 		if char == '\'' && !insideIdentifier {
 			insideString = !insideString
@@ -173,8 +219,12 @@ func Sprintf(dialect string, query string, args []interface{}) (string, error) {
 			buf.WriteRune(char)
 			continue
 		}
+		// namebuf will be non-empty only if the previous iteration inserted a
+		// parameter-related character (i.e. one of ?, $, :, @) into it. That's
+		// how we know we are currently inside a parameter name
 		if len(namebuf) > 0 && nameTerminatingChars[char] {
 			if namebuf[0] == '@' && dialect == DialectMSSQL {
+				// TODO: implement MSSQL support
 			}
 			name := string(namebuf[1:])
 			if name == "" {
