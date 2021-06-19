@@ -91,6 +91,8 @@ func ReflectTable(table Table) error {
 			v.Set(reflect.ValueOf(NewStringField(fieldName, genericTable)))
 		case TimeField:
 			v.Set(reflect.ValueOf(NewTimeField(fieldName, genericTable)))
+		case GenericField:
+			v.Set(reflect.ValueOf(NewGenericField(fieldName, genericTable)))
 		}
 	}
 	return nil

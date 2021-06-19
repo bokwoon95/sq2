@@ -33,11 +33,16 @@ func CreateTable(dialect string, tbl Table, opt IncludeOption) (string, error) {
 	}
 	buf.WriteString(sq.QuoteIdentifier(dialect, tbl.TableName))
 	buf.WriteString(" (")
-	for i, column := range tbl.Columns {
+	var columned bool
+	for _, column := range tbl.Columns {
+		if column.Ignore {
+			continue
+		}
 		buf.WriteString("\n    ")
-		if i > 0 {
+		if columned {
 			buf.WriteString(",")
 		}
+		columned = true
 		buf.WriteString(sq.QuoteIdentifier(dialect, column.ColumnName))
 		if column.ColumnType != "" {
 			buf.WriteString(" " + column.ColumnType)
@@ -78,7 +83,7 @@ func CreateTable(dialect string, tbl Table, opt IncludeOption) (string, error) {
 			buf.WriteString(" NOT NULL")
 		}
 		if column.ColumnDefault != "" {
-			buf.WriteString(" DEFAULT " + column.ColumnDefault) // TODO: c.ColumnDefault has to be sanitized and escaped
+			buf.WriteString(" DEFAULT (" + column.ColumnDefault + ")") // TODO: c.ColumnDefault has to be sanitized and escaped
 		}
 		if column.CollationName != "" {
 			switch dialect {
@@ -130,7 +135,7 @@ func CreateTable(dialect string, tbl Table, opt IncludeOption) (string, error) {
 					buf.WriteString(" ON UPDATE " + constraint.OnUpdate) // TODO: check for validity
 				}
 				if constraint.OnDelete != "" {
-					buf.WriteString(" ON UPDATE " + constraint.OnDelete) // TODO: check for validity
+					buf.WriteString(" ON DELETE " + constraint.OnDelete) // TODO: check for validity
 				}
 			case CHECK:
 				buf.WriteString(" (" + constraint.CheckExpr + ")")
@@ -161,7 +166,7 @@ func CreateTable(dialect string, tbl Table, opt IncludeOption) (string, error) {
 					buf.WriteString("UNIQUE ")
 				}
 				buf.WriteString("INDEX " + index.IndexName)
-				if index.IndexType != "" {
+				if index.IndexType != "" && !strings.EqualFold(index.IndexType, "BTREE") {
 					buf.WriteString(" USING " + index.IndexType)
 				}
 				buf.WriteString(" (")
@@ -172,7 +177,7 @@ func CreateTable(dialect string, tbl Table, opt IncludeOption) (string, error) {
 					if column != "" {
 						buf.WriteString(column)
 					} else {
-						buf.WriteString(index.Exprs[j])
+						buf.WriteString("(" + index.Exprs[j] + ")")
 					}
 				}
 				buf.WriteString(")")

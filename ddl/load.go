@@ -67,6 +67,8 @@ func (m *Metadata) LoadTable(table sq.Table) (err error) {
 	}
 	for _, modifier := range modifiers {
 		switch modifier[0] {
+		case "fts5":
+			continue
 		case "primarykey":
 			err = tbl.LoadConstraint(PRIMARY_KEY, tbl.TableSchema, tbl.TableName, nil, modifier[1])
 			if err != nil {
@@ -103,7 +105,7 @@ func (m *Metadata) LoadTable(table sq.Table) (err error) {
 		}
 		columnName := field.GetName()
 		if columnName == "" {
-			return fmt.Errorf("ddl: column name is empty")
+			return fmt.Errorf("ddl: table %s field #%d has no name", genericTable.TableName, i)
 		}
 		columnType := defaultColumnType(m.Dialect, field)
 		config := tableType.Field(i).Tag.Get("ddl")

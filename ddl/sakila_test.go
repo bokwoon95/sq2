@@ -47,105 +47,6 @@ func (tbl ACTOR) DDL(dialect string, t *T) {
 	}
 }
 
-func ACTOR_TABLE(dialect string) Table {
-	tbl := Table{
-		TableName: "actor",
-		Columns: []Column{
-			{ColumnName: "actor_id", ColumnType: "INTEGER"},
-			{ColumnName: "first_name", ColumnType: "TEXT", IsNotNull: true},
-			{ColumnName: "last_name", ColumnType: "TEXT", IsNotNull: true},
-			{ColumnName: "full_name", ColumnType: "TEXT"},
-			{ColumnName: "full_name_reversed", ColumnType: "TEXT"},
-			{ColumnName: "last_update", ColumnType: "DATETIME", IsNotNull: true},
-		},
-		Constraints: []Constraint{
-			{ConstraintName: "actor_actor_id_pkey", ConstraintType: PRIMARY_KEY, Columns: []string{"actor_id"}},
-		},
-		Indices: []Index{
-			{IndexName: "actor_last_name_idx", Columns: []string{"last_name"}},
-		},
-		columnsCache: map[string]int{
-			"actor_id": 0, "first_name": 1, "last_name": 2, "full_name": 3, "full_name_reversed": 4, "last_update": 5,
-		},
-		constraintsCache: map[string]int{"actor_actor_id_pkey": 0},
-		indicesCache:     map[string]int{"actor_last_name_idx": 0},
-	}
-	defer func() {
-		for i := range tbl.Columns {
-			tbl.Columns[i].TableSchema = tbl.TableSchema
-			tbl.Columns[i].TableName = tbl.TableName
-		}
-		for i := range tbl.Constraints {
-			tbl.Constraints[i].ConstraintSchema = tbl.TableSchema
-			tbl.Constraints[i].TableSchema = tbl.TableSchema
-			tbl.Constraints[i].TableName = tbl.TableName
-		}
-		for i := range tbl.Indices {
-			tbl.Indices[i].IndexSchema = tbl.TableSchema
-			tbl.Indices[i].TableSchema = tbl.TableSchema
-			tbl.Indices[i].TableName = tbl.TableName
-		}
-	}()
-	switch dialect {
-	case sq.DialectSQLite:
-		tbl.tcol(dialect, "full_name").Config(func(c *Column) {
-			c.GeneratedExpr = "first_name || ' ' || last_name"
-			c.GeneratedExprStored = false
-		})
-		tbl.tcol(dialect, "full_name_reversed").Config(func(c *Column) {
-			c.GeneratedExpr = "last_name || ' ' || first_name"
-			c.GeneratedExprStored = true
-		})
-		tbl.tcol(dialect, "last_update").Config(func(c *Column) {
-			c.ColumnDefault = "DATETIME('now')"
-		})
-	case sq.DialectPostgres:
-		tbl.TableSchema = "public"
-		tbl.tcol(dialect, "actor_id").Config(func(c *Column) {
-			c.Identity = BY_DEFAULT_AS_IDENTITY
-		})
-		tbl.tcol(dialect, "full_name").Config(func(c *Column) {
-			c.GeneratedExpr = "first_name || ' ' || last_name"
-			c.GeneratedExprStored = true
-		})
-		tbl.tcol(dialect, "full_name_reversed").Config(func(c *Column) {
-			c.GeneratedExpr = "last_name || ' ' || first_name"
-			c.GeneratedExprStored = true
-		})
-		tbl.tcol(dialect, "last_update").Config(func(c *Column) {
-			c.ColumnType = "TIMESTAMPTZ"
-			c.ColumnDefault = "NOW()"
-		})
-	case sq.DialectMySQL:
-		tbl.TableSchema = "db"
-		tbl.tcol(dialect, "actor_id").Config(func(c *Column) {
-			c.Autoincrement = true
-		})
-		tbl.tcol(dialect, "first_name").Config(func(c *Column) {
-			c.ColumnType = "VARCHAR(45)"
-		})
-		tbl.tcol(dialect, "last_name").Config(func(c *Column) {
-			c.ColumnType = "VARCHAR(45)"
-		})
-		tbl.tcol(dialect, "full_name").Config(func(c *Column) {
-			c.ColumnType = "VARCHAR(45)"
-			c.GeneratedExpr = "CONCAT(first_name, ' ', last_name)"
-			c.GeneratedExprStored = false
-		})
-		tbl.tcol(dialect, "full_name_reversed").Config(func(c *Column) {
-			c.ColumnType = "VARCHAR(45)"
-			c.GeneratedExpr = "CONCAT(last_name, ' ', first_name)"
-			c.GeneratedExprStored = true
-		})
-		tbl.tcol(dialect, "last_update").Config(func(c *Column) {
-			c.ColumnType = "TIMESTAMP"
-			c.ColumnDefault = "CURRENT_TIMESTAMP"
-			c.OnUpdateCurrentTimestamp = true
-		})
-	}
-	return tbl
-}
-
 type CATEGORY struct {
 	sq.GenericTable
 	CATEGORY_ID sq.NumberField `ddl:"type=INTEGER primarykey"`
@@ -323,7 +224,7 @@ type FILM struct {
 	DESCRIPTION          sq.StringField
 	RELEASE_YEAR         sq.NumberField
 	LANGUAGE_ID          sq.NumberField `ddl:"notnull references={language onupdate=cascade ondelete=restrict} index"`
-	ORIGINAL_LANGUAGE_ID sq.NumberField `ddl:"references={language onupdate=cascade ondelete=restrict} index"`
+	ORIGINAL_LANGUAGE_ID sq.NumberField `ddl:"references={language.language_id onupdate=cascade ondelete=restrict} index"`
 	RENTAL_DURATION      sq.NumberField `ddl:"default=3 notnull"`
 	RENTAL_RATE          sq.NumberField `ddl:"type=DECIMAL(4,2) default=4.99 notnull"`
 	LENGTH               sq.NumberField
@@ -349,8 +250,10 @@ func (tbl FILM) DDL(dialect string, t *T) {
 		t.Column(tbl.DESCRIPTION).Type("TEXT")
 		t.Column(tbl.RATING).Type("ENUM('G','PG','PG-13','R','NC-17')")
 		t.Column(tbl.LAST_UPDATE).Type("TIMESTAMP").Default("CURRENT_TIMESTAMP").OnUpdateCurrentTimestamp()
+		t.Column(tbl.FULLTEXT).Ignore()
 		t.Check("film_release_year_check", "{1} >= 1901 AND {1} <= 2155", tbl.RELEASE_YEAR)
 	case sq.DialectSQLite:
+		t.Column(tbl.FULLTEXT).Ignore()
 		t.Check("film_release_year_check", "{1} >= 1901 AND {1} <= 2155", tbl.RELEASE_YEAR)
 		t.Check("film_rating_check", "{} IN ('G','PG','PG-13','R','NC-17')", tbl.RATING)
 	}

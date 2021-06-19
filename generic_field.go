@@ -17,6 +17,15 @@ type GenericField struct {
 
 var _ Field = GenericField{}
 
+func NewGenericField(fieldName string, tbl GenericTable) GenericField {
+	return GenericField{
+		TableSchema: tbl.TableSchema,
+		TableName:   tbl.TableName,
+		TableAlias:  tbl.TableAlias,
+		FieldName:   fieldName,
+	}
+}
+
 func (f GenericField) GetAlias() string { return f.FieldAlias }
 
 func (f GenericField) GetName() string { return f.FieldName }
