@@ -18,10 +18,10 @@ var (
 )
 
 const (
-	DialectSQLite   = "SQLite"
-	DialectPostgres = "Postgres"
-	DialectMySQL    = "MySQL"
-	DialectMSSQL    = "MSSQL"
+	DialectSQLite    = "sqlite"
+	DialectPostgres  = "postgres"
+	DialectMySQL     = "mysql"
+	DialectSQLServer = "sqlserver"
 	// DialectOracle   = "Oracle"
 )
 
@@ -148,7 +148,7 @@ func explodeSlice(dialect string, buf *bytes.Buffer, args *[]interface{}, params
 		switch dialect {
 		case DialectPostgres, DialectSQLite:
 			buf.WriteString("$" + strconv.Itoa(len(*args)+1))
-		case DialectMSSQL:
+		case DialectSQLServer:
 			buf.WriteString("@p" + strconv.Itoa(len(*args)+1))
 		default:
 			buf.WriteString("?")
@@ -188,7 +188,7 @@ func QuoteIdentifier(dialect string, identifier string) string {
 	switch dialect {
 	case DialectMySQL:
 		return "`" + identifier + "`"
-	case DialectMSSQL:
+	case DialectSQLServer:
 		return "[" + identifier + "]"
 	default:
 		return `"` + identifier + `"`

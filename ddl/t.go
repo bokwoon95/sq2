@@ -39,6 +39,15 @@ type TColumn struct {
 	columnIndex int
 }
 
+func (tbl *Table) tcol(dialect, columnName string) *TColumn {
+	return &TColumn{
+		dialect:     dialect,
+		tbl:         tbl,
+		columnName:  columnName,
+		columnIndex: tbl.CachedColumnIndex(columnName),
+	}
+}
+
 func (t *T) Column(field sq.Field) *TColumn {
 	if field == nil {
 		panicf("field is nil")

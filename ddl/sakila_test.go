@@ -4,6 +4,19 @@ import (
 	"github.com/bokwoon95/sq"
 )
 
+func NEW_ACTOR(dialect, alias string) ACTOR {
+	var tbl ACTOR
+	switch dialect {
+	case sq.DialectPostgres:
+		tbl.GenericTable.TableSchema = "public"
+	case sq.DialectMySQL:
+		tbl.GenericTable.TableSchema = "db"
+	}
+	_ = sq.ReflectTable(&tbl)
+	tbl.GenericTable.TableAlias = alias
+	return tbl
+}
+
 type ACTOR struct {
 	sq.GenericTable
 	ACTOR_ID           sq.NumberField `ddl:"type=INTEGER primarykey"`
@@ -18,7 +31,7 @@ func (tbl ACTOR) DDL(dialect string, t *T) {
 	switch dialect {
 	case sq.DialectPostgres:
 		t.Column(tbl.ACTOR_ID).Identity()
-		t.Column(tbl.FULL_NAME_REVERSED).Generated("{} || ' ' || {}", tbl.FIRST_NAME, tbl.LAST_NAME).Stored()
+		t.Column(tbl.FULL_NAME).Generated("{} || ' ' || {}", tbl.FIRST_NAME, tbl.LAST_NAME).Stored()
 		t.Column(tbl.LAST_UPDATE).Type("TIMESTAMPTZ").Default("NOW()")
 	case sq.DialectMySQL:
 		t.Column(tbl.ACTOR_ID).Autoincrement()
@@ -27,23 +40,109 @@ func (tbl ACTOR) DDL(dialect string, t *T) {
 		t.Column(tbl.FULL_NAME).Type("VARCHAR(45)").Generated("CONCAT({}, ' ', {})", tbl.FIRST_NAME, tbl.LAST_NAME)
 		t.Column(tbl.FULL_NAME_REVERSED).Config(func(c *Column) {
 			c.ColumnType = "VARCHAR(45)"
-			c.GeneratedExpr = t.Sprintf("CONCAT({}, ' ', {})", tbl.FIRST_NAME, tbl.LAST_NAME)
+			c.GeneratedExpr = t.Sprintf("CONCAT({}, ' ', {})", tbl.LAST_NAME, tbl.FIRST_NAME)
 			c.GeneratedExprStored = true
 		})
 		t.Column(tbl.LAST_UPDATE).Type("TIMESTAMP").Default("CURRENT_TIMESTAMP").OnUpdateCurrentTimestamp()
 	}
 }
 
-func NEW_ACTOR(dialect, alias string) ACTOR {
-	var tbl ACTOR
-	switch dialect {
-	case sq.DialectPostgres:
-		tbl.GenericTable.TableSchema = "public"
-	case sq.DialectMySQL:
-		tbl.GenericTable.TableSchema = "db"
+func ACTOR_TABLE(dialect string) Table {
+	tbl := Table{
+		TableName: "actor",
+		Columns: []Column{
+			{ColumnName: "actor_id", ColumnType: "INTEGER"},
+			{ColumnName: "first_name", ColumnType: "TEXT", IsNotNull: true},
+			{ColumnName: "last_name", ColumnType: "TEXT", IsNotNull: true},
+			{ColumnName: "full_name", ColumnType: "TEXT"},
+			{ColumnName: "full_name_reversed", ColumnType: "TEXT"},
+			{ColumnName: "last_update", ColumnType: "DATETIME", IsNotNull: true},
+		},
+		Constraints: []Constraint{
+			{ConstraintName: "actor_actor_id_pkey", ConstraintType: PRIMARY_KEY, Columns: []string{"actor_id"}},
+		},
+		Indices: []Index{
+			{IndexName: "actor_last_name_idx", Columns: []string{"last_name"}},
+		},
+		columnsCache: map[string]int{
+			"actor_id": 0, "first_name": 1, "last_name": 2, "full_name": 3, "full_name_reversed": 4, "last_update": 5,
+		},
+		constraintsCache: map[string]int{"actor_actor_id_pkey": 0},
+		indicesCache:     map[string]int{"actor_last_name_idx": 0},
 	}
-	_ = sq.ReflectTable(&tbl)
-	tbl.GenericTable.TableAlias = alias
+	defer func() {
+		for i := range tbl.Columns {
+			tbl.Columns[i].TableSchema = tbl.TableSchema
+			tbl.Columns[i].TableName = tbl.TableName
+		}
+		for i := range tbl.Constraints {
+			tbl.Constraints[i].ConstraintSchema = tbl.TableSchema
+			tbl.Constraints[i].TableSchema = tbl.TableSchema
+			tbl.Constraints[i].TableName = tbl.TableName
+		}
+		for i := range tbl.Indices {
+			tbl.Indices[i].IndexSchema = tbl.TableSchema
+			tbl.Indices[i].TableSchema = tbl.TableSchema
+			tbl.Indices[i].TableName = tbl.TableName
+		}
+	}()
+	switch dialect {
+	case sq.DialectSQLite:
+		tbl.tcol(dialect, "full_name").Config(func(c *Column) {
+			c.GeneratedExpr = "first_name || ' ' || last_name"
+			c.GeneratedExprStored = false
+		})
+		tbl.tcol(dialect, "full_name_reversed").Config(func(c *Column) {
+			c.GeneratedExpr = "last_name || ' ' || first_name"
+			c.GeneratedExprStored = true
+		})
+		tbl.tcol(dialect, "last_update").Config(func(c *Column) {
+			c.ColumnDefault = "DATETIME('now')"
+		})
+	case sq.DialectPostgres:
+		tbl.TableSchema = "public"
+		tbl.tcol(dialect, "actor_id").Config(func(c *Column) {
+			c.Identity = BY_DEFAULT_AS_IDENTITY
+		})
+		tbl.tcol(dialect, "full_name").Config(func(c *Column) {
+			c.GeneratedExpr = "first_name || ' ' || last_name"
+			c.GeneratedExprStored = true
+		})
+		tbl.tcol(dialect, "full_name_reversed").Config(func(c *Column) {
+			c.GeneratedExpr = "last_name || ' ' || first_name"
+			c.GeneratedExprStored = true
+		})
+		tbl.tcol(dialect, "last_update").Config(func(c *Column) {
+			c.ColumnType = "TIMESTAMPTZ"
+			c.ColumnDefault = "NOW()"
+		})
+	case sq.DialectMySQL:
+		tbl.TableSchema = "db"
+		tbl.tcol(dialect, "actor_id").Config(func(c *Column) {
+			c.Autoincrement = true
+		})
+		tbl.tcol(dialect, "first_name").Config(func(c *Column) {
+			c.ColumnType = "VARCHAR(45)"
+		})
+		tbl.tcol(dialect, "last_name").Config(func(c *Column) {
+			c.ColumnType = "VARCHAR(45)"
+		})
+		tbl.tcol(dialect, "full_name").Config(func(c *Column) {
+			c.ColumnType = "VARCHAR(45)"
+			c.GeneratedExpr = "CONCAT(first_name, ' ', last_name)"
+			c.GeneratedExprStored = false
+		})
+		tbl.tcol(dialect, "full_name_reversed").Config(func(c *Column) {
+			c.ColumnType = "VARCHAR(45)"
+			c.GeneratedExpr = "CONCAT(last_name, ' ', first_name)"
+			c.GeneratedExprStored = true
+		})
+		tbl.tcol(dialect, "last_update").Config(func(c *Column) {
+			c.ColumnType = "TIMESTAMP"
+			c.ColumnDefault = "CURRENT_TIMESTAMP"
+			c.OnUpdateCurrentTimestamp = true
+		})
+	}
 	return tbl
 }
 

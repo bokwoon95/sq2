@@ -158,11 +158,7 @@ func (tbl *Table) LoadColumn(dialect, columnName, columnType, config string) err
 		case "onupdatecurrenttimestamp":
 			col.OnUpdateCurrentTimestamp = true
 		case "generated":
-			generatedExpr, _, _, err := lexValue(modifier[1])
-			if err != nil {
-				return fmt.Errorf("%s: %s", qualifiedColumn, err.Error())
-			}
-			col.GeneratedExpr = generatedExpr
+			col.GeneratedExpr = modifier[1]
 		case "stored":
 			col.GeneratedExprStored = true
 		case "virtual":

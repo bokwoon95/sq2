@@ -48,7 +48,7 @@ func (param NamedParam) AppendSQLExclude(dialect string, buf *bytes.Buffer, args
 			buf.WriteString("$" + strconv.Itoa(len(*args)+1))
 			*args = append(*args, param.Value)
 		}
-	case DialectMSSQL:
+	case DialectSQLServer:
 		if len(params[param.Name]) > 0 {
 			(*args)[params[param.Name][0]] = param.Value
 			buf.WriteString("@p" + strconv.Itoa(params[param.Name][0]+1))

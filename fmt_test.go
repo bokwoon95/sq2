@@ -234,7 +234,7 @@ func Test_Fprintf(t *testing.T) {
 
 	t.Run("mssql anonymous", func(t *testing.T) {
 		var tt TT
-		tt.dialect = DialectMSSQL
+		tt.dialect = DialectSQLServer
 		tt.format = "SELECT {} FROM {} WHERE {} = {} AND {} <> {} AND {} IN ({})"
 		tt.values = []interface{}{USERS.NAME, USERS, USERS.AGE, 5, USERS.EMAIL, "bob@email.com", USERS.NAME, []string{"tom", "dick", "harry"}}
 		tt.wantQuery = "SELECT name FROM users WHERE age = @p1 AND email <> @p2 AND name IN (@p3, @p4, @p5)"
@@ -245,7 +245,7 @@ func Test_Fprintf(t *testing.T) {
 
 	t.Run("mssql ordinal", func(t *testing.T) {
 		var tt TT
-		tt.dialect = DialectMSSQL
+		tt.dialect = DialectSQLServer
 		tt.format = "SELECT {} FROM {} WHERE {} = {5} AND {} <> {5} AND {1} IN ({6}) AND {4} IN ({6})"
 		tt.values = []interface{}{USERS.NAME, USERS, USERS.AGE, USERS.EMAIL, "bob@email.com", []string{"tom", "dick", "harry"}}
 		tt.wantQuery = "SELECT name FROM users WHERE age = @p1 AND email <> @p1 AND name IN (@p2, @p3, @p4) AND email IN (@p5, @p6, @p7)"
@@ -256,7 +256,7 @@ func Test_Fprintf(t *testing.T) {
 
 	t.Run("MSSQL Param", func(t *testing.T) {
 		var tt TT
-		tt.dialect = DialectMSSQL
+		tt.dialect = DialectSQLServer
 		tt.format = "SELECT {} FROM {} WHERE {3} = {age} AND {3} > {age} AND {4} <> {email} AND {1} IN ({names}) AND {4} IN ({names})"
 		tt.values = []interface{}{USERS.NAME, USERS, USERS.AGE, USERS.EMAIL, Param("email", "bob@email.com"), Param("age", 5), Param("names", []string{"tom", "dick", "harry"})}
 		tt.wantQuery = "SELECT name FROM users WHERE age = @p1 AND age > @p1 AND email <> @p2 AND name IN (@p3, @p4, @p5) AND email IN (@p6, @p7, @p8)"
@@ -267,7 +267,7 @@ func Test_Fprintf(t *testing.T) {
 
 	t.Run("MSSQL sql.Named", func(t *testing.T) {
 		var tt TT
-		tt.dialect = DialectMSSQL
+		tt.dialect = DialectSQLServer
 		tt.format = "SELECT {} FROM {} WHERE {3} = {age} AND {3} > {age} AND {4} <> {email}"
 		tt.values = []interface{}{USERS.NAME, USERS, USERS.AGE, USERS.EMAIL, sql.Named("email", "bob@email.com"), sql.Named("age", 5)}
 		tt.wantQuery = "SELECT name FROM users WHERE age = @age AND age > @age AND email <> @email"
@@ -278,7 +278,7 @@ func Test_Fprintf(t *testing.T) {
 
 	t.Run("MSSQL mixing sql.Named and sq.Param", func(t *testing.T) {
 		var tt TT
-		tt.dialect = DialectMSSQL
+		tt.dialect = DialectSQLServer
 		tt.format = "SELECT {} FROM {} WHERE {3} = {age} AND {3} > {age} AND {4} <> {email}"
 		tt.values = []interface{}{USERS.NAME, USERS, USERS.AGE, USERS.EMAIL, Param("email", "bob@email.com"), sql.Named("age", 5)}
 		tt.wantQuery = "SELECT name FROM users WHERE age = @age AND age > @age AND email <> @p2"
@@ -289,7 +289,7 @@ func Test_Fprintf(t *testing.T) {
 
 	t.Run("MSSQL mixing sql.Named and sq.Param", func(t *testing.T) {
 		var tt TT
-		tt.dialect = DialectMSSQL
+		tt.dialect = DialectSQLServer
 		tt.format = "SELECT {} FROM {} WHERE {4} <> {email} AND {3} = {age} AND {3} > {age}"
 		tt.values = []interface{}{USERS.NAME, USERS, USERS.AGE, USERS.EMAIL, sql.Named("age", 5), Param("email", "bob@email.com")}
 		tt.wantQuery = "SELECT name FROM users WHERE email <> @p1 AND age = @age AND age > @age"

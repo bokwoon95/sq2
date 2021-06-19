@@ -90,7 +90,7 @@ func BufferPrintValue(dialect string, buf *bytes.Buffer, args *[]interface{}, pa
 			*args = append(*args, value)
 		}
 		switch dialect {
-		case DialectMSSQL:
+		case DialectSQLServer:
 			buf.WriteString("@" + v.Name)
 		case DialectSQLite:
 			buf.WriteString("$" + v.Name)
@@ -117,7 +117,7 @@ func BufferPrintValue(dialect string, buf *bytes.Buffer, args *[]interface{}, pa
 		} else {
 			buf.WriteString("$" + strconv.Itoa(len(*args)+1))
 		}
-	case DialectMSSQL:
+	case DialectSQLServer:
 		if name != "" && len(params[name]) > 0 {
 			buf.WriteString("@p" + strconv.Itoa(params[name][0]+1))
 			return nil
@@ -136,7 +136,7 @@ func BufferPrintValue(dialect string, buf *bytes.Buffer, args *[]interface{}, pa
 
 func lookupParam(dialect string, args []interface{}, argsLookup map[string]int, namebuf *[]rune, runningArgsIndex *int) (paramValue string, err error) {
 	defer func() { *namebuf = (*namebuf)[:0] }()
-	if (*namebuf)[0] == '@' && dialect == DialectMSSQL {
+	if (*namebuf)[0] == '@' && dialect == DialectSQLServer {
 		// TODO: implement MSSQL support
 	}
 	name := string((*namebuf)[1:])
@@ -237,11 +237,11 @@ func Sprintf(dialect string, query string, args []interface{}) (string, error) {
 		switch {
 		case char == '$' && (dialect == DialectSQLite || dialect == DialectPostgres),
 			char == ':' && dialect == DialectSQLite,
-			char == '@' && (dialect == DialectSQLite || dialect == DialectMSSQL),
+			char == '@' && (dialect == DialectSQLite || dialect == DialectSQLServer),
 			char == '?' && dialect == DialectSQLite:
 			namebuf = append(namebuf, char)
 			continue
-		case char == '?' && dialect != DialectPostgres && dialect != DialectMSSQL:
+		case char == '?' && dialect != DialectPostgres && dialect != DialectSQLServer:
 			if runningArgsIndex < 0 || runningArgsIndex >= len(args) {
 				return buf.String(), fmt.Errorf("sq: too few args provided, expected more than %d", runningArgsIndex+1)
 			}

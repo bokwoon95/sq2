@@ -167,7 +167,7 @@ func Test_GenericField(t *testing.T) {
 
 	t.Run("mssql quoted identifiers", func(t *testing.T) {
 		var tt TT
-		tt.dialect = DialectMSSQL
+		tt.dialect = DialectSQLServer
 		tt.item = Fields{
 			BAD_TABLE.WHITESPACE,
 			BAD_TABLE.UPPERCASE,
