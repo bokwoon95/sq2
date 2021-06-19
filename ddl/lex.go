@@ -46,42 +46,37 @@ func cutValue(s string) (value, rest string, err error) {
 	return value, rest, nil
 }
 
-func lexModifiers(config string) (modifiers [][2]string, nameIndex, colsIndex int, err error) {
-	nameIndex, colsIndex = -1, -1
-	i := 0
-	value, rest := "", config
+func lexValue(s string) (value string, modifiers [][2]string, modifierIndex map[string]int, err error) {
+	value, rest, err := cutValue(s)
+	if err != nil {
+		return "", nil, modifierIndex, err
+	}
+	modifiers, modifierIndex, err = lexModifiers(rest)
+	if err != nil {
+		return "", nil, modifierIndex, err
+	}
+	return value, modifiers, modifierIndex, err
+}
+
+func lexModifiers(s string) (modifiers [][2]string, modifierIndex map[string]int, err error) {
+	modifierIndex = make(map[string]int)
+	var currentIndex int
+	value, rest := "", s
 	for rest != "" {
 		value, rest, err = cutValue(rest)
 		if err != nil {
-			return nil, nameIndex, colsIndex, err
+			return nil, modifierIndex, err
 		}
 		subname, subvalue := value, ""
-		if i := strings.Index(value, "="); i >= 0 {
-			subname, subvalue = value[:i], value[i+1:]
+		if j := strings.Index(value, "="); j >= 0 {
+			subname, subvalue = value[:j], value[j+1:]
 			if subvalue[0] == '{' {
 				subvalue = subvalue[1 : len(subvalue)-1]
 			}
 		}
-		switch subname {
-		case "name":
-			nameIndex = i
-		case "cols":
-			colsIndex = i
-		}
+		modifierIndex[subname] = currentIndex
 		modifiers = append(modifiers, [2]string{subname, subvalue})
-		i++
+		currentIndex++
 	}
-	return modifiers, nameIndex, colsIndex, nil
-}
-
-func lexValue(config string) (value string, modifiers [][2]string, nameIndex, colsIndex int, err error) {
-	value, rest, err := cutValue(config)
-	if err != nil {
-		return "", nil, -1, -1, err
-	}
-	modifiers, nameIndex, colsIndex, err = lexModifiers(rest)
-	if err != nil {
-		return "", nil, nameIndex, colsIndex, err
-	}
-	return value, modifiers, nameIndex, colsIndex, err
+	return modifiers, modifierIndex, nil
 }

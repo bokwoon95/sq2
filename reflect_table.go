@@ -162,8 +162,8 @@ func lexModifiers(s string) (modifiers [][2]string, modifierIndex map[string]int
 			if subvalue[0] == '{' {
 				subvalue = subvalue[1 : len(subvalue)-1]
 			}
-			modifierIndex[subname] = currentIndex
 		}
+		modifierIndex[subname] = currentIndex
 		modifiers = append(modifiers, [2]string{subname, subvalue})
 		currentIndex++
 	}

@@ -327,8 +327,8 @@ func Test_Sprintf(t *testing.T) {
 		var tt TT
 		tt.dialect = ""
 		tt.query = `SELECT ?` +
-			`, 'do not "rebind" ? ? ?'` +
-			`, "do not 'rebind' ? ? ?"` +
+			`, 'do not "rebind" ? ? ?'` + // string containing double quotes
+			`, "do not 'rebind' ? ? ?"` + // identifier containing single quotes
 			`, ?` +
 			`, ?`
 		tt.args = []interface{}{
