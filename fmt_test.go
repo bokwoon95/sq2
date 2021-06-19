@@ -327,8 +327,8 @@ func Test_Sprintf(t *testing.T) {
 		var tt TT
 		tt.dialect = ""
 		tt.query = `SELECT ?` +
-			`, 'do not rebind ? ? ?'` +
-			`, "do not rebind ? ? ?"` +
+			`, 'do not "rebind" ? ? ?'` +
+			`, "do not 'rebind' ? ? ?"` +
 			`, ?` +
 			`, ?`
 		tt.args = []interface{}{
@@ -337,8 +337,8 @@ func Test_Sprintf(t *testing.T) {
 			"string with already escaped ''quotes'' except for 'this'",
 		}
 		tt.wantString = `SELECT 'normal string'` +
-			`, 'do not rebind ? ? ?'` +
-			`, "do not rebind ? ? ?"` +
+			`, 'do not "rebind" ? ? ?'` +
+			`, "do not 'rebind' ? ? ?"` +
 			`, 'string with ''quotes'' must be escaped'` +
 			`, 'string with already escaped ''quotes'' except for ''this'''`
 		assert(t, tt)
