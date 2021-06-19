@@ -268,27 +268,52 @@ func Sprintf(dialect string, query string, args []interface{}) (string, error) {
 	return buf.String(), nil
 }
 
-func escapeSQLSingleQuote(s string) string {
-	i := strings.IndexByte(s, '\'')
+func EscapeQuote(str string, quote byte) string {
+	escapedQuote := string([]byte{quote, quote})
+	i := strings.IndexByte(str, quote)
 	if i < 0 {
-		return s
+		return str
 	}
 	buf := bufpool.Get().(*bytes.Buffer)
 	defer func() {
 		buf.Reset()
 		bufpool.Put(buf)
 	}()
-	buf.Grow(len(s))
+	buf.Grow(len(str))
 	for i >= 0 {
-		buf.WriteString(s[:i] + `''`)
-		if len(s[i:]) > 2 && s[i:i+2] == `''` {
-			s = s[i+2:]
+		buf.WriteString(str[:i] + escapedQuote)
+		if len(str[i:]) > 2 && str[i:i+2] == escapedQuote {
+			str = str[i+2:]
 		} else {
-			s = s[i+1:]
+			str = str[i+1:]
 		}
-		i = strings.IndexByte(s, '\'')
+		i = strings.IndexByte(str, quote)
 	}
-	buf.WriteString(s)
+	buf.WriteString(str)
+	return buf.String()
+}
+
+func EscapeSQLString(str string) string {
+	i := strings.IndexByte(str, '\'')
+	if i < 0 {
+		return str
+	}
+	buf := bufpool.Get().(*bytes.Buffer)
+	defer func() {
+		buf.Reset()
+		bufpool.Put(buf)
+	}()
+	buf.Grow(len(str))
+	for i >= 0 {
+		buf.WriteString(str[:i] + `''`)
+		if len(str[i:]) > 2 && str[i:i+2] == `''` {
+			str = str[i+2:]
+		} else {
+			str = str[i+1:]
+		}
+		i = strings.IndexByte(str, '\'')
+	}
+	buf.WriteString(str)
 	return buf.String()
 }
 
@@ -305,7 +330,7 @@ func Sprint(v interface{}) (string, error) {
 	case []byte:
 		return `x'` + hex.EncodeToString(v) + `'`, nil
 	case string:
-		return `'` + escapeSQLSingleQuote(v) + `'`, nil
+		return `'` + EscapeQuote(v, '\'') + `'`, nil
 	case time.Time:
 		return `'` + v.Format(time.RFC3339Nano) + `'`, nil
 	case int:
@@ -366,7 +391,7 @@ func Sprint(v interface{}) (string, error) {
 		if !v.Valid {
 			return "NULL", nil
 		} else {
-			return `'` + escapeSQLSingleQuote(v.String) + `'`, nil
+			return `'` + EscapeQuote(v.String, '\'') + `'`, nil
 		}
 	case sql.NullTime:
 		if !v.Valid {

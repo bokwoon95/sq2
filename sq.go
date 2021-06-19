@@ -182,6 +182,11 @@ func QuoteIdentifier(dialect string, identifier string) string {
 			break
 		}
 	}
+	switch dialect {
+	case DialectMySQL:
+	case DialectSQLServer:
+	default:
+	}
 	if !needsQuoting {
 		return identifier
 	}
