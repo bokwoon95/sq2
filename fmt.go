@@ -135,7 +135,7 @@ func BufferPrintValue(dialect string, buf *bytes.Buffer, args *[]interface{}, pa
 }
 
 // TODO: change signature to include error output
-func Sprintf(dialect string, query string, args []interface{}) string {
+func Sprintf(dialect string, query string, args []interface{}) (string, error) {
 	buf := bufpool.Get().(*bytes.Buffer)
 	defer func() {
 		buf.Reset()
@@ -150,6 +150,7 @@ func Sprintf(dialect string, query string, args []interface{}) string {
 	}
 	runningArgsIndex := 0
 	var insideString bool
+	var insideIdentifier bool
 	var namebuf []rune
 	nameTerminatingChars := map[rune]bool{
 		',': true, '(': true, ')': true, ';': true,
@@ -158,12 +159,17 @@ func Sprintf(dialect string, query string, args []interface{}) string {
 		'\t': true, '\n': true, '\v': true, '\f': true, '\r': true, ' ': true, 0x85: true, 0xA0: true,
 	}
 	for _, char := range query {
-		if char == '\'' {
+		if char == '\'' && !insideIdentifier {
 			insideString = !insideString
 			buf.WriteRune(char)
 			continue
 		}
-		if insideString {
+		if char == '"' && !insideString {
+			insideIdentifier = !insideIdentifier
+			buf.WriteRune(char)
+			continue
+		}
+		if insideString || insideIdentifier {
 			buf.WriteRune(char)
 			continue
 		}
@@ -173,7 +179,11 @@ func Sprintf(dialect string, query string, args []interface{}) string {
 			name := string(namebuf[1:])
 			if name == "" {
 				if namebuf[0] == '?' {
-					buf.WriteString(Sprint(args[runningArgsIndex]))
+					argString, err := Sprint(args[runningArgsIndex])
+					if err != nil {
+						return buf.String(), err
+					}
+					buf.WriteString(argString)
 					runningArgsIndex++
 				} else {
 					buf.WriteString("%!(MISSING)")
@@ -182,7 +192,11 @@ func Sprintf(dialect string, query string, args []interface{}) string {
 				if num-1 < 0 || num-1 >= len(args) {
 					buf.WriteString("%!(BADINDEX)")
 				} else {
-					buf.WriteString(Sprint(args[num-1]))
+					argString, err := Sprint(args[num-1])
+					if err != nil {
+						return buf.String(), err
+					}
+					buf.WriteString(argString)
 				}
 			} else {
 				num, ok := argsLookup[name]
@@ -193,7 +207,11 @@ func Sprintf(dialect string, query string, args []interface{}) string {
 				} else if num < 0 || num >= len(args) {
 					buf.WriteString("%!(BADINDEX)")
 				} else {
-					buf.WriteString(Sprint(args[num]))
+					argString, err := Sprint(args[num])
+					if err != nil {
+						return buf.String(), err
+					}
+					buf.WriteString(argString)
 				}
 			}
 			buf.WriteRune(char)
@@ -215,7 +233,11 @@ func Sprintf(dialect string, query string, args []interface{}) string {
 			if runningArgsIndex < 0 || runningArgsIndex >= len(args) {
 				buf.WriteString("%!(BADINDEX)")
 			} else {
-				buf.WriteString(Sprint(args[runningArgsIndex]))
+				argString, err := Sprint(args[runningArgsIndex])
+				if err != nil {
+					return buf.String(), err
+				}
+				buf.WriteString(argString)
 				runningArgsIndex++
 			}
 			continue
@@ -226,7 +248,11 @@ func Sprintf(dialect string, query string, args []interface{}) string {
 		name := string(namebuf[1:])
 		if name == "" {
 			if namebuf[0] == '?' {
-				buf.WriteString(Sprint(args[runningArgsIndex]))
+				argString, err := Sprint(args[runningArgsIndex])
+				if err != nil {
+					return buf.String(), err
+				}
+				buf.WriteString(argString)
 				runningArgsIndex++
 			} else {
 				buf.WriteString("%!(MISSING)")
@@ -235,7 +261,11 @@ func Sprintf(dialect string, query string, args []interface{}) string {
 			if num-1 < 0 || num-1 >= len(args) {
 				buf.WriteString("%!(BADINDEX)")
 			} else {
-				buf.WriteString(Sprint(args[num-1]))
+				argString, err := Sprint(args[num-1])
+				if err != nil {
+					return buf.String(), err
+				}
+				buf.WriteString(argString)
 			}
 		} else {
 			num, ok := argsLookup[name]
@@ -246,130 +276,170 @@ func Sprintf(dialect string, query string, args []interface{}) string {
 			} else if num < 0 || num >= len(args) {
 				buf.WriteString("%!(BADINDEX)")
 			} else {
-				buf.WriteString(Sprint(args[num]))
+				argString, err := Sprint(args[num])
+				if err != nil {
+					return buf.String(), err
+				}
+				buf.WriteString(argString)
 			}
 		}
 	}
-	if insideString {
+	if insideString || insideIdentifier {
 		// means something went wrong, unclosed quote somewhere
 	}
+	return buf.String(), nil
+}
+
+func escapeSQLSingleQuote(s string) string {
+	i := strings.IndexByte(s, '\'')
+	if i < 0 {
+		return s
+	}
+	buf := bufpool.Get().(*bytes.Buffer)
+	defer func() {
+		buf.Reset()
+		bufpool.Put(buf)
+	}()
+	buf.Grow(len(s))
+	for i >= 0 {
+		buf.WriteString(s[:i] + `''`)
+		if len(s[i:]) > 2 && s[i:i+2] == `''` {
+			s = s[i+2:]
+		} else {
+			s = s[i+1:]
+		}
+		i = strings.IndexByte(s, '\'')
+	}
+	buf.WriteString(s)
 	return buf.String()
 }
 
-// TODO: change signature to include error output
-func Sprint(v interface{}) string {
+func Sprint(v interface{}) (string, error) {
 	switch v := v.(type) {
 	case nil:
-		return "NULL"
+		return "NULL", nil
 	case bool:
 		if v {
-			return "TRUE"
+			return "TRUE", nil
 		} else {
-			return "FALSE"
+			return "FALSE", nil
 		}
 	case []byte:
-		return `x'` + hex.EncodeToString(v) + `'`
+		return `x'` + hex.EncodeToString(v) + `'`, nil
 	case string:
-		return `'` + v + `'`
+		return `'` + escapeSQLSingleQuote(v) + `'`, nil
 	case time.Time:
-		return `'` + v.Format(time.RFC3339Nano) + `'`
+		return `'` + v.Format(time.RFC3339Nano) + `'`, nil
 	case int:
-		return strconv.FormatInt(int64(v), 10)
+		return strconv.FormatInt(int64(v), 10), nil
 	case int8:
-		return strconv.FormatInt(int64(v), 10)
+		return strconv.FormatInt(int64(v), 10), nil
 	case int16:
-		return strconv.FormatInt(int64(v), 10)
+		return strconv.FormatInt(int64(v), 10), nil
 	case int32:
-		return strconv.FormatInt(int64(v), 10)
+		return strconv.FormatInt(int64(v), 10), nil
 	case int64:
-		return strconv.FormatInt(v, 10)
+		return strconv.FormatInt(v, 10), nil
 	case uint:
-		return strconv.FormatUint(uint64(v), 10)
+		return strconv.FormatUint(uint64(v), 10), nil
 	case uint8:
-		return strconv.FormatUint(uint64(v), 10)
+		return strconv.FormatUint(uint64(v), 10), nil
 	case uint16:
-		return strconv.FormatUint(uint64(v), 10)
+		return strconv.FormatUint(uint64(v), 10), nil
 	case uint32:
-		return strconv.FormatUint(uint64(v), 10)
+		return strconv.FormatUint(uint64(v), 10), nil
 	case uint64:
-		return strconv.FormatUint(v, 10)
+		return strconv.FormatUint(v, 10), nil
 	case float32:
-		return strconv.FormatFloat(float64(v), 'g', -1, 64)
+		return strconv.FormatFloat(float64(v), 'g', -1, 64), nil
 	case float64:
-		return strconv.FormatFloat(v, 'g', -1, 64)
+		return strconv.FormatFloat(v, 'g', -1, 64), nil
 	case sql.NamedArg:
 		return Sprint(v.Value)
 	case sql.NullBool:
 		if !v.Valid {
-			return "NULL"
+			return "NULL", nil
 		} else {
 			if v.Bool {
-				return "TRUE"
+				return "TRUE", nil
 			} else {
-				return "FALSE"
+				return "FALSE", nil
 			}
 		}
 	case sql.NullFloat64:
 		if !v.Valid {
-			return "NULL"
+			return "NULL", nil
 		} else {
-			return strconv.FormatFloat(v.Float64, 'g', -1, 64)
+			return strconv.FormatFloat(v.Float64, 'g', -1, 64), nil
 		}
 	case sql.NullInt64:
 		if !v.Valid {
-			return "NULL"
+			return "NULL", nil
 		} else {
-			return strconv.FormatInt(v.Int64, 10)
+			return strconv.FormatInt(v.Int64, 10), nil
 		}
 	case sql.NullInt32:
-	case sql.NullString:
-	case sql.NullTime:
-	case driver.Valuer:
-		v2, err := v.Value()
-		if err != nil {
-			return `%!(` + err.Error() + `)`
+		if !v.Valid {
+			return "NULL", nil
+		} else {
+			return strconv.FormatInt(int64(v.Int32), 10), nil
 		}
-		switch v2 := v2.(type) {
+	case sql.NullString:
+		if !v.Valid {
+			return "NULL", nil
+		} else {
+			return `'` + escapeSQLSingleQuote(v.String) + `'`, nil
+		}
+	case sql.NullTime:
+		if !v.Valid {
+			return "NULL", nil
+		} else {
+			return `'` + v.Time.Format(time.RFC3339Nano) + `'`, nil
+		}
+	case driver.Valuer:
+		vv, err := v.Value()
+		if err != nil {
+			return "", fmt.Errorf("sq: error when calling Value(): %w", err)
+		}
+		switch vv := vv.(type) {
 		case int64:
-			return strconv.FormatInt(v2, 10)
+			return strconv.FormatInt(vv, 10), nil
 		case float64:
-			return strconv.FormatFloat(v2, 'g', -1, 64)
+			return strconv.FormatFloat(vv, 'g', -1, 64), nil
 		case bool:
-			if v2 {
-				return "TRUE"
+			if vv {
+				return "TRUE", nil
 			} else {
-				return "FALSE"
+				return "FALSE", nil
 			}
 		case []byte:
-			return `x'` + hex.EncodeToString(v2) + `'`
+			return `x'` + hex.EncodeToString(vv) + `'`, nil
 		case string:
-			return `'` + v2 + `'`
+			return `'` + vv + `'`, nil
 		case time.Time:
-			return `'` + v2.Format(time.RFC3339Nano) + `'`
+			return `'` + vv.Format(time.RFC3339Nano) + `'`, nil
 		default:
-			return fmt.Sprintf("%#v", v2)
+			return "", fmt.Errorf("sq: unrecognized driver.Valuer type (must be one of int64, float64, bool, []byte, string, time.Time)")
 		}
 	}
 	var deref int
 	rv := reflect.ValueOf(v)
-	for {
-		if rv.Kind() != reflect.Ptr && rv.Kind() != reflect.Interface {
-			break
-		}
+	// keep dereferencing until we are no longer at a pointer or interface type (i.e a concrete type)
+	for rv.Kind() != reflect.Ptr && rv.Kind() != reflect.Interface {
 		rv = rv.Elem()
 		deref++
 	}
 	if !rv.IsValid() {
-		return "%!(NO VALUE)"
+		return "", fmt.Errorf("sq: value is not valid (whatever that means??? Tell me how you got here)")
 	}
 	if rv.Kind() == reflect.Chan {
-		return "%!(CHANNEL)"
+		return "", fmt.Errorf("sq: channels cannot be represented in SQL")
 	}
 	if rv.Kind() == reflect.Func {
-		return "%!(FUNCTION)"
+		return "", fmt.Errorf("sq: functions cannot be represented in SQL")
 	}
 	if deref > 0 {
 		return Sprint(rv.Interface())
 	}
-	return fmt.Sprintf("%#v", v)
+	return "", fmt.Errorf("sq: could not convert %#v into its SQL representation", v)
 }

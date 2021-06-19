@@ -104,7 +104,10 @@ func appendSQLExclude(dialect, tableName string, v sq.SQLExcludeAppender) (strin
 	if len(args) == 0 {
 		return buf.String(), nil
 	}
-	str := sq.Sprintf(dialect, buf.String(), args)
+	str, err := sq.Sprintf(dialect, buf.String(), args)
+	if err != nil {
+		return "", err
+	}
 	return str, nil
 }
 

@@ -309,7 +309,8 @@ func Test_Sprintf(t *testing.T) {
 
 	assert := func(t *testing.T, tt TT) {
 		is := testutil.New(t, testutil.Parallel)
-		gotString := Sprintf(tt.dialect, tt.query, tt.args)
+		gotString, err := Sprintf(tt.dialect, tt.query, tt.args)
+		is.NoErr(err)
 		is.Equal(tt.wantString, gotString)
 	}
 

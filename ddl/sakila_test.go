@@ -242,7 +242,7 @@ func (tbl FILM) DDL(dialect string, t *T) {
 		t.Column(tbl.RELEASE_YEAR).Type("year")
 		t.Column(tbl.RATING).Type("mpaa_rating").Default("'G'::mpaa_rating")
 		t.Column(tbl.LAST_UPDATE).Type("TIMESTAMPTZ").Default("NOW()")
-		t.Column(tbl.SPECIAL_FEATURES).Type("TEXT[]") // TODO: ArrayField
+		t.Column(tbl.SPECIAL_FEATURES).Type("TEXT[]")
 		t.Column(tbl.FULLTEXT).Type("TSVECTOR")
 	case sq.DialectMySQL:
 		t.Column(tbl.FILM_ID).Autoincrement()

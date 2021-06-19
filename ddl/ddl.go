@@ -279,13 +279,11 @@ func (tbl *Table) CachedIndexIndex(indexName string) (indexIndex int) {
 		return -1
 	}
 	indexIndex, ok := tbl.indicesCache[indexName]
-	if ok && indexIndex >= 0 && indexIndex < len(tbl.Indices) {
-		if tbl.Indices[indexIndex].IndexName == indexName {
-			return indexIndex
-		}
+	if !ok || indexIndex < 0 || indexIndex >= len(tbl.Indices) || tbl.Indices[indexIndex].IndexName != indexName {
+		delete(tbl.indicesCache, indexName)
+		return -1
 	}
-	delete(tbl.indicesCache, indexName)
-	return -1
+	return indexIndex
 }
 
 func (tbl *Table) AppendIndex(index Index) (indexIndex int) {
