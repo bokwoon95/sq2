@@ -134,7 +134,52 @@ func BufferPrintValue(dialect string, buf *bytes.Buffer, args *[]interface{}, pa
 	return nil
 }
 
-// TODO: change signature to include error output
+func lookupParam(dialect string, args []interface{}, argsLookup map[string]int, namebuf *[]rune, runningArgsIndex *int) (paramValue string, err error) {
+	defer func() { *namebuf = (*namebuf)[:0] }()
+	if (*namebuf)[0] == '@' && dialect == DialectMSSQL {
+		// TODO: implement MSSQL support
+	}
+	name := string((*namebuf)[1:])
+	if name == "" {
+		if (*namebuf)[0] != '?' {
+			return "", fmt.Errorf("sq: parameter name missing")
+		}
+		paramValue, err = Sprint(args[*runningArgsIndex])
+		if err != nil {
+			return "", err
+		}
+		(*runningArgsIndex)++
+		return paramValue, nil
+	}
+	num, err := strconv.Atoi(name)
+	if err == nil {
+		num-- // decrement because ordinal numbers always lead the index by 1 (e.g. $1 corresponds to index 0)
+		if num < 0 || num >= len(args) {
+			return "", fmt.Errorf("sq: args index %d out of bounds", num)
+		}
+		paramValue, err = Sprint(args[num])
+		if err != nil {
+			return "", err
+		}
+		return paramValue, nil
+	}
+	if dialect == DialectPostgres {
+		return "", fmt.Errorf("sq: Postgres does not support $%s named parameter", name)
+	}
+	num, ok := argsLookup[name]
+	if !ok {
+		return "", fmt.Errorf("sq: named parameter $%s not provided", name)
+	}
+	if num < 0 || num >= len(args) {
+		return "", fmt.Errorf("sq: args index %d out of bounds", num)
+	}
+	paramValue, err = Sprint(args[num])
+	if err != nil {
+		return "", err
+	}
+	return paramValue, nil
+}
+
 func Sprintf(dialect string, query string, args []interface{}) (string, error) {
 	buf := bufpool.Get().(*bytes.Buffer)
 	defer func() {
@@ -158,52 +203,6 @@ func Sprintf(dialect string, query string, args []interface{}) (string, error) {
 		'+': true, '-': true, '*': true, '/': true,
 		'\t': true, '\n': true, '\v': true, '\f': true, '\r': true, ' ': true, 0x85: true, 0xA0: true,
 	}
-	lookupParam := func(namebuf *[]rune) (string, error) {
-		defer func() { *namebuf = (*namebuf)[:0] }()
-		if (*namebuf)[0] == '@' && dialect == DialectMSSQL {
-			// TODO: implement MSSQL support
-		}
-		name := string((*namebuf)[1:])
-		if name == "" {
-			if (*namebuf)[0] != '?' {
-				return "", fmt.Errorf("sq: parameter name missing")
-			}
-			paramValue, err := Sprint(args[runningArgsIndex])
-			if err != nil {
-				return "", err
-			}
-			runningArgsIndex++
-			return paramValue, nil
-		}
-		num, err := strconv.Atoi(name)
-		if err == nil {
-			num-- // decrement because ordinal numbers always lead the index by 1 (e.g. $1 corresponds to index 0)
-			if num < 0 || num >= len(args) {
-				return "", fmt.Errorf("sq: args index %d out of bounds", num)
-			}
-			paramValue, err := Sprint(args[num])
-			if err != nil {
-				return "", err
-			}
-			return paramValue, nil
-		}
-		if dialect == DialectPostgres {
-			return "", fmt.Errorf("sq: Postgres does not support $%s named parameter", name)
-		}
-		num, ok := argsLookup[name]
-		if !ok {
-			return "", fmt.Errorf("sq: named parameter $%s not provided", name)
-		}
-		if num < 0 || num >= len(args) {
-			return "", fmt.Errorf("sq: args index %d out of bounds", num)
-		}
-		paramValue, err := Sprint(args[num])
-		if err != nil {
-			return "", err
-		}
-		return paramValue, nil
-	}
-	_ = lookupParam
 	for _, char := range query {
 		if char == '\'' && !insideIdentifier {
 			insideString = !insideString
@@ -219,57 +218,20 @@ func Sprintf(dialect string, query string, args []interface{}) (string, error) {
 			buf.WriteRune(char)
 			continue
 		}
-		// namebuf will be non-empty only if the previous iteration inserted a
-		// parameter-related character (i.e. one of ?, $, :, @) into it. That's
-		// how we know we are currently inside a parameter name
-		if len(namebuf) > 0 && nameTerminatingChars[char] {
-			if namebuf[0] == '@' && dialect == DialectMSSQL {
-				// TODO: implement MSSQL support
-			}
-			name := string(namebuf[1:])
-			if name == "" {
-				if namebuf[0] == '?' {
-					argString, err := Sprint(args[runningArgsIndex])
-					if err != nil {
-						return buf.String(), err
-					}
-					buf.WriteString(argString)
-					runningArgsIndex++
-				} else {
-					buf.WriteString("%!(MISSING)")
-				}
-			} else if num, err := strconv.Atoi(name); err == nil {
-				if num-1 < 0 || num-1 >= len(args) {
-					buf.WriteString("%!(BADINDEX)")
-				} else {
-					argString, err := Sprint(args[num-1])
-					if err != nil {
-						return buf.String(), err
-					}
-					buf.WriteString(argString)
-				}
-			} else {
-				num, ok := argsLookup[name]
-				if dialect == DialectPostgres {
-					buf.WriteString("%!(INVALID)")
-				} else if !ok {
-					buf.WriteString("%!(MISSING)")
-				} else if num < 0 || num >= len(args) {
-					buf.WriteString("%!(BADINDEX)")
-				} else {
-					argString, err := Sprint(args[num])
-					if err != nil {
-						return buf.String(), err
-					}
-					buf.WriteString(argString)
-				}
-			}
-			buf.WriteRune(char)
-			namebuf = namebuf[:0]
-			continue
-		}
+		// If namebuf is non-empty, it means we are inside a parameter name.
+		// This is because the first character will be inserted into namebuf
+		// only if the previous iteration encounter a parameter-related
+		// character (i.e. '?', '$', ':' or '@')
 		if len(namebuf) > 0 {
-			namebuf = append(namebuf, char)
+			if !nameTerminatingChars[char] {
+				namebuf = append(namebuf, char)
+			} else {
+				paramValue, err := lookupParam(dialect, args, argsLookup, &namebuf, &runningArgsIndex)
+				if err != nil {
+					return buf.String(), err
+				}
+				buf.WriteString(paramValue + string(char))
+			}
 			continue
 		}
 		switch {
@@ -281,58 +243,24 @@ func Sprintf(dialect string, query string, args []interface{}) (string, error) {
 			continue
 		case char == '?' && dialect != DialectPostgres && dialect != DialectMSSQL:
 			if runningArgsIndex < 0 || runningArgsIndex >= len(args) {
-				buf.WriteString("%!(BADINDEX)")
-			} else {
-				argString, err := Sprint(args[runningArgsIndex])
-				if err != nil {
-					return buf.String(), err
-				}
-				buf.WriteString(argString)
-				runningArgsIndex++
+				return buf.String(), fmt.Errorf("sq: too few args provided, expected more than %d", runningArgsIndex+1)
 			}
+			paramValue, err := Sprint(args[runningArgsIndex])
+			if err != nil {
+				return buf.String(), err
+			}
+			buf.WriteString(paramValue)
+			runningArgsIndex++
 			continue
 		}
 		buf.WriteRune(char)
 	}
 	if len(namebuf) > 0 {
-		name := string(namebuf[1:])
-		if name == "" {
-			if namebuf[0] == '?' {
-				argString, err := Sprint(args[runningArgsIndex])
-				if err != nil {
-					return buf.String(), err
-				}
-				buf.WriteString(argString)
-				runningArgsIndex++
-			} else {
-				buf.WriteString("%!(MISSING)")
-			}
-		} else if num, err := strconv.Atoi(name); err == nil {
-			if num-1 < 0 || num-1 >= len(args) {
-				buf.WriteString("%!(BADINDEX)")
-			} else {
-				argString, err := Sprint(args[num-1])
-				if err != nil {
-					return buf.String(), err
-				}
-				buf.WriteString(argString)
-			}
-		} else {
-			num, ok := argsLookup[name]
-			if dialect == DialectPostgres {
-				buf.WriteString("%!(INVALID)")
-			} else if !ok {
-				buf.WriteString("%!(MISSING)")
-			} else if num < 0 || num >= len(args) {
-				buf.WriteString("%!(BADINDEX)")
-			} else {
-				argString, err := Sprint(args[num])
-				if err != nil {
-					return buf.String(), err
-				}
-				buf.WriteString(argString)
-			}
+		paramValue, err := lookupParam(dialect, args, argsLookup, &namebuf, &runningArgsIndex)
+		if err != nil {
+			return buf.String(), err
 		}
+		buf.WriteString(paramValue)
 	}
 	if insideString || insideIdentifier {
 		// means something went wrong, unclosed quote somewhere
