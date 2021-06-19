@@ -182,20 +182,15 @@ func QuoteIdentifier(dialect string, identifier string) string {
 			break
 		}
 	}
-	switch dialect {
-	case DialectMySQL:
-	case DialectSQLServer:
-	default:
-	}
 	if !needsQuoting {
 		return identifier
 	}
 	switch dialect {
 	case DialectMySQL:
-		return "`" + identifier + "`"
+		return "`" + EscapeQuote(identifier, '`') + "`"
 	case DialectSQLServer:
-		return "[" + identifier + "]"
+		return "[" + EscapeQuote(identifier, '[') + "]"
 	default:
-		return `"` + identifier + `"`
+		return `"` + EscapeQuote(identifier, '"') + `"`
 	}
 }
