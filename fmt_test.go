@@ -314,12 +314,33 @@ func Test_Sprintf(t *testing.T) {
 		is.Equal(tt.wantString, gotString)
 	}
 
-	t.Run("mysql empty", func(t *testing.T) {
+	t.Run("empty", func(t *testing.T) {
 		var tt TT
-		tt.dialect = DialectMySQL
+		tt.dialect = ""
 		tt.query = ""
 		tt.args = []interface{}{}
 		tt.wantString = ""
+		assert(t, tt)
+	})
+
+	t.Run("insideString, insideIdentifier and escaping single quotes", func(t *testing.T) {
+		var tt TT
+		tt.dialect = ""
+		tt.query = `SELECT ?` +
+			`, 'do not rebind ? ? ?'` +
+			`, "do not rebind ? ? ?"` +
+			`, ?` +
+			`, ?`
+		tt.args = []interface{}{
+			"normal string",
+			"string with 'quotes' must be escaped",
+			"string with already escaped ''quotes'' except for 'this'",
+		}
+		tt.wantString = `SELECT 'normal string'` +
+			`, 'do not rebind ? ? ?'` +
+			`, "do not rebind ? ? ?"` +
+			`, 'string with ''quotes'' must be escaped'` +
+			`, 'string with already escaped ''quotes'' except for ''this'''`
 		assert(t, tt)
 	})
 

@@ -263,7 +263,7 @@ func Sprintf(dialect string, query string, args []interface{}) (string, error) {
 		buf.WriteString(paramValue)
 	}
 	if insideString || insideIdentifier {
-		// means something went wrong, unclosed quote somewhere
+		return buf.String(), fmt.Errorf("sq: unclosed string or identifier")
 	}
 	return buf.String(), nil
 }
