@@ -111,14 +111,12 @@ func Test_GenericField(t *testing.T) {
 	BAD_TABLE := struct {
 		WHITESPACE  GenericField
 		UPPERCASE   GenericField
-		UNDERSCORE  GenericField
 		NUMBER      GenericField
 		SPECIALCHAR GenericField
 		GOOD_COLUMN GenericField
 	}{
 		WHITESPACE:  GenericField{TableName: "bad table", FieldName: "some shitty column name with spaces"},
 		UPPERCASE:   GenericField{TableName: "bad table", FieldName: "uppercASE"},
-		UNDERSCORE:  GenericField{TableName: "bad table", FieldName: "_start_with_underscore"},
 		NUMBER:      GenericField{TableName: "bad table", FieldName: "123start_with_number"},
 		SPECIALCHAR: GenericField{TableName: "bad table", FieldName: "!@#$%^&*"},
 		GOOD_COLUMN: GenericField{TableName: "bad table", FieldName: "s1mple_unquoted"},
@@ -129,14 +127,12 @@ func Test_GenericField(t *testing.T) {
 		tt.item = Fields{
 			BAD_TABLE.WHITESPACE,
 			BAD_TABLE.UPPERCASE,
-			BAD_TABLE.UNDERSCORE,
 			BAD_TABLE.NUMBER,
 			BAD_TABLE.SPECIALCHAR,
 			BAD_TABLE.GOOD_COLUMN,
 		}
 		tt.wantQuery = `"bad table"."some shitty column name with spaces"` +
 			`, "bad table"."uppercASE"` +
-			`, "bad table"."_start_with_underscore"` +
 			`, "bad table"."123start_with_number"` +
 			`, "bad table"."!@#$%^&*"` +
 			`, "bad table".s1mple_unquoted`
@@ -150,14 +146,12 @@ func Test_GenericField(t *testing.T) {
 		tt.item = Fields{
 			BAD_TABLE.WHITESPACE,
 			BAD_TABLE.UPPERCASE,
-			BAD_TABLE.UNDERSCORE,
 			BAD_TABLE.NUMBER,
 			BAD_TABLE.SPECIALCHAR,
 			BAD_TABLE.GOOD_COLUMN,
 		}
 		tt.wantQuery = "`bad table`.`some shitty column name with spaces`" +
 			", `bad table`.`uppercASE`" +
-			", `bad table`.`_start_with_underscore`" +
 			", `bad table`.`123start_with_number`" +
 			", `bad table`.`!@#$%^&*`" +
 			", `bad table`.s1mple_unquoted"
@@ -171,14 +165,12 @@ func Test_GenericField(t *testing.T) {
 		tt.item = Fields{
 			BAD_TABLE.WHITESPACE,
 			BAD_TABLE.UPPERCASE,
-			BAD_TABLE.UNDERSCORE,
 			BAD_TABLE.NUMBER,
 			BAD_TABLE.SPECIALCHAR,
 			BAD_TABLE.GOOD_COLUMN,
 		}
 		tt.wantQuery = "[bad table].[some shitty column name with spaces]" +
 			", [bad table].[uppercASE]" +
-			", [bad table].[_start_with_underscore]" +
 			", [bad table].[123start_with_number]" +
 			", [bad table].[!@#$%^&*]" +
 			", [bad table].s1mple_unquoted"

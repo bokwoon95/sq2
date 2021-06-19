@@ -269,7 +269,6 @@ func Sprintf(dialect string, query string, args []interface{}) (string, error) {
 }
 
 func EscapeQuote(str string, quote byte) string {
-	escapedQuote := string([]byte{quote, quote})
 	i := strings.IndexByte(str, quote)
 	if i < 0 {
 		return str
@@ -280,6 +279,7 @@ func EscapeQuote(str string, quote byte) string {
 		bufpool.Put(buf)
 	}()
 	buf.Grow(len(str))
+	escapedQuote := string([]byte{quote, quote})
 	for i >= 0 {
 		buf.WriteString(str[:i] + escapedQuote)
 		if len(str[i:]) > 2 && str[i:i+2] == escapedQuote {

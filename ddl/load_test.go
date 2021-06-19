@@ -9,7 +9,7 @@ import (
 
 func Test_LoadTable(t *testing.T) {
 	is := testutil.New(t)
-	const dialect = "postgres"
+	const dialect = "mysql"
 	ACTOR := NEW_ACTOR(dialect, "")
 	m := NewMetadata(dialect)
 	err := m.LoadTable(ACTOR)
@@ -18,7 +18,7 @@ func Test_LoadTable(t *testing.T) {
 	wantTable := ACTOR_TABLE(dialect)
 	gotTable := m.Schemas[0].Tables[0]
 	is.Equal(wantTable, gotTable)
-	str, err := gotTable.ToSQL(dialect)
+	str, err := CreateTable(dialect, gotTable, IncludeConstraints|IncludeIndices)
 	is.NoErr(err)
 	fmt.Println(str)
 }

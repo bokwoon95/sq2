@@ -342,6 +342,7 @@ type Constraint struct {
 	CheckExpr           string
 	IsDeferrable        bool
 	IsInitiallyDeferred bool
+	Comment             string
 }
 
 type Index struct {
@@ -355,6 +356,7 @@ type Index struct {
 	Exprs       []string
 	Include     []string
 	Predicate   string
+	Comment     string
 }
 
 type View struct {
