@@ -39,21 +39,22 @@ func CreateTable(dialect string, tbl Table) (string, error) {
 			return buf.String(), err
 		}
 	}
-	if dialect == sq.DialectSQLite {
-		var newlineWritten bool
-		for _, constraint := range tbl.Constraints {
-			if constraint.ConstraintType == PRIMARY_KEY && len(constraint.Columns) == 1 {
-				continue
-			}
-			if !newlineWritten {
-				buf.WriteString("\n")
-				newlineWritten = true
-			}
-			buf.WriteString("\n    ,CONSTRAINT ")
-			err := createConstraint(dialect, buf, constraint)
-			if err != nil {
-				return buf.String(), err
-			}
+	var newlineWritten bool
+	for _, constraint := range tbl.Constraints {
+		if dialect == sq.DialectSQLite && constraint.ConstraintType == PRIMARY_KEY && len(constraint.Columns) == 1 {
+			continue
+		}
+		if dialect != sq.DialectSQLite && constraint.ConstraintType == FOREIGN_KEY {
+			continue
+		}
+		if !newlineWritten {
+			buf.WriteString("\n")
+			newlineWritten = true
+		}
+		buf.WriteString("\n    ,CONSTRAINT ")
+		err := createConstraint(dialect, buf, constraint)
+		if err != nil {
+			return buf.String(), err
 		}
 	}
 	buf.WriteString("\n);")
