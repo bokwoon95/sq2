@@ -23,6 +23,9 @@ func makeDDL(is testutil.I, dialect string, table sq.Table) (ddl string) {
 	buf.WriteString(str)
 	if dialect != sq.DialectSQLite {
 		for _, constraint := range tbl.Constraints {
+			if constraint.ConstraintType != FOREIGN_KEY {
+				continue
+			}
 			buf.WriteString("\n")
 			str, err := CreateConstraint(dialect, constraint)
 			is.NoErr(err)
