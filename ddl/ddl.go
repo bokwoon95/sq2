@@ -199,7 +199,6 @@ type Table struct {
 	Constraints      []Constraint
 	Indices          []Index
 	Modifiers        string
-	Comment          string
 	columnsCache     map[string]int
 	constraintsCache map[string]int
 	indicesCache     map[string]int
@@ -324,7 +323,6 @@ type Column struct {
 	CollationName            string
 	ColumnDefault            string
 	Modifiers                string
-	Comment                  string
 	Ignore                   bool
 }
 
@@ -344,7 +342,6 @@ type Constraint struct {
 	CheckExpr           string
 	IsDeferrable        bool
 	IsInitiallyDeferred bool
-	Comment             string
 }
 
 type Index struct {
@@ -358,7 +355,6 @@ type Index struct {
 	Exprs       []string
 	Include     []string
 	Predicate   string
-	Comment     string
 }
 
 type View struct {

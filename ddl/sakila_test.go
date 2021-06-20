@@ -4,6 +4,9 @@ import (
 	"github.com/bokwoon95/sq"
 )
 
+// TODO: rewrite DDL signature to take in a context.Context
+// Or ... alternatively provide a DDLContexter interface that takes precedence over DDLer. Which is better design?
+
 func NEW_ACTOR(dialect, alias string) ACTOR {
 	var tbl ACTOR
 	switch dialect {
