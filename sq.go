@@ -159,6 +159,10 @@ func explodeSlice(dialect string, buf *bytes.Buffer, args *[]interface{}, params
 }
 
 func QuoteIdentifier(dialect string, identifier string) string {
+	// TODO: think about doing away this function entirely. People shouldn't be
+	// using non-standaed identifier names at all. All it's doing is slowing
+	// down the happy path, which is that identifier names aren't quoted.  The
+	// other alternative is to always quote all identifiers.
 	var needsQuoting bool
 	// TODO: Run each loop iteration in parallel. Wait for the first "success"
 	// (finding a character that warrants quoting), then terminate the rest of

@@ -159,6 +159,9 @@ func CreateTable(dialect string, tbl Table) (string, error) {
 }
 
 func CreateConstraint(dialect string, constraint Constraint) (string, error) {
+	if dialect == sq.DialectSQLite {
+		return "", fmt.Errorf("ddl: SQLite does not allow the creating of constraints separately")
+	}
 	buf := bufpool.Get().(*bytes.Buffer)
 	defer func() {
 		buf.Reset()
@@ -211,6 +214,48 @@ func CreateConstraint(dialect string, constraint Constraint) (string, error) {
 		} else {
 			buf.WriteString(" INITIALLY IMMEDIATE")
 		}
+	}
+	buf.WriteString(";")
+	return buf.String(), nil
+}
+
+func CreateIndex(dialect string, index Index) (string, error) {
+	buf := bufpool.Get().(*bytes.Buffer)
+	defer func() {
+		buf.Reset()
+		bufpool.Put(buf)
+	}()
+	buf.WriteString("CREATE")
+	if dialect == sq.DialectMySQL && (index.IndexType == "FULLTEXT" || index.IndexType == "SPATIAL") {
+		buf.WriteString(" " + index.IndexType)
+	} else if index.IsUnique {
+		buf.WriteString(" UNIQUE")
+	}
+	buf.WriteString(" INDEX " + index.IndexName + " ON ")
+	if index.TableSchema != "" {
+		buf.WriteString(sq.QuoteIdentifier(dialect, index.TableSchema) + ".")
+	}
+	buf.WriteString(sq.QuoteIdentifier(dialect, index.TableName))
+	if index.IndexType != "" && !strings.EqualFold(index.IndexType, "BTREE") {
+		buf.WriteString(" USING " + index.IndexType)
+	}
+	buf.WriteString(" (")
+	for i, column := range index.Columns {
+		if i > 0 {
+			buf.WriteString(", ")
+		}
+		if column != "" {
+			buf.WriteString(column)
+		} else {
+			buf.WriteString("(" + index.Exprs[i] + ")")
+		}
+	}
+	buf.WriteString(")")
+	if len(index.Include) > 0 && dialect == sq.DialectPostgres {
+		buf.WriteString(" INCLUDE (" + strings.Join(index.Include, ", ") + ")")
+	}
+	if index.Predicate != "" && (dialect == sq.DialectPostgres || dialect == sq.DialectSQLite) {
+		buf.WriteString(" WHERE " + index.Predicate)
 	}
 	buf.WriteString(";")
 	return buf.String(), nil

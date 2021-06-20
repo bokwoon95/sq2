@@ -12,8 +12,7 @@ func NEW_ACTOR(dialect, alias string) ACTOR {
 	case sq.DialectMySQL:
 		tbl.GenericTable.TableSchema = "db"
 	}
-	_ = sq.ReflectTable(&tbl)
-	tbl.GenericTable.TableAlias = alias
+	_ = sq.ReflectTable(&tbl, alias)
 	return tbl
 }
 
@@ -74,8 +73,7 @@ func NEW_CATEGORY(dialect, alias string) CATEGORY {
 	case sq.DialectMySQL:
 		tbl.GenericTable.TableSchema = "db"
 	}
-	_ = sq.ReflectTable(&tbl)
-	tbl.GenericTable.TableAlias = alias
+	_ = sq.ReflectTable(&tbl, alias)
 	return tbl
 }
 
@@ -106,8 +104,7 @@ func NEW_COUNTRY(dialect, alias string) COUNTRY {
 	case sq.DialectMySQL:
 		tbl.GenericTable.TableSchema = "db"
 	}
-	_ = sq.ReflectTable(&tbl)
-	tbl.GenericTable.TableAlias = alias
+	_ = sq.ReflectTable(&tbl, alias)
 	return tbl
 }
 
@@ -139,8 +136,7 @@ func NEW_CITY(dialect, alias string) CITY {
 	case sq.DialectMySQL:
 		tbl.GenericTable.TableSchema = "db"
 	}
-	_ = sq.ReflectTable(&tbl)
-	tbl.GenericTable.TableAlias = alias
+	_ = sq.ReflectTable(&tbl, alias)
 	return tbl
 }
 
@@ -180,8 +176,7 @@ func NEW_ADDRESS(dialect, alias string) ADDRESS {
 	case sq.DialectMySQL:
 		tbl.GenericTable.TableSchema = "db"
 	}
-	_ = sq.ReflectTable(&tbl)
-	tbl.GenericTable.TableAlias = alias
+	_ = sq.ReflectTable(&tbl, alias)
 	return tbl
 }
 
@@ -212,8 +207,7 @@ func NEW_LANGUAGE(dialect, alias string) LANGUAGE {
 	case sq.DialectMySQL:
 		tbl.GenericTable.TableSchema = "db"
 	}
-	_ = sq.ReflectTable(&tbl)
-	tbl.GenericTable.TableAlias = alias
+	_ = sq.ReflectTable(&tbl, alias)
 	return tbl
 }
 
@@ -267,8 +261,7 @@ func NEW_FILM(dialect, alias string) FILM {
 	case sq.DialectMySQL:
 		tbl.GenericTable.TableSchema = "db"
 	}
-	_ = sq.ReflectTable(&tbl)
-	tbl.GenericTable.TableAlias = alias
+	_ = sq.ReflectTable(&tbl, alias)
 	return tbl
 }
 
@@ -298,8 +291,7 @@ func NEW_FILM_TEXT(dialect, alias string) FILM_TEXT {
 	case sq.DialectMySQL:
 		tbl.GenericTable.TableSchema = "db"
 	}
-	_ = sq.ReflectTable(&tbl)
-	tbl.GenericTable.TableAlias = alias
+	_ = sq.ReflectTable(&tbl, alias)
 	return tbl
 }
 
@@ -328,8 +320,7 @@ func NEW_FILM_ACTOR(dialect, alias string) FILM_ACTOR {
 	case sq.DialectMySQL:
 		tbl.GenericTable.TableSchema = "db"
 	}
-	_ = sq.ReflectTable(&tbl)
-	tbl.GenericTable.TableAlias = alias
+	_ = sq.ReflectTable(&tbl, alias)
 	return tbl
 }
 
@@ -357,8 +348,7 @@ func NEW_FILM_CATEGORY(dialect, alias string) FILM_CATEGORY {
 	case sq.DialectMySQL:
 		tbl.GenericTable.TableSchema = "db"
 	}
-	_ = sq.ReflectTable(&tbl)
-	tbl.GenericTable.TableAlias = alias
+	_ = sq.ReflectTable(&tbl, alias)
 	return tbl
 }
 
@@ -402,8 +392,7 @@ func NEW_STAFF(dialect, alias string) STAFF {
 	case sq.DialectMySQL:
 		tbl.GenericTable.TableSchema = "db"
 	}
-	_ = sq.ReflectTable(&tbl)
-	tbl.GenericTable.TableAlias = alias
+	_ = sq.ReflectTable(&tbl, alias)
 	return tbl
 }
 
@@ -434,8 +423,7 @@ func NEW_STORE(dialect, alias string) STORE {
 	case sq.DialectMySQL:
 		tbl.GenericTable.TableSchema = "db"
 	}
-	_ = sq.ReflectTable(&tbl)
-	tbl.GenericTable.TableAlias = alias
+	_ = sq.ReflectTable(&tbl, alias)
 	return tbl
 }
 
@@ -477,8 +465,7 @@ func NEW_CUSTOMER(dialect, alias string) CUSTOMER {
 	case sq.DialectMySQL:
 		tbl.GenericTable.TableSchema = "db"
 	}
-	_ = sq.ReflectTable(&tbl)
-	tbl.GenericTable.TableAlias = alias
+	_ = sq.ReflectTable(&tbl, alias)
 	return tbl
 }
 
@@ -509,8 +496,7 @@ func NEW_INVENTORY(dialect, alias string) INVENTORY {
 	case sq.DialectMySQL:
 		tbl.GenericTable.TableSchema = "db"
 	}
-	_ = sq.ReflectTable(&tbl)
-	tbl.GenericTable.TableAlias = alias
+	_ = sq.ReflectTable(&tbl, alias)
 	return tbl
 }
 
@@ -546,8 +532,7 @@ func NEW_RENTAL(dialect, alias string) RENTAL {
 	case sq.DialectMySQL:
 		tbl.GenericTable.TableSchema = "db"
 	}
-	_ = sq.ReflectTable(&tbl)
-	tbl.GenericTable.TableAlias = alias
+	_ = sq.ReflectTable(&tbl, alias)
 	return tbl
 }
 
@@ -580,8 +565,7 @@ func NEW_PAYMENT(dialect, alias string) PAYMENT {
 	case sq.DialectMySQL:
 		tbl.GenericTable.TableSchema = "db"
 	}
-	_ = sq.ReflectTable(&tbl)
-	tbl.GenericTable.TableAlias = alias
+	_ = sq.ReflectTable(&tbl, alias)
 	return tbl
 }
 
@@ -636,8 +620,7 @@ func NEW_DUMMY_TABLE(dialect, alias string) DUMMY_TABLE {
 	case sq.DialectMySQL:
 		tbl.GenericTable.TableSchema = "db"
 	}
-	_ = sq.ReflectTable(&tbl)
-	tbl.GenericTable.TableAlias = alias
+	_ = sq.ReflectTable(&tbl, alias)
 	return tbl
 }
 
@@ -660,7 +643,6 @@ func NEW_DUMMY_TABLE_2(dialect, alias string) DUMMY_TABLE_2 {
 	case sq.DialectMySQL:
 		tbl.GenericTable.TableSchema = "db"
 	}
-	_ = sq.ReflectTable(&tbl)
-	tbl.GenericTable.TableAlias = alias
+	_ = sq.ReflectTable(&tbl, alias)
 	return tbl
 }

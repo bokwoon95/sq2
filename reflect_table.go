@@ -8,7 +8,7 @@ import (
 	"unicode/utf8"
 )
 
-func ReflectTable(table Table) error {
+func ReflectTable(table Table, alias string) error {
 	ptrvalue := reflect.ValueOf(table)
 	typ := ptrvalue.Type()
 	if typ.Kind() != reflect.Ptr {
@@ -53,6 +53,7 @@ func ReflectTable(table Table) error {
 	if genericTable.TableName == "" {
 		genericTable.TableName = strings.ToLower(typ.Name())
 	}
+	genericTable.TableAlias = alias
 	value.Field(0).Set(reflect.ValueOf(genericTable))
 	for i := 1; i < value.NumField(); i++ {
 		v := value.Field(i)
