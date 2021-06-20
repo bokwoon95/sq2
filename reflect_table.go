@@ -46,7 +46,7 @@ func ReflectTable(table Table, alias string) error {
 		}
 		if genericTable.TableName == "" {
 			if i, ok := modifierIndex["name"]; ok {
-				genericTable.TableSchema = modifiers[i][1]
+				genericTable.TableName = modifiers[i][1]
 			}
 		}
 	}
