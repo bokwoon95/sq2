@@ -18,12 +18,12 @@ DROP TABLE IF EXISTS category;
 DROP TABLE IF EXISTS actor;
 
 CREATE TABLE actor (
-    actor_id INTEGER PRIMARY KEY
+    actor_id INTEGER PRIMARY KEY AUTOINCREMENT
     ,first_name TEXT NOT NULL
     ,last_name TEXT NOT NULL
     ,full_name TEXT GENERATED ALWAYS AS (first_name || ' ' || last_name) VIRTUAL
     ,full_name_reversed TEXT GENERATED ALWAYS AS (last_name || ' ' || first_name) STORED
-    ,last_update DATETIME DEFAULT (DATETIME('now')) NOT NULL
+    ,last_update DATETIME NOT NULL DEFAULT (DATETIME('now'))
 );
 
 CREATE INDEX actor_last_name_idx ON actor (last_name);
