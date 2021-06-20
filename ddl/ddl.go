@@ -316,6 +316,8 @@ type Column struct {
 	Identity                 string
 	Autoincrement            bool
 	IsNotNull                bool
+	IsUnique                 bool
+	IsPrimaryKey             bool
 	OnUpdateCurrentTimestamp bool
 	GeneratedExpr            string
 	GeneratedExprStored      bool

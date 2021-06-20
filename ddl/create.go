@@ -58,6 +58,7 @@ func createColumn(dialect string, buf *bytes.Buffer, column Column, alterTable b
 	if column.ColumnType != "" {
 		buf.WriteString(" " + column.ColumnType)
 	}
+	// NOT NULL -> DEFAULT -> PRIMARY KEY -> AUTO_INCREMENT -> GENERATED
 	var isGenerated bool
 	if column.Identity != "" && dialect != sq.DialectMySQL && dialect != sq.DialectSQLite {
 		buf.WriteString(" GENERATED " + column.Identity)
