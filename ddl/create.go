@@ -34,46 +34,9 @@ func CreateTable(dialect string, tbl Table) (string, error) {
 		} else {
 			buf.WriteString(",")
 		}
-		buf.WriteString(sq.QuoteIdentifier(dialect, column.ColumnName))
-		if column.ColumnType != "" {
-			buf.WriteString(" " + column.ColumnType)
-		}
-		var isGenerated bool
-		if column.Identity != "" && dialect != sq.DialectMySQL && dialect != sq.DialectSQLite {
-			buf.WriteString(" GENERATED " + column.Identity)
-		} else if column.Autoincrement && (dialect == sq.DialectMySQL || dialect == sq.DialectSQLite) {
-			switch dialect {
-			case sq.DialectMySQL:
-				buf.WriteString(" AUTO_INCREMENT")
-			case sq.DialectSQLite:
-				buf.WriteString(" AUTOINCREMENT")
-			}
-		} else if column.GeneratedExpr != "" {
-			isGenerated = true
-			buf.WriteString(" GENERATED ALWAYS AS (" + column.GeneratedExpr + ")") // TODO: c.GeneratedExprStored has to be sanitized and escaped
-			// postgres defaults to STORED because it does not support virtual generated columns
-			if column.GeneratedExprStored || dialect == sq.DialectPostgres {
-				buf.WriteString(" STORED")
-			} else {
-				buf.WriteString(" VIRTUAL")
-			}
-		}
-		if column.IsNotNull {
-			buf.WriteString(" NOT NULL")
-		}
-		if column.ColumnDefault != "" && !isGenerated {
-			buf.WriteString(" DEFAULT (" + column.ColumnDefault + ")") // TODO: c.ColumnDefault has to be sanitized and escaped
-		}
-		if column.OnUpdateCurrentTimestamp && dialect == sq.DialectMySQL && !isGenerated {
-			buf.WriteString(" ON UPDATE CURRENT_TIMESTAMP")
-		}
-		if column.CollationName != "" {
-			switch dialect {
-			case sq.DialectPostgres:
-				buf.WriteString(` COLLATE "` + sq.EscapeQuote(column.CollationName, '"') + `"`) // postgres collation names need double quotes (idk why)
-			default:
-				buf.WriteString(" COLLATE " + column.CollationName) // TODO: c.CollationName has to be sanitized and escaped
-			}
+		err := createColumn(dialect, buf, column)
+		if err != nil {
+			return buf.String(), err
 		}
 	}
 	if dialect == sq.DialectSQLite {
@@ -125,36 +88,70 @@ func CreateTable(dialect string, tbl Table) (string, error) {
 			}
 		}
 	}
-	if false && dialect == sq.DialectMySQL { // move this into its own CreateIndex function
-		for _, index := range tbl.Indices {
-			buf.WriteString("\n    ,")
-			switch index.IndexType {
-			case "FULLTEXT", "SPATIAL":
-				buf.WriteString(index.IndexType + " INDEX " + index.IndexName)
-			default:
-				if index.IsUnique {
-					buf.WriteString("UNIQUE ")
-				}
-				buf.WriteString("INDEX " + index.IndexName)
-				if index.IndexType != "" && !strings.EqualFold(index.IndexType, "BTREE") {
-					buf.WriteString(" USING " + index.IndexType)
-				}
-				buf.WriteString(" (")
-				for j, column := range index.Columns {
-					if j > 0 {
-						buf.WriteString(", ")
-					}
-					if column != "" {
-						buf.WriteString(column)
-					} else {
-						buf.WriteString("(" + index.Exprs[j] + ")")
-					}
-				}
-				buf.WriteString(")")
-			}
+	buf.WriteString("\n);")
+	return buf.String(), nil
+}
+
+func createColumn(dialect string, buf *bytes.Buffer, column Column) error {
+	buf.WriteString(sq.QuoteIdentifier(dialect, column.ColumnName))
+	if column.ColumnType != "" {
+		buf.WriteString(" " + column.ColumnType)
+	}
+	var isGenerated bool
+	if column.Identity != "" && dialect != sq.DialectMySQL && dialect != sq.DialectSQLite {
+		buf.WriteString(" GENERATED " + column.Identity)
+	} else if column.Autoincrement && (dialect == sq.DialectMySQL || dialect == sq.DialectSQLite) {
+		switch dialect {
+		case sq.DialectMySQL:
+			buf.WriteString(" AUTO_INCREMENT")
+		case sq.DialectSQLite:
+			buf.WriteString(" AUTOINCREMENT")
+		}
+	} else if column.GeneratedExpr != "" {
+		isGenerated = true
+		buf.WriteString(" GENERATED ALWAYS AS (" + column.GeneratedExpr + ")") // TODO: c.GeneratedExprStored has to be sanitized and escaped
+		// postgres defaults to STORED because it does not support virtual generated columns
+		if column.GeneratedExprStored || dialect == sq.DialectPostgres {
+			buf.WriteString(" STORED")
+		} else {
+			buf.WriteString(" VIRTUAL")
 		}
 	}
-	buf.WriteString("\n);")
+	if column.IsNotNull {
+		buf.WriteString(" NOT NULL")
+	}
+	if column.ColumnDefault != "" && !isGenerated {
+		buf.WriteString(" DEFAULT (" + column.ColumnDefault + ")") // TODO: c.ColumnDefault has to be sanitized and escaped
+	}
+	if column.OnUpdateCurrentTimestamp && dialect == sq.DialectMySQL && !isGenerated {
+		buf.WriteString(" ON UPDATE CURRENT_TIMESTAMP")
+	}
+	if column.CollationName != "" {
+		switch dialect {
+		case sq.DialectPostgres:
+			buf.WriteString(` COLLATE "` + sq.EscapeQuote(column.CollationName, '"') + `"`) // postgres collation names need double quotes (idk why)
+		default:
+			buf.WriteString(" COLLATE " + column.CollationName) // TODO: c.CollationName has to be sanitized and escaped
+		}
+	}
+	return nil
+}
+
+func CreateColumn(dialect string, column Column) (string, error) {
+	buf := bufpool.Get().(*bytes.Buffer)
+	defer func() {
+		buf.Reset()
+		bufpool.Put(buf)
+	}()
+	buf.WriteString("ALTER TABLE ")
+	if column.TableSchema != "" {
+		buf.WriteString(sq.QuoteIdentifier(dialect, column.TableSchema) + ".")
+	}
+	buf.WriteString(sq.QuoteIdentifier(dialect, column.TableName) + " ADD COLUMN " + sq.QuoteIdentifier(dialect, column.ColumnName))
+	err := createColumn(dialect, buf, column)
+	if err != nil {
+		return buf.String(), err
+	}
 	return buf.String(), nil
 }
 
