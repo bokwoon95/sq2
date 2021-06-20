@@ -1167,7 +1167,7 @@ type DUMMY_TABLE struct {
 }
 
 func (tbl DUMMY_TABLE) DDL(dialect string, t *T) {
-	const indexName = "dummy_table_score_color_data_idx"
+	const indexName = "dummy_table_complex_expr_idx"
 	switch dialect {
 	case sq.DialectPostgres:
 		t.Column(tbl.COLOR).Collate("C")
@@ -1212,7 +1212,7 @@ const DUMMY_TABLE_SQLite = `CREATE TABLE dummy_table (
     ,CONSTRAINT dummy_table_score_positive_check CHECK (score > 0)
     ,CONSTRAINT dummy_table_score_id1_greater_than_check CHECK (score > id1)
 );
-CREATE INDEX dummy_table_score_color_data_idx ON dummy_table (score, (SUBSTR(color, 1, 2)), (color || ' abcd'), (CAST(JSON_EXTRACT(data, '$.age') AS INT))) WHERE color = 'red';`
+CREATE INDEX dummy_table_complex_expr_idx ON dummy_table (score, (SUBSTR(color, 1, 2)), (color || ' abcd'), (CAST(JSON_EXTRACT(data, '$.age') AS INT))) WHERE color = 'red';`
 
 const DUMMY_TABLE_Postgres = `CREATE TABLE public.dummy_table (
     id1 INT
@@ -1225,7 +1225,7 @@ ALTER TABLE public.dummy_table ADD CONSTRAINT dummy_table_id1_id2_pkey PRIMARY K
 ALTER TABLE public.dummy_table ADD CONSTRAINT dummy_table_score_color_key UNIQUE (score, color);
 ALTER TABLE public.dummy_table ADD CONSTRAINT dummy_table_score_positive_check CHECK (score > 0);
 ALTER TABLE public.dummy_table ADD CONSTRAINT dummy_table_score_id1_greater_than_check CHECK (score > id1);
-CREATE INDEX dummy_table_score_color_data_idx ON public.dummy_table (score, (SUBSTR(color, 1, 2)), (color || ' abcd'), ((data->>'age')::INT)) WHERE color = 'red';`
+CREATE INDEX dummy_table_complex_expr_idx ON public.dummy_table (score, (SUBSTR(color, 1, 2)), (color || ' abcd'), ((data->>'age')::INT)) WHERE color = 'red';`
 
 const DUMMY_TABLE_MySQL = `CREATE TABLE db.dummy_table (
     id1 INT
@@ -1238,7 +1238,7 @@ ALTER TABLE db.dummy_table ADD CONSTRAINT dummy_table_id1_id2_pkey PRIMARY KEY (
 ALTER TABLE db.dummy_table ADD CONSTRAINT dummy_table_score_color_key UNIQUE (score, color);
 ALTER TABLE db.dummy_table ADD CONSTRAINT dummy_table_score_positive_check CHECK (score > 0);
 ALTER TABLE db.dummy_table ADD CONSTRAINT dummy_table_score_id1_greater_than_check CHECK (score > id1);
-CREATE INDEX dummy_table_score_color_data_idx ON db.dummy_table (score, (SUBSTR(color, 1, 2)), (CONCAT(color, ' abcd')), (CAST(data->>'$.age' AS SIGNED)));`
+CREATE INDEX dummy_table_complex_expr_idx ON db.dummy_table (score, (SUBSTR(color, 1, 2)), (CONCAT(color, ' abcd')), (CAST(data->>'$.age' AS SIGNED)));`
 
 func NEW_DUMMY_TABLE_2(dialect, alias string) DUMMY_TABLE_2 {
 	var tbl DUMMY_TABLE_2
