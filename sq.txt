@@ -20,3 +20,8 @@ By running the AfterQuery Hook with a transaction, it gives you the ability to r
 The only downside is if you modify the SELECTed column list before it hits the database, then whatever comes back will most likely cause the rowmapper to panic.
 
 sq README needs a FAQ section, just like how Maddy mail server does. I naturally gravitaed towards the FAQ link in order to learn more about maddy, and was able to learn so much it just from reading the FAQ alone.
+
+row.Close() instead of row.Return() or row.Exit() with runtime.Goexit() shenanigans, because row.Close() can be orthogonal across Fetch, FetchOne and FetchSlice.
+That is, instead of terminating the function there and then you simply mark the row iteration as complete and that subsequent row iterations should not occur.
+
+How much slower is checking before quoting an identifier compared to just quoting it? Need to run some benchmarks, decide if it's worth it.

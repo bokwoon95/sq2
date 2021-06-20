@@ -100,7 +100,7 @@ func (m *Metadata) LoadTable(table sq.Table) (err error) {
 	}
 	for i := 1; i < tableValue.NumField(); i++ {
 		field, ok := tableValue.Field(i).Interface().(sq.Field)
-		if !ok || field == nil {
+		if !ok {
 			continue
 		}
 		columnName := field.GetName()
@@ -291,7 +291,7 @@ func (tbl *Table) LoadConstraint(constraintType, tableSchema, tableName string, 
 			default:
 				return fmt.Errorf("unknown value '%s' for 'references.ondelete' modifier", modifier[1])
 			}
-		case "expr":
+		case "check":
 			constraint.CheckExpr = modifier[1]
 		case "deferrable":
 			constraint.IsDeferrable = true

@@ -8,17 +8,7 @@ import (
 	"github.com/bokwoon95/sq"
 )
 
-type IncludeOption int
-
-const (
-	IncludeConstraints IncludeOption = 1 << iota
-	IncludeIndices
-	IncludeTableComment
-	IncludeColumnComments
-	IncludeIndexComments
-)
-
-func CreateTable(dialect string, tbl Table, opt IncludeOption) (string, error) {
+func CreateTable(dialect string, tbl Table) (string, error) {
 	buf := bufpool.Get().(*bytes.Buffer)
 	defer func() {
 		buf.Reset()
@@ -88,9 +78,9 @@ func CreateTable(dialect string, tbl Table, opt IncludeOption) (string, error) {
 		if column.CollationName != "" {
 			switch dialect {
 			case sq.DialectPostgres:
-				buf.WriteString(` "` + sq.EscapeQuote(column.CollationName, '"') + `"`) // postgres collation names need double quotes (idk why)
+				buf.WriteString(` COLLATE "` + sq.EscapeQuote(column.CollationName, '"') + `"`) // postgres collation names need double quotes (idk why)
 			default:
-				buf.WriteString(" " + column.CollationName) // TODO: c.CollationName has to be sanitized and escaped
+				buf.WriteString(" COLLATE " + column.CollationName) // TODO: c.CollationName has to be sanitized and escaped
 			}
 		}
 		if column.OnUpdateCurrentTimestamp {
@@ -99,18 +89,10 @@ func CreateTable(dialect string, tbl Table, opt IncludeOption) (string, error) {
 				buf.WriteString(" ON UPDATE CURRENT_TIMESTAMP")
 			}
 		}
-		if column.Comment != "" && dialect == sq.DialectMySQL && IncludeColumnComments&opt != 0 {
-			buf.WriteString(" COMMENT '" + sq.EscapeQuote(column.Comment, '\'') + "'")
-		}
 	}
 	var newlined bool
-	if IncludeConstraints&opt != 0 {
+	if dialect == sq.DialectSQLite {
 		for _, constraint := range tbl.Constraints {
-			switch constraint.ConstraintType {
-			case PRIMARY_KEY, FOREIGN_KEY, UNIQUE, CHECK:
-			default:
-				continue // ignore unrecognized constraint types
-			}
 			if !newlined {
 				buf.WriteString("\n")
 				newlined = true
@@ -140,18 +122,17 @@ func CreateTable(dialect string, tbl Table, opt IncludeOption) (string, error) {
 			case CHECK:
 				buf.WriteString(" (" + constraint.CheckExpr + ")")
 			}
-			if !constraint.IsDeferrable {
-				continue
-			}
-			buf.WriteString(" DEFERRABLE")
-			if !constraint.IsInitiallyDeferred {
-				buf.WriteString(" INITIALLY IMMEDIATE")
-			} else {
-				buf.WriteString(" INITIALLY DEFERRED")
+			if constraint.IsDeferrable {
+				buf.WriteString(" DEFERRABLE")
+				if constraint.IsInitiallyDeferred {
+					buf.WriteString(" INITIALLY DEFERRED")
+				} else {
+					buf.WriteString(" INITIALLY IMMEDIATE")
+				}
 			}
 		}
 	}
-	if IncludeIndices&opt != 0 && dialect == sq.DialectMySQL {
+	if false && dialect == sq.DialectMySQL { // move this into its own CreateIndex function
 		if !newlined {
 			buf.WriteString("\n")
 			newlined = true
@@ -181,12 +162,56 @@ func CreateTable(dialect string, tbl Table, opt IncludeOption) (string, error) {
 					}
 				}
 				buf.WriteString(")")
-				if index.Comment != "" && IncludeIndexComments&opt != 0 {
-					buf.WriteString(" COMMENT '" + sq.EscapeQuote(index.Comment, '\'') + "'")
-				}
 			}
 		}
 	}
 	buf.WriteString("\n);")
+	return buf.String(), nil
+}
+
+func CreateConstraint(dialect string, constraint Constraint) (string, error) {
+	buf := bufpool.Get().(*bytes.Buffer)
+	defer func() {
+		buf.Reset()
+		bufpool.Put(buf)
+	}()
+	buf.WriteString("ALTER TABLE ")
+	if constraint.TableSchema != "" {
+		buf.WriteString(sq.QuoteIdentifier(dialect, constraint.TableSchema) + ".")
+	}
+	buf.WriteString(sq.QuoteIdentifier(dialect, constraint.TableName) + " ADD CONSTRAINT " + constraint.ConstraintName + " " + constraint.ConstraintType)
+	switch constraint.ConstraintType {
+	case PRIMARY_KEY, UNIQUE:
+		buf.WriteString(" (" + strings.Join(constraint.Columns, ", ") + ")")
+	case FOREIGN_KEY:
+		buf.WriteString(" (" + strings.Join(constraint.Columns, ", ") + ") REFERENCES ")
+		if constraint.ReferencesSchema != "" {
+			buf.WriteString(constraint.ReferencesSchema + ".")
+		}
+		buf.WriteString(constraint.ReferencesTable)
+		if len(constraint.ReferencesColumns) > 0 {
+			buf.WriteString(" (" + strings.Join(constraint.ReferencesColumns, ", ") + ")")
+		}
+		if constraint.MatchOption != "" {
+			buf.WriteString(" " + constraint.MatchOption) // TODO: check for validity
+		}
+		if constraint.OnUpdate != "" {
+			buf.WriteString(" ON UPDATE " + constraint.OnUpdate) // TODO: check for validity
+		}
+		if constraint.OnDelete != "" {
+			buf.WriteString(" ON DELETE " + constraint.OnDelete) // TODO: check for validity
+		}
+	case CHECK:
+		buf.WriteString(" (" + constraint.CheckExpr + ")")
+	}
+	if constraint.IsDeferrable {
+		buf.WriteString(" DEFERRABLE")
+		if constraint.IsInitiallyDeferred {
+			buf.WriteString(" INITIALLY DEFERRED")
+		} else {
+			buf.WriteString(" INITIALLY IMMEDIATE")
+		}
+	}
+	buf.WriteString(";")
 	return buf.String(), nil
 }
