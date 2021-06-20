@@ -848,7 +848,7 @@ type CUSTOMER struct {
 	FIRST_NAME      sq.StringField  `ddl:"notnull"`
 	LAST_NAME       sq.StringField  `ddl:"notnull index"`
 	EMAIL           sq.StringField  `ddl:"unique"`
-	ADDRESS_ID      sq.NumberField  `ddl:"notnull references={address onupdate=cascade ondelete=restrict} index"`
+	ADDRESS_ID      sq.NumberField  `ddl:"notnull references={address.address_id onupdate=cascade ondelete=restrict} index"`
 	ACTIVE          sq.BooleanField `ddl:"default=TRUE notnull"`
 	DATA            sq.JSONField
 	CREATE_DATE     sq.TimeField `ddl:"default=DATETIME('now') notnull"`
@@ -885,7 +885,7 @@ const CUSTOMER_SQLite = `CREATE TABLE customer (
 
     ,CONSTRAINT customer_email_first_name_last_name_key UNIQUE (email, first_name, last_name)
     ,CONSTRAINT customer_email_key UNIQUE (email)
-    ,CONSTRAINT customer_address_id_fkey FOREIGN KEY (address_id) REFERENCES address ON UPDATE CASCADE ON DELETE RESTRICT
+    ,CONSTRAINT customer_address_id_fkey FOREIGN KEY (address_id) REFERENCES address (address_id) ON UPDATE CASCADE ON DELETE RESTRICT
 );
 CREATE INDEX customer_store_id_idx ON customer (store_id);
 CREATE INDEX customer_last_name_idx ON customer (last_name);
@@ -907,7 +907,7 @@ const CUSTOMER_Postgres = `CREATE TABLE public.customer (
     ,CONSTRAINT customer_customer_id_pkey PRIMARY KEY (customer_id)
     ,CONSTRAINT customer_email_key UNIQUE (email)
 );
-ALTER TABLE public.customer ADD CONSTRAINT customer_address_id_fkey FOREIGN KEY (address_id) REFERENCES address ON UPDATE CASCADE ON DELETE RESTRICT;
+ALTER TABLE public.customer ADD CONSTRAINT customer_address_id_fkey FOREIGN KEY (address_id) REFERENCES address (address_id) ON UPDATE CASCADE ON DELETE RESTRICT;
 CREATE INDEX customer_store_id_idx ON public.customer (store_id);
 CREATE INDEX customer_last_name_idx ON public.customer (last_name);
 CREATE INDEX customer_address_id_idx ON public.customer (address_id);`
@@ -928,7 +928,7 @@ const CUSTOMER_MySQL = `CREATE TABLE db.customer (
     ,CONSTRAINT customer_customer_id_pkey PRIMARY KEY (customer_id)
     ,CONSTRAINT customer_email_key UNIQUE (email)
 );
-ALTER TABLE db.customer ADD CONSTRAINT customer_address_id_fkey FOREIGN KEY (address_id) REFERENCES address ON UPDATE CASCADE ON DELETE RESTRICT;
+ALTER TABLE db.customer ADD CONSTRAINT customer_address_id_fkey FOREIGN KEY (address_id) REFERENCES address (address_id) ON UPDATE CASCADE ON DELETE RESTRICT;
 CREATE INDEX customer_store_id_idx ON db.customer (store_id);
 CREATE INDEX customer_last_name_idx ON db.customer (last_name);
 CREATE INDEX customer_address_id_idx ON db.customer (address_id);`
@@ -948,8 +948,8 @@ func NEW_INVENTORY(dialect, alias string) INVENTORY {
 type INVENTORY struct {
 	sq.GenericTable `sq:"name=inventory" ddl:"index={. cols=store_id,film_id}"`
 	INVENTORY_ID    sq.NumberField `ddl:"type=INTEGER primarykey"`
-	FILM_ID         sq.NumberField `ddl:"notnull references={film onupdate=cascade ondelete=restrict}"`
-	STORE_ID        sq.NumberField `ddl:"notnull references={store onupdate=cascade ondelete=restrict}"`
+	FILM_ID         sq.NumberField `ddl:"notnull references={film.film_id onupdate=cascade ondelete=restrict}"`
+	STORE_ID        sq.NumberField `ddl:"notnull references={store.store_id onupdate=cascade ondelete=restrict}"`
 	LAST_UPDATE     sq.TimeField   `ddl:"default=DATETIME('now') notnull"`
 }
 
@@ -970,8 +970,8 @@ const INVENTORY_SQLite = `CREATE TABLE inventory (
     ,store_id INT NOT NULL
     ,last_update DATETIME NOT NULL DEFAULT (DATETIME('now'))
 
-    ,CONSTRAINT inventory_film_id_fkey FOREIGN KEY (film_id) REFERENCES film ON UPDATE CASCADE ON DELETE RESTRICT
-    ,CONSTRAINT inventory_store_id_fkey FOREIGN KEY (store_id) REFERENCES store ON UPDATE CASCADE ON DELETE RESTRICT
+    ,CONSTRAINT inventory_film_id_fkey FOREIGN KEY (film_id) REFERENCES film (film_id) ON UPDATE CASCADE ON DELETE RESTRICT
+    ,CONSTRAINT inventory_store_id_fkey FOREIGN KEY (store_id) REFERENCES store (store_id) ON UPDATE CASCADE ON DELETE RESTRICT
 );
 CREATE INDEX inventory_store_id_film_id_idx ON inventory (store_id, film_id);`
 
@@ -983,8 +983,8 @@ const INVENTORY_Postgres = `CREATE TABLE public.inventory (
 
     ,CONSTRAINT inventory_inventory_id_pkey PRIMARY KEY (inventory_id)
 );
-ALTER TABLE public.inventory ADD CONSTRAINT inventory_film_id_fkey FOREIGN KEY (film_id) REFERENCES film ON UPDATE CASCADE ON DELETE RESTRICT;
-ALTER TABLE public.inventory ADD CONSTRAINT inventory_store_id_fkey FOREIGN KEY (store_id) REFERENCES store ON UPDATE CASCADE ON DELETE RESTRICT;
+ALTER TABLE public.inventory ADD CONSTRAINT inventory_film_id_fkey FOREIGN KEY (film_id) REFERENCES film (film_id) ON UPDATE CASCADE ON DELETE RESTRICT;
+ALTER TABLE public.inventory ADD CONSTRAINT inventory_store_id_fkey FOREIGN KEY (store_id) REFERENCES store (store_id) ON UPDATE CASCADE ON DELETE RESTRICT;
 CREATE INDEX inventory_store_id_film_id_idx ON public.inventory (store_id, film_id);`
 
 const INVENTORY_MySQL = `CREATE TABLE db.inventory (
@@ -995,8 +995,8 @@ const INVENTORY_MySQL = `CREATE TABLE db.inventory (
 
     ,CONSTRAINT inventory_inventory_id_pkey PRIMARY KEY (inventory_id)
 );
-ALTER TABLE db.inventory ADD CONSTRAINT inventory_film_id_fkey FOREIGN KEY (film_id) REFERENCES film ON UPDATE CASCADE ON DELETE RESTRICT;
-ALTER TABLE db.inventory ADD CONSTRAINT inventory_store_id_fkey FOREIGN KEY (store_id) REFERENCES store ON UPDATE CASCADE ON DELETE RESTRICT;
+ALTER TABLE db.inventory ADD CONSTRAINT inventory_film_id_fkey FOREIGN KEY (film_id) REFERENCES film (film_id) ON UPDATE CASCADE ON DELETE RESTRICT;
+ALTER TABLE db.inventory ADD CONSTRAINT inventory_store_id_fkey FOREIGN KEY (store_id) REFERENCES store (store_id) ON UPDATE CASCADE ON DELETE RESTRICT;
 CREATE INDEX inventory_store_id_film_id_idx ON db.inventory (store_id, film_id);`
 
 func NEW_RENTAL(dialect, alias string) RENTAL {
@@ -1015,10 +1015,10 @@ type RENTAL struct {
 	sq.GenericTable `ddl:"index={. cols=rental_date,inventory_id,customer_id unique}"`
 	RENTAL_ID       sq.NumberField `ddl:"type=INTEGER primarykey"`
 	RENTAL_DATE     sq.TimeField   `ddl:"notnull"`
-	INVENTORY_ID    sq.NumberField `ddl:"notnull index references={inventory onupdate=cascade ondelete=restrict}"`
-	CUSTOMER_ID     sq.NumberField `ddl:"notnull index references={customer onupdate=cascade ondelete=restrict}"`
+	INVENTORY_ID    sq.NumberField `ddl:"notnull index references={inventory.inventory_id onupdate=cascade ondelete=restrict}"`
+	CUSTOMER_ID     sq.NumberField `ddl:"notnull index references={customer.customer_id onupdate=cascade ondelete=restrict}"`
 	RETURN_DATE     sq.TimeField
-	STAFF_ID        sq.NumberField `ddl:"notnull index references={staff onupdate=cascade ondelete=restrict}"`
+	STAFF_ID        sq.NumberField `ddl:"notnull index references={staff.staff_id onupdate=cascade ondelete=restrict}"`
 	LAST_UPDATE     sq.TimeField   `ddl:"default=DATETIME('now') notnull"`
 }
 
@@ -1044,9 +1044,9 @@ const RENTAL_SQLite = `CREATE TABLE rental (
     ,staff_id INT NOT NULL
     ,last_update DATETIME NOT NULL DEFAULT (DATETIME('now'))
 
-    ,CONSTRAINT rental_inventory_id_fkey FOREIGN KEY (inventory_id) REFERENCES inventory ON UPDATE CASCADE ON DELETE RESTRICT
-    ,CONSTRAINT rental_customer_id_fkey FOREIGN KEY (customer_id) REFERENCES customer ON UPDATE CASCADE ON DELETE RESTRICT
-    ,CONSTRAINT rental_staff_id_fkey FOREIGN KEY (staff_id) REFERENCES staff ON UPDATE CASCADE ON DELETE RESTRICT
+    ,CONSTRAINT rental_inventory_id_fkey FOREIGN KEY (inventory_id) REFERENCES inventory (inventory_id) ON UPDATE CASCADE ON DELETE RESTRICT
+    ,CONSTRAINT rental_customer_id_fkey FOREIGN KEY (customer_id) REFERENCES customer (customer_id) ON UPDATE CASCADE ON DELETE RESTRICT
+    ,CONSTRAINT rental_staff_id_fkey FOREIGN KEY (staff_id) REFERENCES staff (staff_id) ON UPDATE CASCADE ON DELETE RESTRICT
 );
 CREATE UNIQUE INDEX rental_rental_date_inventory_id_customer_id_idx ON rental (rental_date, inventory_id, customer_id);
 CREATE INDEX rental_inventory_id_idx ON rental (inventory_id);
@@ -1064,9 +1064,9 @@ const RENTAL_Postgres = `CREATE TABLE public.rental (
 
     ,CONSTRAINT rental_rental_id_pkey PRIMARY KEY (rental_id)
 );
-ALTER TABLE public.rental ADD CONSTRAINT rental_inventory_id_fkey FOREIGN KEY (inventory_id) REFERENCES inventory ON UPDATE CASCADE ON DELETE RESTRICT;
-ALTER TABLE public.rental ADD CONSTRAINT rental_customer_id_fkey FOREIGN KEY (customer_id) REFERENCES customer ON UPDATE CASCADE ON DELETE RESTRICT;
-ALTER TABLE public.rental ADD CONSTRAINT rental_staff_id_fkey FOREIGN KEY (staff_id) REFERENCES staff ON UPDATE CASCADE ON DELETE RESTRICT;
+ALTER TABLE public.rental ADD CONSTRAINT rental_inventory_id_fkey FOREIGN KEY (inventory_id) REFERENCES inventory (inventory_id) ON UPDATE CASCADE ON DELETE RESTRICT;
+ALTER TABLE public.rental ADD CONSTRAINT rental_customer_id_fkey FOREIGN KEY (customer_id) REFERENCES customer (customer_id) ON UPDATE CASCADE ON DELETE RESTRICT;
+ALTER TABLE public.rental ADD CONSTRAINT rental_staff_id_fkey FOREIGN KEY (staff_id) REFERENCES staff (staff_id) ON UPDATE CASCADE ON DELETE RESTRICT;
 CREATE UNIQUE INDEX rental_rental_date_inventory_id_customer_id_idx ON public.rental (rental_date, inventory_id, customer_id);
 CREATE INDEX rental_inventory_id_idx ON public.rental (inventory_id);
 CREATE INDEX rental_customer_id_idx ON public.rental (customer_id);
@@ -1083,9 +1083,9 @@ const RENTAL_MySQL = `CREATE TABLE db.rental (
 
     ,CONSTRAINT rental_rental_id_pkey PRIMARY KEY (rental_id)
 );
-ALTER TABLE db.rental ADD CONSTRAINT rental_inventory_id_fkey FOREIGN KEY (inventory_id) REFERENCES inventory ON UPDATE CASCADE ON DELETE RESTRICT;
-ALTER TABLE db.rental ADD CONSTRAINT rental_customer_id_fkey FOREIGN KEY (customer_id) REFERENCES customer ON UPDATE CASCADE ON DELETE RESTRICT;
-ALTER TABLE db.rental ADD CONSTRAINT rental_staff_id_fkey FOREIGN KEY (staff_id) REFERENCES staff ON UPDATE CASCADE ON DELETE RESTRICT;
+ALTER TABLE db.rental ADD CONSTRAINT rental_inventory_id_fkey FOREIGN KEY (inventory_id) REFERENCES inventory (inventory_id) ON UPDATE CASCADE ON DELETE RESTRICT;
+ALTER TABLE db.rental ADD CONSTRAINT rental_customer_id_fkey FOREIGN KEY (customer_id) REFERENCES customer (customer_id) ON UPDATE CASCADE ON DELETE RESTRICT;
+ALTER TABLE db.rental ADD CONSTRAINT rental_staff_id_fkey FOREIGN KEY (staff_id) REFERENCES staff (staff_id) ON UPDATE CASCADE ON DELETE RESTRICT;
 CREATE UNIQUE INDEX rental_rental_date_inventory_id_customer_id_idx ON db.rental (rental_date, inventory_id, customer_id);
 CREATE INDEX rental_inventory_id_idx ON db.rental (inventory_id);
 CREATE INDEX rental_customer_id_idx ON db.rental (customer_id);
@@ -1106,9 +1106,9 @@ func NEW_PAYMENT(dialect, alias string) PAYMENT {
 type PAYMENT struct {
 	sq.GenericTable
 	PAYMENT_ID   sq.NumberField `ddl:"type=INTEGER primarykey"`
-	CUSTOMER_ID  sq.NumberField `ddl:"notnull index references={customer onupdate=cascade ondelete=restrict}"`
-	STAFF_ID     sq.NumberField `ddl:"notnull index references={staff onupdate=cascade ondelete=restrict}"`
-	RENTAL_ID    sq.NumberField `ddl:"references={rental onupdate=cascade ondelete=restrict}"`
+	CUSTOMER_ID  sq.NumberField `ddl:"notnull index references={customer.customer_id onupdate=cascade ondelete=restrict}"`
+	STAFF_ID     sq.NumberField `ddl:"notnull index references={staff.staff_id onupdate=cascade ondelete=restrict}"`
+	RENTAL_ID    sq.NumberField `ddl:"references={rental.rental_id onupdate=cascade ondelete=restrict}"`
 	AMOUNT       sq.NumberField `ddl:"type=DECIMAL(5,2) notnull"`
 	PAYMENT_DATE sq.TimeField   `ddl:"notnull"`
 }
@@ -1132,9 +1132,9 @@ const PAYMENT_SQLite = `CREATE TABLE payment (
     ,amount DECIMAL(5,2) NOT NULL
     ,payment_date DATETIME NOT NULL
 
-    ,CONSTRAINT payment_customer_id_fkey FOREIGN KEY (customer_id) REFERENCES customer ON UPDATE CASCADE ON DELETE RESTRICT
-    ,CONSTRAINT payment_staff_id_fkey FOREIGN KEY (staff_id) REFERENCES staff ON UPDATE CASCADE ON DELETE RESTRICT
-    ,CONSTRAINT payment_rental_id_fkey FOREIGN KEY (rental_id) REFERENCES rental ON UPDATE CASCADE ON DELETE RESTRICT
+    ,CONSTRAINT payment_customer_id_fkey FOREIGN KEY (customer_id) REFERENCES customer (customer_id) ON UPDATE CASCADE ON DELETE RESTRICT
+    ,CONSTRAINT payment_staff_id_fkey FOREIGN KEY (staff_id) REFERENCES staff (staff_id) ON UPDATE CASCADE ON DELETE RESTRICT
+    ,CONSTRAINT payment_rental_id_fkey FOREIGN KEY (rental_id) REFERENCES rental (rental_id) ON UPDATE CASCADE ON DELETE RESTRICT
 );
 CREATE INDEX payment_customer_id_idx ON payment (customer_id);
 CREATE INDEX payment_staff_id_idx ON payment (staff_id);`
@@ -1149,9 +1149,9 @@ const PAYMENT_Postgres = `CREATE TABLE public.payment (
 
     ,CONSTRAINT payment_payment_id_pkey PRIMARY KEY (payment_id)
 );
-ALTER TABLE public.payment ADD CONSTRAINT payment_customer_id_fkey FOREIGN KEY (customer_id) REFERENCES customer ON UPDATE CASCADE ON DELETE RESTRICT;
-ALTER TABLE public.payment ADD CONSTRAINT payment_staff_id_fkey FOREIGN KEY (staff_id) REFERENCES staff ON UPDATE CASCADE ON DELETE RESTRICT;
-ALTER TABLE public.payment ADD CONSTRAINT payment_rental_id_fkey FOREIGN KEY (rental_id) REFERENCES rental ON UPDATE CASCADE ON DELETE RESTRICT;
+ALTER TABLE public.payment ADD CONSTRAINT payment_customer_id_fkey FOREIGN KEY (customer_id) REFERENCES customer (customer_id) ON UPDATE CASCADE ON DELETE RESTRICT;
+ALTER TABLE public.payment ADD CONSTRAINT payment_staff_id_fkey FOREIGN KEY (staff_id) REFERENCES staff (staff_id) ON UPDATE CASCADE ON DELETE RESTRICT;
+ALTER TABLE public.payment ADD CONSTRAINT payment_rental_id_fkey FOREIGN KEY (rental_id) REFERENCES rental (rental_id) ON UPDATE CASCADE ON DELETE RESTRICT;
 CREATE INDEX payment_customer_id_idx ON public.payment (customer_id);
 CREATE INDEX payment_staff_id_idx ON public.payment (staff_id);`
 
@@ -1165,9 +1165,9 @@ const PAYMENT_MySQL = `CREATE TABLE db.payment (
 
     ,CONSTRAINT payment_payment_id_pkey PRIMARY KEY (payment_id)
 );
-ALTER TABLE db.payment ADD CONSTRAINT payment_customer_id_fkey FOREIGN KEY (customer_id) REFERENCES customer ON UPDATE CASCADE ON DELETE RESTRICT;
-ALTER TABLE db.payment ADD CONSTRAINT payment_staff_id_fkey FOREIGN KEY (staff_id) REFERENCES staff ON UPDATE CASCADE ON DELETE RESTRICT;
-ALTER TABLE db.payment ADD CONSTRAINT payment_rental_id_fkey FOREIGN KEY (rental_id) REFERENCES rental ON UPDATE CASCADE ON DELETE RESTRICT;
+ALTER TABLE db.payment ADD CONSTRAINT payment_customer_id_fkey FOREIGN KEY (customer_id) REFERENCES customer (customer_id) ON UPDATE CASCADE ON DELETE RESTRICT;
+ALTER TABLE db.payment ADD CONSTRAINT payment_staff_id_fkey FOREIGN KEY (staff_id) REFERENCES staff (staff_id) ON UPDATE CASCADE ON DELETE RESTRICT;
+ALTER TABLE db.payment ADD CONSTRAINT payment_rental_id_fkey FOREIGN KEY (rental_id) REFERENCES rental (rental_id) ON UPDATE CASCADE ON DELETE RESTRICT;
 CREATE INDEX payment_customer_id_idx ON db.payment (customer_id);
 CREATE INDEX payment_staff_id_idx ON db.payment (staff_id);`
 
