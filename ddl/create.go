@@ -34,7 +34,7 @@ func CreateTable(dialect string, tbl Table) (string, error) {
 		} else {
 			buf.WriteString(",")
 		}
-		err := createColumn(dialect, buf, column)
+		err := createColumn(dialect, buf, column, false)
 		if err != nil {
 			return buf.String(), err
 		}
@@ -42,49 +42,10 @@ func CreateTable(dialect string, tbl Table) (string, error) {
 	if dialect == sq.DialectSQLite {
 		buf.WriteString("\n")
 		for _, constraint := range tbl.Constraints {
-			buf.WriteString("\n    ,CONSTRAINT " + constraint.ConstraintName + " " + constraint.ConstraintType)
-			switch constraint.ConstraintType {
-			case PRIMARY_KEY, UNIQUE:
-				buf.WriteString(" (" + strings.Join(constraint.Columns, ", ") + ")")
-			case FOREIGN_KEY:
-				buf.WriteString(" (" + strings.Join(constraint.Columns, ", ") + ") REFERENCES ")
-				if constraint.ReferencesSchema != "" {
-					buf.WriteString(constraint.ReferencesSchema + ".")
-				}
-				buf.WriteString(constraint.ReferencesTable)
-				if len(constraint.ReferencesColumns) > 0 {
-					buf.WriteString(" (" + strings.Join(constraint.ReferencesColumns, ", ") + ")")
-				}
-				if constraint.MatchOption != "" {
-					buf.WriteString(" " + constraint.MatchOption) // TODO: check for validity
-				}
-				if constraint.OnUpdate != "" {
-					buf.WriteString(" ON UPDATE " + constraint.OnUpdate) // TODO: check for validity
-				}
-				if constraint.OnDelete != "" {
-					buf.WriteString(" ON DELETE " + constraint.OnDelete) // TODO: check for validity
-				}
-			case CHECK:
-				buf.WriteString(" (" + constraint.CheckExpr + ")")
-			}
-			var canDeferrable bool
-			switch dialect {
-			case sq.DialectPostgres:
-				if constraint.ConstraintType != CHECK {
-					canDeferrable = true
-				}
-			case sq.DialectSQLite:
-				if constraint.ConstraintType == FOREIGN_KEY {
-					canDeferrable = true
-				}
-			}
-			if canDeferrable && constraint.IsDeferrable {
-				buf.WriteString(" DEFERRABLE")
-				if constraint.IsInitiallyDeferred {
-					buf.WriteString(" INITIALLY DEFERRED")
-				} else {
-					buf.WriteString(" INITIALLY IMMEDIATE")
-				}
+			buf.WriteString("\n    ,CONSTRAINT ")
+			err := createConstraint(dialect, buf, constraint)
+			if err != nil {
+				return buf.String(), err
 			}
 		}
 	}
@@ -92,7 +53,7 @@ func CreateTable(dialect string, tbl Table) (string, error) {
 	return buf.String(), nil
 }
 
-func createColumn(dialect string, buf *bytes.Buffer, column Column) error {
+func createColumn(dialect string, buf *bytes.Buffer, column Column, alterTable bool) error {
 	buf.WriteString(sq.QuoteIdentifier(dialect, column.ColumnName))
 	if column.ColumnType != "" {
 		buf.WriteString(" " + column.ColumnType)
@@ -110,10 +71,12 @@ func createColumn(dialect string, buf *bytes.Buffer, column Column) error {
 	} else if column.GeneratedExpr != "" {
 		isGenerated = true
 		buf.WriteString(" GENERATED ALWAYS AS (" + column.GeneratedExpr + ")") // TODO: c.GeneratedExprStored has to be sanitized and escaped
-		// postgres defaults to STORED because it does not support virtual generated columns
-		if column.GeneratedExprStored || dialect == sq.DialectPostgres {
+		if column.GeneratedExprStored {
 			buf.WriteString(" STORED")
 		} else {
+			if dialect == sq.DialectPostgres {
+				return fmt.Errorf("Postgres does not support VIRTUAL generated columns")
+			}
 			buf.WriteString(" VIRTUAL")
 		}
 	}
@@ -121,7 +84,12 @@ func createColumn(dialect string, buf *bytes.Buffer, column Column) error {
 		buf.WriteString(" NOT NULL")
 	}
 	if column.ColumnDefault != "" && !isGenerated {
-		buf.WriteString(" DEFAULT (" + column.ColumnDefault + ")") // TODO: c.ColumnDefault has to be sanitized and escaped
+		// TODO: c.ColumnDefault has to be sanitized and escaped
+		if dialect == sq.DialectSQLite && alterTable {
+			buf.WriteString(" DEFAULT " + column.ColumnDefault)
+		} else {
+			buf.WriteString(" DEFAULT (" + column.ColumnDefault + ")")
+		}
 	}
 	if column.OnUpdateCurrentTimestamp && dialect == sq.DialectMySQL && !isGenerated {
 		buf.WriteString(" ON UPDATE CURRENT_TIMESTAMP")
@@ -148,30 +116,19 @@ func CreateColumn(dialect string, column Column) (string, error) {
 		buf.WriteString(sq.QuoteIdentifier(dialect, column.TableSchema) + ".")
 	}
 	buf.WriteString(sq.QuoteIdentifier(dialect, column.TableName) + " ADD COLUMN " + sq.QuoteIdentifier(dialect, column.ColumnName))
-	err := createColumn(dialect, buf, column)
+	err := createColumn(dialect, buf, column, true)
 	if err != nil {
 		return buf.String(), err
 	}
+	buf.WriteString(";")
 	return buf.String(), nil
 }
 
-func CreateConstraint(dialect string, constraint Constraint) (string, error) {
-	if dialect == sq.DialectSQLite {
-		return "", fmt.Errorf("ddl: SQLite does not allow the creating of constraints separately")
-	}
-	buf := bufpool.Get().(*bytes.Buffer)
-	defer func() {
-		buf.Reset()
-		bufpool.Put(buf)
-	}()
-	buf.WriteString("ALTER TABLE ")
-	if constraint.TableSchema != "" {
-		buf.WriteString(sq.QuoteIdentifier(dialect, constraint.TableSchema) + ".")
-	}
-	buf.WriteString(sq.QuoteIdentifier(dialect, constraint.TableName) + " ADD CONSTRAINT " + constraint.ConstraintName + " " + constraint.ConstraintType)
+func createConstraint(dialect string, buf *bytes.Buffer, constraint Constraint) error {
+	buf.WriteString(constraint.ConstraintName + " " + constraint.ConstraintType)
 	switch constraint.ConstraintType {
-	case PRIMARY_KEY, UNIQUE:
-		buf.WriteString(" (" + strings.Join(constraint.Columns, ", ") + ")")
+	case CHECK:
+		buf.WriteString(" (" + constraint.CheckExpr + ")")
 	case FOREIGN_KEY:
 		buf.WriteString(" (" + strings.Join(constraint.Columns, ", ") + ") REFERENCES ")
 		if constraint.ReferencesSchema != "" {
@@ -190,19 +147,14 @@ func CreateConstraint(dialect string, constraint Constraint) (string, error) {
 		if constraint.OnDelete != "" {
 			buf.WriteString(" ON DELETE " + constraint.OnDelete) // TODO: check for validity
 		}
-	case CHECK:
-		buf.WriteString(" (" + constraint.CheckExpr + ")")
+	default:
+		buf.WriteString(" (" + strings.Join(constraint.Columns, ", ") + ")")
 	}
 	var deferSupported bool
-	switch dialect {
-	case sq.DialectPostgres:
-		if constraint.ConstraintType != CHECK {
-			deferSupported = true
-		}
-	case sq.DialectSQLite:
-		if constraint.ConstraintType == FOREIGN_KEY {
-			deferSupported = true
-		}
+	switch {
+	case dialect == sq.DialectPostgres && constraint.ConstraintType != CHECK,
+		dialect == sq.DialectSQLite && constraint.ConstraintType == FOREIGN_KEY:
+		deferSupported = true
 	}
 	if deferSupported && constraint.IsDeferrable {
 		buf.WriteString(" DEFERRABLE")
@@ -211,6 +163,27 @@ func CreateConstraint(dialect string, constraint Constraint) (string, error) {
 		} else {
 			buf.WriteString(" INITIALLY IMMEDIATE")
 		}
+	}
+	return nil
+}
+
+func CreateConstraint(dialect string, constraint Constraint) (string, error) {
+	if dialect == sq.DialectSQLite {
+		return "", fmt.Errorf("ddl: SQLite does not allow the creating of constraints separately")
+	}
+	buf := bufpool.Get().(*bytes.Buffer)
+	defer func() {
+		buf.Reset()
+		bufpool.Put(buf)
+	}()
+	buf.WriteString("ALTER TABLE ")
+	if constraint.TableSchema != "" {
+		buf.WriteString(sq.QuoteIdentifier(dialect, constraint.TableSchema) + ".")
+	}
+	buf.WriteString(sq.QuoteIdentifier(dialect, constraint.TableName) + " ADD CONSTRAINT ")
+	err := createConstraint(dialect, buf, constraint)
+	if err != nil {
+		return buf.String(), err
 	}
 	buf.WriteString(";")
 	return buf.String(), nil
