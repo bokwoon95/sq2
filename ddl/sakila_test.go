@@ -18,7 +18,7 @@ func NEW_ACTOR(dialect, alias string) ACTOR {
 
 type ACTOR struct {
 	sq.GenericTable
-	ACTOR_ID           sq.NumberField `ddl:"type=INTEGER primarykey"`
+	ACTOR_ID           sq.NumberField `ddl:"type=INTEGER autoincrement primarykey"`
 	FIRST_NAME         sq.StringField `ddl:"notnull"`
 	LAST_NAME          sq.StringField `ddl:"notnull index"`
 	FULL_NAME          sq.StringField `ddl:"generated={first_name || ' ' || last_name} virtual"`
@@ -29,11 +29,11 @@ type ACTOR struct {
 func (tbl ACTOR) DDL(dialect string, t *T) {
 	switch dialect {
 	case sq.DialectPostgres:
-		t.Column(tbl.ACTOR_ID).Identity()
+		t.Column(tbl.ACTOR_ID).Type("INT").AlwaysIdentity()
 		t.Column(tbl.FULL_NAME).Generated("{} || ' ' || {}", tbl.FIRST_NAME, tbl.LAST_NAME).Stored()
 		t.Column(tbl.LAST_UPDATE).Type("TIMESTAMPTZ").Default("NOW()")
 	case sq.DialectMySQL:
-		t.Column(tbl.ACTOR_ID).Autoincrement()
+		t.Column(tbl.ACTOR_ID).Type("INT").Autoincrement()
 		t.Column(tbl.FIRST_NAME).Type("VARCHAR(45)")
 		t.Column(tbl.LAST_NAME).Type("VARCHAR(45)")
 		t.Column(tbl.FULL_NAME).Type("VARCHAR(45)").Generated("CONCAT({}, ' ', {})", tbl.FIRST_NAME, tbl.LAST_NAME)
@@ -44,6 +44,50 @@ func (tbl ACTOR) DDL(dialect string, t *T) {
 		})
 		t.Column(tbl.LAST_UPDATE).Type("TIMESTAMP").Default("CURRENT_TIMESTAMP").OnUpdateCurrentTimestamp()
 	}
+}
+
+const ACTOR_SQLite = `CREATE TABLE actor (
+    actor_id INTEGER PRIMARY KEY AUTOINCREMENT
+    ,first_name TEXT NOT NULL
+    ,last_name TEXT NOT NULL
+    ,full_name TEXT GENERATED ALWAYS AS (first_name || ' ' || last_name) VIRTUAL
+    ,full_name_reversed TEXT GENERATED ALWAYS AS (last_name || ' ' || first_name) STORED
+    ,last_update DATETIME NOT NULL DEFAULT (DATETIME('now'))
+);
+CREATE INDEX actor_last_name_idx ON actor (last_name);`
+
+const ACTOR_Postgres = `CREATE TABLE public.actor (
+    actor_id INT GENERATED ALWAYS AS IDENTITY
+    ,first_name TEXT NOT NULL
+    ,last_name TEXT NOT NULL
+    ,full_name TEXT GENERATED ALWAYS AS (first_name || ' ' || last_name) STORED
+    ,full_name_reversed TEXT GENERATED ALWAYS AS (last_name || ' ' || first_name) STORED
+    ,last_update TIMESTAMPTZ NOT NULL DEFAULT (NOW())
+);
+ALTER TABLE public.actor ADD CONSTRAINT actor_actor_id_pkey PRIMARY KEY (actor_id);
+CREATE INDEX actor_last_name_idx ON public.actor (last_name);`
+
+const ACTOR_MySQL = `CREATE TABLE db.actor (
+    actor_id INT AUTO_INCREMENT
+    ,first_name VARCHAR(45) NOT NULL
+    ,last_name VARCHAR(45) NOT NULL
+    ,full_name VARCHAR(45) GENERATED ALWAYS AS (CONCAT(first_name, ' ', last_name)) VIRTUAL
+    ,full_name_reversed VARCHAR(45) GENERATED ALWAYS AS (CONCAT(last_name, ' ', first_name)) STORED
+    ,last_update TIMESTAMP NOT NULL DEFAULT (CURRENT_TIMESTAMP) ON UPDATE CURRENT_TIMESTAMP
+);
+ALTER TABLE db.actor ADD CONSTRAINT actor_actor_id_pkey PRIMARY KEY (actor_id);
+CREATE INDEX actor_last_name_idx ON db.actor (last_name);`
+
+func NEW_CATEGORY(dialect, alias string) CATEGORY {
+	var tbl CATEGORY
+	switch dialect {
+	case sq.DialectPostgres:
+		tbl.GenericTable.TableSchema = "public"
+	case sq.DialectMySQL:
+		tbl.GenericTable.TableSchema = "db"
+	}
+	_ = sq.ReflectTable(&tbl, alias)
+	return tbl
 }
 
 type CATEGORY struct {
@@ -65,8 +109,8 @@ func (tbl CATEGORY) DDL(dialect string, t *T) {
 	}
 }
 
-func NEW_CATEGORY(dialect, alias string) CATEGORY {
-	var tbl CATEGORY
+func NEW_COUNTRY(dialect, alias string) COUNTRY {
+	var tbl COUNTRY
 	switch dialect {
 	case sq.DialectPostgres:
 		tbl.GenericTable.TableSchema = "public"
@@ -96,8 +140,8 @@ func (tbl COUNTRY) DDL(dialect string, t *T) {
 	}
 }
 
-func NEW_COUNTRY(dialect, alias string) COUNTRY {
-	var tbl COUNTRY
+func NEW_CITY(dialect, alias string) CITY {
+	var tbl CITY
 	switch dialect {
 	case sq.DialectPostgres:
 		tbl.GenericTable.TableSchema = "public"
@@ -128,8 +172,8 @@ func (tbl CITY) DDL(dialect string, t *T) {
 	}
 }
 
-func NEW_CITY(dialect, alias string) CITY {
-	var tbl CITY
+func NEW_ADDRESS(dialect, alias string) ADDRESS {
+	var tbl ADDRESS
 	switch dialect {
 	case sq.DialectPostgres:
 		tbl.GenericTable.TableSchema = "public"
@@ -168,8 +212,8 @@ func (tbl ADDRESS) DDL(dialect string, t *T) {
 	}
 }
 
-func NEW_ADDRESS(dialect, alias string) ADDRESS {
-	var tbl ADDRESS
+func NEW_LANGUAGE(dialect, alias string) LANGUAGE {
+	var tbl LANGUAGE
 	switch dialect {
 	case sq.DialectPostgres:
 		tbl.GenericTable.TableSchema = "public"
@@ -199,8 +243,8 @@ func (tbl LANGUAGE) DDL(dialect string, t *T) {
 	}
 }
 
-func NEW_LANGUAGE(dialect, alias string) LANGUAGE {
-	var tbl LANGUAGE
+func NEW_FILM(dialect, alias string) FILM {
+	var tbl FILM
 	switch dialect {
 	case sq.DialectPostgres:
 		tbl.GenericTable.TableSchema = "public"
@@ -253,8 +297,8 @@ func (tbl FILM) DDL(dialect string, t *T) {
 	}
 }
 
-func NEW_FILM(dialect, alias string) FILM {
-	var tbl FILM
+func NEW_FILM_TEXT(dialect, alias string) FILM_TEXT {
+	var tbl FILM_TEXT
 	switch dialect {
 	case sq.DialectPostgres:
 		tbl.GenericTable.TableSchema = "public"
@@ -283,8 +327,8 @@ func (tbl FILM_TEXT) DDL(dialect string, t *T) {
 	}
 }
 
-func NEW_FILM_TEXT(dialect, alias string) FILM_TEXT {
-	var tbl FILM_TEXT
+func NEW_FILM_ACTOR(dialect, alias string) FILM_ACTOR {
+	var tbl FILM_ACTOR
 	switch dialect {
 	case sq.DialectPostgres:
 		tbl.GenericTable.TableSchema = "public"
@@ -312,8 +356,8 @@ func (tbl FILM_ACTOR) DDL(dialect string, t *T) {
 	}
 }
 
-func NEW_FILM_ACTOR(dialect, alias string) FILM_ACTOR {
-	var tbl FILM_ACTOR
+func NEW_FILM_CATEGORY(dialect, alias string) FILM_CATEGORY {
+	var tbl FILM_CATEGORY
 	switch dialect {
 	case sq.DialectPostgres:
 		tbl.GenericTable.TableSchema = "public"
@@ -340,8 +384,8 @@ func (tbl FILM_CATEGORY) DDL(dialect string, t *T) {
 	}
 }
 
-func NEW_FILM_CATEGORY(dialect, alias string) FILM_CATEGORY {
-	var tbl FILM_CATEGORY
+func NEW_STAFF(dialect, alias string) STAFF {
+	var tbl STAFF
 	switch dialect {
 	case sq.DialectPostgres:
 		tbl.GenericTable.TableSchema = "public"
@@ -384,8 +428,8 @@ func (tbl STAFF) DDL(dialect string, t *T) {
 	}
 }
 
-func NEW_STAFF(dialect, alias string) STAFF {
-	var tbl STAFF
+func NEW_STORE(dialect, alias string) STORE {
+	var tbl STORE
 	switch dialect {
 	case sq.DialectPostgres:
 		tbl.GenericTable.TableSchema = "public"
@@ -415,8 +459,8 @@ func (tbl STORE) DDL(dialect string, t *T) {
 	}
 }
 
-func NEW_STORE(dialect, alias string) STORE {
-	var tbl STORE
+func NEW_CUSTOMER(dialect, alias string) CUSTOMER {
+	var tbl CUSTOMER
 	switch dialect {
 	case sq.DialectPostgres:
 		tbl.GenericTable.TableSchema = "public"
@@ -457,8 +501,8 @@ func (tbl CUSTOMER) DDL(dialect string, t *T) {
 	}
 }
 
-func NEW_CUSTOMER(dialect, alias string) CUSTOMER {
-	var tbl CUSTOMER
+func NEW_INVENTORY(dialect, alias string) INVENTORY {
+	var tbl INVENTORY
 	switch dialect {
 	case sq.DialectPostgres:
 		tbl.GenericTable.TableSchema = "public"
@@ -488,8 +532,8 @@ func (tbl INVENTORY) DDL(dialect string, t *T) {
 	}
 }
 
-func NEW_INVENTORY(dialect, alias string) INVENTORY {
-	var tbl INVENTORY
+func NEW_RENTAL(dialect, alias string) RENTAL {
+	var tbl RENTAL
 	switch dialect {
 	case sq.DialectPostgres:
 		tbl.GenericTable.TableSchema = "public"
@@ -524,8 +568,8 @@ func (tbl RENTAL) DDL(dialect string, t *T) {
 	}
 }
 
-func NEW_RENTAL(dialect, alias string) RENTAL {
-	var tbl RENTAL
+func NEW_PAYMENT(dialect, alias string) PAYMENT {
+	var tbl PAYMENT
 	switch dialect {
 	case sq.DialectPostgres:
 		tbl.GenericTable.TableSchema = "public"
@@ -557,8 +601,8 @@ func (tbl PAYMENT) DDL(dialect string, t *T) {
 	}
 }
 
-func NEW_PAYMENT(dialect, alias string) PAYMENT {
-	var tbl PAYMENT
+func NEW_DUMMY_TABLE(dialect, alias string) DUMMY_TABLE {
+	var tbl DUMMY_TABLE
 	switch dialect {
 	case sq.DialectPostgres:
 		tbl.GenericTable.TableSchema = "public"
@@ -612,8 +656,8 @@ func (tbl DUMMY_TABLE) DDL(dialect string, t *T) {
 	t.Unique(tbl.SCORE, tbl.COLOR)
 }
 
-func NEW_DUMMY_TABLE(dialect, alias string) DUMMY_TABLE {
-	var tbl DUMMY_TABLE
+func NEW_DUMMY_TABLE_2(dialect, alias string) DUMMY_TABLE_2 {
+	var tbl DUMMY_TABLE_2
 	switch dialect {
 	case sq.DialectPostgres:
 		tbl.GenericTable.TableSchema = "public"
@@ -633,16 +677,4 @@ type DUMMY_TABLE_2 struct {
 func (tbl DUMMY_TABLE_2) DDL(dialect string, t *T) {
 	ref := NEW_DUMMY_TABLE(dialect, "")
 	t.ForeignKey(tbl.ID1, tbl.ID2).References(ref, ref.ID1, ref.ID2).OnUpdate("CASCADE").OnDelete("RESTRICT")
-}
-
-func NEW_DUMMY_TABLE_2(dialect, alias string) DUMMY_TABLE_2 {
-	var tbl DUMMY_TABLE_2
-	switch dialect {
-	case sq.DialectPostgres:
-		tbl.GenericTable.TableSchema = "public"
-	case sq.DialectMySQL:
-		tbl.GenericTable.TableSchema = "db"
-	}
-	_ = sq.ReflectTable(&tbl, alias)
-	return tbl
 }

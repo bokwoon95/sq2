@@ -40,8 +40,15 @@ func CreateTable(dialect string, tbl Table) (string, error) {
 		}
 	}
 	if dialect == sq.DialectSQLite {
-		buf.WriteString("\n")
+		var newlineWritten bool
 		for _, constraint := range tbl.Constraints {
+			if constraint.ConstraintType == PRIMARY_KEY && len(constraint.Columns) == 1 {
+				continue
+			}
+			if !newlineWritten {
+				buf.WriteString("\n")
+				newlineWritten = true
+			}
 			buf.WriteString("\n    ,CONSTRAINT ")
 			err := createConstraint(dialect, buf, constraint)
 			if err != nil {
@@ -58,19 +65,34 @@ func createColumn(dialect string, buf *bytes.Buffer, column Column, alterTable b
 	if column.ColumnType != "" {
 		buf.WriteString(" " + column.ColumnType)
 	}
-	// NOT NULL -> DEFAULT -> PRIMARY KEY -> AUTO_INCREMENT -> GENERATED
-	var isGenerated bool
-	if column.Identity != "" && dialect != sq.DialectMySQL && dialect != sq.DialectSQLite {
-		buf.WriteString(" GENERATED " + column.Identity)
-	} else if column.Autoincrement && (dialect == sq.DialectMySQL || dialect == sq.DialectSQLite) {
+	if column.IsNotNull {
+		buf.WriteString(" NOT NULL")
+	}
+	isAutoincrement := column.Autoincrement && (dialect == sq.DialectMySQL || dialect == sq.DialectSQLite)
+	isIdentity := column.Identity != "" && (dialect != sq.DialectMySQL && dialect != sq.DialectSQLite)
+	isGenerated := column.GeneratedExpr != ""
+	if column.ColumnDefault != "" && !isAutoincrement && !isIdentity && !isGenerated {
+		// TODO: c.ColumnDefault has to be sanitized and escaped
+		if dialect == sq.DialectSQLite && alterTable {
+			buf.WriteString(" DEFAULT " + column.ColumnDefault)
+		} else {
+			buf.WriteString(" DEFAULT (" + column.ColumnDefault + ")")
+		}
+	}
+	if column.IsPrimaryKey && dialect == sq.DialectSQLite {
+		// only SQLite primary key is defined inline, others are defined as separate constraints
+		buf.WriteString(" PRIMARY KEY")
+	}
+	if isAutoincrement {
 		switch dialect {
 		case sq.DialectMySQL:
 			buf.WriteString(" AUTO_INCREMENT")
 		case sq.DialectSQLite:
 			buf.WriteString(" AUTOINCREMENT")
 		}
-	} else if column.GeneratedExpr != "" {
-		isGenerated = true
+	} else if isIdentity {
+		buf.WriteString(" GENERATED " + column.Identity)
+	} else if isGenerated {
 		buf.WriteString(" GENERATED ALWAYS AS (" + column.GeneratedExpr + ")") // TODO: c.GeneratedExprStored has to be sanitized and escaped
 		if column.GeneratedExprStored {
 			buf.WriteString(" STORED")
@@ -81,18 +103,7 @@ func createColumn(dialect string, buf *bytes.Buffer, column Column, alterTable b
 			buf.WriteString(" VIRTUAL")
 		}
 	}
-	if column.IsNotNull {
-		buf.WriteString(" NOT NULL")
-	}
-	if column.ColumnDefault != "" && !isGenerated {
-		// TODO: c.ColumnDefault has to be sanitized and escaped
-		if dialect == sq.DialectSQLite && alterTable {
-			buf.WriteString(" DEFAULT " + column.ColumnDefault)
-		} else {
-			buf.WriteString(" DEFAULT (" + column.ColumnDefault + ")")
-		}
-	}
-	if column.OnUpdateCurrentTimestamp && dialect == sq.DialectMySQL && !isGenerated {
+	if column.OnUpdateCurrentTimestamp && dialect == sq.DialectMySQL {
 		buf.WriteString(" ON UPDATE CURRENT_TIMESTAMP")
 	}
 	if column.CollationName != "" {

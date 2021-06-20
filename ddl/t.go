@@ -182,6 +182,7 @@ func (t *TColumn) PrimaryKey() *TColumn {
 	if err != nil {
 		panicf(err.Error())
 	}
+	t.tbl.Columns[t.columnIndex].IsPrimaryKey = true
 	return t
 }
 
@@ -191,6 +192,7 @@ func (t *TColumn) Unique() *TColumn {
 	if err != nil {
 		panicf(err.Error())
 	}
+	t.tbl.Columns[t.columnIndex].IsUnique = true
 	return t
 }
 

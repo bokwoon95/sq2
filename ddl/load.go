@@ -120,6 +120,21 @@ func (m *Metadata) LoadTable(table sq.Table) (err error) {
 	}
 	t := &T{dialect: m.Dialect, tbl: &tbl}
 	ddlTable.DDL(m.Dialect, t)
+	for _, constraint := range tbl.Constraints {
+		if len(constraint.Columns) != 1 {
+			continue
+		}
+		columnIndex := tbl.CachedColumnIndex(constraint.Columns[0])
+		if columnIndex < 0 {
+			continue
+		}
+		switch constraint.ConstraintType {
+		case PRIMARY_KEY:
+			tbl.Columns[columnIndex].IsPrimaryKey = true
+		case UNIQUE:
+			tbl.Columns[columnIndex].IsUnique = true
+		}
+	}
 	return nil
 }
 
