@@ -2584,6 +2584,10 @@ VALUES
     ,('1000','ZORRO ARK','A Intrepid Panorama of a Mad Scientist And a Boy who must Redeem a Boy in A Monastery','2006','1',NULL,'3','4.99','50','18.99','NC-17','["Trailers","Commentaries","Behind the Scenes"]','2006-02-15 05:03:42.000')
 ;
 
+-- Manually update the FTS index
+INSERT INTO film_text (rowid, title, description)
+SELECT film_id, title, description FROM film;
+
 INSERT INTO film_actor
     (actor_id,film_id,last_update)
 VALUES

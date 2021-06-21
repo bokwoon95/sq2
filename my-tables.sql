@@ -228,7 +228,7 @@ CREATE INDEX payment_customer_id_idx ON db.payment (customer_id);
 CREATE INDEX payment_staff_id_idx ON db.payment (staff_id);
 
 CREATE TABLE db.dummy_table (
-    id1 INT AUTO_INCREMENT
+    id1 INT
     ,id2 VARCHAR(255)
     ,score INT
     ,color VARCHAR(50) DEFAULT 'red' COLLATE latin1_swedish_ci
