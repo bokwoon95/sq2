@@ -79,11 +79,11 @@ CREATE TABLE film (
     ,release_year INT
     ,language_id INT NOT NULL
     ,original_language_id INT
-    ,rental_duration INT NOT NULL DEFAULT (3)
-    ,rental_rate DECIMAL(4,2) NOT NULL DEFAULT (4.99)
+    ,rental_duration INT NOT NULL DEFAULT 3
+    ,rental_rate DECIMAL(4,2) NOT NULL DEFAULT 4.99
     ,length INT
-    ,replacement_cost DECIMAL(5,2) NOT NULL DEFAULT (19.99)
-    ,rating TEXT DEFAULT ('G')
+    ,replacement_cost DECIMAL(5,2) NOT NULL DEFAULT 19.99
+    ,rating TEXT DEFAULT 'G'
     ,special_features JSON
     ,last_update DATETIME NOT NULL DEFAULT (DATETIME('now'))
 
@@ -135,7 +135,7 @@ CREATE TABLE staff (
     ,address_id INT NOT NULL
     ,email TEXT
     ,store_id INT
-    ,active BOOLEAN NOT NULL DEFAULT (TRUE)
+    ,active BOOLEAN NOT NULL DEFAULT TRUE
     ,username TEXT NOT NULL
     ,password TEXT
     ,last_update DATETIME NOT NULL DEFAULT (DATETIME('now'))
@@ -164,7 +164,7 @@ CREATE TABLE customer (
     ,last_name TEXT NOT NULL
     ,email TEXT
     ,address_id INT NOT NULL
-    ,active BOOLEAN NOT NULL DEFAULT (TRUE)
+    ,active BOOLEAN NOT NULL DEFAULT TRUE
     ,data JSON
     ,create_date DATETIME NOT NULL DEFAULT (DATETIME('now'))
     ,last_update DATETIME DEFAULT (DATETIME('now'))
@@ -235,7 +235,7 @@ CREATE TABLE dummy_table (
     id1 INT
     ,id2 TEXT
     ,score INT
-    ,color TEXT DEFAULT ('red') COLLATE nocase
+    ,color TEXT DEFAULT 'red' COLLATE nocase
     ,data JSON
 
     ,CONSTRAINT dummy_table_id1_id2_pkey PRIMARY KEY (id1, id2)

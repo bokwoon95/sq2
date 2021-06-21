@@ -25,7 +25,7 @@ CREATE TABLE db.actor (
     ,last_name VARCHAR(45) NOT NULL
     ,full_name VARCHAR(45) GENERATED ALWAYS AS (CONCAT(first_name, ' ', last_name)) VIRTUAL
     ,full_name_reversed VARCHAR(45) GENERATED ALWAYS AS (CONCAT(last_name, ' ', first_name)) STORED
-    ,last_update TIMESTAMP NOT NULL DEFAULT (CURRENT_TIMESTAMP) ON UPDATE CURRENT_TIMESTAMP
+    ,last_update TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 
     ,CONSTRAINT actor_actor_id_pkey PRIMARY KEY (actor_id)
 );
@@ -35,7 +35,7 @@ CREATE INDEX actor_last_name_idx ON db.actor (last_name);
 CREATE TABLE db.category (
     category_id INT AUTO_INCREMENT
     ,name VARCHAR(25) NOT NULL
-    ,last_update TIMESTAMP NOT NULL DEFAULT (CURRENT_TIMESTAMP) ON UPDATE CURRENT_TIMESTAMP
+    ,last_update TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 
     ,CONSTRAINT category_category_id_pkey PRIMARY KEY (category_id)
 );
@@ -43,7 +43,7 @@ CREATE TABLE db.category (
 CREATE TABLE db.country (
     country_id INT AUTO_INCREMENT
     ,country VARCHAR(50) NOT NULL
-    ,last_update TIMESTAMP NOT NULL DEFAULT (CURRENT_TIMESTAMP) ON UPDATE CURRENT_TIMESTAMP
+    ,last_update TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 
     ,CONSTRAINT country_country_id_pkey PRIMARY KEY (country_id)
 );
@@ -52,7 +52,7 @@ CREATE TABLE db.city (
     city_id INT AUTO_INCREMENT
     ,city VARCHAR(50) NOT NULL
     ,country_id INT NOT NULL
-    ,last_update TIMESTAMP NOT NULL DEFAULT (CURRENT_TIMESTAMP) ON UPDATE CURRENT_TIMESTAMP
+    ,last_update TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 
     ,CONSTRAINT city_city_id_pkey PRIMARY KEY (city_id)
 );
@@ -67,7 +67,7 @@ CREATE TABLE db.address (
     ,city_id INT NOT NULL
     ,postal_code VARCHAR(10)
     ,phone VARCHAR(20) NOT NULL
-    ,last_update TIMESTAMP NOT NULL DEFAULT (CURRENT_TIMESTAMP) ON UPDATE CURRENT_TIMESTAMP
+    ,last_update TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 
     ,CONSTRAINT address_address_id_pkey PRIMARY KEY (address_id)
 );
@@ -77,7 +77,7 @@ CREATE INDEX address_city_id_idx ON db.address (city_id);
 CREATE TABLE db.language (
     language_id INT AUTO_INCREMENT
     ,name CHAR(20) NOT NULL
-    ,last_update TIMESTAMP NOT NULL DEFAULT (CURRENT_TIMESTAMP) ON UPDATE CURRENT_TIMESTAMP
+    ,last_update TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 
     ,CONSTRAINT language_language_id_pkey PRIMARY KEY (language_id)
 );
@@ -89,13 +89,13 @@ CREATE TABLE db.film (
     ,release_year INT
     ,language_id INT NOT NULL
     ,original_language_id INT
-    ,rental_duration INT NOT NULL DEFAULT (3)
-    ,rental_rate DECIMAL(4,2) NOT NULL DEFAULT (4.99)
+    ,rental_duration INT NOT NULL DEFAULT 3
+    ,rental_rate DECIMAL(4,2) NOT NULL DEFAULT 4.99
     ,length INT
-    ,replacement_cost DECIMAL(5,2) NOT NULL DEFAULT (19.99)
-    ,rating ENUM('G','PG','PG-13','R','NC-17') DEFAULT ('G')
+    ,replacement_cost DECIMAL(5,2) NOT NULL DEFAULT 19.99
+    ,rating ENUM('G','PG','PG-13','R','NC-17') DEFAULT 'G'
     ,special_features JSON
-    ,last_update TIMESTAMP NOT NULL DEFAULT (CURRENT_TIMESTAMP) ON UPDATE CURRENT_TIMESTAMP
+    ,last_update TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 
     ,CONSTRAINT film_film_id_pkey PRIMARY KEY (film_id)
     ,CONSTRAINT film_release_year_check CHECK (release_year >= 1901 AND release_year <= 2155)
@@ -118,7 +118,7 @@ CREATE FULLTEXT INDEX film_text_title_description_idx ON db.film_text (title, de
 CREATE TABLE db.film_actor (
     actor_id INT NOT NULL
     ,film_id INT NOT NULL
-    ,last_update TIMESTAMP NOT NULL DEFAULT (CURRENT_TIMESTAMP) ON UPDATE CURRENT_TIMESTAMP
+    ,last_update TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
 CREATE UNIQUE INDEX film_actor_actor_id_film_id_idx ON db.film_actor (actor_id, film_id);
@@ -128,7 +128,7 @@ CREATE INDEX film_actor_film_id_idx ON db.film_actor (film_id);
 CREATE TABLE db.film_category (
     film_id INT NOT NULL
     ,category_id INT NOT NULL
-    ,last_update TIMESTAMP NOT NULL DEFAULT (CURRENT_TIMESTAMP) ON UPDATE CURRENT_TIMESTAMP
+    ,last_update TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
 CREATE TABLE db.staff (
@@ -138,10 +138,10 @@ CREATE TABLE db.staff (
     ,address_id INT NOT NULL
     ,email VARCHAR(50)
     ,store_id INT
-    ,active BOOLEAN NOT NULL DEFAULT (TRUE)
+    ,active BOOLEAN NOT NULL DEFAULT TRUE
     ,username VARCHAR(16) NOT NULL
     ,password VARCHAR(40)
-    ,last_update TIMESTAMP NOT NULL DEFAULT (CURRENT_TIMESTAMP) ON UPDATE CURRENT_TIMESTAMP
+    ,last_update TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
     ,picture BLOB
 
     ,CONSTRAINT staff_staff_id_pkey PRIMARY KEY (staff_id)
@@ -151,7 +151,7 @@ CREATE TABLE db.store (
     store_id INT AUTO_INCREMENT
     ,manager_staff_id INT NOT NULL
     ,address_id INT NOT NULL
-    ,last_update TIMESTAMP NOT NULL DEFAULT (CURRENT_TIMESTAMP) ON UPDATE CURRENT_TIMESTAMP
+    ,last_update TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 
     ,CONSTRAINT store_store_id_pkey PRIMARY KEY (store_id)
 );
@@ -165,10 +165,10 @@ CREATE TABLE db.customer (
     ,last_name VARCHAR(45) NOT NULL
     ,email VARCHAR(50)
     ,address_id INT NOT NULL
-    ,active BOOLEAN NOT NULL DEFAULT (TRUE)
+    ,active BOOLEAN NOT NULL DEFAULT TRUE
     ,data JSON
-    ,create_date TIMESTAMP NOT NULL DEFAULT (CURRENT_TIMESTAMP)
-    ,last_update TIMESTAMP DEFAULT (CURRENT_TIMESTAMP) ON UPDATE CURRENT_TIMESTAMP
+    ,create_date TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+    ,last_update TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 
     ,CONSTRAINT customer_email_first_name_last_name_key UNIQUE (email, first_name, last_name)
     ,CONSTRAINT customer_customer_id_pkey PRIMARY KEY (customer_id)
@@ -185,7 +185,7 @@ CREATE TABLE db.inventory (
     inventory_id INT AUTO_INCREMENT
     ,film_id INT NOT NULL
     ,store_id INT NOT NULL
-    ,last_update TIMESTAMP NOT NULL DEFAULT (CURRENT_TIMESTAMP) ON UPDATE CURRENT_TIMESTAMP
+    ,last_update TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 
     ,CONSTRAINT inventory_inventory_id_pkey PRIMARY KEY (inventory_id)
 );
@@ -199,7 +199,7 @@ CREATE TABLE db.rental (
     ,customer_id INT NOT NULL
     ,return_date TIMESTAMP
     ,staff_id INT NOT NULL
-    ,last_update TIMESTAMP NOT NULL DEFAULT (CURRENT_TIMESTAMP) ON UPDATE CURRENT_TIMESTAMP
+    ,last_update TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 
     ,CONSTRAINT rental_rental_id_pkey PRIMARY KEY (rental_id)
 );
@@ -231,7 +231,7 @@ CREATE TABLE db.dummy_table (
     id1 INT
     ,id2 VARCHAR(255)
     ,score INT
-    ,color VARCHAR(50) DEFAULT ('red') COLLATE latin1_swedish_ci
+    ,color VARCHAR(50) DEFAULT 'red' COLLATE latin1_swedish_ci
     ,data JSON
 
     ,CONSTRAINT dummy_table_id1_id2_pkey PRIMARY KEY (id1, id2)
