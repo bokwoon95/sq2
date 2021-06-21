@@ -31,7 +31,7 @@ func (m *Metadata) LoadTable(table sq.Table) (err error) {
 	if tableValue.NumField() == 0 {
 		return fmt.Errorf("ddl: table is empty struct")
 	}
-	genericTable, ok := tableValue.Field(0).Interface().(sq.GenericTable)
+	genericTable, ok := tableValue.Field(0).Interface().(sq.TableInfo)
 	if !ok {
 		return fmt.Errorf("ddl: first field of table struct is not an embedded sq.GenericTable")
 	}

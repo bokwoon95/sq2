@@ -421,15 +421,15 @@ func (t *TConstraint) Config(config func(constraint *Constraint)) {
 
 func (t *TConstraint) References(table sq.Table, fields ...sq.Field) *TConstraint {
 	if table == nil {
-		panicf("table is nil")
+		panicf("referenced table is nil")
 	}
 	referencesTable := table.GetName()
 	if referencesTable == "" {
-		panicf("table has no name")
+		panicf("referenced table has no name")
 	}
 	referencesColumns, err := getColumnNames(fields)
 	if err != nil {
-		panicf(err.Error())
+		panicf("referenced " + err.Error())
 	}
 	constraint := t.tbl.Constraints[t.constraintIndex]
 	constraint.ReferencesTable = referencesTable

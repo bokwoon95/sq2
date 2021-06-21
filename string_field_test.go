@@ -48,7 +48,7 @@ func Test_StringField(t *testing.T) {
 
 	t.Run("StringField", func(t *testing.T) {
 		var tt TT
-		tt.item = NewStringField("field", GenericTable{TableName: "tbl"})
+		tt.item = NewStringField("field", TableInfo{TableName: "tbl"})
 		tt.wantQuery = "tbl.field"
 		tt.wantArgs = []interface{}{}
 		assert(t, tt)
@@ -56,7 +56,7 @@ func Test_StringField(t *testing.T) {
 
 	t.Run("StringField with alias", func(t *testing.T) {
 		var tt TT
-		tt.item = NewStringField("field", GenericTable{TableName: "tbl"}).As("f")
+		tt.item = NewStringField("field", TableInfo{TableName: "tbl"}).As("f")
 		tt.wantQuery = "tbl.field"
 		tt.wantArgs = []interface{}{}
 		assert(t, tt)
@@ -64,7 +64,7 @@ func Test_StringField(t *testing.T) {
 
 	t.Run("StringField ASC NULLS FIRST", func(t *testing.T) {
 		var tt TT
-		tt.item = NewStringField("field", GenericTable{TableName: "tbl"}).Asc().NullsFirst()
+		tt.item = NewStringField("field", TableInfo{TableName: "tbl"}).Asc().NullsFirst()
 		tt.wantQuery = "tbl.field ASC NULLS FIRST"
 		tt.wantArgs = []interface{}{}
 		assert(t, tt)
@@ -72,7 +72,7 @@ func Test_StringField(t *testing.T) {
 
 	t.Run("StringField DESC NULLS LAST", func(t *testing.T) {
 		var tt TT
-		tt.item = NewStringField("field", GenericTable{TableName: "tbl"}).Desc().NullsLast()
+		tt.item = NewStringField("field", TableInfo{TableName: "tbl"}).Desc().NullsLast()
 		tt.wantQuery = "tbl.field DESC NULLS LAST"
 		tt.wantArgs = []interface{}{}
 		assert(t, tt)
@@ -80,7 +80,7 @@ func Test_StringField(t *testing.T) {
 
 	t.Run("StringField IS NULL", func(t *testing.T) {
 		var tt TT
-		tt.item = NewStringField("field", GenericTable{TableName: "tbl"}).IsNull()
+		tt.item = NewStringField("field", TableInfo{TableName: "tbl"}).IsNull()
 		tt.wantQuery = "tbl.field IS NULL"
 		tt.wantArgs = []interface{}{}
 		assert(t, tt)
@@ -88,7 +88,7 @@ func Test_StringField(t *testing.T) {
 
 	t.Run("StringField IS NOT NULL", func(t *testing.T) {
 		var tt TT
-		tt.item = NewStringField("field", GenericTable{TableName: "tbl"}).IsNotNull()
+		tt.item = NewStringField("field", TableInfo{TableName: "tbl"}).IsNotNull()
 		tt.wantQuery = "tbl.field IS NOT NULL"
 		tt.wantArgs = []interface{}{}
 		assert(t, tt)
@@ -124,7 +124,7 @@ func Test_StringField(t *testing.T) {
 
 	t.Run("StringField Eq", func(t *testing.T) {
 		var tt TT
-		field := NewStringField("field", GenericTable{TableName: "tbl"})
+		field := NewStringField("field", TableInfo{TableName: "tbl"})
 		tt.item = field.Eq(field)
 		tt.wantQuery = "tbl.field = tbl.field"
 		tt.wantArgs = []interface{}{}
@@ -133,7 +133,7 @@ func Test_StringField(t *testing.T) {
 
 	t.Run("StringField Ne", func(t *testing.T) {
 		var tt TT
-		field := NewStringField("field", GenericTable{TableName: "tbl"})
+		field := NewStringField("field", TableInfo{TableName: "tbl"})
 		tt.item = field.Ne(field)
 		tt.wantQuery = "tbl.field <> tbl.field"
 		tt.wantArgs = []interface{}{}
@@ -142,7 +142,7 @@ func Test_StringField(t *testing.T) {
 
 	t.Run("StringField EqString", func(t *testing.T) {
 		var tt TT
-		tt.item = NewStringField("field", GenericTable{TableName: "tbl"}).EqString("abc")
+		tt.item = NewStringField("field", TableInfo{TableName: "tbl"}).EqString("abc")
 		tt.wantQuery = "tbl.field = ?"
 		tt.wantArgs = []interface{}{"abc"}
 		assert(t, tt)
@@ -150,7 +150,7 @@ func Test_StringField(t *testing.T) {
 
 	t.Run("StringField NeString", func(t *testing.T) {
 		var tt TT
-		tt.item = NewStringField("field", GenericTable{TableName: "tbl"}).NeString("abc")
+		tt.item = NewStringField("field", TableInfo{TableName: "tbl"}).NeString("abc")
 		tt.wantQuery = "tbl.field <> ?"
 		tt.wantArgs = []interface{}{"abc"}
 		assert(t, tt)
@@ -158,7 +158,7 @@ func Test_StringField(t *testing.T) {
 
 	t.Run("StringField SetString", func(t *testing.T) {
 		var tt TT
-		tt.item = NewStringField("field", GenericTable{TableName: "tbl"}).SetString("abc")
+		tt.item = NewStringField("field", TableInfo{TableName: "tbl"}).SetString("abc")
 		tt.wantQuery = "tbl.field = ?"
 		tt.wantArgs = []interface{}{"abc"}
 		assert(t, tt)

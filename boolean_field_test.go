@@ -31,7 +31,7 @@ func Test_BooleanField(t *testing.T) {
 
 	t.Run("BooleanField", func(t *testing.T) {
 		var tt TT
-		tt.item = NewBooleanField("field", GenericTable{TableName: "tbl"})
+		tt.item = NewBooleanField("field", TableInfo{TableName: "tbl"})
 		tt.wantQuery = "tbl.field"
 		tt.wantArgs = []interface{}{}
 		assert(t, tt)
@@ -39,7 +39,7 @@ func Test_BooleanField(t *testing.T) {
 
 	t.Run("BooleanField with alias", func(t *testing.T) {
 		var tt TT
-		tt.item = NewBooleanField("field", GenericTable{TableName: "tbl"}).As("f")
+		tt.item = NewBooleanField("field", TableInfo{TableName: "tbl"}).As("f")
 		tt.wantQuery = "tbl.field"
 		tt.wantArgs = []interface{}{}
 		assert(t, tt)
@@ -47,7 +47,7 @@ func Test_BooleanField(t *testing.T) {
 
 	t.Run("BooleanField ASC NULLS LAST", func(t *testing.T) {
 		var tt TT
-		tt.item = NewBooleanField("field", GenericTable{TableName: "tbl"}).Asc().NullsLast()
+		tt.item = NewBooleanField("field", TableInfo{TableName: "tbl"}).Asc().NullsLast()
 		tt.wantQuery = "tbl.field ASC NULLS LAST"
 		tt.wantArgs = []interface{}{}
 		assert(t, tt)
@@ -55,7 +55,7 @@ func Test_BooleanField(t *testing.T) {
 
 	t.Run("BooleanField DESC NULLS FIRST", func(t *testing.T) {
 		var tt TT
-		tt.item = NewBooleanField("field", GenericTable{TableName: "tbl"}).Desc().NullsFirst()
+		tt.item = NewBooleanField("field", TableInfo{TableName: "tbl"}).Desc().NullsFirst()
 		tt.wantQuery = "tbl.field DESC NULLS FIRST"
 		tt.wantArgs = []interface{}{}
 		assert(t, tt)
@@ -63,7 +63,7 @@ func Test_BooleanField(t *testing.T) {
 
 	t.Run("BooleanField NOT", func(t *testing.T) {
 		var tt TT
-		tt.item = NewBooleanField("field", GenericTable{TableName: "tbl"}).Not()
+		tt.item = NewBooleanField("field", TableInfo{TableName: "tbl"}).Not()
 		tt.wantQuery = "NOT tbl.field"
 		tt.wantArgs = []interface{}{}
 		assert(t, tt)
@@ -71,7 +71,7 @@ func Test_BooleanField(t *testing.T) {
 
 	t.Run("BooleanField IS NULL", func(t *testing.T) {
 		var tt TT
-		tt.item = NewBooleanField("field", GenericTable{TableName: "tbl"}).IsNull()
+		tt.item = NewBooleanField("field", TableInfo{TableName: "tbl"}).IsNull()
 		tt.wantQuery = "tbl.field IS NULL"
 		tt.wantArgs = []interface{}{}
 		assert(t, tt)
@@ -79,7 +79,7 @@ func Test_BooleanField(t *testing.T) {
 
 	t.Run("BooleanField IS NOT NULL", func(t *testing.T) {
 		var tt TT
-		tt.item = NewBooleanField("field", GenericTable{TableName: "tbl"}).IsNotNull()
+		tt.item = NewBooleanField("field", TableInfo{TableName: "tbl"}).IsNotNull()
 		tt.wantQuery = "tbl.field IS NOT NULL"
 		tt.wantArgs = []interface{}{}
 		assert(t, tt)
@@ -87,7 +87,7 @@ func Test_BooleanField(t *testing.T) {
 
 	t.Run("BooleanField Eq", func(t *testing.T) {
 		var tt TT
-		f := NewBooleanField("field", GenericTable{TableName: "tbl"})
+		f := NewBooleanField("field", TableInfo{TableName: "tbl"})
 		tt.item = f.Eq(f)
 		tt.wantQuery = "tbl.field = tbl.field"
 		tt.wantArgs = []interface{}{}
@@ -96,7 +96,7 @@ func Test_BooleanField(t *testing.T) {
 
 	t.Run("BooleanField Ne", func(t *testing.T) {
 		var tt TT
-		f := NewBooleanField("field", GenericTable{TableName: "tbl"})
+		f := NewBooleanField("field", TableInfo{TableName: "tbl"})
 		tt.item = f.Ne(f)
 		tt.wantQuery = "tbl.field <> tbl.field"
 		tt.wantArgs = []interface{}{}
@@ -105,7 +105,7 @@ func Test_BooleanField(t *testing.T) {
 
 	t.Run("BooleanField EqBool", func(t *testing.T) {
 		var tt TT
-		tt.item = NewBooleanField("field", GenericTable{TableName: "tbl"}).EqBool(true)
+		tt.item = NewBooleanField("field", TableInfo{TableName: "tbl"}).EqBool(true)
 		tt.wantQuery = "tbl.field = ?"
 		tt.wantArgs = []interface{}{true}
 		assert(t, tt)
@@ -113,7 +113,7 @@ func Test_BooleanField(t *testing.T) {
 
 	t.Run("BooleanField NeBool", func(t *testing.T) {
 		var tt TT
-		tt.item = NewBooleanField("field", GenericTable{TableName: "tbl"}).NeBool(true)
+		tt.item = NewBooleanField("field", TableInfo{TableName: "tbl"}).NeBool(true)
 		tt.wantQuery = "tbl.field <> ?"
 		tt.wantArgs = []interface{}{true}
 		assert(t, tt)
@@ -121,7 +121,7 @@ func Test_BooleanField(t *testing.T) {
 
 	t.Run("BooleanField SetBool", func(t *testing.T) {
 		var tt TT
-		tt.item = NewBooleanField("field", GenericTable{TableName: "tbl"}).SetBool(true)
+		tt.item = NewBooleanField("field", TableInfo{TableName: "tbl"}).SetBool(true)
 		tt.wantQuery = "tbl.field = ?"
 		tt.wantArgs = []interface{}{true}
 		assert(t, tt)

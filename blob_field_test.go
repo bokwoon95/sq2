@@ -31,7 +31,7 @@ func Test_BlobField(t *testing.T) {
 
 	t.Run("BlobField", func(t *testing.T) {
 		var tt TT
-		tt.item = NewBlobField("field", GenericTable{TableName: "tbl"})
+		tt.item = NewBlobField("field", TableInfo{TableName: "tbl"})
 		tt.wantQuery = "tbl.field"
 		tt.wantArgs = []interface{}{}
 		assert(t, tt)
@@ -39,7 +39,7 @@ func Test_BlobField(t *testing.T) {
 
 	t.Run("BlobField with alias", func(t *testing.T) {
 		var tt TT
-		tt.item = NewBlobField("field", GenericTable{TableName: "tbl"}).As("f")
+		tt.item = NewBlobField("field", TableInfo{TableName: "tbl"}).As("f")
 		tt.wantQuery = "tbl.field"
 		tt.wantArgs = []interface{}{}
 		assert(t, tt)
@@ -47,7 +47,7 @@ func Test_BlobField(t *testing.T) {
 
 	t.Run("ASC NULLS FIRST", func(t *testing.T) {
 		var tt TT
-		tt.item = NewBlobField("field", GenericTable{TableName: "tbl"}).Asc().NullsFirst()
+		tt.item = NewBlobField("field", TableInfo{TableName: "tbl"}).Asc().NullsFirst()
 		tt.wantQuery = "tbl.field ASC NULLS FIRST"
 		tt.wantArgs = []interface{}{}
 		assert(t, tt)
@@ -55,7 +55,7 @@ func Test_BlobField(t *testing.T) {
 
 	t.Run("DESC NULLS LAST", func(t *testing.T) {
 		var tt TT
-		tt.item = NewBlobField("field", GenericTable{TableName: "tbl"}).Desc().NullsLast()
+		tt.item = NewBlobField("field", TableInfo{TableName: "tbl"}).Desc().NullsLast()
 		tt.wantQuery = "tbl.field DESC NULLS LAST"
 		tt.wantArgs = []interface{}{}
 		assert(t, tt)
@@ -63,7 +63,7 @@ func Test_BlobField(t *testing.T) {
 
 	t.Run("SetBlob", func(t *testing.T) {
 		var tt TT
-		tt.item = NewBlobField("field", GenericTable{TableName: "tbl"}).SetBlob([]byte{'a', 'b', 'c', 'd'})
+		tt.item = NewBlobField("field", TableInfo{TableName: "tbl"}).SetBlob([]byte{'a', 'b', 'c', 'd'})
 		tt.excludedTableQualifiers = []string{"tbl"}
 		tt.wantQuery = "field = ?"
 		tt.wantArgs = []interface{}{'a', 'b', 'c', 'd'}

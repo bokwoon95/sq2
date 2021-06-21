@@ -13,7 +13,7 @@ type TimeField struct {
 
 var _ Field = TimeField{}
 
-func NewTimeField(fieldName string, tbl GenericTable) TimeField {
+func NewTimeField(fieldName string, tbl TableInfo) TimeField {
 	return TimeField{GenericField: GenericField{
 		TableSchema: tbl.TableSchema,
 		TableName:   tbl.TableName,

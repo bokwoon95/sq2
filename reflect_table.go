@@ -24,7 +24,7 @@ func ReflectTable(table Table, alias string) error {
 	}
 	v := value.Field(0)
 	vtype := typ.Field(0)
-	genericTable, ok := v.Interface().(GenericTable)
+	genericTable, ok := v.Interface().(TableInfo)
 	if !ok {
 		return fmt.Errorf("first field not a embedded GenericTable")
 	}

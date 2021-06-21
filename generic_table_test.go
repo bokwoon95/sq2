@@ -10,7 +10,7 @@ import (
 func Test_GenericTable(t *testing.T) {
 	type TT struct {
 		dialect   string
-		tbl       GenericTable
+		tbl       TableInfo
 		wantQuery string
 		wantArgs  []interface{}
 	}
@@ -34,7 +34,7 @@ func Test_GenericTable(t *testing.T) {
 
 	t.Run("with schema", func(t *testing.T) {
 		var tt TT
-		tt.tbl = GenericTable{
+		tt.tbl = TableInfo{
 			TableSchema: "public",
 			TableName:   "users",
 		}
@@ -45,7 +45,7 @@ func Test_GenericTable(t *testing.T) {
 
 	t.Run("without schema", func(t *testing.T) {
 		var tt TT
-		tt.tbl = GenericTable{
+		tt.tbl = TableInfo{
 			TableName: "users",
 		}
 		tt.wantQuery = "users"
