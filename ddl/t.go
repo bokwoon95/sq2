@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"runtime"
+	"strconv"
 	"strings"
 
 	"github.com/bokwoon95/sq"
@@ -147,13 +148,46 @@ func (t *TColumn) Stored() *TColumn {
 	return t
 }
 
-// TODO: DefaultExpr and DefaultLiteral
 func (t *TColumn) Default(format string, values ...interface{}) *TColumn {
+	var expr string
+	if len(values) == 0 {
+		if len(format) >= 2 && format[0] == '\'' && format[len(format)-1] == '\'' {
+			expr = format
+		} else if strings.EqualFold(format, "TRUE") ||
+			strings.EqualFold(format, "FALSE") ||
+			strings.EqualFold(format, "CURRENT_DATE") ||
+			strings.EqualFold(format, "CURRENT_TIME") ||
+			strings.EqualFold(format, "CURRENT_TIMESTAMP") {
+			expr = format
+		} else if _, err := strconv.ParseInt(format, 10, 64); err == nil {
+			expr = format
+		} else if _, err := strconv.ParseFloat(format, 64); err == nil {
+			expr = format
+		} else if t.dialect == sq.DialectPostgres {
+			expr = format
+		} else {
+			expr = "(" + format + ")"
+		}
+		t.tbl.Columns[t.columnIndex].ColumnDefault = expr
+		return t
+	}
 	expr, err := sprintf(t.dialect, t.tbl.TableName, format, values)
 	if err != nil {
 		panicf(err.Error())
 	}
+	if t.dialect != sq.DialectPostgres {
+		expr = "(" + expr + ")"
+	}
 	t.tbl.Columns[t.columnIndex].ColumnDefault = expr
+	return t
+}
+
+func (t *TColumn) DefaultLiteral(value interface{}) *TColumn {
+	literal, err := sq.Sprint(value)
+	if err != nil {
+		panicf(err.Error())
+	}
+	t.tbl.Columns[t.columnIndex].ColumnDefault = literal
 	return t
 }
 
@@ -447,10 +481,15 @@ func getColumnNamesAndExprs(dialect, tableName string, fields []sq.Field) (colum
 		var columnName, expr string
 		columnName = field.GetName()
 		if columnName == "" {
-			var err error
-			expr, err = appendSQLExclude(dialect, tableName, field)
-			if err != nil {
-				return nil, nil, err
+			if fieldliteral, ok := field.(sq.FieldLiteral); ok {
+				expr = string(fieldliteral)
+			} else {
+				var err error
+				expr, err = appendSQLExclude(dialect, tableName, field)
+				if err != nil {
+					return nil, nil, err
+				}
+				expr = "(" + expr + ")"
 			}
 		}
 		columnNames = append(columnNames, columnName)

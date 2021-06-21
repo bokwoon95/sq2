@@ -44,7 +44,7 @@ func CreateTable(dialect string, tbl Table) (string, error) {
 		if strings.EqualFold(tbl.VirtualTable, "fts5") && dialect == sq.DialectSQLite {
 			column = Column{ColumnName: column.ColumnName}
 		}
-		err := createColumn(dialect, buf, column, false)
+		err := createColumn(dialect, buf, column)
 		if err != nil {
 			return buf.String(), err
 		}
@@ -82,7 +82,7 @@ func CreateTable(dialect string, tbl Table) (string, error) {
 	return buf.String(), nil
 }
 
-func createColumn(dialect string, buf *bytes.Buffer, column Column, alterTable bool) error {
+func createColumn(dialect string, buf *bytes.Buffer, column Column) error {
 	buf.WriteString(sq.QuoteIdentifier(dialect, column.ColumnName))
 	if column.ColumnType != "" {
 		buf.WriteString(" " + column.ColumnType)
@@ -94,12 +94,7 @@ func createColumn(dialect string, buf *bytes.Buffer, column Column, alterTable b
 	isIdentity := column.Identity != "" && (dialect != sq.DialectMySQL && dialect != sq.DialectSQLite)
 	isGenerated := column.GeneratedExpr != ""
 	if column.ColumnDefault != "" && !isAutoincrement && !isIdentity && !isGenerated {
-		// TODO: c.ColumnDefault has to be sanitized and escaped
-		if dialect == sq.DialectSQLite && alterTable {
-			buf.WriteString(" DEFAULT " + column.ColumnDefault)
-		} else {
-			buf.WriteString(" DEFAULT (" + column.ColumnDefault + ")")
-		}
+		buf.WriteString(" DEFAULT " + column.ColumnDefault)
 	}
 	if column.IsPrimaryKey && dialect == sq.DialectSQLite {
 		// only SQLite primary key is defined inline, others are defined as separate constraints
@@ -150,7 +145,7 @@ func CreateColumn(dialect string, column Column) (string, error) {
 		buf.WriteString(sq.QuoteIdentifier(dialect, column.TableSchema) + ".")
 	}
 	buf.WriteString(sq.QuoteIdentifier(dialect, column.TableName) + " ADD COLUMN " + sq.QuoteIdentifier(dialect, column.ColumnName))
-	err := createColumn(dialect, buf, column, true)
+	err := createColumn(dialect, buf, column)
 	if err != nil {
 		return buf.String(), err
 	}
@@ -252,7 +247,7 @@ func CreateIndex(dialect string, index Index) (string, error) {
 		if column != "" {
 			buf.WriteString(column)
 		} else {
-			buf.WriteString("(" + index.Exprs[i] + ")")
+			buf.WriteString(index.Exprs[i])
 		}
 	}
 	buf.WriteString(")")
