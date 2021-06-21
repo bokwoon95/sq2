@@ -3,15 +3,21 @@ package sq
 import "bytes"
 
 type StringField struct {
-	GenericField
-	Format string
-	Values []interface{}
+	info FieldInfo
 }
 
 var _ Field = StringField{}
 
+func (f StringField) AppendSQLExclude(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int, excludedTableQualifiers []string) error {
+	return f.info.AppendSQLExclude(dialect, buf, args, params, excludedTableQualifiers)
+}
+
+func (f StringField) GetAlias() string { return f.info.FieldAlias }
+
+func (f StringField) GetName() string { return f.info.FieldName }
+
 func NewStringField(fieldName string, tableInfo TableInfo) StringField {
-	return StringField{GenericField: GenericField{
+	return StringField{info: FieldInfo{
 		TableSchema: tableInfo.TableSchema,
 		TableName:   tableInfo.TableName,
 		TableAlias:  tableInfo.TableAlias,
@@ -20,59 +26,46 @@ func NewStringField(fieldName string, tableInfo TableInfo) StringField {
 }
 
 func StringFieldf(format string, values ...interface{}) StringField {
-	return StringField{Format: format, Values: values}
+	return StringField{info: FieldInfo{
+		Format: format,
+		Values: values,
+	}}
 }
 
 func (f StringField) As(alias string) StringField {
-	f.FieldAlias = alias
+	f.info.FieldAlias = alias
 	return f
 }
 
 func (f StringField) Asc() StringField {
-	f.Descending.Valid = true
-	f.Descending.Bool = false
+	f.info.Descending.Valid = true
+	f.info.Descending.Bool = false
 	return f
 }
 
 func (f StringField) Desc() StringField {
-	f.Descending.Valid = true
-	f.Descending.Bool = true
+	f.info.Descending.Valid = true
+	f.info.Descending.Bool = true
 	return f
 }
 
 func (f StringField) NullsLast() StringField {
-	f.Nullsfirst.Valid = true
-	f.Nullsfirst.Bool = false
+	f.info.NullsFirst.Valid = true
+	f.info.NullsFirst.Bool = false
 	return f
 }
 
 func (f StringField) NullsFirst() StringField {
-	f.Nullsfirst.Valid = true
-	f.Nullsfirst.Bool = true
+	f.info.NullsFirst.Valid = true
+	f.info.NullsFirst.Bool = true
 	return f
-}
-
-func (f StringField) AppendSQLExclude(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int, excludedTableQualifiers []string) error {
-	if f.Format != "" {
-		err := BufferPrintf(dialect, buf, args, params, excludedTableQualifiers, f.Format, f.Values)
-		if err != nil {
-			return err
-		}
-		f.TableSchema, f.TableName, f.TableAlias, f.FieldName, f.FieldAlias = "", "", "", "", ""
-	}
-	return f.GenericField.AppendSQLExclude(dialect, buf, args, params, excludedTableQualifiers)
 }
 
 func (f StringField) IsNull() Predicate { return IsNull(f) }
 
 func (f StringField) IsNotNull() Predicate { return IsNotNull(f) }
 
-func (f StringField) In(v interface{}) Predicate {
-	if v, ok := v.(RowValue); ok {
-		return Predicatef("{} IN {}", f, v)
-	}
-	return Predicatef("{} IN ({})", f, v)
-}
+func (f StringField) In(v interface{}) Predicate { return In(f, v) }
 
 func (f StringField) Eq(field StringField) Predicate { return Eq(f, field) }
 
