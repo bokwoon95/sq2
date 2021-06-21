@@ -79,7 +79,7 @@ func (p VariadicPredicate) AppendSQLExclude(dialect string, buf *bytes.Buffer, a
 			if !p.Toplevel {
 				buf.WriteString("(")
 			}
-			v.Toplevel = true // if only one predicate and it is variadic, hoist it to the top level
+			v.Toplevel = true
 			err = v.AppendSQLExclude(dialect, buf, args, params, excludedTableQualifiers)
 			if err != nil {
 				return err
@@ -102,9 +102,7 @@ func (p VariadicPredicate) AppendSQLExclude(dialect string, buf *bytes.Buffer, a
 		}
 		for i, predicate := range p.Predicates {
 			if i > 0 {
-				buf.WriteString(" ")
-				buf.WriteString(string(p.Operator))
-				buf.WriteString(" ")
+				buf.WriteString(" " + string(p.Operator) + " ")
 			}
 			if predicate == nil {
 				return fmt.Errorf("nil Predicate")

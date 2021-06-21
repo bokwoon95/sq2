@@ -8,12 +8,11 @@ import (
 type JoinType string
 
 const (
-	JoinTypeInner    JoinType = "JOIN"
-	JoinTypeLeft     JoinType = "LEFT JOIN"
-	JoinTypeRight    JoinType = "RIGHT JOIN"
-	JoinTypeFull     JoinType = "FULL JOIN"
-	JoinTypeCross    JoinType = "CROSS JOIN"
-	JoinTypeImplicit JoinType = ","
+	JoinTypeInner JoinType = "JOIN"
+	JoinTypeLeft  JoinType = "LEFT JOIN"
+	JoinTypeRight JoinType = "RIGHT JOIN"
+	JoinTypeFull  JoinType = "FULL JOIN"
+	JoinTypeCross JoinType = "CROSS JOIN"
 )
 
 type JoinTable struct {
@@ -59,13 +58,6 @@ func FullJoin(table Table, predicates ...Predicate) JoinTable {
 func CrossJoin(table Table) JoinTable {
 	return JoinTable{
 		JoinType: JoinTypeCross,
-		Table:    table,
-	}
-}
-
-func ImplicitJoin(table Table) JoinTable {
-	return JoinTable{
-		JoinType: JoinTypeImplicit,
 		Table:    table,
 	}
 }
