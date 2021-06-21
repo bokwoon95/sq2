@@ -110,8 +110,7 @@ func BufferPrintValue(dialect string, buf *bytes.Buffer, args *[]interface{}, pa
 		return v.AppendSQL(dialect, buf, args, params)
 	}
 	if isExplodableSlice(value) {
-		explodeSlice(dialect, buf, args, params, excludedTableQualifiers, value)
-		return nil
+		return explodeSlice(dialect, buf, args, params, excludedTableQualifiers, value)
 	}
 	switch dialect {
 	case DialectPostgres, DialectSQLite:
