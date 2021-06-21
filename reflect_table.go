@@ -26,10 +26,10 @@ func ReflectTable(table Table, alias string) error {
 	vtype := typ.Field(0)
 	genericTable, ok := v.Interface().(TableInfo)
 	if !ok {
-		return fmt.Errorf("first field not a embedded GenericTable")
+		return fmt.Errorf("first field not a embedded TableInfo")
 	}
 	if !vtype.Anonymous {
-		return fmt.Errorf("first field not an embedded GenericTable")
+		return fmt.Errorf("first field not an embedded TableInfo")
 	}
 	if !v.CanSet() {
 		return nil

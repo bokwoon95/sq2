@@ -32,3 +32,5 @@ func (tbl TableInfo) GetAlias() string { return tbl.TableAlias }
 func (tbl TableInfo) GetName() string { return tbl.TableName }
 
 func (tbl TableInfo) GetSchema() string { return tbl.TableSchema }
+
+func (tbl TableInfo) GetTableInfo() (TableInfo, error) { return tbl, nil }
