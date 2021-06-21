@@ -5,15 +5,21 @@ import (
 )
 
 type NumberField struct {
-	GenericField
-	Format string
-	Values []interface{}
+	info FieldInfo
 }
 
 var _ Field = NumberField{}
 
+func (f NumberField) AppendSQLExclude(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int, excludedTableQualifiers []string) error {
+	return f.info.AppendSQLExclude(dialect, buf, args, params, excludedTableQualifiers)
+}
+
+func (f NumberField) GetAlias() string { return f.info.FieldAlias }
+
+func (f NumberField) GetName() string { return f.info.FieldName }
+
 func NewNumberField(fieldName string, tableInfo TableInfo) NumberField {
-	return NumberField{GenericField: GenericField{
+	return NumberField{info: FieldInfo{
 		TableSchema: tableInfo.TableSchema,
 		TableName:   tableInfo.TableName,
 		TableAlias:  tableInfo.TableAlias,
@@ -22,59 +28,46 @@ func NewNumberField(fieldName string, tableInfo TableInfo) NumberField {
 }
 
 func NumberFieldf(format string, values ...interface{}) NumberField {
-	return NumberField{Format: format, Values: values}
+	return NumberField{info: FieldInfo{
+		Format: format,
+		Values: values,
+	}}
 }
 
 func (f NumberField) As(alias string) NumberField {
-	f.FieldAlias = alias
+	f.info.FieldAlias = alias
 	return f
 }
 
 func (f NumberField) Asc() NumberField {
-	f.Descending.Valid = true
-	f.Descending.Bool = false
+	f.info.Descending.Valid = true
+	f.info.Descending.Bool = false
 	return f
 }
 
 func (f NumberField) Desc() NumberField {
-	f.Descending.Valid = true
-	f.Descending.Bool = true
+	f.info.Descending.Valid = true
+	f.info.Descending.Bool = true
 	return f
 }
 
 func (f NumberField) NullsLast() NumberField {
-	f.Nullsfirst.Valid = true
-	f.Nullsfirst.Bool = false
+	f.info.NullsFirst.Valid = true
+	f.info.NullsFirst.Bool = false
 	return f
 }
 
 func (f NumberField) NullsFirst() NumberField {
-	f.Nullsfirst.Valid = true
-	f.Nullsfirst.Bool = true
+	f.info.NullsFirst.Valid = true
+	f.info.NullsFirst.Bool = true
 	return f
-}
-
-func (f NumberField) AppendSQLExclude(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int, excludedTableQualifiers []string) error {
-	if f.Format != "" {
-		err := BufferPrintf(dialect, buf, args, params, excludedTableQualifiers, f.Format, f.Values)
-		if err != nil {
-			return err
-		}
-		f.TableSchema, f.TableName, f.TableAlias, f.FieldName, f.FieldAlias = "", "", "", "", ""
-	}
-	return f.GenericField.AppendSQLExclude(dialect, buf, args, params, excludedTableQualifiers)
 }
 
 func (f NumberField) IsNull() Predicate { return IsNull(f) }
 
 func (f NumberField) IsNotNull() Predicate { return IsNotNull(f) }
 
-func (f NumberField) In(v interface{}) Predicate {
-	if v, ok := v.(RowValue); ok {
-		return Predicatef("{} IN {}", f, v)
-	}
-	return Predicatef("{} IN ({})", f, v)
-}
+func (f NumberField) In(v interface{}) Predicate { return In(f, v) }
 
 func (f NumberField) Eq(field NumberField) Predicate { return Eq(f, field) }
 
