@@ -10,11 +10,11 @@ type StringField struct {
 
 var _ Field = StringField{}
 
-func NewStringField(fieldName string, tbl TableInfo) StringField {
+func NewStringField(fieldName string, tableInfo TableInfo) StringField {
 	return StringField{GenericField: GenericField{
-		TableSchema: tbl.TableSchema,
-		TableName:   tbl.TableName,
-		TableAlias:  tbl.TableAlias,
+		TableSchema: tableInfo.TableSchema,
+		TableName:   tableInfo.TableName,
+		TableAlias:  tableInfo.TableAlias,
 		FieldName:   fieldName,
 	}}
 }

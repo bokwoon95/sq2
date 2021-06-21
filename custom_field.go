@@ -7,11 +7,21 @@ import (
 
 type CustomField struct {
 	GenericField
+	info   FieldInfo
 	Format string
 	Values []interface{}
 }
 
 var _ Field = CustomField{}
+
+func NewCustomField(fieldName string, tableInfo TableInfo) CustomField {
+	return CustomField{info: FieldInfo{
+		TableSchema: tableInfo.TableSchema,
+		TableName:   tableInfo.TableName,
+		TableAlias:  tableInfo.TableAlias,
+		FieldName:   fieldName,
+	}}
+}
 
 func Fieldf(format string, values ...interface{}) CustomField {
 	return CustomField{Format: format, Values: values}
