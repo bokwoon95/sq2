@@ -1234,7 +1234,7 @@ func (tbl DUMMY_TABLE) DDL(dialect string, t *T) {
 		t.NameIndex("dummy_table_id2_idx", sq.FieldLiteral(`id2 COLLATE "C"`))
 		t.NameIndex("dummy_table_color_idx", sq.FieldLiteral("color text_pattern_ops"))
 	case sq.DialectMySQL:
-		t.Column(tbl.ID1).Autoincrement()
+		t.Column(tbl.ID1)
 		t.Column(tbl.COLOR).Type("VARCHAR(50)").Collate("latin1_swedish_ci")
 		t.NameIndex(indexName,
 			tbl.SCORE,
@@ -1280,7 +1280,7 @@ CREATE INDEX dummy_table_id2_idx ON public.dummy_table (id2 COLLATE "C");
 CREATE INDEX dummy_table_color_idx ON public.dummy_table (color text_pattern_ops);`
 
 const DUMMY_TABLE_MySQL = `CREATE TABLE db.dummy_table (
-    id1 INT AUTO_INCREMENT
+    id1 INT
     ,id2 VARCHAR(255)
     ,score INT
     ,color VARCHAR(50) DEFAULT 'red' COLLATE latin1_swedish_ci
