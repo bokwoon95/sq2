@@ -24,7 +24,7 @@ func ReflectTable(table Table, alias string) error {
 	}
 	v := value.Field(0)
 	vtype := typ.Field(0)
-	genericTable, ok := v.Interface().(TableInfo)
+	tableInfo, ok := v.Interface().(TableInfo)
 	if !ok {
 		return fmt.Errorf("first field not a embedded TableInfo")
 	}
@@ -34,27 +34,27 @@ func ReflectTable(table Table, alias string) error {
 	if !v.CanSet() {
 		return nil
 	}
-	if genericTable.TableSchema == "" || genericTable.TableName == "" {
+	if tableInfo.TableSchema == "" || tableInfo.TableName == "" {
 		modifiers, modifierIndex, err := lexModifiers(vtype.Tag.Get("sq"))
 		if err != nil {
 			return err
 		}
-		if genericTable.TableSchema == "" {
+		if tableInfo.TableSchema == "" {
 			if i, ok := modifierIndex["schema"]; ok {
-				genericTable.TableSchema = modifiers[i][1]
+				tableInfo.TableSchema = modifiers[i][1]
 			}
 		}
-		if genericTable.TableName == "" {
+		if tableInfo.TableName == "" {
 			if i, ok := modifierIndex["name"]; ok {
-				genericTable.TableName = modifiers[i][1]
+				tableInfo.TableName = modifiers[i][1]
 			}
 		}
 	}
-	if genericTable.TableName == "" {
-		genericTable.TableName = strings.ToLower(typ.Name())
+	if tableInfo.TableName == "" {
+		tableInfo.TableName = strings.ToLower(typ.Name())
 	}
-	genericTable.TableAlias = alias
-	value.Field(0).Set(reflect.ValueOf(genericTable))
+	tableInfo.TableAlias = alias
+	value.Field(0).Set(reflect.ValueOf(tableInfo))
 	for i := 1; i < value.NumField(); i++ {
 		v := value.Field(i)
 		fieldValue, ok := v.Interface().(Field)
@@ -81,19 +81,19 @@ func ReflectTable(table Table, alias string) error {
 		}
 		switch fieldValue.(type) {
 		case BlobField:
-			v.Set(reflect.ValueOf(NewBlobField(fieldName, genericTable)))
+			v.Set(reflect.ValueOf(NewBlobField(fieldName, tableInfo)))
 		case BooleanField:
-			v.Set(reflect.ValueOf(NewBooleanField(fieldName, genericTable)))
+			v.Set(reflect.ValueOf(NewBooleanField(fieldName, tableInfo)))
 		case JSONField:
-			v.Set(reflect.ValueOf(NewJSONField(fieldName, genericTable)))
+			v.Set(reflect.ValueOf(NewJSONField(fieldName, tableInfo)))
 		case NumberField:
-			v.Set(reflect.ValueOf(NewNumberField(fieldName, genericTable)))
+			v.Set(reflect.ValueOf(NewNumberField(fieldName, tableInfo)))
 		case StringField:
-			v.Set(reflect.ValueOf(NewStringField(fieldName, genericTable)))
+			v.Set(reflect.ValueOf(NewStringField(fieldName, tableInfo)))
 		case TimeField:
-			v.Set(reflect.ValueOf(NewTimeField(fieldName, genericTable)))
+			v.Set(reflect.ValueOf(NewTimeField(fieldName, tableInfo)))
 		case GenericField:
-			v.Set(reflect.ValueOf(NewGenericField(fieldName, genericTable)))
+			v.Set(reflect.ValueOf(NewGenericField(fieldName, tableInfo)))
 		}
 	}
 	return nil
