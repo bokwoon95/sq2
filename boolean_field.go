@@ -5,14 +5,14 @@ import (
 )
 
 type BooleanField struct {
-	GenericField
+	info     FieldInfo
 	Negative bool
 }
 
 var _ Field = BooleanField{}
 
 func NewBooleanField(fieldName string, tbl TableInfo) BooleanField {
-	return BooleanField{GenericField: GenericField{
+	return BooleanField{info: FieldInfo{
 		TableSchema: tbl.TableSchema,
 		TableName:   tbl.TableName,
 		TableAlias:  tbl.TableAlias,
@@ -20,8 +20,19 @@ func NewBooleanField(fieldName string, tbl TableInfo) BooleanField {
 	}}
 }
 
+func (f BooleanField) GetAlias() string { return f.info.FieldAlias }
+
+func (f BooleanField) GetName() string { return f.info.FieldName }
+
+func (f BooleanField) AppendSQLExclude(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int, excludedTableQualifiers []string) error {
+	if f.Negative {
+		buf.WriteString("NOT ")
+	}
+	return f.info.AppendSQLExclude(dialect, buf, args, params, excludedTableQualifiers)
+}
+
 func (f BooleanField) As(alias string) BooleanField {
-	f.FieldAlias = alias
+	f.info.FieldAlias = alias
 	return f
 }
 
@@ -31,34 +42,27 @@ func (f BooleanField) Not() Predicate {
 }
 
 func (f BooleanField) Asc() BooleanField {
-	f.Descending.Valid = true
-	f.Descending.Bool = false
+	f.info.Descending.Valid = true
+	f.info.Descending.Bool = false
 	return f
 }
 
 func (f BooleanField) Desc() BooleanField {
-	f.Descending.Valid = true
-	f.Descending.Bool = true
+	f.info.Descending.Valid = true
+	f.info.Descending.Bool = true
 	return f
 }
 
 func (f BooleanField) NullsLast() BooleanField {
-	f.Nullsfirst.Valid = true
-	f.Nullsfirst.Bool = false
+	f.info.NullsFirst.Valid = true
+	f.info.NullsFirst.Bool = false
 	return f
 }
 
 func (f BooleanField) NullsFirst() BooleanField {
-	f.Nullsfirst.Valid = true
-	f.Nullsfirst.Bool = true
+	f.info.NullsFirst.Valid = true
+	f.info.NullsFirst.Bool = true
 	return f
-}
-
-func (f BooleanField) AppendSQLExclude(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int, excludedTableQualifiers []string) error {
-	if f.Negative {
-		buf.WriteString("NOT ")
-	}
-	return f.GenericField.AppendSQLExclude(dialect, buf, args, params, excludedTableQualifiers)
 }
 
 func (f BooleanField) IsNull() Predicate { return IsNull(f) }
