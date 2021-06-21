@@ -167,12 +167,20 @@ func (ctes CTEs) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{
 			buf.WriteString(")")
 		}
 		buf.WriteString(" AS (")
-		if metafield.query == nil {
+		switch query := metafield.query.(type) {
+		case nil:
 			return fmt.Errorf("CTE #%d has no query", i+1)
-		}
-		err := metafield.query.AppendSQL(dialect, buf, args, params)
-		if err != nil {
-			return fmt.Errorf("CTE #%d failed to build query: %w", i+1, err)
+		case VariadicQuery:
+			query.TopLevel = true
+			err := query.AppendSQL(dialect, buf, args, params)
+			if err != nil {
+				return fmt.Errorf("CTE #%d failed to build query: %w", i+1, err)
+			}
+		default:
+			err := query.AppendSQL(dialect, buf, args, params)
+			if err != nil {
+				return fmt.Errorf("CTE #%d failed to build query: %w", i+1, err)
+			}
 		}
 	}
 	buf.WriteString(" ")
