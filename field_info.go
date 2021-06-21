@@ -6,6 +6,10 @@ import (
 )
 
 // TODO: move this to a file of its own, together with the `GetFieldInfo(field Field) (FieldInfo, error)` function
+// first try to type assert to a field.(FieldInfo) directly
+// then see if it is one of the builtin types: BlobField | BooleanField | GenericField | JSONField | NumberField | StringField | TimeField
+// then see if it implements FieldInfoGetter
+// else return error
 type FieldInfoGetter interface {
 	GetFieldInfo() (FieldInfo, error)
 }
@@ -22,7 +26,11 @@ type FieldInfo struct {
 	NullsFirst  sql.NullBool
 }
 
-var _ SQLExcludeAppender = FieldInfo{}
+var _ Field = FieldInfo{}
+
+func (f FieldInfo) GetAlias() string { return f.FieldAlias }
+
+func (f FieldInfo) GetName() string { return f.FieldName }
 
 func (f FieldInfo) AppendSQLExclude(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int, excludedTableQualifiers []string) error {
 	if f.Format != "" {
