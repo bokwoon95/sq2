@@ -35,8 +35,7 @@ func (param NamedParam) AppendSQLExclude(dialect string, buf *bytes.Buffer, args
 		return v.AppendSQL(dialect, buf, args, params)
 	}
 	if isExplodableSlice(param.Value) {
-		explodeSlice(dialect, buf, args, params, excludedTableQualifiers, param.Value)
-		return nil
+		return explodeSlice(dialect, buf, args, params, excludedTableQualifiers, param.Value)
 	}
 	switch dialect {
 	case DialectPostgres, DialectSQLite:
