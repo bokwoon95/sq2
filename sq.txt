@@ -9,6 +9,8 @@ blob_field.go | boolean_field.go | json_field.go | numberfield.go | string_field
 join_table.go
 variadic_query.go
 subquery_field.go | cte.go
+...
+window.go (at very last because nothing depends on it)
 
 BeforeQuery Hook
 AfterQuery Hook

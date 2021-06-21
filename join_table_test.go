@@ -83,16 +83,6 @@ func Test_JoinTable(t *testing.T) {
 		assert(t, tt)
 	})
 
-	t.Run("implicit join", func(t *testing.T) {
-		var tt TT
-		USERS := USERS
-		USERS.TableAlias = "u"
-		tt.item = ImplicitJoin(USERS)
-		tt.wantQuery = ", users AS u"
-		tt.wantArgs = []interface{}{}
-		assert(t, tt)
-	})
-
 	t.Run("custom join", func(t *testing.T) {
 		var tt TT
 		tt.item = CustomJoin("CROSS JOIN LATERAL", Tablef("unnest({}) WITH ORDINALITY AS uhh(email, seqno)", USERS.EMAIL))
@@ -109,7 +99,6 @@ func Test_JoinTable(t *testing.T) {
 			RightJoin(USERS, Eq(1, 1)),
 			FullJoin(USERS, Eq(1, 1)),
 			CrossJoin(USERS),
-			ImplicitJoin(USERS),
 			CustomJoin("CROSS JOIN LATERAL", Tablef("unnest({}) WITH ORDINALITY AS uhh(email, seqno)", USERS.EMAIL)),
 		}
 		tt.wantQuery = "JOIN users ON ? = ?" +
@@ -117,7 +106,6 @@ func Test_JoinTable(t *testing.T) {
 			" RIGHT JOIN users ON ? = ?" +
 			" FULL JOIN users ON ? = ?" +
 			" CROSS JOIN users" +
-			" , users" +
 			" CROSS JOIN LATERAL unnest(users.email) WITH ORDINALITY AS uhh(email, seqno)"
 		tt.wantArgs = []interface{}{1, 1, 1, 1, 1, 1, 1, 1}
 		assert(t, tt)
