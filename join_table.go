@@ -83,22 +83,12 @@ func (join JoinTable) AppendSQL(dialect string, buf *bytes.Buffer, args *[]inter
 		join.JoinType = JoinTypeInner
 	}
 	buf.WriteString(string(join.JoinType) + " ")
-	var err error
-	switch v := join.Table.(type) {
-	case nil:
+	if join.Table == nil {
 		return fmt.Errorf("sq: joining on a nil table")
-	case Subquery:
-		buf.WriteString("(")
-		err = v.AppendSQL(dialect, buf, args, params)
-		if err != nil {
-			return err
-		}
-		buf.WriteString(")")
-	default:
-		err = v.AppendSQL(dialect, buf, args, params)
-		if err != nil {
-			return err
-		}
+	}
+	err := join.Table.AppendSQL(dialect, buf, args, params)
+	if err != nil {
+		return err
 	}
 	if tableAlias := join.Table.GetAlias(); tableAlias != "" {
 		buf.WriteString(" AS ")
