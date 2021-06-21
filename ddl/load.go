@@ -183,6 +183,11 @@ func (tbl *Table) LoadColumn(dialect, columnName, columnType, config string) err
 		case "collate":
 			col.CollationName = modifier[1]
 		case "default":
+			// TODO: differentiate between DefaultExpr and DefaultLiteral
+			// if starts and ends with single quotes, is DefaultLiteral
+			// if parseable as integer or float, is DefaultLiteral
+			// if is TRUE, FALSE, CURRENT_TIMESTAMP et al, is DefaultLiteral
+			// else if DefaultExpr
 			col.ColumnDefault = modifier[1]
 		case "ignore":
 			col.Ignore = true

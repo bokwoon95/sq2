@@ -546,15 +546,26 @@ func (tbl FILM_TEXT) DDL(dialect string, t *T) {
 		t.Column(tbl.TITLE).Type("VARCHAR(255)").NotNull()
 		t.Index(tbl.TITLE, tbl.DESCRIPTION).Using("FULLTEXT")
 	case sq.DialectSQLite:
+		t.VirtualTable("FTS5", `content='film'`, `content_rowid='film_id'`)
 		t.Column(tbl.FILM_ID).Ignore() // Ignore will literally delete the column from t.Table.Columns
 	}
 }
 
-const FILM_TEXT_SQLite = ``
+const FILM_TEXT_SQLite = `CREATE VIRTUAL TABLE film_text USING FTS5 (
+    title
+    ,description
+    ,content='film'
+    ,content_rowid='film_id'
+);`
 
-const FILM_TEXT_Postgres = ``
+const FILM_TEXT_Postgres = `postgres does not use film_text table for FTS because it has fulltext TSVECTOR column in film table`
 
-const FILM_TEXT_MySQL = ``
+const FILM_TEXT_MySQL = `CREATE TABLE db.film_text (
+  film_id INT NOT NULL PRIMARY KEY
+  ,title VARCHAR(255) NOT NULL
+  ,description TEXT
+);
+CREATE FULLTEXT INDEX film_text_title_description_idx ON db.film_text (title, description);`
 
 func NEW_FILM_ACTOR(dialect, alias string) FILM_ACTOR {
 	var tbl FILM_ACTOR

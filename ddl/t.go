@@ -32,6 +32,11 @@ type T struct {
 	tbl     *Table
 }
 
+func (t *T) VirtualTable(moduleName string, moduleArgs ...string) {
+	t.tbl.VirtualTable = moduleName
+	t.tbl.VirtualTableArgs = moduleArgs
+}
+
 type TColumn struct {
 	dialect     string
 	tbl         *Table
@@ -142,6 +147,7 @@ func (t *TColumn) Stored() *TColumn {
 	return t
 }
 
+// TODO: DefaultExpr and DefaultLiteral
 func (t *TColumn) Default(format string, values ...interface{}) *TColumn {
 	expr, err := sprintf(t.dialect, t.tbl.TableName, format, values)
 	if err != nil {

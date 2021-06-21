@@ -99,7 +99,12 @@ CREATE INDEX film_language_id_idx ON film (language_id);
 
 CREATE INDEX film_original_language_id_idx ON film (original_language_id);
 
-CREATE VIRTUAL TABLE film_text USING FTS5(title, description, content='film', content_rowid='film_id');
+CREATE VIRTUAL TABLE film_text USING FTS5 (
+    title
+    ,description
+    ,content='film'
+    ,content_rowid='film_id'
+);
 
 CREATE TABLE film_actor (
     actor_id INT NOT NULL
