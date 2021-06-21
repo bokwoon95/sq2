@@ -533,7 +533,7 @@ func NEW_FILM_TEXT(dialect, alias string) FILM_TEXT {
 }
 
 type FILM_TEXT struct {
-	sq.GenericTable `sq:"name=film_text" ddl:"fts5={content='film' content_rowid='film_id'}"`
+	sq.GenericTable `sq:"name=film_text" ddl:"virtual={fts5 content='film' content_rowid='film_id'}"`
 	FILM_ID         sq.NumberField
 	TITLE           sq.StringField
 	DESCRIPTION     sq.StringField
@@ -541,17 +541,20 @@ type FILM_TEXT struct {
 
 func (tbl FILM_TEXT) DDL(dialect string, t *T) {
 	switch dialect {
-	case sq.DialectPostgres: // no-op, we will ignore this table if postgres
-	case sq.DialectMySQL:
-		t.Column(tbl.TITLE).Type("VARCHAR(255)").NotNull()
-		t.Index(tbl.TITLE, tbl.DESCRIPTION).Using("FULLTEXT")
 	case sq.DialectSQLite:
-		t.VirtualTable("FTS5", `content='film'`, `content_rowid='film_id'`)
+		t.VirtualTable("fts5", `content='film'`, `content_rowid='film_id'`)
 		t.Column(tbl.FILM_ID).Ignore() // Ignore will literally delete the column from t.Table.Columns
+	case sq.DialectPostgres:
+		break // no-op, postgres does not need a separate film_text table for full text search
+	case sq.DialectMySQL:
+		t.Column(tbl.FILM_ID).Type("INT").NotNull().PrimaryKey()
+		t.Column(tbl.TITLE).Type("VARCHAR(255)").NotNull()
+		t.Column(tbl.DESCRIPTION).Type("TEXT")
+		t.Index(tbl.TITLE, tbl.DESCRIPTION).Using("FULLTEXT")
 	}
 }
 
-const FILM_TEXT_SQLite = `CREATE VIRTUAL TABLE film_text USING FTS5 (
+const FILM_TEXT_SQLite = `CREATE VIRTUAL TABLE film_text USING fts5 (
     title
     ,description
     ,content='film'
@@ -561,9 +564,11 @@ const FILM_TEXT_SQLite = `CREATE VIRTUAL TABLE film_text USING FTS5 (
 const FILM_TEXT_Postgres = `postgres does not use film_text table for FTS because it has fulltext TSVECTOR column in film table`
 
 const FILM_TEXT_MySQL = `CREATE TABLE db.film_text (
-  film_id INT NOT NULL PRIMARY KEY
-  ,title VARCHAR(255) NOT NULL
-  ,description TEXT
+    film_id INT NOT NULL
+    ,title VARCHAR(255) NOT NULL
+    ,description TEXT
+
+    ,CONSTRAINT film_text_film_id_pkey PRIMARY KEY (film_id)
 );
 CREATE FULLTEXT INDEX film_text_title_description_idx ON db.film_text (title, description);`
 
@@ -1296,8 +1301,8 @@ func NEW_DUMMY_TABLE_2(dialect, alias string) DUMMY_TABLE_2 {
 
 type DUMMY_TABLE_2 struct {
 	sq.GenericTable `ddl:"references={dummy_table.id1,id2 cols=id1,id2 onupdate=cascade ondelete=restrict}"`
-	ID1 sq.NumberField
-	ID2 sq.StringField
+	ID1             sq.NumberField
+	ID2             sq.StringField
 }
 
 func (tbl DUMMY_TABLE_2) DDL(dialect string, t *T) {

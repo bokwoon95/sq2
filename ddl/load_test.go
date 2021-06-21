@@ -175,25 +175,18 @@ func Test_LoadTable(t *testing.T) {
 		// fmt.Println(gotDDL)
 	})
 
-	// TODO: MySQL FULLTEXT and SQLite FTS5
-	// t.Run("FILM_TEXT SQLite", func(t *testing.T) {
-	// 	is := testutil.New(t, testutil.Parallel)
-	// 	gotDDL := makeDDL(is, sq.DialectSQLite, NEW_FILM_TEXT(sq.DialectSQLite, ""))
-	// 	// is.Equal(FILM_TEXT_SQLite, gotDDL)
-	// 	fmt.Println(gotDDL)
-	// })
-	// t.Run("FILM_TEXT Postgres", func(t *testing.T) {
-	// 	is := testutil.New(t, testutil.Parallel)
-	// 	gotDDL := makeDDL(is, sq.DialectPostgres, NEW_FILM_TEXT(sq.DialectPostgres, ""))
-	// 	// is.Equal(FILM_TEXT_Postgres, gotDDL)
-	// 	fmt.Println(gotDDL)
-	// })
-	// t.Run("FILM_TEXT MySQL", func(t *testing.T) {
-	// 	is := testutil.New(t, testutil.Parallel)
-	// 	gotDDL := makeDDL(is, sq.DialectMySQL, NEW_FILM_TEXT(sq.DialectMySQL, ""))
-	// 	// is.Equal(FILM_TEXT_MySQL, gotDDL)
-	// 	fmt.Println(gotDDL)
-	// })
+	t.Run("FILM_TEXT SQLite", func(t *testing.T) {
+		is := testutil.New(t, testutil.Parallel)
+		gotDDL := makeDDL(is, sq.DialectSQLite, NEW_FILM_TEXT(sq.DialectSQLite, ""))
+		is.Equal(FILM_TEXT_SQLite, gotDDL)
+		// fmt.Println(gotDDL)
+	})
+	t.Run("FILM_TEXT MySQL", func(t *testing.T) {
+		is := testutil.New(t, testutil.Parallel)
+		gotDDL := makeDDL(is, sq.DialectMySQL, NEW_FILM_TEXT(sq.DialectMySQL, ""))
+		is.Equal(FILM_TEXT_MySQL, gotDDL)
+		// fmt.Println(gotDDL)
+	})
 
 	t.Run("FILM_ACTOR SQLite", func(t *testing.T) {
 		is := testutil.New(t, testutil.Parallel)

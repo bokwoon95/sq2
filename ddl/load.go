@@ -67,8 +67,19 @@ func (m *Metadata) LoadTable(table sq.Table) (err error) {
 	}
 	for _, modifier := range modifiers {
 		switch modifier[0] {
-		case "fts5":
-			continue
+		case "virtual":
+			virtualTable, modifiers, _, err := lexValue(modifier[1])
+			if err != nil {
+				return fmt.Errorf("ddl: %s: %s", qualifiedTable, err.Error())
+			}
+			tbl.VirtualTable = virtualTable
+			for _, modifier := range modifiers {
+				virtualTableArg := modifier[0]
+				if modifier[1] != "" {
+					virtualTableArg += "=" + modifier[1]
+				}
+				tbl.VirtualTableArgs = append(tbl.VirtualTableArgs, virtualTableArg)
+			}
 		case "primarykey":
 			err = tbl.LoadConstraint(PRIMARY_KEY, tbl.TableSchema, tbl.TableName, nil, modifier[1])
 			if err != nil {

@@ -17,26 +17,47 @@ func CreateTable(dialect string, tbl Table) (string, error) {
 	if len(tbl.Columns) == 0 {
 		return "", fmt.Errorf("ddl: table has no columns")
 	}
-	buf.WriteString("CREATE TABLE ")
+	if tbl.VirtualTable != "" && dialect == sq.DialectSQLite {
+		buf.WriteString("CREATE VIRTUAL TABLE ")
+	} else {
+		buf.WriteString("CREATE TABLE ")
+	}
 	if tbl.TableSchema != "" {
 		buf.WriteString(sq.QuoteIdentifier(dialect, tbl.TableSchema) + ".")
 	}
 	buf.WriteString(sq.QuoteIdentifier(dialect, tbl.TableName))
+	if tbl.VirtualTable != "" && dialect == sq.DialectSQLite {
+		buf.WriteString(" USING " + tbl.VirtualTable)
+	}
 	buf.WriteString(" (")
 	var columnWritten bool
 	for _, column := range tbl.Columns {
 		if column.Ignore {
 			continue
 		}
-		buf.WriteString("\n    ")
 		if !columnWritten {
 			columnWritten = true
+			buf.WriteString("\n    ")
 		} else {
-			buf.WriteString(",")
+			buf.WriteString("\n    ,")
+		}
+		if strings.EqualFold(tbl.VirtualTable, "fts5") && dialect == sq.DialectSQLite {
+			column = Column{ColumnName: column.ColumnName}
 		}
 		err := createColumn(dialect, buf, column, false)
 		if err != nil {
 			return buf.String(), err
+		}
+	}
+	if tbl.VirtualTable != "" && dialect == sq.DialectSQLite && len(tbl.VirtualTableArgs) > 0 {
+		for _, arg := range tbl.VirtualTableArgs {
+			if !columnWritten {
+				columnWritten = true
+				buf.WriteString("\n    ")
+			} else {
+				buf.WriteString("\n    ,")
+			}
+			buf.WriteString(arg)
 		}
 	}
 	var newlineWritten bool
@@ -209,7 +230,8 @@ func CreateIndex(dialect string, index Index) (string, error) {
 		bufpool.Put(buf)
 	}()
 	buf.WriteString("CREATE")
-	if dialect == sq.DialectMySQL && (index.IndexType == "FULLTEXT" || index.IndexType == "SPATIAL") {
+	isFulltextOrSpatial := index.IndexType == "FULLTEXT" || index.IndexType == "SPATIAL"
+	if dialect == sq.DialectMySQL && isFulltextOrSpatial {
 		buf.WriteString(" " + index.IndexType)
 	} else if index.IsUnique {
 		buf.WriteString(" UNIQUE")
@@ -219,7 +241,7 @@ func CreateIndex(dialect string, index Index) (string, error) {
 		buf.WriteString(sq.QuoteIdentifier(dialect, index.TableSchema) + ".")
 	}
 	buf.WriteString(sq.QuoteIdentifier(dialect, index.TableName))
-	if index.IndexType != "" && !strings.EqualFold(index.IndexType, "BTREE") {
+	if index.IndexType != "" && !isFulltextOrSpatial && !strings.EqualFold(index.IndexType, "BTREE") {
 		buf.WriteString(" USING " + index.IndexType)
 	}
 	buf.WriteString(" (")
