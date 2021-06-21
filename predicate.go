@@ -153,3 +153,10 @@ func Ge(a, b interface{}) Predicate { return Predicatef("{} >= {}", a, b) }
 func Lt(a, b interface{}) Predicate { return Predicatef("{} < {}", a, b) }
 
 func Le(a, b interface{}) Predicate { return Predicatef("{} <= {}", a, b) }
+
+func In(a, b interface{}) Predicate {
+	if b, ok := b.(RowValue); ok {
+		return Predicatef("{} IN {}", a, b)
+	}
+	return Predicatef("{} IN ({})", a, b)
+}
