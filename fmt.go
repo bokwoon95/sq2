@@ -13,6 +13,10 @@ import (
 )
 
 func BufferPrintf(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int, excludedTableQualifiers []string, format string, values []interface{}) error {
+	if i := strings.IndexByte(format, '{'); i < 0 {
+		buf.WriteString(format)
+		return nil
+	}
 	buf.Grow(len(format))
 	runningValuesIndex := 0
 	valuesLookup := make(map[string]int)
