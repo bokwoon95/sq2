@@ -1,11 +1,13 @@
 package sq
 
+import "bytes"
+
 type JSONField struct {
-	GenericField
+	info FieldInfo
 }
 
 func NewJSONField(fieldName string, tableInfo TableInfo) JSONField {
-	return JSONField{GenericField: GenericField{
+	return JSONField{info: FieldInfo{
 		TableSchema: tableInfo.TableSchema,
 		TableName:   tableInfo.TableName,
 		TableAlias:  tableInfo.TableAlias,
@@ -15,31 +17,39 @@ func NewJSONField(fieldName string, tableInfo TableInfo) JSONField {
 
 var _ Field = JSONField{}
 
+func (f JSONField) AppendSQLExclude(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int, excludedTableQualifiers []string) error {
+	return f.info.AppendSQLExclude(dialect, buf, args, params, excludedTableQualifiers)
+}
+
+func (f JSONField) GetAlias() string { return f.info.FieldAlias }
+
+func (f JSONField) GetName() string { return f.info.FieldName }
+
 func (f JSONField) As(alias string) JSONField {
-	f.FieldAlias = alias
+	f.info.FieldAlias = alias
 	return f
 }
 
 func (f JSONField) Asc() JSONField {
-	f.Descending.Valid = true
-	f.Descending.Bool = false
+	f.info.Descending.Valid = true
+	f.info.Descending.Bool = false
 	return f
 }
 
 func (f JSONField) Desc() JSONField {
-	f.Descending.Valid = true
-	f.Descending.Bool = true
+	f.info.Descending.Valid = true
+	f.info.Descending.Bool = true
 	return f
 }
 
 func (f JSONField) NullsLast() JSONField {
-	f.Nullsfirst.Valid = true
-	f.Nullsfirst.Bool = false
+	f.info.NullsFirst.Valid = true
+	f.info.NullsFirst.Bool = false
 	return f
 }
 
 func (f JSONField) NullsFirst() JSONField {
-	f.Nullsfirst.Valid = true
-	f.Nullsfirst.Bool = true
+	f.info.NullsFirst.Valid = true
+	f.info.NullsFirst.Bool = true
 	return f
 }
