@@ -199,6 +199,8 @@ type Table struct {
 	Constraints      []Constraint
 	Indices          []Index
 	Modifiers        string
+	VirtualTable     string
+	VirtualTableArgs []string
 	columnsCache     map[string]int
 	constraintsCache map[string]int
 	indicesCache     map[string]int
