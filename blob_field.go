@@ -8,11 +8,11 @@ type BlobField struct {
 
 var _ Field = BlobField{}
 
-func NewBlobField(fieldName string, tbl TableInfo) BlobField {
+func NewBlobField(fieldName string, tableinfo TableInfo) BlobField {
 	return BlobField{info: FieldInfo{
-		TableSchema: tbl.TableSchema,
-		TableName:   tbl.TableName,
-		TableAlias:  tbl.TableAlias,
+		TableSchema: tableinfo.TableSchema,
+		TableName:   tableinfo.TableName,
+		TableAlias:  tableinfo.TableAlias,
 		FieldName:   fieldName,
 	}}
 }
@@ -53,5 +53,9 @@ func (f BlobField) NullsFirst() BlobField {
 	f.info.NullsFirst.Bool = true
 	return f
 }
+
+func (f BlobField) IsNull() Predicate { return IsNull(f) }
+
+func (f BlobField) IsNotNull() Predicate { return IsNotNull(f) }
 
 func (f BlobField) SetBlob(val []byte) Assignment { return Assign(f, val) }

@@ -61,6 +61,22 @@ func Test_BlobField(t *testing.T) {
 		assert(t, tt)
 	})
 
+	t.Run("BlobField IS NULL", func(t *testing.T) {
+		var tt TT
+		tt.item = NewBlobField("field", TableInfo{TableName: "tbl"}).IsNull()
+		tt.wantQuery = "tbl.field IS NULL"
+		tt.wantArgs = []interface{}{}
+		assert(t, tt)
+	})
+
+	t.Run("BlobField IS NOT NULL", func(t *testing.T) {
+		var tt TT
+		tt.item = NewBlobField("field", TableInfo{TableName: "tbl"}).IsNotNull()
+		tt.wantQuery = "tbl.field IS NOT NULL"
+		tt.wantArgs = []interface{}{}
+		assert(t, tt)
+	})
+
 	t.Run("SetBlob", func(t *testing.T) {
 		var tt TT
 		tt.item = NewBlobField("field", TableInfo{TableName: "tbl"}).SetBlob([]byte{'a', 'b', 'c', 'd'})

@@ -11,11 +11,11 @@ type BooleanField struct {
 
 var _ Field = BooleanField{}
 
-func NewBooleanField(fieldName string, tbl TableInfo) BooleanField {
+func NewBooleanField(fieldName string, tableinfo TableInfo) BooleanField {
 	return BooleanField{info: FieldInfo{
-		TableSchema: tbl.TableSchema,
-		TableName:   tbl.TableName,
-		TableAlias:  tbl.TableAlias,
+		TableSchema: tableinfo.TableSchema,
+		TableName:   tableinfo.TableName,
+		TableAlias:  tableinfo.TableAlias,
 		FieldName:   fieldName,
 	}}
 }
