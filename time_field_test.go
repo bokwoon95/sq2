@@ -10,15 +10,15 @@ import (
 
 func Test_TimeField(t *testing.T) {
 	USERS := struct {
-		USER_ID GenericField
-		NAME    GenericField
-		EMAIL   GenericField
-		AGE     GenericField
+		USER_ID CustomField
+		NAME    CustomField
+		EMAIL   CustomField
+		AGE     CustomField
 	}{
-		USER_ID: GenericField{FieldName: "user_id"},
-		NAME:    GenericField{FieldName: "name"},
-		EMAIL:   GenericField{FieldName: "email"},
-		AGE:     GenericField{FieldName: "age"},
+		USER_ID: NewCustomField("user_id", TableInfo{}),
+		NAME:    NewCustomField("name", TableInfo{}),
+		EMAIL:   NewCustomField("email", TableInfo{}),
+		AGE:     NewCustomField("age", TableInfo{}),
 	}
 
 	type TT struct {
