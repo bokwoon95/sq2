@@ -23,6 +23,14 @@ func NewCustomField(fieldName string, tableInfo TableInfo) CustomField {
 	}}
 }
 
+func (f CustomField) GetAlias() string { return f.info.FieldAlias }
+
+func (f CustomField) GetName() string { return f.info.FieldName }
+
+// func (f CustomField) AppendSQLExclude(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int, excludedTableQualifiers []string) error {
+// 	return f.info.AppendSQLExclude(dialect, buf, args, params, excludedTableQualifiers)
+// }
+
 func Fieldf(format string, values ...interface{}) CustomField {
 	return CustomField{Format: format, Values: values}
 }
@@ -30,6 +38,7 @@ func Fieldf(format string, values ...interface{}) CustomField {
 func FieldValue(value interface{}) CustomField { return Fieldf("{}", value) }
 
 func (f CustomField) As(alias string) CustomField {
+	f.info.FieldAlias = alias
 	f.FieldAlias = alias
 	return f
 }

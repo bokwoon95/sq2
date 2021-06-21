@@ -17,13 +17,13 @@ func NewBlobField(fieldName string, tableInfo TableInfo) BlobField {
 	}}
 }
 
-func (f BlobField) AppendSQLExclude(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int, excludedTableQualifiers []string) error {
-	return f.info.AppendSQLExclude(dialect, buf, args, params, excludedTableQualifiers)
-}
-
 func (f BlobField) GetAlias() string { return f.info.FieldAlias }
 
 func (f BlobField) GetName() string { return f.info.FieldName }
+
+func (f BlobField) AppendSQLExclude(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int, excludedTableQualifiers []string) error {
+	return f.info.AppendSQLExclude(dialect, buf, args, params, excludedTableQualifiers)
+}
 
 func (f BlobField) As(alias string) BlobField {
 	f.info.FieldAlias = alias
