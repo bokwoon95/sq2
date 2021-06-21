@@ -5,6 +5,11 @@ import (
 	"database/sql"
 )
 
+// TODO: move this to a file of its own, together with the `GetFieldInfo(field Field) (FieldInfo, error)` function
+type FieldInfoGetter interface {
+	GetFieldInfo() (FieldInfo, error)
+}
+
 type FieldInfo struct {
 	TableSchema string
 	TableName   string

@@ -1,13 +1,15 @@
 package sq
 
+import "bytes"
+
 type BlobField struct {
-	GenericField
+	info FieldInfo
 }
 
 var _ Field = BlobField{}
 
 func NewBlobField(fieldName string, tbl TableInfo) BlobField {
-	return BlobField{GenericField: GenericField{
+	return BlobField{info: FieldInfo{
 		TableSchema: tbl.TableSchema,
 		TableName:   tbl.TableName,
 		TableAlias:  tbl.TableAlias,
@@ -15,32 +17,40 @@ func NewBlobField(fieldName string, tbl TableInfo) BlobField {
 	}}
 }
 
+func (f BlobField) AppendSQLExclude(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int, excludedTableQualifiers []string) error {
+	return f.info.AppendSQLExclude(dialect, buf, args, params, excludedTableQualifiers)
+}
+
+func (f BlobField) GetAlias() string { return f.info.FieldAlias }
+
+func (f BlobField) GetName() string { return f.info.FieldName }
+
 func (f BlobField) As(alias string) BlobField {
-	f.FieldAlias = alias
+	f.info.FieldAlias = alias
 	return f
 }
 
 func (f BlobField) Asc() BlobField {
-	f.Descending.Valid = true
-	f.Descending.Bool = false
+	f.info.Descending.Valid = true
+	f.info.Descending.Bool = false
 	return f
 }
 
 func (f BlobField) Desc() BlobField {
-	f.Descending.Valid = true
-	f.Descending.Bool = true
+	f.info.Descending.Valid = true
+	f.info.Descending.Bool = true
 	return f
 }
 
 func (f BlobField) NullsLast() BlobField {
-	f.Nullsfirst.Valid = true
-	f.Nullsfirst.Bool = false
+	f.info.NullsFirst.Valid = true
+	f.info.NullsFirst.Bool = false
 	return f
 }
 
 func (f BlobField) NullsFirst() BlobField {
-	f.Nullsfirst.Valid = true
-	f.Nullsfirst.Bool = true
+	f.info.NullsFirst.Valid = true
+	f.info.NullsFirst.Bool = true
 	return f
 }
 
