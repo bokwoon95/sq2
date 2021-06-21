@@ -31,11 +31,12 @@ func (vq VariadicQuery) ToSQL() (query string, args []interface{}, params map[st
 		bufpool.Put(buf)
 	}()
 	params = make(map[string][]int)
-	err = vq.AppendSQL("", buf, &args, params)
-	if err != nil {
-		return query, args, params, err
+	var dialect string
+	if len(vq.Queries) > 0 {
+		dialect = vq.Queries[0].Dialect()
 	}
-	return buf.String(), args, params, nil
+	err = vq.AppendSQL(dialect, buf, &args, params)
+	return buf.String(), args, params, err
 }
 
 func (vq VariadicQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {

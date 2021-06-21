@@ -65,6 +65,10 @@ type SQLExcludeAppender interface {
 	AppendSQLExclude(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int, excludedTableQualifiers []string) error
 }
 
+type toSQLer interface {
+	ToSQL() (query string, args []interface{}, params map[string][]int, err error)
+}
+
 type Table interface {
 	SQLAppender
 	GetAlias() string
