@@ -1,0 +1,3 @@
+DDLer should take in a context.Context
+
+Think about sanitizing and escaping the table stuff. Actually if I assume the config comes from trusted sources, I can forego this requirement.
