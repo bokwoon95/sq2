@@ -110,7 +110,7 @@ func createColumn(dialect string, buf *bytes.Buffer, column Column) error {
 	} else if isIdentity {
 		buf.WriteString(" GENERATED " + column.Identity)
 	} else if isGenerated {
-		buf.WriteString(" GENERATED ALWAYS AS (" + column.GeneratedExpr + ")") // TODO: c.GeneratedExprStored has to be sanitized and escaped
+		buf.WriteString(" GENERATED ALWAYS AS (" + column.GeneratedExpr + ")")
 		if column.GeneratedExprStored {
 			buf.WriteString(" STORED")
 		} else {
@@ -128,7 +128,7 @@ func createColumn(dialect string, buf *bytes.Buffer, column Column) error {
 		case sq.DialectPostgres:
 			buf.WriteString(` COLLATE "` + sq.EscapeQuote(column.CollationName, '"') + `"`) // postgres collation names need double quotes (idk why)
 		default:
-			buf.WriteString(" COLLATE " + column.CollationName) // TODO: c.CollationName has to be sanitized and escaped
+			buf.WriteString(" COLLATE " + column.CollationName)
 		}
 	}
 	return nil
@@ -168,13 +168,13 @@ func createConstraint(dialect string, buf *bytes.Buffer, constraint Constraint) 
 			buf.WriteString(" (" + strings.Join(constraint.ReferencesColumns, ", ") + ")")
 		}
 		if constraint.MatchOption != "" {
-			buf.WriteString(" " + constraint.MatchOption) // TODO: check for validity
+			buf.WriteString(" " + constraint.MatchOption)
 		}
 		if constraint.OnUpdate != "" {
-			buf.WriteString(" ON UPDATE " + constraint.OnUpdate) // TODO: check for validity
+			buf.WriteString(" ON UPDATE " + constraint.OnUpdate)
 		}
 		if constraint.OnDelete != "" {
-			buf.WriteString(" ON DELETE " + constraint.OnDelete) // TODO: check for validity
+			buf.WriteString(" ON DELETE " + constraint.OnDelete)
 		}
 	default:
 		buf.WriteString(" (" + strings.Join(constraint.Columns, ", ") + ")")
