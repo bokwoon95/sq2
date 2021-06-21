@@ -6,8 +6,9 @@ rowvalue.go
 table_info.go
 field_info.go <-> custom_field.go <-> assignment.go
 blob_field.go | boolean_field.go | json_field.go | numberfield.go | string_field.go | time_field.go
-subquery_field.go (subquery_test.go comes later, as it depends on other queries)
 join_table.go
+variadic_query.go
+subquery_field.go | cte.go
 
 BeforeQuery Hook
 AfterQuery Hook

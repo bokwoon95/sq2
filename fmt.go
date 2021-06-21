@@ -422,3 +422,65 @@ func Sprint(v interface{}) (string, error) {
 	}
 	return "", fmt.Errorf("sq: could not convert %#v into its SQL representation", v)
 }
+
+type customTable struct {
+	format string
+	values []interface{}
+}
+
+var _ Table = customTable{}
+
+func Tablef(format string, values ...interface{}) Table {
+	return customTable{format: format, values: values}
+}
+
+func (tbl customTable) GetAlias() string { return "" }
+
+func (tbl customTable) GetName() string { return "" }
+
+func (tbl customTable) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
+	return BufferPrintf(dialect, buf, args, params, nil, tbl.format, tbl.values)
+}
+
+type customQuery struct {
+	dialect string
+	format  string
+	values  []interface{}
+}
+
+var _ Query = customQuery{}
+
+func Queryf(dialect string, format string, values ...interface{}) Query {
+	return customQuery{
+		format: format,
+		values: values,
+	}
+}
+
+func (q customQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
+	return BufferPrintf(dialect, buf, args, params, nil, q.format, q.values)
+}
+
+func (q customQuery) ToSQL() (query string, args []interface{}, params map[string][]int, err error) {
+	buf := bufpool.Get().(*bytes.Buffer)
+	defer func() {
+		buf.Reset()
+		bufpool.Put(buf)
+	}()
+	params = make(map[string][]int)
+	err = q.AppendSQL(q.dialect, buf, &args, params)
+	if err != nil {
+		return buf.String(), args, params, err
+	}
+	return buf.String(), args, params, nil
+}
+
+func (q customQuery) SetFetchableFields([]Field) (Query, error) {
+	return nil, ErrUnsupported
+}
+
+func (q customQuery) GetFetchableFields() ([]Field, error) {
+	return nil, ErrUnsupported
+}
+
+func (q customQuery) Dialect() string { return q.dialect }
