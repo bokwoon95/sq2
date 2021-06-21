@@ -41,24 +41,6 @@ func Test_CustomField(t *testing.T) {
 		is.Equal(tt.wantArgs, gotArgs)
 	}
 
-	assertError := func(t *testing.T, tt TT) {
-		is := testutil.New(t, testutil.Parallel)
-		buf := bufpool.Get().(*bytes.Buffer)
-		defer func() {
-			buf.Reset()
-			bufpool.Put(buf)
-		}()
-		gotArgs, params := []interface{}{}, map[string][]int{}
-		err := tt.item.AppendSQLExclude(tt.dialect, buf, &gotArgs, params, nil)
-		is.True(err != nil)
-	}
-
-	t.Run("CustomField empty", func(t *testing.T) {
-		var tt TT
-		tt.item = CustomField{}
-		assertError(t, tt)
-	})
-
 	t.Run("FieldValue", func(t *testing.T) {
 		var tt TT
 		tt.item = FieldValue("abcd")

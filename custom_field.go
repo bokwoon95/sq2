@@ -2,14 +2,10 @@ package sq
 
 import (
 	"bytes"
-	"fmt"
 )
 
 type CustomField struct {
-	GenericField
-	info   FieldInfo
-	Format string
-	Values []interface{}
+	info FieldInfo
 }
 
 var _ Field = CustomField{}
@@ -27,68 +23,53 @@ func (f CustomField) GetAlias() string { return f.info.FieldAlias }
 
 func (f CustomField) GetName() string { return f.info.FieldName }
 
-// func (f CustomField) AppendSQLExclude(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int, excludedTableQualifiers []string) error {
-// 	return f.info.AppendSQLExclude(dialect, buf, args, params, excludedTableQualifiers)
-// }
+func (f CustomField) AppendSQLExclude(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int, excludedTableQualifiers []string) error {
+	return f.info.AppendSQLExclude(dialect, buf, args, params, excludedTableQualifiers)
+}
 
 func Fieldf(format string, values ...interface{}) CustomField {
-	return CustomField{Format: format, Values: values}
+	return CustomField{info: FieldInfo{
+		Format: format,
+		Values: values,
+	}}
 }
 
 func FieldValue(value interface{}) CustomField { return Fieldf("{}", value) }
 
 func (f CustomField) As(alias string) CustomField {
 	f.info.FieldAlias = alias
-	f.FieldAlias = alias
 	return f
 }
 
 func (f CustomField) Asc() CustomField {
-	f.Descending.Valid = true
-	f.Descending.Bool = false
+	f.info.Descending.Valid = true
+	f.info.Descending.Bool = false
 	return f
 }
 
 func (f CustomField) Desc() CustomField {
-	f.Descending.Valid = true
-	f.Descending.Bool = true
+	f.info.Descending.Valid = true
+	f.info.Descending.Bool = true
 	return f
 }
 
 func (f CustomField) NullsLast() CustomField {
-	f.Nullsfirst.Valid = true
-	f.Nullsfirst.Bool = false
+	f.info.NullsFirst.Valid = true
+	f.info.NullsFirst.Bool = false
 	return f
 }
 
 func (f CustomField) NullsFirst() CustomField {
-	f.Nullsfirst.Valid = true
-	f.Nullsfirst.Bool = true
+	f.info.NullsFirst.Valid = true
+	f.info.NullsFirst.Bool = true
 	return f
-}
-
-func (f CustomField) AppendSQLExclude(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int, excludedTableQualifiers []string) error {
-	if f.Format == "" {
-		return fmt.Errorf("CustomField is empty")
-	}
-	err := BufferPrintf(dialect, buf, args, params, excludedTableQualifiers, f.Format, f.Values)
-	if err != nil {
-		return err
-	}
-	f.TableSchema, f.TableName, f.TableAlias, f.FieldName, f.FieldAlias = "", "", "", "", ""
-	return f.GenericField.AppendSQLExclude(dialect, buf, args, params, excludedTableQualifiers)
 }
 
 func (f CustomField) IsNull() Predicate { return IsNull(f) }
 
 func (f CustomField) IsNotNull() Predicate { return IsNotNull(f) }
 
-func (f CustomField) In(v interface{}) Predicate {
-	if v, ok := v.(RowValue); ok {
-		return Predicatef("{} IN {}", f, v)
-	}
-	return Predicatef("{} IN ({})", f, v)
-}
+func (f CustomField) In(v interface{}) Predicate { return In(f, v) }
 
 func (f CustomField) Eq(v interface{}) Predicate { return Eq(f, v) }
 
