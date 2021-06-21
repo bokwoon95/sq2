@@ -1211,22 +1211,6 @@ type DUMMY_TABLE struct {
 func (tbl DUMMY_TABLE) DDL(dialect string, t *T) {
 	const indexName = "dummy_table_complex_expr_idx"
 	switch dialect {
-	case sq.DialectPostgres:
-		t.Column(tbl.COLOR).Collate("C")
-		t.NameIndex(indexName,
-			tbl.SCORE,
-			sq.Fieldf("SUBSTR({}, 1, 2)", tbl.COLOR),
-			sq.Fieldf("{} || {}", tbl.COLOR, " abcd"),
-			sq.Fieldf("({}->>{})::INT", tbl.DATA, "age"),
-		).Where("{} = {}", tbl.COLOR, "red")
-	case sq.DialectMySQL:
-		t.Column(tbl.COLOR).Type("VARCHAR(50)").Collate("latin1_swedish_ci")
-		t.NameIndex(indexName,
-			tbl.SCORE,
-			sq.Fieldf("SUBSTR({}, 1, 2)", tbl.COLOR),
-			sq.Fieldf("CONCAT({}, {})", tbl.COLOR, " abcd"),
-			sq.Fieldf("CAST({}->>{} AS SIGNED)", tbl.DATA, "$.age"),
-		)
 	case sq.DialectSQLite:
 		t.Column(tbl.COLOR).Collate("nocase")
 		t.NameIndex(indexName,
@@ -1235,6 +1219,24 @@ func (tbl DUMMY_TABLE) DDL(dialect string, t *T) {
 			sq.Fieldf("{} || {}", tbl.COLOR, " abcd"),
 			sq.Fieldf("CAST(JSON_EXTRACT({}, {}) AS INT)", tbl.DATA, "$.age"),
 		).Where("{} = {}", tbl.COLOR, "red")
+	case sq.DialectPostgres:
+		t.Column(tbl.COLOR).Collate("C")
+		t.NameIndex(indexName,
+			tbl.SCORE,
+			sq.Fieldf("SUBSTR({}, 1, 2)", tbl.COLOR),
+			sq.Fieldf("{} || {}", tbl.COLOR, " abcd"),
+			sq.Fieldf("({}->>{})::INT", tbl.DATA, "age"),
+		).Where("{} = {}", tbl.COLOR, "red")
+		t.NameIndex("dummy_table_id2_idx", sq.FieldLiteral(`id2 COLLATE "C"`))
+		t.NameIndex("dummy_table_color_idx", sq.FieldLiteral("color text_pattern_ops"))
+	case sq.DialectMySQL:
+		t.Column(tbl.COLOR).Type("VARCHAR(50)").Collate("latin1_swedish_ci")
+		t.NameIndex(indexName,
+			tbl.SCORE,
+			sq.Fieldf("SUBSTR({}, 1, 2)", tbl.COLOR),
+			sq.Fieldf("CONCAT({}, {})", tbl.COLOR, " abcd"),
+			sq.Fieldf("CAST({}->>{} AS SIGNED)", tbl.DATA, "$.age"),
+		)
 	}
 	t.Check("dummy_table_score_positive_check", "{} > 0", tbl.SCORE)
 	t.Check("dummy_table_score_id1_greater_than_check", "{} > {}", tbl.SCORE, tbl.ID1)
@@ -1268,7 +1270,9 @@ const DUMMY_TABLE_Postgres = `CREATE TABLE public.dummy_table (
     ,CONSTRAINT dummy_table_score_positive_check CHECK (score > 0)
     ,CONSTRAINT dummy_table_score_id1_greater_than_check CHECK (score > id1)
 );
-CREATE INDEX dummy_table_complex_expr_idx ON public.dummy_table (score, (SUBSTR(color, 1, 2)), (color || ' abcd'), ((data->>'age')::INT)) WHERE color = 'red';`
+CREATE INDEX dummy_table_complex_expr_idx ON public.dummy_table (score, (SUBSTR(color, 1, 2)), (color || ' abcd'), ((data->>'age')::INT)) WHERE color = 'red';
+CREATE INDEX dummy_table_id2_idx ON public.dummy_table (id2 COLLATE "C");
+CREATE INDEX dummy_table_color_idx ON public.dummy_table (color text_pattern_ops);`
 
 const DUMMY_TABLE_MySQL = `CREATE TABLE db.dummy_table (
     id1 INT

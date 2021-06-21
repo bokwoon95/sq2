@@ -235,6 +235,10 @@ CREATE TABLE public.dummy_table (
 
 CREATE INDEX dummy_table_complex_expr_idx ON public.dummy_table (score, (SUBSTR(color, 1, 2)), (color || ' abcd'), ((data->>'age')::INT)) WHERE color = 'red';
 
+CREATE INDEX dummy_table_id2_idx ON public.dummy_table (id2 COLLATE "C");
+
+CREATE INDEX dummy_table_color_idx ON public.dummy_table (color text_pattern_ops);
+
 CREATE TABLE public.dummy_table_2 (
     id1 INT
     ,id2 TEXT
