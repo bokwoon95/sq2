@@ -1223,7 +1223,7 @@ func (tbl DUMMY_TABLE) DDL(dialect string, t *T) {
 			sq.Fieldf("({}->>{})::INT", tbl.DATA, "age"),
 		).Where("{} = {}", tbl.COLOR, "red")
 	case sq.DialectMySQL:
-		t.Column(tbl.COLOR).Type("VARCHAR(50)").Collate("latin_swedish_ci")
+		t.Column(tbl.COLOR).Type("VARCHAR(50)").Collate("latin1_swedish_ci")
 		t.NameIndex(indexName,
 			tbl.SCORE,
 			sq.Fieldf("SUBSTR({}, 1, 2)", tbl.COLOR),
@@ -1277,7 +1277,7 @@ const DUMMY_TABLE_MySQL = `CREATE TABLE db.dummy_table (
     id1 INT
     ,id2 VARCHAR(255)
     ,score INT
-    ,color VARCHAR(50) DEFAULT 'red' COLLATE latin_swedish_ci
+    ,color VARCHAR(50) DEFAULT 'red' COLLATE latin1_swedish_ci
     ,data JSON
 
     ,CONSTRAINT dummy_table_id1_id2_pkey PRIMARY KEY (id1, id2)
