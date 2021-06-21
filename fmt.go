@@ -457,10 +457,6 @@ func Queryf(dialect string, format string, values ...interface{}) Query {
 	}
 }
 
-func (q customQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
-	return BufferPrintf(dialect, buf, args, params, nil, q.format, q.values)
-}
-
 func (q customQuery) ToSQL() (query string, args []interface{}, params map[string][]int, err error) {
 	buf := bufpool.Get().(*bytes.Buffer)
 	defer func() {
@@ -469,10 +465,11 @@ func (q customQuery) ToSQL() (query string, args []interface{}, params map[strin
 	}()
 	params = make(map[string][]int)
 	err = q.AppendSQL(q.dialect, buf, &args, params)
-	if err != nil {
-		return buf.String(), args, params, err
-	}
-	return buf.String(), args, params, nil
+	return buf.String(), args, params, err
+}
+
+func (q customQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
+	return BufferPrintf(dialect, buf, args, params, nil, q.format, q.values)
 }
 
 func (q customQuery) SetFetchableFields([]Field) (Query, error) {
