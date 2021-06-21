@@ -31,7 +31,7 @@ func Test_JSONField(t *testing.T) {
 
 	t.Run("JSONField", func(t *testing.T) {
 		var tt TT
-		tt.item = NewJSONField("field", GenericTable{TableName: "tbl"})
+		tt.item = NewJSONField("field", TableInfo{TableName: "tbl"})
 		tt.wantQuery = "tbl.field"
 		tt.wantArgs = []interface{}{}
 		assert(t, tt)
@@ -39,7 +39,7 @@ func Test_JSONField(t *testing.T) {
 
 	t.Run("JSONField with alias", func(t *testing.T) {
 		var tt TT
-		tt.item = NewJSONField("field", GenericTable{TableName: "tbl"}).As("f")
+		tt.item = NewJSONField("field", TableInfo{TableName: "tbl"}).As("f")
 		tt.wantQuery = "tbl.field"
 		tt.wantArgs = []interface{}{}
 		assert(t, tt)
@@ -47,7 +47,7 @@ func Test_JSONField(t *testing.T) {
 
 	t.Run("JSONField ASC NULLS LAST", func(t *testing.T) {
 		var tt TT
-		tt.item = NewJSONField("field", GenericTable{TableName: "tbl"}).Asc().NullsLast()
+		tt.item = NewJSONField("field", TableInfo{TableName: "tbl"}).Asc().NullsLast()
 		tt.wantQuery = "tbl.field ASC NULLS LAST"
 		tt.wantArgs = []interface{}{}
 		assert(t, tt)
@@ -55,7 +55,7 @@ func Test_JSONField(t *testing.T) {
 
 	t.Run("JSONField DESC NULLS FIRST", func(t *testing.T) {
 		var tt TT
-		tt.item = NewJSONField("field", GenericTable{TableName: "tbl"}).Desc().NullsFirst()
+		tt.item = NewJSONField("field", TableInfo{TableName: "tbl"}).Desc().NullsFirst()
 		tt.wantQuery = "tbl.field DESC NULLS FIRST"
 		tt.wantArgs = []interface{}{}
 		assert(t, tt)

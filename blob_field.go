@@ -6,7 +6,7 @@ type BlobField struct {
 
 var _ Field = BlobField{}
 
-func NewBlobField(fieldName string, tbl GenericTable) BlobField {
+func NewBlobField(fieldName string, tbl TableInfo) BlobField {
 	return BlobField{GenericField: GenericField{
 		TableSchema: tbl.TableSchema,
 		TableName:   tbl.TableName,

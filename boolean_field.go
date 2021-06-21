@@ -11,7 +11,7 @@ type BooleanField struct {
 
 var _ Field = BooleanField{}
 
-func NewBooleanField(fieldName string, tbl GenericTable) BooleanField {
+func NewBooleanField(fieldName string, tbl TableInfo) BooleanField {
 	return BooleanField{GenericField: GenericField{
 		TableSchema: tbl.TableSchema,
 		TableName:   tbl.TableName,

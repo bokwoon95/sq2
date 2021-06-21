@@ -8,16 +8,16 @@ func NEW_ACTOR(dialect, alias string) ACTOR {
 	var tbl ACTOR
 	switch dialect {
 	case sq.DialectPostgres:
-		tbl.GenericTable.TableSchema = "public"
+		tbl.TableInfo.TableSchema = "public"
 	case sq.DialectMySQL:
-		tbl.GenericTable.TableSchema = "db"
+		tbl.TableInfo.TableSchema = "db"
 	}
 	_ = sq.ReflectTable(&tbl, alias)
 	return tbl
 }
 
 type ACTOR struct {
-	sq.GenericTable
+	sq.TableInfo
 	ACTOR_ID           sq.NumberField `ddl:"type=INTEGER autoincrement primarykey"`
 	FIRST_NAME         sq.StringField `ddl:"notnull"`
 	LAST_NAME          sq.StringField `ddl:"notnull index"`
@@ -84,16 +84,16 @@ func NEW_CATEGORY(dialect, alias string) CATEGORY {
 	var tbl CATEGORY
 	switch dialect {
 	case sq.DialectPostgres:
-		tbl.GenericTable.TableSchema = "public"
+		tbl.TableInfo.TableSchema = "public"
 	case sq.DialectMySQL:
-		tbl.GenericTable.TableSchema = "db"
+		tbl.TableInfo.TableSchema = "db"
 	}
 	_ = sq.ReflectTable(&tbl, alias)
 	return tbl
 }
 
 type CATEGORY struct {
-	sq.GenericTable
+	sq.TableInfo
 	CATEGORY_ID sq.NumberField `ddl:"type=INTEGER primarykey"`
 	NAME        sq.StringField `ddl:"notnull"`
 	LAST_UPDATE sq.TimeField   `ddl:"default=DATETIME('now') notnull"`
@@ -137,16 +137,16 @@ func NEW_COUNTRY(dialect, alias string) COUNTRY {
 	var tbl COUNTRY
 	switch dialect {
 	case sq.DialectPostgres:
-		tbl.GenericTable.TableSchema = "public"
+		tbl.TableInfo.TableSchema = "public"
 	case sq.DialectMySQL:
-		tbl.GenericTable.TableSchema = "db"
+		tbl.TableInfo.TableSchema = "db"
 	}
 	_ = sq.ReflectTable(&tbl, alias)
 	return tbl
 }
 
 type COUNTRY struct {
-	sq.GenericTable
+	sq.TableInfo
 	COUNTRY_ID  sq.NumberField `ddl:"type=INTEGER primarykey"`
 	COUNTRY     sq.StringField `ddl:"notnull"`
 	LAST_UPDATE sq.TimeField   `ddl:"default=DATETIME('now') notnull"`
@@ -190,16 +190,16 @@ func NEW_CITY(dialect, alias string) CITY {
 	var tbl CITY
 	switch dialect {
 	case sq.DialectPostgres:
-		tbl.GenericTable.TableSchema = "public"
+		tbl.TableInfo.TableSchema = "public"
 	case sq.DialectMySQL:
-		tbl.GenericTable.TableSchema = "db"
+		tbl.TableInfo.TableSchema = "db"
 	}
 	_ = sq.ReflectTable(&tbl, alias)
 	return tbl
 }
 
 type CITY struct {
-	sq.GenericTable
+	sq.TableInfo
 	CITY_ID     sq.NumberField `ddl:"type=INTEGER primarykey"`
 	CITY        sq.StringField `ddl:"notnull"`
 	COUNTRY_ID  sq.NumberField `ddl:"notnull references={country onupdate=cascade ondelete=restrict} index"`
@@ -258,16 +258,16 @@ func NEW_ADDRESS(dialect, alias string) ADDRESS {
 	var tbl ADDRESS
 	switch dialect {
 	case sq.DialectPostgres:
-		tbl.GenericTable.TableSchema = "public"
+		tbl.TableInfo.TableSchema = "public"
 	case sq.DialectMySQL:
-		tbl.GenericTable.TableSchema = "db"
+		tbl.TableInfo.TableSchema = "db"
 	}
 	_ = sq.ReflectTable(&tbl, alias)
 	return tbl
 }
 
 type ADDRESS struct {
-	sq.GenericTable
+	sq.TableInfo
 	ADDRESS_ID  sq.NumberField `ddl:"type=INTEGER primarykey"`
 	ADDRESS     sq.StringField `ddl:"notnull"`
 	ADDRESS2    sq.StringField
@@ -342,16 +342,16 @@ func NEW_LANGUAGE(dialect, alias string) LANGUAGE {
 	var tbl LANGUAGE
 	switch dialect {
 	case sq.DialectPostgres:
-		tbl.GenericTable.TableSchema = "public"
+		tbl.TableInfo.TableSchema = "public"
 	case sq.DialectMySQL:
-		tbl.GenericTable.TableSchema = "db"
+		tbl.TableInfo.TableSchema = "db"
 	}
 	_ = sq.ReflectTable(&tbl, alias)
 	return tbl
 }
 
 type LANGUAGE struct {
-	sq.GenericTable
+	sq.TableInfo
 	LANGUAGE_ID sq.NumberField `ddl:"type=INTEGER primarykey"`
 	NAME        sq.StringField `ddl:"notnull"`
 	LAST_UPDATE sq.TimeField   `ddl:"default=DATETIME('now') notnull"`
@@ -395,16 +395,16 @@ func NEW_FILM(dialect, alias string) FILM {
 	var tbl FILM
 	switch dialect {
 	case sq.DialectPostgres:
-		tbl.GenericTable.TableSchema = "public"
+		tbl.TableInfo.TableSchema = "public"
 	case sq.DialectMySQL:
-		tbl.GenericTable.TableSchema = "db"
+		tbl.TableInfo.TableSchema = "db"
 	}
 	_ = sq.ReflectTable(&tbl, alias)
 	return tbl
 }
 
 type FILM struct {
-	sq.GenericTable
+	sq.TableInfo
 	FILM_ID              sq.NumberField `ddl:"type=INTEGER primarykey"`
 	TITLE                sq.StringField `ddl:"notnull index"`
 	DESCRIPTION          sq.StringField
@@ -523,19 +523,19 @@ func NEW_FILM_TEXT(dialect, alias string) FILM_TEXT {
 	var tbl FILM_TEXT
 	switch dialect {
 	case sq.DialectPostgres:
-		tbl.GenericTable.TableSchema = "public"
+		tbl.TableInfo.TableSchema = "public"
 	case sq.DialectMySQL:
-		tbl.GenericTable.TableSchema = "db"
+		tbl.TableInfo.TableSchema = "db"
 	}
 	_ = sq.ReflectTable(&tbl, alias)
 	return tbl
 }
 
 type FILM_TEXT struct {
-	sq.GenericTable `sq:"name=film_text" ddl:"virtual={fts5 content='film' content_rowid='film_id'}"`
-	FILM_ID         sq.NumberField
-	TITLE           sq.StringField
-	DESCRIPTION     sq.StringField
+	sq.TableInfo `sq:"name=film_text" ddl:"virtual={fts5 content='film' content_rowid='film_id'}"`
+	FILM_ID      sq.NumberField
+	TITLE        sq.StringField
+	DESCRIPTION  sq.StringField
 }
 
 func (tbl FILM_TEXT) DDL(dialect string, t *T) {
@@ -575,19 +575,19 @@ func NEW_FILM_ACTOR(dialect, alias string) FILM_ACTOR {
 	var tbl FILM_ACTOR
 	switch dialect {
 	case sq.DialectPostgres:
-		tbl.GenericTable.TableSchema = "public"
+		tbl.TableInfo.TableSchema = "public"
 	case sq.DialectMySQL:
-		tbl.GenericTable.TableSchema = "db"
+		tbl.TableInfo.TableSchema = "db"
 	}
 	_ = sq.ReflectTable(&tbl, alias)
 	return tbl
 }
 
 type FILM_ACTOR struct {
-	sq.GenericTable `ddl:"index={. cols=actor_id,film_id unique}"`
-	ACTOR_ID        sq.NumberField `ddl:"notnull references={actor.actor_id onupdate=cascade ondelete=restrict}"`
-	FILM_ID         sq.NumberField `ddl:"notnull references={film.film_id onupdate=cascade ondelete=restrict} index"`
-	LAST_UPDATE     sq.TimeField   `ddl:"default=DATETIME('now') notnull"`
+	sq.TableInfo `ddl:"index={. cols=actor_id,film_id unique}"`
+	ACTOR_ID     sq.NumberField `ddl:"notnull references={actor.actor_id onupdate=cascade ondelete=restrict}"`
+	FILM_ID      sq.NumberField `ddl:"notnull references={film.film_id onupdate=cascade ondelete=restrict} index"`
+	LAST_UPDATE  sq.TimeField   `ddl:"default=DATETIME('now') notnull"`
 }
 
 func (tbl FILM_ACTOR) DDL(dialect string, t *T) {
@@ -635,16 +635,16 @@ func NEW_FILM_CATEGORY(dialect, alias string) FILM_CATEGORY {
 	var tbl FILM_CATEGORY
 	switch dialect {
 	case sq.DialectPostgres:
-		tbl.GenericTable.TableSchema = "public"
+		tbl.TableInfo.TableSchema = "public"
 	case sq.DialectMySQL:
-		tbl.GenericTable.TableSchema = "db"
+		tbl.TableInfo.TableSchema = "db"
 	}
 	_ = sq.ReflectTable(&tbl, alias)
 	return tbl
 }
 
 type FILM_CATEGORY struct {
-	sq.GenericTable
+	sq.TableInfo
 	FILM_ID     sq.NumberField `ddl:"notnull references={film.film_id onupdate=cascade ondelete=restrict}"`
 	CATEGORY_ID sq.NumberField `ddl:"notnull references={category.category_id onupdate=cascade ondelete=restrict}"`
 	LAST_UPDATE sq.TimeField   `ddl:"default=DATETIME('now') notnull"`
@@ -688,16 +688,16 @@ func NEW_STAFF(dialect, alias string) STAFF {
 	var tbl STAFF
 	switch dialect {
 	case sq.DialectPostgres:
-		tbl.GenericTable.TableSchema = "public"
+		tbl.TableInfo.TableSchema = "public"
 	case sq.DialectMySQL:
-		tbl.GenericTable.TableSchema = "db"
+		tbl.TableInfo.TableSchema = "db"
 	}
 	_ = sq.ReflectTable(&tbl, alias)
 	return tbl
 }
 
 type STAFF struct {
-	sq.GenericTable
+	sq.TableInfo
 	STAFF_ID    sq.NumberField `ddl:"type=INTEGER primarykey"`
 	FIRST_NAME  sq.StringField `ddl:"notnull"`
 	LAST_NAME   sq.StringField `ddl:"notnull"`
@@ -785,16 +785,16 @@ func NEW_STORE(dialect, alias string) STORE {
 	var tbl STORE
 	switch dialect {
 	case sq.DialectPostgres:
-		tbl.GenericTable.TableSchema = "public"
+		tbl.TableInfo.TableSchema = "public"
 	case sq.DialectMySQL:
-		tbl.GenericTable.TableSchema = "db"
+		tbl.TableInfo.TableSchema = "db"
 	}
 	_ = sq.ReflectTable(&tbl, alias)
 	return tbl
 }
 
 type STORE struct {
-	sq.GenericTable
+	sq.TableInfo
 	STORE_ID         sq.NumberField `ddl:"type=INTEGER primarykey"`
 	MANAGER_STAFF_ID sq.NumberField `ddl:"notnull references={staff.staff_id onupdate=cascade ondelete=restrict} index={. unique}"`
 	ADDRESS_ID       sq.NumberField `ddl:"notnull references={address.address_id onupdate=cascade ondelete=restrict}"`
@@ -851,26 +851,26 @@ func NEW_CUSTOMER(dialect, alias string) CUSTOMER {
 	var tbl CUSTOMER
 	switch dialect {
 	case sq.DialectPostgres:
-		tbl.GenericTable.TableSchema = "public"
+		tbl.TableInfo.TableSchema = "public"
 	case sq.DialectMySQL:
-		tbl.GenericTable.TableSchema = "db"
+		tbl.TableInfo.TableSchema = "db"
 	}
 	_ = sq.ReflectTable(&tbl, alias)
 	return tbl
 }
 
 type CUSTOMER struct {
-	sq.GenericTable `sq:"name=customer" ddl:"unique={. cols=email,first_name,last_name}"`
-	CUSTOMER_ID     sq.NumberField  `ddl:"type=INTEGER primarykey"`
-	STORE_ID        sq.NumberField  `ddl:"notnull index"`
-	FIRST_NAME      sq.StringField  `ddl:"notnull"`
-	LAST_NAME       sq.StringField  `ddl:"notnull index"`
-	EMAIL           sq.StringField  `ddl:"unique"`
-	ADDRESS_ID      sq.NumberField  `ddl:"notnull references={address.address_id onupdate=cascade ondelete=restrict} index"`
-	ACTIVE          sq.BooleanField `ddl:"default=TRUE notnull"`
-	DATA            sq.JSONField
-	CREATE_DATE     sq.TimeField `ddl:"default=DATETIME('now') notnull"`
-	LAST_UPDATE     sq.TimeField `ddl:"default=DATETIME('now')"`
+	sq.TableInfo `sq:"name=customer" ddl:"unique={. cols=email,first_name,last_name}"`
+	CUSTOMER_ID  sq.NumberField  `ddl:"type=INTEGER primarykey"`
+	STORE_ID     sq.NumberField  `ddl:"notnull index"`
+	FIRST_NAME   sq.StringField  `ddl:"notnull"`
+	LAST_NAME    sq.StringField  `ddl:"notnull index"`
+	EMAIL        sq.StringField  `ddl:"unique"`
+	ADDRESS_ID   sq.NumberField  `ddl:"notnull references={address.address_id onupdate=cascade ondelete=restrict} index"`
+	ACTIVE       sq.BooleanField `ddl:"default=TRUE notnull"`
+	DATA         sq.JSONField
+	CREATE_DATE  sq.TimeField `ddl:"default=DATETIME('now') notnull"`
+	LAST_UPDATE  sq.TimeField `ddl:"default=DATETIME('now')"`
 }
 
 func (tbl CUSTOMER) DDL(dialect string, t *T) {
@@ -955,20 +955,20 @@ func NEW_INVENTORY(dialect, alias string) INVENTORY {
 	var tbl INVENTORY
 	switch dialect {
 	case sq.DialectPostgres:
-		tbl.GenericTable.TableSchema = "public"
+		tbl.TableInfo.TableSchema = "public"
 	case sq.DialectMySQL:
-		tbl.GenericTable.TableSchema = "db"
+		tbl.TableInfo.TableSchema = "db"
 	}
 	_ = sq.ReflectTable(&tbl, alias)
 	return tbl
 }
 
 type INVENTORY struct {
-	sq.GenericTable `sq:"name=inventory" ddl:"index={. cols=store_id,film_id}"`
-	INVENTORY_ID    sq.NumberField `ddl:"type=INTEGER primarykey"`
-	FILM_ID         sq.NumberField `ddl:"notnull references={film.film_id onupdate=cascade ondelete=restrict}"`
-	STORE_ID        sq.NumberField `ddl:"notnull references={store.store_id onupdate=cascade ondelete=restrict}"`
-	LAST_UPDATE     sq.TimeField   `ddl:"default=DATETIME('now') notnull"`
+	sq.TableInfo `sq:"name=inventory" ddl:"index={. cols=store_id,film_id}"`
+	INVENTORY_ID sq.NumberField `ddl:"type=INTEGER primarykey"`
+	FILM_ID      sq.NumberField `ddl:"notnull references={film.film_id onupdate=cascade ondelete=restrict}"`
+	STORE_ID     sq.NumberField `ddl:"notnull references={store.store_id onupdate=cascade ondelete=restrict}"`
+	LAST_UPDATE  sq.TimeField   `ddl:"default=DATETIME('now') notnull"`
 }
 
 func (tbl INVENTORY) DDL(dialect string, t *T) {
@@ -1021,23 +1021,23 @@ func NEW_RENTAL(dialect, alias string) RENTAL {
 	var tbl RENTAL
 	switch dialect {
 	case sq.DialectPostgres:
-		tbl.GenericTable.TableSchema = "public"
+		tbl.TableInfo.TableSchema = "public"
 	case sq.DialectMySQL:
-		tbl.GenericTable.TableSchema = "db"
+		tbl.TableInfo.TableSchema = "db"
 	}
 	_ = sq.ReflectTable(&tbl, alias)
 	return tbl
 }
 
 type RENTAL struct {
-	sq.GenericTable `ddl:"index={. cols=rental_date,inventory_id,customer_id unique}"`
-	RENTAL_ID       sq.NumberField `ddl:"type=INTEGER primarykey"`
-	RENTAL_DATE     sq.TimeField   `ddl:"notnull"`
-	INVENTORY_ID    sq.NumberField `ddl:"notnull index references={inventory.inventory_id onupdate=cascade ondelete=restrict}"`
-	CUSTOMER_ID     sq.NumberField `ddl:"notnull index references={customer.customer_id onupdate=cascade ondelete=restrict}"`
-	RETURN_DATE     sq.TimeField
-	STAFF_ID        sq.NumberField `ddl:"notnull index references={staff.staff_id onupdate=cascade ondelete=restrict}"`
-	LAST_UPDATE     sq.TimeField   `ddl:"default=DATETIME('now') notnull"`
+	sq.TableInfo `ddl:"index={. cols=rental_date,inventory_id,customer_id unique}"`
+	RENTAL_ID    sq.NumberField `ddl:"type=INTEGER primarykey"`
+	RENTAL_DATE  sq.TimeField   `ddl:"notnull"`
+	INVENTORY_ID sq.NumberField `ddl:"notnull index references={inventory.inventory_id onupdate=cascade ondelete=restrict}"`
+	CUSTOMER_ID  sq.NumberField `ddl:"notnull index references={customer.customer_id onupdate=cascade ondelete=restrict}"`
+	RETURN_DATE  sq.TimeField
+	STAFF_ID     sq.NumberField `ddl:"notnull index references={staff.staff_id onupdate=cascade ondelete=restrict}"`
+	LAST_UPDATE  sq.TimeField   `ddl:"default=DATETIME('now') notnull"`
 }
 
 func (tbl RENTAL) DDL(dialect string, t *T) {
@@ -1113,16 +1113,16 @@ func NEW_PAYMENT(dialect, alias string) PAYMENT {
 	var tbl PAYMENT
 	switch dialect {
 	case sq.DialectPostgres:
-		tbl.GenericTable.TableSchema = "public"
+		tbl.TableInfo.TableSchema = "public"
 	case sq.DialectMySQL:
-		tbl.GenericTable.TableSchema = "db"
+		tbl.TableInfo.TableSchema = "db"
 	}
 	_ = sq.ReflectTable(&tbl, alias)
 	return tbl
 }
 
 type PAYMENT struct {
-	sq.GenericTable
+	sq.TableInfo
 	PAYMENT_ID   sq.NumberField `ddl:"type=INTEGER primarykey"`
 	CUSTOMER_ID  sq.NumberField `ddl:"notnull index references={customer.customer_id onupdate=cascade ondelete=restrict}"`
 	STAFF_ID     sq.NumberField `ddl:"notnull index references={staff.staff_id onupdate=cascade ondelete=restrict}"`
@@ -1193,21 +1193,21 @@ func NEW_DUMMY_TABLE(dialect, alias string) DUMMY_TABLE {
 	var tbl DUMMY_TABLE
 	switch dialect {
 	case sq.DialectPostgres:
-		tbl.GenericTable.TableSchema = "public"
+		tbl.TableInfo.TableSchema = "public"
 	case sq.DialectMySQL:
-		tbl.GenericTable.TableSchema = "db"
+		tbl.TableInfo.TableSchema = "db"
 	}
 	_ = sq.ReflectTable(&tbl, alias)
 	return tbl
 }
 
 type DUMMY_TABLE struct {
-	sq.GenericTable `ddl:"primarykey={. cols=id1,id2} unique={. cols=score,color}"`
-	ID1             sq.NumberField
-	ID2             sq.StringField
-	SCORE           sq.NumberField
-	COLOR           sq.StringField `ddl:"collate=nocase default='red'"`
-	DATA            sq.JSONField
+	sq.TableInfo `ddl:"primarykey={. cols=id1,id2} unique={. cols=score,color}"`
+	ID1          sq.NumberField
+	ID2          sq.StringField
+	SCORE        sq.NumberField
+	COLOR        sq.StringField `ddl:"collate=nocase default='red'"`
+	DATA         sq.JSONField
 }
 
 func (tbl DUMMY_TABLE) DDL(dialect string, t *T) {
@@ -1297,18 +1297,18 @@ func NEW_DUMMY_TABLE_2(dialect, alias string) DUMMY_TABLE_2 {
 	var tbl DUMMY_TABLE_2
 	switch dialect {
 	case sq.DialectPostgres:
-		tbl.GenericTable.TableSchema = "public"
+		tbl.TableInfo.TableSchema = "public"
 	case sq.DialectMySQL:
-		tbl.GenericTable.TableSchema = "db"
+		tbl.TableInfo.TableSchema = "db"
 	}
 	_ = sq.ReflectTable(&tbl, alias)
 	return tbl
 }
 
 type DUMMY_TABLE_2 struct {
-	sq.GenericTable `ddl:"references={dummy_table.id1,id2 cols=id1,id2 onupdate=cascade ondelete=restrict}"`
-	ID1             sq.NumberField
-	ID2             sq.StringField
+	sq.TableInfo `ddl:"references={dummy_table.id1,id2 cols=id1,id2 onupdate=cascade ondelete=restrict}"`
+	ID1          sq.NumberField
+	ID2          sq.StringField
 }
 
 func (tbl DUMMY_TABLE_2) DDL(dialect string, t *T) {

@@ -51,7 +51,7 @@ func Test_TimeField(t *testing.T) {
 
 	t.Run("TimeField", func(t *testing.T) {
 		var tt TT
-		tt.item = NewTimeField("field", GenericTable{TableName: "tbl"})
+		tt.item = NewTimeField("field", TableInfo{TableName: "tbl"})
 		tt.wantQuery = "tbl.field"
 		tt.wantArgs = []interface{}{}
 		assert(t, tt)
@@ -59,7 +59,7 @@ func Test_TimeField(t *testing.T) {
 
 	t.Run("TimeField with alias", func(t *testing.T) {
 		var tt TT
-		tt.item = NewTimeField("field", GenericTable{TableName: "tbl"}).As("f")
+		tt.item = NewTimeField("field", TableInfo{TableName: "tbl"}).As("f")
 		tt.wantQuery = "tbl.field"
 		tt.wantArgs = []interface{}{}
 		assert(t, tt)
@@ -67,7 +67,7 @@ func Test_TimeField(t *testing.T) {
 
 	t.Run("TimeField ASC NULLS FIRST", func(t *testing.T) {
 		var tt TT
-		tt.item = NewTimeField("field", GenericTable{TableName: "tbl"}).Asc().NullsFirst()
+		tt.item = NewTimeField("field", TableInfo{TableName: "tbl"}).Asc().NullsFirst()
 		tt.wantQuery = "tbl.field ASC NULLS FIRST"
 		tt.wantArgs = []interface{}{}
 		assert(t, tt)
@@ -75,7 +75,7 @@ func Test_TimeField(t *testing.T) {
 
 	t.Run("TimeField DESC NULLS LAST", func(t *testing.T) {
 		var tt TT
-		tt.item = NewTimeField("field", GenericTable{TableName: "tbl"}).Desc().NullsLast()
+		tt.item = NewTimeField("field", TableInfo{TableName: "tbl"}).Desc().NullsLast()
 		tt.wantQuery = "tbl.field DESC NULLS LAST"
 		tt.wantArgs = []interface{}{}
 		assert(t, tt)
@@ -83,7 +83,7 @@ func Test_TimeField(t *testing.T) {
 
 	t.Run("TimeField IS NULL", func(t *testing.T) {
 		var tt TT
-		tt.item = NewTimeField("field", GenericTable{TableName: "tbl"}).IsNull()
+		tt.item = NewTimeField("field", TableInfo{TableName: "tbl"}).IsNull()
 		tt.wantQuery = "tbl.field IS NULL"
 		tt.wantArgs = []interface{}{}
 		assert(t, tt)
@@ -91,7 +91,7 @@ func Test_TimeField(t *testing.T) {
 
 	t.Run("TimeField IS NOT NULL", func(t *testing.T) {
 		var tt TT
-		tt.item = NewTimeField("field", GenericTable{TableName: "tbl"}).IsNotNull()
+		tt.item = NewTimeField("field", TableInfo{TableName: "tbl"}).IsNotNull()
 		tt.wantQuery = "tbl.field IS NOT NULL"
 		tt.wantArgs = []interface{}{}
 		assert(t, tt)
@@ -123,7 +123,7 @@ func Test_TimeField(t *testing.T) {
 
 	t.Run("TimeField Eq", func(t *testing.T) {
 		var tt TT
-		field := NewTimeField("field", GenericTable{TableName: "tbl"})
+		field := NewTimeField("field", TableInfo{TableName: "tbl"})
 		tt.item = field.Eq(field)
 		tt.wantQuery = "tbl.field = tbl.field"
 		tt.wantArgs = []interface{}{}
@@ -132,7 +132,7 @@ func Test_TimeField(t *testing.T) {
 
 	t.Run("TimeField Ne", func(t *testing.T) {
 		var tt TT
-		field := NewTimeField("field", GenericTable{TableName: "tbl"})
+		field := NewTimeField("field", TableInfo{TableName: "tbl"})
 		tt.item = field.Ne(field)
 		tt.wantQuery = "tbl.field <> tbl.field"
 		tt.wantArgs = []interface{}{}
@@ -141,7 +141,7 @@ func Test_TimeField(t *testing.T) {
 
 	t.Run("TimeField Gt", func(t *testing.T) {
 		var tt TT
-		field := NewTimeField("field", GenericTable{TableName: "tbl"})
+		field := NewTimeField("field", TableInfo{TableName: "tbl"})
 		tt.item = field.Gt(field)
 		tt.wantQuery = "tbl.field > tbl.field"
 		tt.wantArgs = []interface{}{}
@@ -150,7 +150,7 @@ func Test_TimeField(t *testing.T) {
 
 	t.Run("TimeField Ge", func(t *testing.T) {
 		var tt TT
-		field := NewTimeField("field", GenericTable{TableName: "tbl"})
+		field := NewTimeField("field", TableInfo{TableName: "tbl"})
 		tt.item = field.Ge(field)
 		tt.wantQuery = "tbl.field >= tbl.field"
 		tt.wantArgs = []interface{}{}
@@ -159,7 +159,7 @@ func Test_TimeField(t *testing.T) {
 
 	t.Run("TimeField Lt", func(t *testing.T) {
 		var tt TT
-		field := NewTimeField("field", GenericTable{TableName: "tbl"})
+		field := NewTimeField("field", TableInfo{TableName: "tbl"})
 		tt.item = field.Lt(field)
 		tt.wantQuery = "tbl.field < tbl.field"
 		tt.wantArgs = []interface{}{}
@@ -168,7 +168,7 @@ func Test_TimeField(t *testing.T) {
 
 	t.Run("TimeField Le", func(t *testing.T) {
 		var tt TT
-		field := NewTimeField("field", GenericTable{TableName: "tbl"})
+		field := NewTimeField("field", TableInfo{TableName: "tbl"})
 		tt.item = field.Le(field)
 		tt.wantQuery = "tbl.field <= tbl.field"
 		tt.wantArgs = []interface{}{}
@@ -177,7 +177,7 @@ func Test_TimeField(t *testing.T) {
 
 	t.Run("TimeField EqTime", func(t *testing.T) {
 		var tt TT
-		tt.item = NewTimeField("field", GenericTable{TableName: "tbl"}).EqTime(timeval)
+		tt.item = NewTimeField("field", TableInfo{TableName: "tbl"}).EqTime(timeval)
 		tt.wantQuery = "tbl.field = ?"
 		tt.wantArgs = []interface{}{timeval}
 		assert(t, tt)
@@ -185,7 +185,7 @@ func Test_TimeField(t *testing.T) {
 
 	t.Run("TimeField NeTime", func(t *testing.T) {
 		var tt TT
-		tt.item = NewTimeField("field", GenericTable{TableName: "tbl"}).NeTime(timeval)
+		tt.item = NewTimeField("field", TableInfo{TableName: "tbl"}).NeTime(timeval)
 		tt.wantQuery = "tbl.field <> ?"
 		tt.wantArgs = []interface{}{timeval}
 		assert(t, tt)
@@ -193,7 +193,7 @@ func Test_TimeField(t *testing.T) {
 
 	t.Run("TimeField GtTime", func(t *testing.T) {
 		var tt TT
-		tt.item = NewTimeField("field", GenericTable{TableName: "tbl"}).GtTime(timeval)
+		tt.item = NewTimeField("field", TableInfo{TableName: "tbl"}).GtTime(timeval)
 		tt.wantQuery = "tbl.field > ?"
 		tt.wantArgs = []interface{}{timeval}
 		assert(t, tt)
@@ -201,7 +201,7 @@ func Test_TimeField(t *testing.T) {
 
 	t.Run("TimeField GeTime", func(t *testing.T) {
 		var tt TT
-		tt.item = NewTimeField("field", GenericTable{TableName: "tbl"}).GeTime(timeval)
+		tt.item = NewTimeField("field", TableInfo{TableName: "tbl"}).GeTime(timeval)
 		tt.wantQuery = "tbl.field >= ?"
 		tt.wantArgs = []interface{}{timeval}
 		assert(t, tt)
@@ -209,7 +209,7 @@ func Test_TimeField(t *testing.T) {
 
 	t.Run("TimeField LtTime", func(t *testing.T) {
 		var tt TT
-		tt.item = NewTimeField("field", GenericTable{TableName: "tbl"}).LtTime(timeval)
+		tt.item = NewTimeField("field", TableInfo{TableName: "tbl"}).LtTime(timeval)
 		tt.wantQuery = "tbl.field < ?"
 		tt.wantArgs = []interface{}{timeval}
 		assert(t, tt)
@@ -217,7 +217,7 @@ func Test_TimeField(t *testing.T) {
 
 	t.Run("TimeField LeTime", func(t *testing.T) {
 		var tt TT
-		tt.item = NewTimeField("field", GenericTable{TableName: "tbl"}).LeTime(timeval)
+		tt.item = NewTimeField("field", TableInfo{TableName: "tbl"}).LeTime(timeval)
 		tt.wantQuery = "tbl.field <= ?"
 		tt.wantArgs = []interface{}{timeval}
 		assert(t, tt)
@@ -225,7 +225,7 @@ func Test_TimeField(t *testing.T) {
 
 	t.Run("TimeField SetTime", func(t *testing.T) {
 		var tt TT
-		tt.item = NewTimeField("field", GenericTable{TableName: "tbl"}).SetTime(timeval)
+		tt.item = NewTimeField("field", TableInfo{TableName: "tbl"}).SetTime(timeval)
 		tt.wantQuery = "tbl.field = ?"
 		tt.wantArgs = []interface{}{timeval}
 		assert(t, tt)
