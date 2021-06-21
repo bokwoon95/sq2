@@ -12,11 +12,11 @@ type NumberField struct {
 
 var _ Field = NumberField{}
 
-func NewNumberField(fieldName string, tbl TableInfo) NumberField {
+func NewNumberField(fieldName string, tableInfo TableInfo) NumberField {
 	return NumberField{GenericField: GenericField{
-		TableSchema: tbl.TableSchema,
-		TableName:   tbl.TableName,
-		TableAlias:  tbl.TableAlias,
+		TableSchema: tableInfo.TableSchema,
+		TableName:   tableInfo.TableName,
+		TableAlias:  tableInfo.TableAlias,
 		FieldName:   fieldName,
 	}}
 }

@@ -8,11 +8,11 @@ type BlobField struct {
 
 var _ Field = BlobField{}
 
-func NewBlobField(fieldName string, tableinfo TableInfo) BlobField {
+func NewBlobField(fieldName string, tableInfo TableInfo) BlobField {
 	return BlobField{info: FieldInfo{
-		TableSchema: tableinfo.TableSchema,
-		TableName:   tableinfo.TableName,
-		TableAlias:  tableinfo.TableAlias,
+		TableSchema: tableInfo.TableSchema,
+		TableName:   tableInfo.TableName,
+		TableAlias:  tableInfo.TableAlias,
 		FieldName:   fieldName,
 	}}
 }

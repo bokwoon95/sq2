@@ -4,11 +4,11 @@ type JSONField struct {
 	GenericField
 }
 
-func NewJSONField(fieldName string, tbl TableInfo) JSONField {
+func NewJSONField(fieldName string, tableInfo TableInfo) JSONField {
 	return JSONField{GenericField: GenericField{
-		TableSchema: tbl.TableSchema,
-		TableName:   tbl.TableName,
-		TableAlias:  tbl.TableAlias,
+		TableSchema: tableInfo.TableSchema,
+		TableName:   tableInfo.TableName,
+		TableAlias:  tableInfo.TableAlias,
 		FieldName:   fieldName,
 	}}
 }
