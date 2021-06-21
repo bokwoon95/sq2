@@ -157,19 +157,19 @@ func Test_LoadTable(t *testing.T) {
 	})
 
 	t.Run("FILM SQLite", func(t *testing.T) {
-		is := testutil.New(t, testutil.Parallel)
+		is := testutil.New(t, testutil.FailFast, testutil.Parallel)
 		gotDDL := makeDDL(is, sq.DialectSQLite, NEW_FILM(sq.DialectSQLite, ""))
 		is.Equal(FILM_SQLite, gotDDL)
 		// fmt.Println(gotDDL)
 	})
 	t.Run("FILM Postgres", func(t *testing.T) {
-		is := testutil.New(t, testutil.Parallel)
+		is := testutil.New(t, testutil.FailFast, testutil.Parallel)
 		gotDDL := makeDDL(is, sq.DialectPostgres, NEW_FILM(sq.DialectPostgres, ""))
 		is.Equal(FILM_Postgres, gotDDL)
 		// fmt.Println(gotDDL)
 	})
 	t.Run("FILM MySQL", func(t *testing.T) {
-		is := testutil.New(t, testutil.Parallel)
+		is := testutil.New(t, testutil.FailFast, testutil.Parallel)
 		gotDDL := makeDDL(is, sq.DialectMySQL, NEW_FILM(sq.DialectMySQL, ""))
 		is.Equal(FILM_MySQL, gotDDL)
 		// fmt.Println(gotDDL)

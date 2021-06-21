@@ -416,7 +416,7 @@ type FILM struct {
 	LENGTH               sq.NumberField
 	REPLACEMENT_COST     sq.NumberField  `ddl:"type=DECIMAL(5,2) default=19.99 notnull"`
 	RATING               sq.StringField  `ddl:"default='G'"`
-	SPECIAL_FEATURES     sq.GenericField `ddl:"type=JSON"`
+	SPECIAL_FEATURES     sq.CustomField `ddl:"type=JSON"`
 	LAST_UPDATE          sq.TimeField    `ddl:"default=DATETIME('now') notnull"`
 	FULLTEXT             sq.StringField
 }
