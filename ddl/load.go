@@ -3,6 +3,7 @@ package ddl
 import (
 	"fmt"
 	"reflect"
+	"strconv"
 	"strings"
 
 	"github.com/bokwoon95/sq"
@@ -194,12 +195,23 @@ func (tbl *Table) LoadColumn(dialect, columnName, columnType, config string) err
 		case "collate":
 			col.CollationName = modifier[1]
 		case "default":
-			// TODO: differentiate between DefaultExpr and DefaultLiteral
-			// if starts and ends with single quotes, is DefaultLiteral
-			// if parseable as integer or float, is DefaultLiteral
-			// if is TRUE, FALSE, CURRENT_TIMESTAMP et al, is DefaultLiteral
-			// else if DefaultExpr
-			col.ColumnDefault = modifier[1]
+			if len(modifier[1]) >= 2 && modifier[1][0] == '\'' && modifier[1][len(modifier[1])-1] == '\'' {
+				col.ColumnDefault = modifier[1]
+			} else if strings.EqualFold(modifier[1], "TRUE") ||
+				strings.EqualFold(modifier[1], "FALSE") ||
+				strings.EqualFold(modifier[1], "CURRENT_DATE") ||
+				strings.EqualFold(modifier[1], "CURRENT_TIME") ||
+				strings.EqualFold(modifier[1], "CURRENT_TIMESTAMP") {
+				col.ColumnDefault = modifier[1]
+			} else if _, err := strconv.ParseInt(modifier[1], 10, 64); err == nil {
+				col.ColumnDefault = modifier[1]
+			} else if _, err := strconv.ParseFloat(modifier[1], 64); err == nil {
+				col.ColumnDefault = modifier[1]
+			} else if dialect == sq.DialectPostgres {
+				col.ColumnDefault = modifier[1]
+			} else {
+				col.ColumnDefault = "(" + modifier[1] + ")"
+			}
 		case "ignore":
 			col.Ignore = true
 		case "primarykey":
