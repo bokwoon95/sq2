@@ -33,10 +33,10 @@ func (m *Metadata) LoadTable(table sq.Table) (err error) {
 	}
 	genericTable, ok := tableValue.Field(0).Interface().(sq.TableInfo)
 	if !ok {
-		return fmt.Errorf("ddl: first field of table struct is not an embedded sq.GenericTable")
+		return fmt.Errorf("ddl: first field of table struct is not an embedded sq.TableInfo")
 	}
 	if !tableType.Field(0).Anonymous {
-		return fmt.Errorf("ddl: first field of table struct is not an embedded sq.GenericTable")
+		return fmt.Errorf("ddl: first field of table struct is not an embedded sq.TableInfo")
 	}
 	var schema Schema
 	if i := m.CachedSchemaIndex(genericTable.TableSchema); i >= 0 {

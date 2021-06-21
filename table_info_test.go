@@ -7,7 +7,7 @@ import (
 	"github.com/bokwoon95/testutil"
 )
 
-func Test_GenericTable(t *testing.T) {
+func Test_TableInfo(t *testing.T) {
 	type TT struct {
 		dialect   string
 		tbl       TableInfo
