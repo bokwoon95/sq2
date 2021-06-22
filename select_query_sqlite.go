@@ -13,17 +13,17 @@ func (d SQLiteDialect) From(table Table) SQLiteSelectQuery {
 	return q
 }
 
-func (d SQLiteDialect) Select(fields ...Field) SQLiteSelectQuery {
-	var q SQLiteSelectQuery
-	q.QueryDialect = DialectSQLite
-	q.SelectFields = fields
-	return q
-}
-
 func (d SQLiteDialect) SelectWith(ctes ...CTE) SQLiteSelectQuery {
 	var q SQLiteSelectQuery
 	q.QueryDialect = DialectSQLite
 	q.CTEs = ctes
+	return q
+}
+
+func (d SQLiteDialect) Select(fields ...Field) SQLiteSelectQuery {
+	var q SQLiteSelectQuery
+	q.QueryDialect = DialectSQLite
+	q.SelectFields = fields
 	return q
 }
 
@@ -63,16 +63,6 @@ func (q SQLiteSelectQuery) Join(table Table, predicates ...Predicate) SQLiteSele
 
 func (q SQLiteSelectQuery) LeftJoin(table Table, predicates ...Predicate) SQLiteSelectQuery {
 	q.JoinTables = append(q.JoinTables, LeftJoin(table, predicates...))
-	return q
-}
-
-func (q SQLiteSelectQuery) RightJoin(table Table, predicates ...Predicate) SQLiteSelectQuery {
-	q.JoinTables = append(q.JoinTables, RightJoin(table, predicates...))
-	return q
-}
-
-func (q SQLiteSelectQuery) FullJoin(table Table, predicates ...Predicate) SQLiteSelectQuery {
-	q.JoinTables = append(q.JoinTables, FullJoin(table, predicates...))
 	return q
 }
 

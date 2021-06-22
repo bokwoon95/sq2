@@ -13,17 +13,17 @@ func (d PostgresDialect) From(table Table) PostgresSelectQuery {
 	return q
 }
 
-func (d PostgresDialect) Select(fields ...Field) PostgresSelectQuery {
-	var q PostgresSelectQuery
-	q.QueryDialect = DialectPostgres
-	q.SelectFields = fields
-	return q
-}
-
 func (d PostgresDialect) SelectWith(ctes ...CTE) PostgresSelectQuery {
 	var q PostgresSelectQuery
 	q.QueryDialect = DialectPostgres
 	q.CTEs = ctes
+	return q
+}
+
+func (d PostgresDialect) Select(fields ...Field) PostgresSelectQuery {
+	var q PostgresSelectQuery
+	q.QueryDialect = DialectPostgres
+	q.SelectFields = fields
 	return q
 }
 
@@ -35,7 +35,7 @@ func (d PostgresDialect) SelectDistinct(fields ...Field) PostgresSelectQuery {
 	return q
 }
 
-func (d PostgresDialect) SelectDistinctOn(distinctFields ...Field) func(fields ...Field) PostgresSelectQuery {
+func (d PostgresDialect) SelectDistinctOn(distinctFields ...Field) func(...Field) PostgresSelectQuery {
 	return func(fields ...Field) PostgresSelectQuery {
 		var q PostgresSelectQuery
 		q.QueryDialect = DialectPostgres
@@ -60,6 +60,17 @@ func (q PostgresSelectQuery) SelectDistinct(fields ...Field) PostgresSelectQuery
 	q.SelectType = SelectTypeDistinct
 	q.SelectFields = fields
 	return q
+}
+
+func (q PostgresSelectQuery) SelectDistinctOn(distinctFields ...Field) func(...Field) PostgresSelectQuery {
+	return func(fields ...Field) PostgresSelectQuery {
+		var q PostgresSelectQuery
+		q.QueryDialect = DialectPostgres
+		q.SelectType = SelectTypeDistinct
+		q.DistinctOn = distinctFields
+		q.SelectFields = fields
+		return q
+	}
 }
 
 func (q PostgresSelectQuery) From(table Table) PostgresSelectQuery {

@@ -6,22 +6,10 @@ type MySQLInsertQuery struct {
 
 var _ Query = MySQLInsertQuery{}
 
-func (d MySQLDialect) InsertWith(ctes ...CTE) MySQLInsertQuery {
-	var q MySQLInsertQuery
-	q.QueryDialect = DialectMySQL
-	q.CTEs = ctes
-	return q
-}
-
 func (d MySQLDialect) InsertInto(table BaseTable) MySQLInsertQuery {
 	var q MySQLInsertQuery
 	q.QueryDialect = DialectMySQL
 	q.IntoTable = table
-	return q
-}
-
-func (q MySQLInsertQuery) With(ctes ...CTE) MySQLInsertQuery {
-	q.CTEs = append(q.CTEs, ctes...)
 	return q
 }
 
@@ -52,10 +40,5 @@ func (q MySQLInsertQuery) Select(query MySQLSelectQuery) MySQLInsertQuery {
 
 func (q MySQLInsertQuery) OnDuplicateKeyUpdate(assignments ...Assignment) MySQLInsertQuery {
 	q.Resolution = assignments
-	return q
-}
-
-func (q MySQLInsertQuery) Where(predicates ...Predicate) MySQLInsertQuery {
-	q.ResolutionPredicate.Predicates = append(q.ResolutionPredicate.Predicates, predicates...)
 	return q
 }
