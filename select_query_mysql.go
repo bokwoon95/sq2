@@ -13,17 +13,17 @@ func (d MySQLDialect) From(table Table) MySQLSelectQuery {
 	return q
 }
 
-func (d MySQLDialect) Select(fields ...Field) MySQLSelectQuery {
-	var q MySQLSelectQuery
-	q.QueryDialect = DialectMySQL
-	q.SelectFields = fields
-	return q
-}
-
 func (d MySQLDialect) SelectWith(ctes ...CTE) MySQLSelectQuery {
 	var q MySQLSelectQuery
 	q.QueryDialect = DialectMySQL
 	q.CTEs = ctes
+	return q
+}
+
+func (d MySQLDialect) Select(fields ...Field) MySQLSelectQuery {
+	var q MySQLSelectQuery
+	q.QueryDialect = DialectMySQL
+	q.SelectFields = fields
 	return q
 }
 
