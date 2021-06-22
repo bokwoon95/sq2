@@ -136,8 +136,7 @@ func (fs Fields) AppendSQLExcludeWithAlias(dialect string, buf *bytes.Buffer, ar
 				return err
 			}
 			if alias = f.GetAlias(); alias != "" {
-				buf.WriteString(" AS ")
-				buf.WriteString(alias)
+				buf.WriteString(" AS " + QuoteIdentifier(dialect, alias))
 			}
 		}
 	}

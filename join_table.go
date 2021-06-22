@@ -74,6 +74,15 @@ func (join JoinTable) AppendSQL(dialect string, buf *bytes.Buffer, args *[]inter
 	if join.JoinType == "" {
 		join.JoinType = JoinTypeInner
 	}
+	if len(join.OnPredicates.Predicates) == 0 &&
+		(join.JoinType == JoinTypeInner ||
+			join.JoinType == JoinTypeRight ||
+			join.JoinType == JoinTypeFull) {
+		return fmt.Errorf("sq: %s requires at least one predicate specified", join.JoinType)
+	}
+	if dialect == DialectSQLite && (join.JoinType == JoinTypeRight || join.JoinType == JoinTypeFull) {
+		return fmt.Errorf("sq: sqlite does not support %s", join.JoinType)
+	}
 	buf.WriteString(string(join.JoinType) + " ")
 	if join.Table == nil {
 		return fmt.Errorf("sq: joining on a nil table")
