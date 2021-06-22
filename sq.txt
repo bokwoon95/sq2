@@ -31,6 +31,28 @@ due to the ever-changing nature of database features, some of the semantic stuff
 
 TODO: currently for some dialect-specific features I'm just ignoring and moving on e.g. MySQL's OnUpdateCurrentTimestamp is ignored by other dialects. This contrasts to my attitude with other things, like returning an error if the using tries to use RIGHT JOIN or FULL JOIN with SQLite because it isn't supported. So do I ignore non-applicable dialect-specific features, or do I return an error to the user to point it out? Where do I draw the line? I need to take a principled stand on this, preferably in a forwards-compatible way.
 Put more succinctly: is there ever a case where the user has to convert a query from one dialect to another in a generic way? What is the context surrounding that? Because if I silently truncate some stuff (like the RETURNING clause), will the query still work fine in that context?
+I have decided: try to silently accomodate as much as possible, and do not enforce SQL semantics.
+
+Don't call it NewDB, call it Wrap(Queryer) Queryer. So users will no longer be able to call concrete methods on the DB, basically they can only make it do things through Fetch and Exec.
+God but all this interface wrapping and unwrapping, won't it be unperformant though?
+
+All this could be solved if I created a separate struct just to hold sq-specific config like loggers and hooks. The user can provide it if they want or they can just pass nil. The upside is that they can now use *sql.DB, *sql.Tx, *sql.Conn, *sql.Stmt in its full glory without wrapping it in some iffy extension interface.
+
+FetchContext(ctx, db, sq.SQLite.
+    From(),
+    rowMapper,
+)
+
+// how is this better though? The user can still forget to pass in the config struct, causing all the loggers and triggers to go to waste.
+// maybe it's just time to embrace the fact that sq triggers will not be reliable enough to enforce database-level constraints, like temporal table filters.
+FetchContext(ctx, db, nil, sq.SQLite.
+    From(),
+    rowMapper,
+)
+There -is- an alternative way... all Fetch and Exec now take in an *sq.DB, instead of a Queryer.
+    The one thing that would make this more palatable is if Fetch and Exec could be re-implemented by external packages i.e. only depedendent on exported functions and types.
+    So if you wanted a Fetch that only takes in an *sql.DB you can rewrite it yourself
+    ^ yes... I think this is the way
 
 think about removing ToSQL from the Query interface, if it doesn't pull its weight. Will need to write more queries with sq first.
 
