@@ -10,8 +10,11 @@ type InsertQuery struct {
 	ColumnMapper func(*Column) error
 	// WITH
 	CTEs CTEs
+	// NOTE: added MySQL's INSERT IGNORE functionality but disabled it for now
+	// because I'm not sure if INSERT IGNORE is something I want to encourage.
+	// https://stackoverflow.com/questions/548541/insert-ignore-vs-insert-on-duplicate-key-update
+	ignore bool
 	// INSERT INTO
-	Ignore        bool
 	IntoTable     BaseTable
 	InsertColumns Fields
 	// VALUES
@@ -42,8 +45,6 @@ func (q InsertQuery) ToSQL() (query string, args []interface{}, params map[strin
 	return buf.String(), args, params, err
 }
 
-// TODO: change `excludedTableQualifiers []string` to `excludeTableQualifier func(name string) bool`
-
 func (q InsertQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
 	var excludedTableQualifiers []string
 	if q.ColumnMapper != nil {
@@ -62,7 +63,7 @@ func (q InsertQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interf
 		}
 	}
 	// INSERT INTO
-	if q.Ignore && dialect == DialectMySQL {
+	if q.ignore && dialect == DialectMySQL {
 		buf.WriteString("INSERT IGNORE INTO ")
 	} else {
 		buf.WriteString("INSERT INTO ")
@@ -74,13 +75,11 @@ func (q InsertQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interf
 	if err != nil {
 		return err
 	}
-	name := q.IntoTable.GetName()
-	alias := q.IntoTable.GetAlias()
-	if alias != "" {
-		buf.WriteString(" AS ")
-		buf.WriteString(alias)
+	if alias := q.IntoTable.GetAlias(); alias != "" {
+		buf.WriteString(" AS " + QuoteIdentifier(dialect, alias))
 		excludedTableQualifiers = append(excludedTableQualifiers, alias)
 	} else {
+		name := q.IntoTable.GetName()
 		excludedTableQualifiers = append(excludedTableQualifiers, name)
 	}
 	if len(q.InsertColumns) > 0 {
@@ -162,7 +161,7 @@ func (q InsertQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interf
 		}
 	}
 	// RETURNING
-	if len(q.ReturningFields) > 0 {
+	if len(q.ReturningFields) > 0 && dialect == DialectPostgres {
 		buf.WriteString(" RETURNING ")
 		err = q.ReturningFields.AppendSQLExcludeWithAlias(dialect, buf, args, params, nil)
 		if err != nil {

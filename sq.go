@@ -88,7 +88,7 @@ type Field interface {
 
 type Query interface {
 	SQLAppender
-	ToSQL() (query string, args []interface{}, params map[string][]int, err error)
+	ToSQL() (query string, args []interface{}, params map[string][]int, err error) // TODO: do I really need this method?
 	SetFetchableFields([]Field) (Query, error)
 	GetFetchableFields() ([]Field, error)
 	Dialect() string

@@ -23,6 +23,7 @@ type Column struct {
 }
 
 // NOTE: Why did I make the following three functions public functions? Is there some use case that I envisioned for the user?
+// NOTE: Oh my god. I wrote those functions because I wanted to allow external packages to use the same *Column for their own functions. One year ago, I had already anticipated the same concerns I have today.
 func NewColumn(mode ColumnMode) *Column {
 	var col Column
 	col.mode = mode

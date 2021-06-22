@@ -7,6 +7,7 @@ import (
 )
 
 type CTEField struct {
+	valid        bool
 	query        Query
 	cteRecursive bool
 	cteName      string
@@ -28,7 +29,7 @@ func (f CTEField) As(alias string) CTEField {
 }
 
 func (f CTEField) AppendSQLExclude(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int, excludedTableQualifiers []string) error {
-	if f.cteName == "" {
+	if !f.valid {
 		return fmt.Errorf("sq: referenced nonexistent CTEField")
 	}
 	if f.fieldName == "" {
@@ -85,6 +86,7 @@ func newCTE(recursive bool, name string, columns []string, query Query) (CTE, er
 	}
 	for _, fieldName := range fieldNames {
 		cte[fieldName] = CTEField{
+			valid:     true,
 			cteName:   name,
 			fieldName: fieldName,
 		}
