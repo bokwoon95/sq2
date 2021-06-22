@@ -12,7 +12,7 @@ type UpdateQuery struct {
 	// WITH
 	CTEs CTEs
 	// UPDATE
-	UpdateTable BaseTable
+	UpdateTables []BaseTable
 	// SET
 	Assignments Assignments
 	// FROM
@@ -65,19 +65,31 @@ func (q UpdateQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interf
 	}
 	// UPDATE
 	buf.WriteString("UPDATE ")
-	if q.UpdateTable == nil {
-		return fmt.Errorf("sq: UPDATE-ing a nil table")
+	if len(q.UpdateTables) == 0 {
+		return fmt.Errorf("sq: no tables to UPDATE")
 	}
-	err = q.UpdateTable.AppendSQL(dialect, buf, args, params)
-	if err != nil {
-		return err
-	}
-	if alias := q.UpdateTable.GetAlias(); alias != "" {
-		buf.WriteString(" AS " + QuoteIdentifier(dialect, alias))
-		excludedTableQualifiers = append(excludedTableQualifiers, alias)
-	} else {
-		name := q.UpdateTable.GetName()
-		excludedTableQualifiers = append(excludedTableQualifiers, name)
+	// TODO: holy shit I'm not smart enough for MySQL's multi-table update semantics
+	for i, updateTable := range q.UpdateTables {
+		if i > 0 {
+			if dialect != DialectMySQL {
+				break
+			}
+			buf.WriteString(", ")
+		}
+		if updateTable == nil {
+			return fmt.Errorf("sq: UPDATE-ing a nil table")
+		}
+		err = updateTable.AppendSQL(dialect, buf, args, params)
+		if err != nil {
+			return err
+		}
+		if alias := updateTable.GetAlias(); alias != "" {
+			buf.WriteString(" AS " + QuoteIdentifier(dialect, alias))
+			excludedTableQualifiers = append(excludedTableQualifiers, alias)
+		} else {
+			name := updateTable.GetName()
+			excludedTableQualifiers = append(excludedTableQualifiers, name)
+		}
 	}
 	// SET
 	if len(q.Assignments) > 0 {
