@@ -1,6 +1,9 @@
 package sq
 
-import "bytes"
+import (
+	"bytes"
+	"fmt"
+)
 
 type InsertQuery struct {
 	QueryDialect string
@@ -42,7 +45,6 @@ func (q InsertQuery) ToSQL() (query string, args []interface{}, params map[strin
 // TODO: change `excludedTableQualifiers []string` to `excludeTableQualifier func(name string) bool`
 
 func (q InsertQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
-	var err error
 	var excludedTableQualifiers []string
 	if q.ColumnMapper != nil {
 		col := NewColumn(ColumnModeInsert)
@@ -54,29 +56,32 @@ func (q InsertQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interf
 	}
 	// WITH
 	if len(q.CTEs) > 0 {
-		err = q.CTEs.AppendSQL(dialect, buf, args, params)
+		err := q.CTEs.AppendSQL(dialect, buf, args, params)
 		if err != nil {
 			return err
 		}
 	}
 	// INSERT INTO
-	buf.WriteString("INSERT INTO ")
-	if q.IntoTable == nil {
-		buf.WriteString("NULL")
+	if q.Ignore && dialect == DialectMySQL {
+		buf.WriteString("INSERT IGNORE INTO ")
 	} else {
-		err = q.IntoTable.AppendSQL(dialect, buf, args, params)
-		if err != nil {
-			return err
-		}
-		name := q.IntoTable.GetName()
-		alias := q.IntoTable.GetAlias()
-		if alias != "" {
-			buf.WriteString(" AS ")
-			buf.WriteString(alias)
-			excludedTableQualifiers = append(excludedTableQualifiers, alias)
-		} else {
-			excludedTableQualifiers = append(excludedTableQualifiers, name)
-		}
+		buf.WriteString("INSERT INTO ")
+	}
+	if q.IntoTable == nil {
+		return fmt.Errorf("sq: INSERTing into nil table")
+	}
+	err := q.IntoTable.AppendSQL(dialect, buf, args, params)
+	if err != nil {
+		return err
+	}
+	name := q.IntoTable.GetName()
+	alias := q.IntoTable.GetAlias()
+	if alias != "" {
+		buf.WriteString(" AS ")
+		buf.WriteString(alias)
+		excludedTableQualifiers = append(excludedTableQualifiers, alias)
+	} else {
+		excludedTableQualifiers = append(excludedTableQualifiers, name)
 	}
 	if len(q.InsertColumns) > 0 {
 		buf.WriteString(" (")
@@ -100,27 +105,36 @@ func (q InsertQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interf
 		if err != nil {
 			return err
 		}
+	default:
+		return fmt.Errorf("RowValues not provided and SelectQuery not provided")
 	}
 	// ON CONFLICT
-	if q.HandleConflict {
-		buf.WriteString(" ON CONFLICT")
-		if len(q.ConflictFields) > 0 {
-			buf.WriteString(" (")
-			err = q.ConflictFields.AppendSQLExclude(dialect, buf, args, params, excludedTableQualifiers)
-			if err != nil {
-				return err
-			}
-			buf.WriteString(")")
-			if len(q.ConflictPredicate.Predicates) > 0 {
-				buf.WriteString(" WHERE ")
-				q.ConflictPredicate.Toplevel = true
-				err = q.ConflictPredicate.AppendSQLExclude(dialect, buf, args, params, excludedTableQualifiers)
+	switch dialect {
+	case DialectSQLite, DialectPostgres:
+		if q.HandleConflict {
+			buf.WriteString(" ON CONFLICT")
+			if q.ConflictConstraint != "" && dialect == DialectPostgres {
+				buf.WriteString(" ON CONSTRAINT " + q.ConflictConstraint)
+			} else if len(q.ConflictFields) > 0 {
+				buf.WriteString(" (")
+				err = q.ConflictFields.AppendSQLExclude(dialect, buf, args, params, excludedTableQualifiers)
 				if err != nil {
 					return err
 				}
+				buf.WriteString(")")
+				if len(q.ConflictPredicate.Predicates) > 0 {
+					buf.WriteString(" WHERE ")
+					q.ConflictPredicate.Toplevel = true
+					err = q.ConflictPredicate.AppendSQLExclude(dialect, buf, args, params, excludedTableQualifiers)
+					if err != nil {
+						return err
+					}
+				}
+			} else {
+				return fmt.Errorf("no conflict target specified")
 			}
 		}
-		if len(q.Resolution) > 0 {
+		if q.HandleConflict && len(q.Resolution) > 0 {
 			buf.WriteString(" DO UPDATE SET ")
 			err = q.Resolution.AppendSQLExclude(dialect, buf, args, params, excludedTableQualifiers)
 			if err != nil {
@@ -134,8 +148,25 @@ func (q InsertQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interf
 					return err
 				}
 			}
-		} else {
+		}
+		if q.HandleConflict && len(q.Resolution) == 0 {
 			buf.WriteString(" DO NOTHING")
+		}
+	case DialectMySQL:
+		if len(q.Resolution) > 0 {
+			buf.WriteString(" ON DUPLICATE KEY UPDATE ")
+			err = q.Resolution.AppendSQLExclude(dialect, buf, args, params, excludedTableQualifiers)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	// RETURNING
+	if len(q.ReturningFields) > 0 {
+		buf.WriteString(" RETURNING ")
+		err = q.ReturningFields.AppendSQLExcludeWithAlias(dialect, buf, args, params, nil)
+		if err != nil {
+			return err
 		}
 	}
 	return nil
