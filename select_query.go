@@ -33,17 +33,6 @@ type SelectQuery struct {
 
 var _ Query = SelectQuery{}
 
-func (q SelectQuery) ToSQL() (query string, args []interface{}, params map[string][]int, err error) {
-	buf := bufpool.Get().(*bytes.Buffer)
-	defer func() {
-		buf.Reset()
-		bufpool.Put(buf)
-	}()
-	params = make(map[string][]int)
-	err = q.AppendSQL(q.QueryDialect, buf, &args, params)
-	return buf.String(), args, params, err
-}
-
 func (q SelectQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
 	var err error
 	// WITH

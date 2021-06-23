@@ -1214,7 +1214,6 @@ func (tbl DUMMY_TABLE) DDL(dialect string, t *T) {
 	const indexName = "dummy_table_complex_expr_idx"
 	switch dialect {
 	case sq.DialectSQLite:
-		t.Column(tbl.ID1)
 		t.Column(tbl.COLOR).Collate("nocase")
 		t.NameIndex(indexName,
 			tbl.SCORE,
@@ -1234,7 +1233,6 @@ func (tbl DUMMY_TABLE) DDL(dialect string, t *T) {
 		t.NameIndex("dummy_table_id2_idx", sq.FieldLiteral(`id2 COLLATE "C"`))
 		t.NameIndex("dummy_table_color_idx", sq.FieldLiteral("color text_pattern_ops"))
 	case sq.DialectMySQL:
-		t.Column(tbl.ID1)
 		t.Column(tbl.COLOR).Type("VARCHAR(50)").Collate("latin1_swedish_ci")
 		t.NameIndex(indexName,
 			tbl.SCORE,

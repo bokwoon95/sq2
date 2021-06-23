@@ -29,21 +29,6 @@ type UpdateQuery struct {
 
 var _ Query = UpdateQuery{}
 
-func (q UpdateQuery) ToSQL() (query string, args []interface{}, params map[string][]int, err error) {
-	buf := bufpool.Get().(*bytes.Buffer)
-	defer func() {
-		buf.Reset()
-		bufpool.Put(buf)
-	}()
-	params = make(map[string][]int)
-	err = q.AppendSQL(q.QueryDialect, buf, &args, params)
-	if err != nil {
-		return query, args, params, err
-	}
-	query = buf.String()
-	return query, args, params, nil
-}
-
 func (q UpdateQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
 	var err error
 	var excludedTableQualifiers []string

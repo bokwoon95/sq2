@@ -24,21 +24,6 @@ type VariadicQuery struct {
 
 var _ SQLAppender = VariadicQuery{}
 
-func (vq VariadicQuery) ToSQL() (query string, args []interface{}, params map[string][]int, err error) {
-	buf := bufpool.Get().(*bytes.Buffer)
-	defer func() {
-		buf.Reset()
-		bufpool.Put(buf)
-	}()
-	params = make(map[string][]int)
-	var dialect string
-	if len(vq.Queries) > 0 {
-		dialect = vq.Queries[0].Dialect()
-	}
-	err = vq.AppendSQL(dialect, buf, &args, params)
-	return buf.String(), args, params, err
-}
-
 func (vq VariadicQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
 	var err error
 	if vq.Operator == "" {
