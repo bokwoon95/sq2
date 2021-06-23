@@ -185,6 +185,6 @@ func (ctes CTEs) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{
 			}
 		}
 	}
-	buf.WriteString(" ")
+	buf.WriteString(") ")
 	return nil
 }

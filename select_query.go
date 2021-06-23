@@ -59,6 +59,7 @@ func (q SelectQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interf
 	if q.FromTable == nil {
 		return fmt.Errorf("sq: SELECTing from nil table")
 	}
+	buf.WriteString(" FROM ")
 	err = q.FromTable.AppendSQL(dialect, buf, args, params)
 	if err != nil {
 		return err
