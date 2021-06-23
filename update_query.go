@@ -3,7 +3,6 @@ package sq
 import (
 	"bytes"
 	"database/sql"
-	"fmt"
 )
 
 type UpdateQuery struct {
@@ -12,12 +11,12 @@ type UpdateQuery struct {
 	// WITH
 	CTEs CTEs
 	// UPDATE
-	UpdateTables []BaseTable
-	// SET
-	Assignments Assignments
+	UpdateTable BaseTable
 	// FROM
 	FromTable  Table
 	JoinTables JoinTables
+	// SET
+	Assignments Assignments
 	// WHERE
 	WherePredicate VariadicPredicate
 	// RETURNING
@@ -65,34 +64,19 @@ func (q UpdateQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interf
 	}
 	// UPDATE
 	buf.WriteString("UPDATE ")
-	if len(q.UpdateTables) == 0 {
-		return fmt.Errorf("sq: no tables to UPDATE")
+	err = q.UpdateTable.AppendSQL(dialect, buf, args, params)
+	if err != nil {
+		return err
 	}
-	// TODO: holy shit I'm not smart enough for MySQL's multi-table update semantics
-	for i, updateTable := range q.UpdateTables {
-		if i > 0 {
-			if dialect != DialectMySQL {
-				break
-			}
-			buf.WriteString(", ")
-		}
-		if updateTable == nil {
-			return fmt.Errorf("sq: UPDATE-ing a nil table")
-		}
-		err = updateTable.AppendSQL(dialect, buf, args, params)
-		if err != nil {
-			return err
-		}
-		if alias := updateTable.GetAlias(); alias != "" {
-			buf.WriteString(" AS " + QuoteIdentifier(dialect, alias))
-			excludedTableQualifiers = append(excludedTableQualifiers, alias)
-		} else {
-			name := updateTable.GetName()
-			excludedTableQualifiers = append(excludedTableQualifiers, name)
-		}
+	if alias := q.UpdateTable.GetAlias(); alias != "" {
+		buf.WriteString(" AS " + QuoteIdentifier(dialect, alias))
+		excludedTableQualifiers = append(excludedTableQualifiers, alias)
+	} else {
+		name := q.UpdateTable.GetName()
+		excludedTableQualifiers = append(excludedTableQualifiers, name)
 	}
 	// SET
-	if len(q.Assignments) > 0 {
+	if len(q.Assignments) > 0 && dialect != DialectMySQL {
 		buf.WriteString(" SET ")
 		err = q.Assignments.AppendSQLExclude(dialect, buf, args, params, excludedTableQualifiers)
 		if err != nil {
@@ -115,6 +99,14 @@ func (q UpdateQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interf
 	if len(q.JoinTables) > 0 {
 		buf.WriteString(" ")
 		err = q.JoinTables.AppendSQL(dialect, buf, args, params)
+		if err != nil {
+			return err
+		}
+	}
+	// SET
+	if len(q.Assignments) > 0 && dialect == DialectMySQL {
+		buf.WriteString(" SET ")
+		err = q.Assignments.AppendSQLExclude(dialect, buf, args, params, excludedTableQualifiers)
 		if err != nil {
 			return err
 		}
