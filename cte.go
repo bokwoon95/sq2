@@ -130,7 +130,9 @@ func (cte CTE) As(alias string) CTE {
 			continue
 		}
 		cte2[fieldName] = CTEField{
+			valid:     true,
 			cteName:   metafield.cteName,
+			cteAlias:  alias,
 			fieldName: fieldName,
 		}
 	}
