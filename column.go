@@ -30,9 +30,13 @@ func NewColumn(mode ColumnMode) *Column {
 	return &col
 }
 
-func ColumnInsertResult(col *Column) (Fields, RowValues) { return col.insertColumns, col.rowValues }
+func ColumnInsertResult(col *Column) (Fields, RowValues) {
+	return col.insertColumns, col.rowValues
+}
 
-func ColumnUpdateResult(col *Column) Assignments { return col.assignments }
+func ColumnUpdateResult(col *Column) Assignments {
+	return col.assignments
+}
 
 func (col *Column) Set(field Field, value interface{}) {
 	if field == nil {

@@ -183,6 +183,8 @@ func lookupParam(dialect string, args []interface{}, argsLookup map[string]int, 
 	return paramValue, nil
 }
 
+// TODO: make args param variadic
+// NOTE: variadic ...interface{} would make Sprintf more susceptible to wrong input, i.e. query becomes dialect, first string arg becomes query
 func Sprintf(dialect string, query string, args []interface{}) (string, error) {
 	buf := bufpool.Get().(*bytes.Buffer)
 	defer func() {
