@@ -103,7 +103,7 @@ func (q SelectQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interf
 	// ORDER BY
 	if len(q.OrderByFields) > 0 {
 		buf.WriteString(" ORDER BY ")
-		err = q.OrderByFields.AppendSQLExclude("", buf, args, params, nil)
+		err = q.OrderByFields.AppendSQLExclude(dialect, buf, args, params, nil)
 		if err != nil {
 			return err
 		}
