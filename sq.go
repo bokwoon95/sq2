@@ -108,11 +108,6 @@ type Queryer interface {
 	ExecContext(ctx context.Context, query string, args ...interface{}) (sql.Result, error)
 }
 
-// type QueryerLogger interface {
-// 	Queryer
-// 	GetLogger(ctx context.Context) (Logger, LogFlag, error)
-// }
-
 type Transactor interface {
 	Begin() (*sql.Tx, error)
 	BeginTx(ctx context.Context, opts *sql.TxOptions) (*sql.Tx, error)
