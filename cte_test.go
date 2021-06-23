@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/bokwoon95/testutil"
+	"github.com/davecgh/go-spew/spew"
 )
 
 func TestCTE(t *testing.T) {
@@ -22,7 +23,8 @@ func TestCTE(t *testing.T) {
 			bufpool.Put(buf)
 		}()
 		gotArgs, gotParams := []interface{}{}, map[string][]int{}
-		tt.item.AppendSQL(tt.dialect, buf, &gotArgs, gotParams)
+		err := tt.item.AppendSQL(tt.dialect, buf, &gotArgs, gotParams)
+		is.NoErr(err)
 		is.Equal(tt.wantQuery, buf.String())
 		is.Equal(tt.wantArgs, gotArgs)
 	}
@@ -40,24 +42,26 @@ func TestCTE(t *testing.T) {
 			GroupBy(RENTAL.STAFF_ID),
 		)
 		is.NoErr(err)
+		cte := cte_rental.As("cte")
+		spew.Dump(cte)
 		tt.item = Postgres.
-			SelectWith(cte_rental).
+			SelectWith(cte).
 			Select(
 				STAFF.STAFF_ID,
 				STAFF.FIRST_NAME,
 				STAFF.LAST_NAME,
-				cte_rental["rental_count"],
+				cte["rental_count"],
 			).
 			From(STAFF).
-			Join(cte_rental, Eq(cte_rental["staff_id"], STAFF.STAFF_ID))
+			Join(cte, Eq(cte["staff_id"], STAFF.STAFF_ID))
 		tt.wantQuery = "WITH cte_rental AS (" +
 			"SELECT rental.staff_id, COUNT(rental.rental_id) AS rental_count" +
 			" FROM rental" +
 			" GROUP BY rental.staff_id" +
 			")" +
-			" SELECT s.staff_id, s.first_name, s.last_name, cte_rental.rental_count" +
+			" SELECT s.staff_id, s.first_name, s.last_name, cte.rental_count" +
 			" FROM staff AS s" +
-			" JOIN cte_rental ON cte_rental.staff_id = s.staff_id"
+			" JOIN cte_rental AS cte ON cte.staff_id = s.staff_id"
 		tt.wantArgs = []interface{}{}
 		assert(is, tt)
 	})
