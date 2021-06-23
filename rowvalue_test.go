@@ -28,6 +28,7 @@ func TestRowValue(t *testing.T) {
 		wantQuery string
 		wantArgs  []interface{}
 	}
+
 	assert := func(t *testing.T, tt TT) {
 		is := testutil.New(t, testutil.Parallel)
 		buf := bufpool.Get().(*bytes.Buffer)
@@ -38,6 +39,8 @@ func TestRowValue(t *testing.T) {
 		gotArgs, gotParams := []interface{}{}, map[string][]int{}
 		err := tt.value.AppendSQL(tt.dialect, buf, &gotArgs, gotParams)
 		is.NoErr(err)
+		is.Equal(tt.wantQuery, buf.String())
+		is.Equal(tt.wantArgs, gotArgs)
 	}
 
 	t.Run("rowvalue", func(t *testing.T) {
@@ -58,5 +61,27 @@ func TestRowValue(t *testing.T) {
 		tt.wantQuery = "(?, ?, user_id, ?), (name, ?, ?, ?), (?, ?, ?, age)"
 		tt.wantArgs = []interface{}{1, 2, 4, 2, 3, 4, 1, 2, 3}
 		assert(t, tt)
+	})
+
+	t.Run("rowvalue in rowvalues", func(t *testing.T) {
+		var tt TT
+		is := testutil.New(t, testutil.Parallel)
+		predicate := RowValue{USERS.USER_ID, USERS.NAME}.In(RowValues{
+			{1, "abc"},
+			{2, "def"},
+			{3, "ghi"},
+		})
+		tt.wantQuery = "(user_id, name) IN ((?, ?), (?, ?), (?, ?))"
+		tt.wantArgs = []interface{}{1, "abc", 2, "def", 3, "ghi"}
+		buf := bufpool.Get().(*bytes.Buffer)
+		defer func() {
+			buf.Reset()
+			bufpool.Put(buf)
+		}()
+		gotArgs, gotParams := []interface{}{}, map[string][]int{}
+		err := predicate.AppendSQLExclude(tt.dialect, buf, &gotArgs, gotParams, nil)
+		is.NoErr(err)
+		is.Equal(tt.wantQuery, buf.String())
+		is.Equal(tt.wantArgs, gotArgs)
 	})
 }
