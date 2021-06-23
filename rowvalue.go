@@ -28,6 +28,8 @@ func (r RowValue) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface
 	return r.AppendSQLExclude(dialect, buf, args, params, nil)
 }
 
+func (r RowValue) In(v interface{}) Predicate { return In(r, v) }
+
 type RowValues []RowValue
 
 func (rs RowValues) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
