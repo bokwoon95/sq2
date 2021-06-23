@@ -102,21 +102,6 @@ func (q DeleteQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interf
 	return nil
 }
 
-func (q DeleteQuery) ToSQL() (query string, args []interface{}, params map[string][]int, err error) {
-	buf := bufpool.Get().(*bytes.Buffer)
-	defer func() {
-		buf.Reset()
-		bufpool.Put(buf)
-	}()
-	params = make(map[string][]int)
-	err = q.AppendSQL("", buf, &args, params)
-	if err != nil {
-		return query, args, params, err
-	}
-	query = buf.String()
-	return query, args, params, nil
-}
-
 func (q DeleteQuery) SetFetchableFields(fields []Field) (Query, error) {
 	switch q.QueryDialect {
 	case DialectPostgres:

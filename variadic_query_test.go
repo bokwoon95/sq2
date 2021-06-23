@@ -1,6 +1,7 @@
 package sq
 
 import (
+	"bytes"
 	"testing"
 
 	"github.com/bokwoon95/testutil"
@@ -8,7 +9,8 @@ import (
 
 func TestVariadicQuery(t *testing.T) {
 	type TT struct {
-		item       toSQLer
+		dialect    string
+		item       SQLAppender
 		wantQuery  string
 		wantArgs   []interface{}
 		wantParams map[string][]int
@@ -18,9 +20,15 @@ func TestVariadicQuery(t *testing.T) {
 
 	assert := func(t *testing.T, tt TT) {
 		is := testutil.New(t, testutil.Parallel)
-		gotQuery, gotArgs, gotParams, err := tt.item.ToSQL()
+		buf := bufpool.Get().(*bytes.Buffer)
+		defer func() {
+			buf.Reset()
+			bufpool.Put(buf)
+		}()
+		gotArgs, gotParams := []interface{}{}, map[string][]int{}
+		err := tt.item.AppendSQL(tt.dialect, buf, &gotArgs, gotParams)
 		is.NoErr(err)
-		is.Equal(tt.wantQuery, gotQuery)
+		is.Equal(tt.wantQuery, buf.String())
 		is.Equal(tt.wantArgs, gotArgs)
 		if tt.wantParams != nil {
 			is.Equal(tt.wantParams, gotParams)
@@ -30,6 +38,7 @@ func TestVariadicQuery(t *testing.T) {
 	t.Run("empty", func(t *testing.T) {
 		var tt TT
 		tt.item = VariadicQuery{}
+		tt.wantArgs = []interface{}{}
 		assert(t, tt)
 	})
 

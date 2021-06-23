@@ -54,8 +54,6 @@ There -is- an alternative way... all Fetch and Exec now take in an *sq.DB, inste
     So if you wanted a Fetch that only takes in an *sql.DB you can rewrite it yourself
     ^ yes... I think this is the way
 
-think about removing ToSQL from the Query interface, if it doesn't pull its weight. Will need to write more queries with sq first.
-
 The only downside is if you modify the SELECTed column list before it hits the database, then whatever comes back will most likely cause the rowmapper to panic.
 
 sq README needs a FAQ section, just like how Maddy mail server does. I naturally gravitaed towards the FAQ link in order to learn more about maddy, and was able to learn so much it just from reading the FAQ alone.

@@ -34,17 +34,6 @@ type InsertQuery struct {
 
 var _ Query = InsertQuery{}
 
-func (q InsertQuery) ToSQL() (query string, args []interface{}, params map[string][]int, err error) {
-	buf := bufpool.Get().(*bytes.Buffer)
-	defer func() {
-		buf.Reset()
-		bufpool.Put(buf)
-	}()
-	params = make(map[string][]int)
-	err = q.AppendSQL(q.QueryDialect, buf, &args, params)
-	return buf.String(), args, params, err
-}
-
 func (q InsertQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
 	var excludedTableQualifiers []string
 	if q.ColumnMapper != nil {

@@ -65,10 +65,6 @@ type SQLExcludeAppender interface {
 	AppendSQLExclude(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int, excludedTableQualifiers []string) error
 }
 
-type toSQLer interface {
-	ToSQL() (query string, args []interface{}, params map[string][]int, err error)
-}
-
 type Table interface {
 	SQLAppender
 	GetAlias() string
@@ -88,10 +84,20 @@ type Field interface {
 
 type Query interface {
 	SQLAppender
-	ToSQL() (query string, args []interface{}, params map[string][]int, err error) // TODO: do I really need this method?
 	SetFetchableFields([]Field) (Query, error)
 	GetFetchableFields() ([]Field, error)
 	Dialect() string
+}
+
+func ToSQL(q Query) (query string, args []interface{}, params map[string][]int, err error) {
+	buf := bufpool.Get().(*bytes.Buffer)
+	defer func() {
+		buf.Reset()
+		bufpool.Put(buf)
+	}()
+	params = make(map[string][]int)
+	err = q.AppendSQL(q.Dialect(), buf, &args, params)
+	return buf.String(), args, params, err
 }
 
 type Predicate interface {
