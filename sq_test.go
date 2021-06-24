@@ -9,7 +9,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/bokwoon95/testutil"
 	"github.com/google/go-cmp/cmp"
 )
 
@@ -89,21 +88,29 @@ func Test_explodeSlice(t *testing.T) {
 	}
 
 	assert := func(t *testing.T, tt TT) {
-		is := testutil.New(t, testutil.Parallel)
 		buf := bufpool.Get().(*bytes.Buffer)
 		defer func() {
 			buf.Reset()
 			bufpool.Put(buf)
 		}()
 		gotArgs, gotParams := []interface{}{}, map[string][]int{}
-		is.True(isExplodableSlice(tt.slice))
+		if !isExplodableSlice(tt.slice) {
+			t.Fatalf("%s expected slice %#v to be explodable", testcallers(), tt.slice)
+		}
 		err := explodeSlice(tt.dialect, buf, &gotArgs, gotParams, tt.excludedTableQualifiers, tt.slice)
-		is.NoErr(err)
-		is.Equal(tt.wantQuery, buf.String())
-		is.Equal(tt.wantArgs, gotArgs)
+		if err != nil {
+			t.Fatal(testcallers(), err)
+		}
+		if diff := testdiff(tt.wantQuery, buf.String()); diff != "" {
+			t.Error(testcallers(), diff)
+		}
+		if diff := testdiff(tt.wantArgs, gotArgs); diff != "" {
+			t.Error(testcallers(), diff)
+		}
 	}
 
 	t.Run("tmpfield slice", func(t *testing.T) {
+		t.Parallel()
 		var tt TT
 		tt.slice = []tmpfield{{"111", "aaa"}, {"222", "bbb"}, {"333", "ccc"}}
 		tt.excludedTableQualifiers = []string{"222"}
@@ -113,6 +120,7 @@ func Test_explodeSlice(t *testing.T) {
 	})
 
 	t.Run("tmptable slice", func(t *testing.T) {
+		t.Parallel()
 		var tt TT
 		tt.slice = []tmptable{"111", "222", "333"}
 		tt.excludedTableQualifiers = []string{"222"}

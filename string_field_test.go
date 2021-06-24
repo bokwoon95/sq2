@@ -3,8 +3,6 @@ package sq
 import (
 	"bytes"
 	"testing"
-
-	"github.com/bokwoon95/testutil"
 )
 
 func Test_StringField(t *testing.T) {
@@ -30,7 +28,6 @@ func Test_StringField(t *testing.T) {
 	}
 
 	assert := func(t *testing.T, tt TT) {
-		is := testutil.New(t, testutil.Parallel)
 		buf := bufpool.Get().(*bytes.Buffer)
 		defer func() {
 			buf.Reset()
@@ -38,15 +35,24 @@ func Test_StringField(t *testing.T) {
 		}()
 		gotArgs, gotParams := []interface{}{}, map[string][]int{}
 		err := tt.item.AppendSQLExclude(tt.dialect, buf, &gotArgs, gotParams, tt.excludedTableQualifiers)
-		is.NoErr(err)
-		is.Equal(tt.wantQuery, buf.String())
-		is.Equal(tt.wantArgs, gotArgs)
+		if err != nil {
+			t.Fatal(testcallers(), err)
+		}
+		if diff := testdiff(tt.wantQuery, buf.String()); diff != "" {
+			t.Error(testcallers(), diff)
+		}
+		if diff := testdiff(tt.wantArgs, gotArgs); diff != "" {
+			t.Error(testcallers(), diff)
+		}
 		if tt.wantParams != nil {
-			is.Equal(tt.wantParams, gotParams)
+			if diff := testdiff(tt.wantParams, gotParams); diff != "" {
+				t.Error(testcallers(), diff)
+			}
 		}
 	}
 
 	t.Run("StringField", func(t *testing.T) {
+		t.Parallel()
 		var tt TT
 		tt.item = NewStringField("field", TableInfo{TableName: "tbl"})
 		tt.wantQuery = "tbl.field"
@@ -55,6 +61,7 @@ func Test_StringField(t *testing.T) {
 	})
 
 	t.Run("StringField with alias", func(t *testing.T) {
+		t.Parallel()
 		var tt TT
 		tt.item = NewStringField("field", TableInfo{TableName: "tbl"}).As("f")
 		tt.wantQuery = "tbl.field"
@@ -63,6 +70,7 @@ func Test_StringField(t *testing.T) {
 	})
 
 	t.Run("StringField ASC NULLS FIRST", func(t *testing.T) {
+		t.Parallel()
 		var tt TT
 		tt.item = NewStringField("field", TableInfo{TableName: "tbl"}).Asc().NullsFirst()
 		tt.wantQuery = "tbl.field ASC NULLS FIRST"
@@ -71,6 +79,7 @@ func Test_StringField(t *testing.T) {
 	})
 
 	t.Run("StringField DESC NULLS LAST", func(t *testing.T) {
+		t.Parallel()
 		var tt TT
 		tt.item = NewStringField("field", TableInfo{TableName: "tbl"}).Desc().NullsLast()
 		tt.wantQuery = "tbl.field DESC NULLS LAST"
@@ -79,6 +88,7 @@ func Test_StringField(t *testing.T) {
 	})
 
 	t.Run("StringField IS NULL", func(t *testing.T) {
+		t.Parallel()
 		var tt TT
 		tt.item = NewStringField("field", TableInfo{TableName: "tbl"}).IsNull()
 		tt.wantQuery = "tbl.field IS NULL"
@@ -87,6 +97,7 @@ func Test_StringField(t *testing.T) {
 	})
 
 	t.Run("StringField IS NOT NULL", func(t *testing.T) {
+		t.Parallel()
 		var tt TT
 		tt.item = NewStringField("field", TableInfo{TableName: "tbl"}).IsNotNull()
 		tt.wantQuery = "tbl.field IS NOT NULL"
@@ -95,6 +106,7 @@ func Test_StringField(t *testing.T) {
 	})
 
 	t.Run("StringFieldf in (slice)", func(t *testing.T) {
+		t.Parallel()
 		var tt TT
 		tt.item = StringFieldf(
 			"{name} || {delim} || {email}",
@@ -109,6 +121,7 @@ func Test_StringField(t *testing.T) {
 	})
 
 	t.Run("StringFieldf in (rowvalue)", func(t *testing.T) {
+		t.Parallel()
 		var tt TT
 		tt.item = StringFieldf(
 			"{name} || {delim} || {email}",
@@ -123,6 +136,7 @@ func Test_StringField(t *testing.T) {
 	})
 
 	t.Run("StringField Eq", func(t *testing.T) {
+		t.Parallel()
 		var tt TT
 		field := NewStringField("field", TableInfo{TableName: "tbl"})
 		tt.item = field.Eq(field)
@@ -132,6 +146,7 @@ func Test_StringField(t *testing.T) {
 	})
 
 	t.Run("StringField Ne", func(t *testing.T) {
+		t.Parallel()
 		var tt TT
 		field := NewStringField("field", TableInfo{TableName: "tbl"})
 		tt.item = field.Ne(field)
@@ -141,6 +156,7 @@ func Test_StringField(t *testing.T) {
 	})
 
 	t.Run("StringField EqString", func(t *testing.T) {
+		t.Parallel()
 		var tt TT
 		tt.item = NewStringField("field", TableInfo{TableName: "tbl"}).EqString("abc")
 		tt.wantQuery = "tbl.field = ?"
@@ -149,6 +165,7 @@ func Test_StringField(t *testing.T) {
 	})
 
 	t.Run("StringField NeString", func(t *testing.T) {
+		t.Parallel()
 		var tt TT
 		tt.item = NewStringField("field", TableInfo{TableName: "tbl"}).NeString("abc")
 		tt.wantQuery = "tbl.field <> ?"
@@ -157,6 +174,7 @@ func Test_StringField(t *testing.T) {
 	})
 
 	t.Run("StringField SetString", func(t *testing.T) {
+		t.Parallel()
 		var tt TT
 		tt.item = NewStringField("field", TableInfo{TableName: "tbl"}).SetString("abc")
 		tt.wantQuery = "tbl.field = ?"
