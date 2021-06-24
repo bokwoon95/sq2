@@ -3,8 +3,6 @@ package sq
 import (
 	"bytes"
 	"testing"
-
-	"github.com/bokwoon95/testutil"
 )
 
 func Test_JSONField(t *testing.T) {
@@ -17,7 +15,6 @@ func Test_JSONField(t *testing.T) {
 	}
 
 	assert := func(t *testing.T, tt TT) {
-		is := testutil.New(t, testutil.Parallel)
 		buf := bufpool.Get().(*bytes.Buffer)
 		defer func() {
 			buf.Reset()
@@ -25,11 +22,19 @@ func Test_JSONField(t *testing.T) {
 		}()
 		gotArgs, gotParams := []interface{}{}, map[string][]int{}
 		err := tt.item.AppendSQLExclude(tt.dialect, buf, &gotArgs, gotParams, tt.excludedTableQualifiers)
-		is.NoErr(err)
-		is.Equal(tt.wantQuery, buf.String())
+		if err != nil {
+			t.Fatal(testcallers(), err)
+		}
+		if diff := testdiff(tt.wantQuery, buf.String()); diff != "" {
+			t.Fatal(testcallers(), diff)
+		}
+		if diff := testdiff(tt.wantArgs, gotArgs); diff != "" {
+			t.Fatal(testcallers(), diff)
+		}
 	}
 
 	t.Run("JSONField", func(t *testing.T) {
+		t.Parallel()
 		var tt TT
 		tt.item = NewJSONField("field", TableInfo{TableName: "tbl"})
 		tt.wantQuery = "tbl.field"
@@ -38,6 +43,7 @@ func Test_JSONField(t *testing.T) {
 	})
 
 	t.Run("JSONField with alias", func(t *testing.T) {
+		t.Parallel()
 		var tt TT
 		tt.item = NewJSONField("field", TableInfo{TableName: "tbl"}).As("f")
 		tt.wantQuery = "tbl.field"
@@ -46,6 +52,7 @@ func Test_JSONField(t *testing.T) {
 	})
 
 	t.Run("JSONField ASC NULLS LAST", func(t *testing.T) {
+		t.Parallel()
 		var tt TT
 		tt.item = NewJSONField("field", TableInfo{TableName: "tbl"}).Asc().NullsLast()
 		tt.wantQuery = "tbl.field ASC NULLS LAST"
@@ -54,6 +61,7 @@ func Test_JSONField(t *testing.T) {
 	})
 
 	t.Run("JSONField DESC NULLS FIRST", func(t *testing.T) {
+		t.Parallel()
 		var tt TT
 		tt.item = NewJSONField("field", TableInfo{TableName: "tbl"}).Desc().NullsFirst()
 		tt.wantQuery = "tbl.field DESC NULLS FIRST"

@@ -3,8 +3,6 @@ package sq
 import (
 	"bytes"
 	"testing"
-
-	"github.com/bokwoon95/testutil"
 )
 
 func Test_JoinTable(t *testing.T) {
@@ -31,19 +29,26 @@ func Test_JoinTable(t *testing.T) {
 	}
 
 	assert := func(t *testing.T, tt TT) {
-		is := testutil.New(t, testutil.Parallel)
 		buf := bufpool.Get().(*bytes.Buffer)
 		defer func() {
 			buf.Reset()
 			bufpool.Put(buf)
 		}()
 		gotArgs, gotParams := []interface{}{}, map[string][]int{}
-		tt.item.AppendSQL(tt.dialect, buf, &gotArgs, gotParams)
-		is.Equal(tt.wantQuery, buf.String())
-		is.Equal(tt.wantArgs, gotArgs)
+		err := tt.item.AppendSQL(tt.dialect, buf, &gotArgs, gotParams)
+		if err != nil {
+			t.Fatal(testcallers(), err)
+		}
+		if diff := testdiff(tt.wantQuery, buf.String()); diff != "" {
+			t.Fatal(testcallers(), diff)
+		}
+		if diff := testdiff(tt.wantArgs, gotArgs); diff != "" {
+			t.Fatal(testcallers(), diff)
+		}
 	}
 
 	t.Run("join", func(t *testing.T) {
+		t.Parallel()
 		var tt TT
 		tt.item = Join(USERS, Eq(1, 1))
 		tt.wantQuery = "JOIN users ON ? = ?"
@@ -52,6 +57,7 @@ func Test_JoinTable(t *testing.T) {
 	})
 
 	t.Run("left join", func(t *testing.T) {
+		t.Parallel()
 		var tt TT
 		tt.item = LeftJoin(USERS, Eq(1, 1))
 		tt.wantQuery = "LEFT JOIN users ON ? = ?"
@@ -60,6 +66,7 @@ func Test_JoinTable(t *testing.T) {
 	})
 
 	t.Run("right join", func(t *testing.T) {
+		t.Parallel()
 		var tt TT
 		tt.item = RightJoin(USERS, Eq(1, 1))
 		tt.wantQuery = "RIGHT JOIN users ON ? = ?"
@@ -68,6 +75,7 @@ func Test_JoinTable(t *testing.T) {
 	})
 
 	t.Run("full join", func(t *testing.T) {
+		t.Parallel()
 		var tt TT
 		tt.item = FullJoin(USERS, Eq(1, 1))
 		tt.wantQuery = "FULL JOIN users ON ? = ?"
@@ -76,6 +84,7 @@ func Test_JoinTable(t *testing.T) {
 	})
 
 	t.Run("cross join", func(t *testing.T) {
+		t.Parallel()
 		var tt TT
 		tt.item = CrossJoin(USERS)
 		tt.wantQuery = "CROSS JOIN users"
@@ -84,6 +93,7 @@ func Test_JoinTable(t *testing.T) {
 	})
 
 	t.Run("custom join", func(t *testing.T) {
+		t.Parallel()
 		var tt TT
 		tt.item = CustomJoin("CROSS JOIN LATERAL", Tablef("unnest({}) WITH ORDINALITY AS uhh(email, seqno)", USERS.EMAIL))
 		tt.wantQuery = "CROSS JOIN LATERAL unnest(users.email) WITH ORDINALITY AS uhh(email, seqno)"
@@ -92,6 +102,7 @@ func Test_JoinTable(t *testing.T) {
 	})
 
 	t.Run("all joins", func(t *testing.T) {
+		t.Parallel()
 		var tt TT
 		tt.item = JoinTables{
 			Join(USERS, Eq(1, 1)),
