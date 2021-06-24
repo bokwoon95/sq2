@@ -47,7 +47,7 @@ func BufferPrintf(dialect string, buf *bytes.Buffer, args *[]interface{}, params
 		var value interface{}
 		if paramName == "" {
 			if runningValuesIndex >= len(values) {
-				return fmt.Errorf("too few values passed in, expected more than %d", runningValuesIndex)
+				return fmt.Errorf("sq: too few values passed in to BufferPrintf, expected more than %d", runningValuesIndex)
 			}
 			value = values[runningValuesIndex]
 			runningValuesIndex++
@@ -55,14 +55,14 @@ func BufferPrintf(dialect string, buf *bytes.Buffer, args *[]interface{}, params
 			num, err := strconv.Atoi(paramName)
 			if err == nil {
 				if num-1 < 0 || num-1 >= len(values) {
-					return fmt.Errorf("ordinal parameter {%d} is out of bounds", num)
+					return fmt.Errorf("sq: ordinal parameter {%d} is out of bounds", num)
 				}
 				ordinalNames = append(ordinalNames, paramName)
 				value = values[num-1]
 			} else {
 				num, ok := valuesLookup[paramName]
 				if !ok {
-					return fmt.Errorf("named parameter {%s} not provided", paramName)
+					return fmt.Errorf("sq: named parameter {%s} not provided", paramName)
 				}
 				value = values[num]
 			}
@@ -81,11 +81,11 @@ func BufferPrintf(dialect string, buf *bytes.Buffer, args *[]interface{}, params
 
 func BufferPrintValue(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int, excludedTableQualifiers []string, value interface{}, name string) error {
 	if v, ok := value.(sql.NamedArg); ok {
-		if v.Name == "" {
-			return fmt.Errorf("sql.NamedArg name cannot be empty")
-		}
 		if dialect == DialectPostgres || dialect == DialectMySQL {
-			return fmt.Errorf("your database dialect does not support named parameters, please do not use sql.NamedArg")
+			return fmt.Errorf("sq: %s does not support named parameters, please do not use sql.NamedArg", dialect)
+		}
+		if v.Name == "" {
+			return fmt.Errorf("sq: sql.NamedArg name cannot be empty")
 		}
 		if len(params[v.Name]) > 0 {
 			(*args)[params[v.Name][0]] = value

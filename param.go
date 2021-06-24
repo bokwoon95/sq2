@@ -26,7 +26,7 @@ func (param NamedParam) GetName() string { return "" }
 
 func (param NamedParam) AppendSQLExclude(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int, excludedTableQualifiers []string) error {
 	if param.Name == "" {
-		return fmt.Errorf("Param name cannot be empty")
+		return fmt.Errorf("sq: Param name cannot be empty")
 	}
 	if v, ok := param.Value.(SQLExcludeAppender); ok && v != nil {
 		return v.AppendSQLExclude(dialect, buf, args, params, excludedTableQualifiers)

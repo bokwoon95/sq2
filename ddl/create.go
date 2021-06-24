@@ -14,10 +14,16 @@ func CreateTable(dialect string, tbl Table) (string, error) {
 		buf.Reset()
 		bufpool.Put(buf)
 	}()
-	if len(tbl.Columns) == 0 {
-		return "", fmt.Errorf("ddl: table has no columns")
+	if tbl.TableName == "" {
+		return "", fmt.Errorf("ddl: table has no name")
 	}
-	if tbl.VirtualTable != "" && dialect == sq.DialectSQLite {
+	if len(tbl.Columns) == 0 {
+		return "", fmt.Errorf("ddl: table %s has no columns", tbl.TableName)
+	}
+	if tbl.VirtualTable != "" {
+		if dialect != sq.DialectSQLite {
+			return buf.String(), fmt.Errorf("ddl: only SQLite has VIRTUAL TABLE support (table=%s)", tbl.TableName)
+		}
 		buf.WriteString("CREATE VIRTUAL TABLE ")
 	} else {
 		buf.WriteString("CREATE TABLE ")
@@ -26,7 +32,7 @@ func CreateTable(dialect string, tbl Table) (string, error) {
 		buf.WriteString(sq.QuoteIdentifier(dialect, tbl.TableSchema) + ".")
 	}
 	buf.WriteString(sq.QuoteIdentifier(dialect, tbl.TableName))
-	if tbl.VirtualTable != "" && dialect == sq.DialectSQLite {
+	if tbl.VirtualTable != "" {
 		buf.WriteString(" USING " + tbl.VirtualTable)
 	}
 	buf.WriteString(" (")
@@ -41,13 +47,16 @@ func CreateTable(dialect string, tbl Table) (string, error) {
 		} else {
 			buf.WriteString("\n    ,")
 		}
-		if strings.EqualFold(tbl.VirtualTable, "fts5") && dialect == sq.DialectSQLite {
+		if strings.EqualFold(tbl.VirtualTable, "fts5") {
 			column = Column{ColumnName: column.ColumnName}
 		}
 		err := createColumn(dialect, buf, column)
 		if err != nil {
 			return buf.String(), err
 		}
+	}
+	if len(tbl.VirtualTableArgs) > 0 && tbl.VirtualTable == "" {
+		return buf.String(), fmt.Errorf("ddl: virtual table arguments present without a virtual table module")
 	}
 	if tbl.VirtualTable != "" && dialect == sq.DialectSQLite && len(tbl.VirtualTableArgs) > 0 {
 		for _, arg := range tbl.VirtualTableArgs {
@@ -100,6 +109,12 @@ func createColumn(dialect string, buf *bytes.Buffer, column Column) error {
 		// only SQLite primary key is defined inline, others are defined as separate constraints
 		buf.WriteString(" PRIMARY KEY")
 	}
+	if isAutoincrement && dialect != sq.DialectMySQL && dialect != sq.DialectSQLite {
+		return fmt.Errorf("ddl: %s does not support autoincrement columns", dialect)
+	}
+	if isIdentity && (dialect == sq.DialectMySQL || dialect == sq.DialectSQLite) {
+		return fmt.Errorf("ddl: %s does not support identity columns", dialect)
+	}
 	if isAutoincrement {
 		switch dialect {
 		case sq.DialectMySQL:
@@ -115,12 +130,15 @@ func createColumn(dialect string, buf *bytes.Buffer, column Column) error {
 			buf.WriteString(" STORED")
 		} else {
 			if dialect == sq.DialectPostgres {
-				return fmt.Errorf("Postgres does not support VIRTUAL generated columns")
+				return fmt.Errorf("ddl: Postgres does not support VIRTUAL generated columns")
 			}
 			buf.WriteString(" VIRTUAL")
 		}
 	}
-	if column.OnUpdateCurrentTimestamp && dialect == sq.DialectMySQL {
+	if column.OnUpdateCurrentTimestamp {
+		if dialect != sq.DialectMySQL {
+			return fmt.Errorf("ddl: %s does not support ON UPDATE CURRENT_TIMESTAMP", dialect)
+		}
 		buf.WriteString(" ON UPDATE CURRENT_TIMESTAMP")
 	}
 	if column.CollationName != "" {
@@ -180,9 +198,8 @@ func createConstraint(dialect string, buf *bytes.Buffer, constraint Constraint) 
 		buf.WriteString(" (" + strings.Join(constraint.Columns, ", ") + ")")
 	}
 	var deferSupported bool
-	switch {
-	case dialect == sq.DialectPostgres && constraint.ConstraintType != CHECK,
-		dialect == sq.DialectSQLite && constraint.ConstraintType == FOREIGN_KEY:
+	if (dialect == sq.DialectPostgres && constraint.ConstraintType != CHECK) ||
+		(dialect == sq.DialectSQLite && constraint.ConstraintType == FOREIGN_KEY) {
 		deferSupported = true
 	}
 	if deferSupported && constraint.IsDeferrable {

@@ -12,24 +12,24 @@ func ReflectTable(table Table, alias string) error {
 	ptrvalue := reflect.ValueOf(table)
 	typ := ptrvalue.Type()
 	if typ.Kind() != reflect.Ptr {
-		return fmt.Errorf("not a pointer")
+		return fmt.Errorf("sq: not a pointer")
 	}
 	value := reflect.Indirect(ptrvalue)
 	typ = value.Type()
 	if typ.Kind() != reflect.Struct {
-		return fmt.Errorf("not a struct pointer")
+		return fmt.Errorf("sq: not a struct pointer")
 	}
 	if value.NumField() == 0 {
-		return fmt.Errorf("empty struct")
+		return fmt.Errorf("sq: empty struct")
 	}
 	v := value.Field(0)
 	vtype := typ.Field(0)
 	tableInfo, ok := v.Interface().(TableInfo)
 	if !ok {
-		return fmt.Errorf("first field not a embedded TableInfo")
+		return fmt.Errorf("sq: first field not a embedded TableInfo")
 	}
 	if !vtype.Anonymous {
-		return fmt.Errorf("first field not an embedded TableInfo")
+		return fmt.Errorf("sq: first field not an embedded TableInfo")
 	}
 	if !v.CanSet() {
 		return nil
@@ -117,7 +117,7 @@ func cutValue(s string) (value, rest string, err error) {
 			bracelevel--
 		}
 		if bracelevel < 0 {
-			return "", "", fmt.Errorf("too many closing braces")
+			return "", "", fmt.Errorf("sq: too many closing braces")
 		}
 		if bracelevel == 0 && isBraceQuoted {
 			break
@@ -128,7 +128,7 @@ func cutValue(s string) (value, rest string, err error) {
 		}
 	}
 	if bracelevel > 0 {
-		return "", "", fmt.Errorf("unclosed brace")
+		return "", "", fmt.Errorf("sq: unclosed brace")
 	}
 	value = s[:splitAt]
 	rest = s[splitAt:]

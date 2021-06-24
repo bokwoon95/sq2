@@ -25,7 +25,7 @@ func caller(skip int) (file string, line int) {
 
 func panicf(format string, a ...interface{}) {
 	file, line := caller(2)
-	panic(fmt.Errorf("%s:%d:%s", file, line, fmt.Sprintf(format, a...)))
+	panic(fmt.Errorf("sq: %s:%d:%s", file, line, fmt.Sprintf(format, a...)))
 }
 
 type T struct {
@@ -252,11 +252,11 @@ func getColumnNames(fields []sq.Field) ([]string, error) {
 	var columnNames []string
 	for i, field := range fields {
 		if field == nil {
-			return nil, fmt.Errorf("field #%d is nil", i+1)
+			return nil, fmt.Errorf("ddl: field #%d is nil", i+1)
 		}
 		columnName := field.GetName()
 		if columnName == "" {
-			return nil, fmt.Errorf("field #%d has no name", i+1)
+			return nil, fmt.Errorf("ddl: field #%d has no name", i+1)
 		}
 		columnNames = append(columnNames, columnName)
 	}
@@ -265,7 +265,7 @@ func getColumnNames(fields []sq.Field) ([]string, error) {
 
 func createOrUpdateConstraint(tbl *Table, constraintType, constraintName string, columns []string, checkExpr string) (constraintIndex int, err error) {
 	if constraintName == "" {
-		return -1, fmt.Errorf("constraintName cannot be empty")
+		return -1, fmt.Errorf("sq: constraintName cannot be empty")
 	}
 	if constraintIndex = tbl.CachedConstraintIndex(constraintName); constraintIndex >= 0 {
 		constraint := tbl.Constraints[constraintIndex]
@@ -476,7 +476,7 @@ type TIndex struct {
 func getColumnNamesAndExprs(dialect, tableName string, fields []sq.Field) (columnNames, exprs []string, err error) {
 	for i, field := range fields {
 		if field == nil {
-			return nil, nil, fmt.Errorf("field #%d is nil", i+1)
+			return nil, nil, fmt.Errorf("sq: field #%d is nil", i+1)
 		}
 		var columnName, expr string
 		columnName = field.GetName()
@@ -500,7 +500,7 @@ func getColumnNamesAndExprs(dialect, tableName string, fields []sq.Field) (colum
 
 func createOrUpdateIndex(tbl *Table, indexName string, columns []string, exprs []string) (indexIndex int, err error) {
 	if indexName == "" {
-		return -1, fmt.Errorf("indexName cannot be empty")
+		return -1, fmt.Errorf("sq: indexName cannot be empty")
 	}
 	if indexIndex = tbl.CachedIndexIndex(indexName); indexIndex >= 0 {
 		index := tbl.Indices[indexIndex]
