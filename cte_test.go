@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"github.com/bokwoon95/testutil"
-	"github.com/davecgh/go-spew/spew"
 )
 
 func TestCTE(t *testing.T) {
@@ -35,7 +34,7 @@ func TestCTE(t *testing.T) {
 		var tt TT
 		is := testutil.New(t, testutil.Parallel)
 		RENTAL, STAFF := NEW_RENTAL(""), NEW_STAFF("s")
-		cte_rental, err := NewCTE("cte_rental", nil, Postgres.
+		cte_rental := NewCTE("cte_rental", nil, Postgres.
 			Select(
 				RENTAL.STAFF_ID,
 				Fieldf("COUNT({})", RENTAL.RENTAL_ID).As("rental_count"),
@@ -43,19 +42,17 @@ func TestCTE(t *testing.T) {
 			From(RENTAL).
 			GroupBy(RENTAL.STAFF_ID),
 		)
-		is.NoErr(err)
 		cte := cte_rental.As("cte")
-		spew.Dump(cte)
 		tt.item = Postgres.
 			SelectWith(cte).
 			Select(
 				STAFF.STAFF_ID,
 				STAFF.FIRST_NAME,
 				STAFF.LAST_NAME,
-				cte["rental_count"],
+				cte.Field("rental_count"),
 			).
 			From(STAFF).
-			Join(cte, Eq(cte["staff_id"], STAFF.STAFF_ID))
+			Join(cte, Eq(cte.Field("staff_id"), STAFF.STAFF_ID))
 		tt.wantQuery = "WITH cte_rental AS (" +
 			"SELECT rental.staff_id, COUNT(rental.rental_id) AS rental_count" +
 			" FROM rental" +

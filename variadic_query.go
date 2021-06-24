@@ -80,7 +80,7 @@ func (vq VariadicQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]int
 }
 
 func (vq VariadicQuery) SetFetchableFields(fields []Field) (Query, error) {
-	return vq, ErrUnsupported
+	return vq, ErrNonFetchableQuery
 }
 
 func (vq VariadicQuery) GetFetchableFields() ([]Field, error) {

@@ -478,11 +478,11 @@ func (q customQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interf
 }
 
 func (q customQuery) SetFetchableFields([]Field) (Query, error) {
-	return nil, ErrUnsupported
+	return nil, ErrNonFetchableQuery
 }
 
 func (q customQuery) GetFetchableFields() ([]Field, error) {
-	return nil, ErrUnsupported
+	return nil, ErrNonFetchableQuery
 }
 
 func (q customQuery) Dialect() string { return q.dialect }
