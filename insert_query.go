@@ -58,7 +58,7 @@ func (q InsertQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interf
 		buf.WriteString("INSERT INTO ")
 	}
 	if q.IntoTable == nil {
-		return fmt.Errorf("sq: INSERTing into nil table")
+		return fmt.Errorf("INSERTing into nil table")
 	}
 	err := q.IntoTable.AppendSQL(dialect, buf, args, params)
 	if err != nil {
@@ -94,7 +94,7 @@ func (q InsertQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interf
 			return err
 		}
 	default:
-		return fmt.Errorf("sq: RowValues not provided and SelectQuery not provided to INSERT query")
+		return fmt.Errorf("RowValues not provided and SelectQuery not provided to INSERT query")
 	}
 	// ON CONFLICT
 	switch dialect {
@@ -119,7 +119,7 @@ func (q InsertQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interf
 					}
 				}
 			} else {
-				return fmt.Errorf("sq: INSERT query has no conflict target specified")
+				return fmt.Errorf("INSERT query has no conflict target specified")
 			}
 		}
 		if q.HandleConflict && len(q.Resolution) > 0 {
@@ -166,7 +166,7 @@ func (q InsertQuery) SetFetchableFields(fields []Field) (Query, error) {
 		q.ReturningFields = fields
 		return q, nil
 	default:
-		return nil, fmt.Errorf("sq: %s INSERT %w", q.QueryDialect, ErrNonFetchableQuery)
+		return nil, fmt.Errorf("%s INSERT %w", q.QueryDialect, ErrNonFetchableQuery)
 	}
 }
 
@@ -175,7 +175,7 @@ func (q InsertQuery) GetFetchableFields() ([]Field, error) {
 	case DialectPostgres:
 		return q.ReturningFields, nil
 	default:
-		return nil, fmt.Errorf("sq: %s INSERT %w", q.QueryDialect, ErrNonFetchableQuery)
+		return nil, fmt.Errorf("%s INSERT %w", q.QueryDialect, ErrNonFetchableQuery)
 	}
 }
 

@@ -155,7 +155,7 @@ func decorateScanError(dialect string, fields []Field, dest []interface{}, err e
 		}
 		buf.WriteString(lhs + " => " + reflect.TypeOf(dest[i]).String())
 	}
-	return fmt.Errorf("sq: please check if your mapper function is correct:%s\n%w", buf.String(), err)
+	return fmt.Errorf("please check if your mapper function is correct:%s\n%w", buf.String(), err)
 }
 
 func accumulateResults(dialect string, buf *bytes.Buffer, fields []Field, dest []interface{}, rowCount int64) {

@@ -39,7 +39,7 @@ func (q DeleteQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interf
 	// DELETE FROM
 	buf.WriteString("DELETE FROM ")
 	if q.FromTable == nil {
-		return fmt.Errorf("sq: DELETE-ing from a nil table")
+		return fmt.Errorf("DELETE-ing from a nil table")
 	}
 	err = q.FromTable.AppendSQL(dialect, buf, args, params)
 	if err != nil {
@@ -108,7 +108,7 @@ func (q DeleteQuery) SetFetchableFields(fields []Field) (Query, error) {
 		q.ReturningFields = fields
 		return q, nil
 	default:
-		return nil, fmt.Errorf("sq: %s DELETE %w", q.QueryDialect, ErrNonFetchableQuery)
+		return nil, fmt.Errorf("%s DELETE %w", q.QueryDialect, ErrNonFetchableQuery)
 	}
 }
 
@@ -117,7 +117,7 @@ func (q DeleteQuery) GetFetchableFields() ([]Field, error) {
 	case DialectPostgres:
 		return q.ReturningFields, nil
 	default:
-		return nil, fmt.Errorf("sq: %s DELETE %w", q.QueryDialect, ErrNonFetchableQuery)
+		return nil, fmt.Errorf("%s DELETE %w", q.QueryDialect, ErrNonFetchableQuery)
 	}
 }
 

@@ -28,9 +28,9 @@ func (f CTEField) AppendSQLExclude(dialect string, buf *bytes.Buffer, args *[]in
 		if f.stickyErr != nil {
 			// TODO: rethink stance about prefixing all errors with `sq:`. This makes it very verbose when cascading sticky errors because every error has an sq prefix.
 			// I see that sqlx does not do error prefixes, I think I shall remove them as well.
-			return fmt.Errorf("sq: CTE field %s.%s invalid due to CTE error: %w", tableQualifier, f.info.FieldName, f.stickyErr)
+			return fmt.Errorf("CTE field %s.%s invalid due to CTE error: %w", tableQualifier, f.info.FieldName, f.stickyErr)
 		} else {
-			return fmt.Errorf("sq: CTE field %s.%s does not exist (available fields: %s)", tableQualifier, f.info.FieldName, strings.Join(f.fieldNames, ", "))
+			return fmt.Errorf("CTE field %s.%s does not exist (available fields: %s)", tableQualifier, f.info.FieldName, strings.Join(f.fieldNames, ", "))
 		}
 	}
 	return f.info.AppendSQLExclude(dialect, buf, args, params, excludedTableQualifiers)
@@ -126,11 +126,11 @@ func newCTE(recursive bool, name string, columns []string, query Query) CTE {
 		cache:           make(map[string]int),
 	}
 	if name == "" {
-		cte.stickyErr = fmt.Errorf("sq: CTE name cannot be empty")
+		cte.stickyErr = fmt.Errorf("CTE name cannot be empty")
 		return cte
 	}
 	if query == nil {
-		cte.stickyErr = fmt.Errorf("sq: CTE query cannot be nil")
+		cte.stickyErr = fmt.Errorf("CTE query cannot be nil")
 		return cte
 	}
 	if len(cte.fieldNames) == 0 {
@@ -140,7 +140,7 @@ func newCTE(recursive bool, name string, columns []string, query Query) CTE {
 			return cte
 		}
 		if len(fields) == 0 {
-			cte.stickyErr = fmt.Errorf("sq: CTE %s does not return any fields", name)
+			cte.stickyErr = fmt.Errorf("CTE %s does not return any fields", name)
 			return cte
 		}
 		for i, field := range fields {
@@ -149,7 +149,7 @@ func newCTE(recursive bool, name string, columns []string, query Query) CTE {
 				fieldName = field.GetName()
 			}
 			if fieldName == "" {
-				cte.stickyErr = fmt.Errorf("sq: CTE %s field #%d needs a name or an alias", name, i+1)
+				cte.stickyErr = fmt.Errorf("CTE %s field #%d needs a name or an alias", name, i+1)
 				return cte
 			}
 			cte.fieldNames = append(cte.fieldNames, fieldName)
@@ -166,15 +166,15 @@ func (cte CTE) As(alias string) CTE {
 		return cte
 	}
 	if cte.cteName == "" {
-		cte.stickyErr = fmt.Errorf("sq: CTE name cannot be empty")
+		cte.stickyErr = fmt.Errorf("CTE name cannot be empty")
 		return cte
 	}
 	if cte.query == nil {
-		cte.stickyErr = fmt.Errorf("sq: CTE query cannot be nil")
+		cte.stickyErr = fmt.Errorf("CTE query cannot be nil")
 		return cte
 	}
 	if len(cte.cache) == 0 {
-		cte.stickyErr = fmt.Errorf("sq: CTE %s does not return any fields", cte.cteName)
+		cte.stickyErr = fmt.Errorf("CTE %s does not return any fields", cte.cteName)
 		return cte
 	}
 	cte.cteAlias = alias
@@ -216,7 +216,7 @@ func (ctes CTEs) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{
 			buf.WriteString(", ")
 		}
 		if cte.cteName == "" {
-			return fmt.Errorf("sq: CTE #%d has no name", i+1)
+			return fmt.Errorf("CTE #%d has no name", i+1)
 		}
 		buf.WriteString(cte.cteName)
 		if cte.explicitColumns {
@@ -227,17 +227,17 @@ func (ctes CTEs) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{
 		buf.WriteString(" AS (")
 		switch query := cte.query.(type) {
 		case nil:
-			return fmt.Errorf("sq: CTE #%d query is nil", i+1)
+			return fmt.Errorf("CTE #%d query is nil", i+1)
 		case VariadicQuery:
 			query.TopLevel = true
 			err := query.AppendSQL(dialect, buf, args, params)
 			if err != nil {
-				return fmt.Errorf("sq: CTE #%d failed to build query: %w", i+1, err)
+				return fmt.Errorf("CTE #%d failed to build query: %w", i+1, err)
 			}
 		default:
 			err := query.AppendSQL(dialect, buf, args, params)
 			if err != nil {
-				return fmt.Errorf("sq: CTE #%d failed to build query: %w", i+1, err)
+				return fmt.Errorf("CTE #%d failed to build query: %w", i+1, err)
 			}
 		}
 	}

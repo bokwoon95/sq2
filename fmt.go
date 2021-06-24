@@ -7,6 +7,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"reflect"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -47,7 +48,7 @@ func BufferPrintf(dialect string, buf *bytes.Buffer, args *[]interface{}, params
 		var value interface{}
 		if paramName == "" {
 			if runningValuesIndex >= len(values) {
-				return fmt.Errorf("sq: too few values passed in to BufferPrintf, expected more than %d", runningValuesIndex)
+				return fmt.Errorf("too few values passed in to BufferPrintf, expected more than %d", runningValuesIndex)
 			}
 			value = values[runningValuesIndex]
 			runningValuesIndex++
@@ -55,14 +56,19 @@ func BufferPrintf(dialect string, buf *bytes.Buffer, args *[]interface{}, params
 			num, err := strconv.Atoi(paramName)
 			if err == nil {
 				if num-1 < 0 || num-1 >= len(values) {
-					return fmt.Errorf("sq: ordinal parameter {%d} is out of bounds", num)
+					return fmt.Errorf("ordinal parameter {%d} is out of bounds", num)
 				}
 				ordinalNames = append(ordinalNames, paramName)
 				value = values[num-1]
 			} else {
 				num, ok := valuesLookup[paramName]
 				if !ok {
-					return fmt.Errorf("sq: named parameter {%s} not provided", paramName)
+					var availableParams []string
+					for name := range valuesLookup {
+						availableParams = append(availableParams, name)
+					}
+					sort.Strings(availableParams)
+					return fmt.Errorf("named parameter {%s} not provided (available params: %s)", paramName, strings.Join(availableParams, ", "))
 				}
 				value = values[num]
 			}
@@ -82,10 +88,10 @@ func BufferPrintf(dialect string, buf *bytes.Buffer, args *[]interface{}, params
 func BufferPrintValue(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int, excludedTableQualifiers []string, value interface{}, name string) error {
 	if v, ok := value.(sql.NamedArg); ok {
 		if dialect == DialectPostgres || dialect == DialectMySQL {
-			return fmt.Errorf("sq: %s does not support named parameters, please do not use sql.NamedArg", dialect)
+			return fmt.Errorf("%s does not support named parameters, please do not use sql.NamedArg", dialect)
 		}
 		if v.Name == "" {
-			return fmt.Errorf("sq: sql.NamedArg name cannot be empty")
+			return fmt.Errorf("sql.NamedArg name cannot be empty")
 		}
 		if len(params[v.Name]) > 0 {
 			(*args)[params[v.Name][0]] = value
@@ -145,7 +151,7 @@ func lookupParam(dialect string, args []interface{}, argsLookup map[string]int, 
 	name := string((*namebuf)[1:])
 	if name == "" {
 		if (*namebuf)[0] != '?' {
-			return "", fmt.Errorf("sq: parameter name missing")
+			return "", fmt.Errorf("parameter name missing")
 		}
 		paramValue, err = Sprint(args[*runningArgsIndex])
 		if err != nil {
@@ -158,7 +164,7 @@ func lookupParam(dialect string, args []interface{}, argsLookup map[string]int, 
 	if err == nil {
 		num-- // decrement because ordinal numbers always lead the index by 1 (e.g. $1 corresponds to index 0)
 		if num < 0 || num >= len(args) {
-			return "", fmt.Errorf("sq: args index %d out of bounds", num)
+			return "", fmt.Errorf("args index %d out of bounds", num)
 		}
 		paramValue, err = Sprint(args[num])
 		if err != nil {
@@ -167,14 +173,14 @@ func lookupParam(dialect string, args []interface{}, argsLookup map[string]int, 
 		return paramValue, nil
 	}
 	if dialect == DialectPostgres {
-		return "", fmt.Errorf("sq: Postgres does not support $%s named parameter", name)
+		return "", fmt.Errorf("Postgres does not support $%s named parameter", name)
 	}
 	num, ok := argsLookup[name]
 	if !ok {
-		return "", fmt.Errorf("sq: named parameter $%s not provided", name)
+		return "", fmt.Errorf("named parameter $%s not provided", name)
 	}
 	if num < 0 || num >= len(args) {
-		return "", fmt.Errorf("sq: args index %d out of bounds", num)
+		return "", fmt.Errorf("args index %d out of bounds", num)
 	}
 	paramValue, err = Sprint(args[num])
 	if err != nil {
@@ -248,7 +254,7 @@ func Sprintf(dialect string, query string, args []interface{}) (string, error) {
 			continue
 		case char == '?' && dialect != DialectPostgres && dialect != DialectSQLServer:
 			if runningArgsIndex < 0 || runningArgsIndex >= len(args) {
-				return buf.String(), fmt.Errorf("sq: too few args provided, expected more than %d", runningArgsIndex+1)
+				return buf.String(), fmt.Errorf("too few args provided, expected more than %d", runningArgsIndex+1)
 			}
 			paramValue, err := Sprint(args[runningArgsIndex])
 			if err != nil {
@@ -268,7 +274,7 @@ func Sprintf(dialect string, query string, args []interface{}) (string, error) {
 		buf.WriteString(paramValue)
 	}
 	if insideString || insideIdentifier {
-		return buf.String(), fmt.Errorf("sq: unclosed string or identifier")
+		return buf.String(), fmt.Errorf("unclosed string or identifier")
 	}
 	return buf.String(), nil
 }
@@ -383,7 +389,7 @@ func Sprint(v interface{}) (string, error) {
 	case driver.Valuer:
 		vv, err := v.Value()
 		if err != nil {
-			return "", fmt.Errorf("sq: error when calling Value(): %w", err)
+			return "", fmt.Errorf("error when calling Value(): %w", err)
 		}
 		switch vv := vv.(type) {
 		case int64:
@@ -403,7 +409,7 @@ func Sprint(v interface{}) (string, error) {
 		case time.Time:
 			return `'` + vv.Format(time.RFC3339Nano) + `'`, nil
 		default:
-			return "", fmt.Errorf("sq: unrecognized driver.Valuer type (must be one of int64, float64, bool, []byte, string, time.Time)")
+			return "", fmt.Errorf("unrecognized driver.Valuer type (must be one of int64, float64, bool, []byte, string, time.Time)")
 		}
 	}
 	var deref int
@@ -414,18 +420,18 @@ func Sprint(v interface{}) (string, error) {
 		deref++
 	}
 	if !rv.IsValid() {
-		return "", fmt.Errorf("sq: value is not valid (whatever that means??? Tell me how you got here)")
+		return "", fmt.Errorf("value is not valid (whatever that means??? Tell me how you got here)")
 	}
 	if rv.Kind() == reflect.Chan {
-		return "", fmt.Errorf("sq: channels cannot be represented in SQL")
+		return "", fmt.Errorf("channels cannot be represented in SQL")
 	}
 	if rv.Kind() == reflect.Func {
-		return "", fmt.Errorf("sq: functions cannot be represented in SQL")
+		return "", fmt.Errorf("functions cannot be represented in SQL")
 	}
 	if deref > 0 {
 		return Sprint(rv.Interface())
 	}
-	return "", fmt.Errorf("sq: could not convert %#v into its SQL representation", v)
+	return "", fmt.Errorf("could not convert %#v into its SQL representation", v)
 }
 
 type customTable struct {
@@ -466,11 +472,11 @@ func (q customQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interf
 }
 
 func (q customQuery) SetFetchableFields([]Field) (Query, error) {
-	return nil, fmt.Errorf("sq: custom %w", ErrNonFetchableQuery)
+	return nil, fmt.Errorf("custom %w", ErrNonFetchableQuery)
 }
 
 func (q customQuery) GetFetchableFields() ([]Field, error) {
-	return nil, fmt.Errorf("sq: custom %w", ErrNonFetchableQuery)
+	return nil, fmt.Errorf("custom %w", ErrNonFetchableQuery)
 }
 
 func (q customQuery) Dialect() string { return "" }

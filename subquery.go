@@ -26,10 +26,10 @@ func (f SubqueryField) As(alias string) SubqueryField {
 
 func (f SubqueryField) AppendSQLExclude(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int, excludedTableQualifiers []string) error {
 	if !f.valid {
-		return fmt.Errorf("sq: referenced nonexistent SubqueryField")
+		return fmt.Errorf("referenced nonexistent SubqueryField")
 	}
 	if f.fieldName == "" {
-		return fmt.Errorf("sq: SubqueryField has no name")
+		return fmt.Errorf("SubqueryField has no name")
 	}
 	if f.queryAlias != "" {
 		buf.WriteString(f.queryAlias + ".")
@@ -44,7 +44,7 @@ var _ Table = Subquery{}
 
 func NewSubquery(query Query, alias string) (Subquery, error) {
 	if query == nil {
-		return nil, fmt.Errorf("sq: Subquery query cannot be nil")
+		return nil, fmt.Errorf("Subquery query cannot be nil")
 	}
 	q := Subquery{"": {
 		query:      query,
@@ -52,21 +52,21 @@ func NewSubquery(query Query, alias string) (Subquery, error) {
 	}}
 	fields, err := query.GetFetchableFields()
 	if err != nil {
-		return nil, fmt.Errorf("sq: error fetching fields for Subquery: %w", err)
+		return nil, fmt.Errorf("error fetching fields for Subquery: %w", err)
 	}
 	if len(fields) == 0 {
-		return nil, fmt.Errorf("sq: Subquery query does not return any fields")
+		return nil, fmt.Errorf("Subquery query does not return any fields")
 	}
 	for i, field := range fields {
 		if field == nil {
-			return nil, fmt.Errorf("sq: field #%d in Subquery query is nil", i+1)
+			return nil, fmt.Errorf("field #%d in Subquery query is nil", i+1)
 		}
 		fieldName := field.GetAlias()
 		if fieldName == "" {
 			fieldName = field.GetName()
 		}
 		if fieldName == "" {
-			return q, fmt.Errorf("sq: field #%d in Subquery has no name and no alias", i+1)
+			return q, fmt.Errorf("field #%d in Subquery has no name and no alias", i+1)
 		}
 		q[fieldName] = SubqueryField{
 			valid:      true,
@@ -83,11 +83,11 @@ func (q Subquery) GetName() string { return "" }
 
 func (q Subquery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
 	if len(q) == 0 {
-		return fmt.Errorf("sq: empty Subquery")
+		return fmt.Errorf("empty Subquery")
 	}
 	query := q[""].query
 	if query == nil {
-		return fmt.Errorf("sq: empty Subquery")
+		return fmt.Errorf("empty Subquery")
 	}
 	buf.WriteString("(")
 	err := query.AppendSQL(dialect, buf, args, params)

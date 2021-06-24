@@ -58,7 +58,7 @@ func (r *Row) ScanInto(dest interface{}, field Field) {
 			r.dest = append(r.dest, &sql.NullTime{})
 		default:
 			if reflect.TypeOf(dest).Kind() != reflect.Ptr {
-				panic(fmt.Errorf("sq: cannot pass in non pointer value (%#v) as dest", dest))
+				panic(fmt.Errorf("cannot pass in non pointer value (%#v) as dest", dest))
 			}
 			r.dest = append(r.dest, dest)
 		}
@@ -107,7 +107,7 @@ func (r *Row) ScanInto(dest interface{}, field Field) {
 	default:
 		destValue := reflect.ValueOf(dest)
 		if destValue.Type().Kind() != reflect.Ptr {
-			panic(fmt.Errorf("sq: cannot pass in non pointer value (%#v) as dest", dest))
+			panic(fmt.Errorf("cannot pass in non pointer value (%#v) as dest", dest))
 		}
 		destValue.Elem().Set(reflect.ValueOf(r.dest[r.index]).Elem())
 	}
