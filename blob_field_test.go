@@ -34,6 +34,7 @@ func Test_BlobField(t *testing.T) {
 	}
 
 	t.Run("BlobField", func(t *testing.T) {
+		t.Parallel()
 		var tt TT
 		tt.item = NewBlobField("field", TableInfo{TableName: "tbl"})
 		tt.wantQuery = "tbl.field"
@@ -42,6 +43,7 @@ func Test_BlobField(t *testing.T) {
 	})
 
 	t.Run("BlobField with alias", func(t *testing.T) {
+		t.Parallel()
 		var tt TT
 		tt.item = NewBlobField("field", TableInfo{TableName: "tbl"}).As("f")
 		tt.wantQuery = "tbl.field"
@@ -50,6 +52,7 @@ func Test_BlobField(t *testing.T) {
 	})
 
 	t.Run("ASC NULLS FIRST", func(t *testing.T) {
+		t.Parallel()
 		var tt TT
 		tt.item = NewBlobField("field", TableInfo{TableName: "tbl"}).Asc().NullsFirst()
 		tt.wantQuery = "tbl.field ASC NULLS FIRST"
@@ -58,6 +61,7 @@ func Test_BlobField(t *testing.T) {
 	})
 
 	t.Run("DESC NULLS LAST", func(t *testing.T) {
+		t.Parallel()
 		var tt TT
 		tt.item = NewBlobField("field", TableInfo{TableName: "tbl"}).Desc().NullsLast()
 		tt.wantQuery = "tbl.field DESC NULLS LAST"
@@ -66,6 +70,7 @@ func Test_BlobField(t *testing.T) {
 	})
 
 	t.Run("BlobField IS NULL", func(t *testing.T) {
+		t.Parallel()
 		var tt TT
 		tt.item = NewBlobField("field", TableInfo{TableName: "tbl"}).IsNull()
 		tt.wantQuery = "tbl.field IS NULL"
@@ -74,6 +79,7 @@ func Test_BlobField(t *testing.T) {
 	})
 
 	t.Run("BlobField IS NOT NULL", func(t *testing.T) {
+		t.Parallel()
 		var tt TT
 		tt.item = NewBlobField("field", TableInfo{TableName: "tbl"}).IsNotNull()
 		tt.wantQuery = "tbl.field IS NOT NULL"
@@ -82,6 +88,7 @@ func Test_BlobField(t *testing.T) {
 	})
 
 	t.Run("SetBlob", func(t *testing.T) {
+		t.Parallel()
 		var tt TT
 		tt.item = NewBlobField("field", TableInfo{TableName: "tbl"}).SetBlob([]byte{'a', 'b', 'c', 'd'})
 		tt.excludedTableQualifiers = []string{"tbl"}
