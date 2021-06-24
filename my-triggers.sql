@@ -1,5 +1,6 @@
 DELIMITER ;;
 
+-- ddl: film_after_insert_trg
 CREATE TRIGGER film_after_insert_trg AFTER INSERT ON film FOR EACH ROW BEGIN
     INSERT INTO film_text
         (film_id, title, description)
@@ -8,6 +9,7 @@ CREATE TRIGGER film_after_insert_trg AFTER INSERT ON film FOR EACH ROW BEGIN
     ;
 END;;
 
+-- ddl: film_after_update_trg
 CREATE TRIGGER film_after_update_trg AFTER UPDATE ON film FOR EACH ROW BEGIN
     IF OLD.title <> NEW.title OR OLD.description <> NEW.description THEN
         UPDATE
@@ -22,6 +24,7 @@ CREATE TRIGGER film_after_update_trg AFTER UPDATE ON film FOR EACH ROW BEGIN
     END IF;
 END;;
 
+-- ddl: film_after_delete_trg
 CREATE TRIGGER film_after_delete_trg AFTER DELETE ON film FOR EACH ROW BEGIN
     DELETE FROM film_text WHERE film_id = OLD.film_id;
 END;;

@@ -94,7 +94,7 @@ func (q InsertQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interf
 			return err
 		}
 	default:
-		return fmt.Errorf("RowValues not provided and SelectQuery not provided")
+		return fmt.Errorf("sq: RowValues not provided and SelectQuery not provided to INSERT query")
 	}
 	// ON CONFLICT
 	switch dialect {
@@ -119,7 +119,7 @@ func (q InsertQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interf
 					}
 				}
 			} else {
-				return fmt.Errorf("no conflict target specified")
+				return fmt.Errorf("sq: INSERT query has no conflict target specified")
 			}
 		}
 		if q.HandleConflict && len(q.Resolution) > 0 {

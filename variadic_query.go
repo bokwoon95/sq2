@@ -35,7 +35,7 @@ func (vq VariadicQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]int
 	if len(vq.Queries) == 1 {
 		switch q := vq.Queries[0].(type) {
 		case nil:
-			return fmt.Errorf("VariadicQuery query #1 is nil")
+			return fmt.Errorf("sq: VariadicQuery query #1 is nil")
 		case VariadicQuery:
 			q.TopLevel = vq.TopLevel
 			err = q.AppendSQL(dialect, buf, args, params)
@@ -59,7 +59,7 @@ func (vq VariadicQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]int
 		}
 		switch q := q.(type) {
 		case nil:
-			return fmt.Errorf("VariadicQuery query #%d is nil", i+1)
+			return fmt.Errorf("sq: VariadicQuery query #%d is nil", i+1)
 		case VariadicQuery:
 			q.TopLevel = false
 			err = q.AppendSQL(dialect, buf, args, params)

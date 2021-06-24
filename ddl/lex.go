@@ -25,7 +25,7 @@ func cutValue(s string) (value, rest string, err error) {
 			bracelevel--
 		}
 		if bracelevel < 0 {
-			return "", "", fmt.Errorf("too many closing braces")
+			return "", "", fmt.Errorf("ddl: too many closing braces")
 		}
 		if bracelevel == 0 && isBraceQuoted {
 			break
@@ -36,7 +36,7 @@ func cutValue(s string) (value, rest string, err error) {
 		}
 	}
 	if bracelevel > 0 {
-		return "", "", fmt.Errorf("unclosed brace")
+		return "", "", fmt.Errorf("ddl: unclosed brace")
 	}
 	value = s[:splitAt]
 	rest = s[splitAt:]

@@ -414,10 +414,10 @@ type FILM struct {
 	RENTAL_DURATION      sq.NumberField `ddl:"default=3 notnull"`
 	RENTAL_RATE          sq.NumberField `ddl:"type=DECIMAL(4,2) default=4.99 notnull"`
 	LENGTH               sq.NumberField
-	REPLACEMENT_COST     sq.NumberField  `ddl:"type=DECIMAL(5,2) default=19.99 notnull"`
-	RATING               sq.StringField  `ddl:"default='G'"`
+	REPLACEMENT_COST     sq.NumberField `ddl:"type=DECIMAL(5,2) default=19.99 notnull"`
+	RATING               sq.StringField `ddl:"default='G'"`
 	SPECIAL_FEATURES     sq.CustomField `ddl:"type=JSON"`
-	LAST_UPDATE          sq.TimeField    `ddl:"default=DATETIME('now') notnull"`
+	LAST_UPDATE          sq.TimeField   `ddl:"default=DATETIME('now') notnull"`
 	FULLTEXT             sq.StringField
 }
 
@@ -532,10 +532,10 @@ func NEW_FILM_TEXT(dialect, alias string) FILM_TEXT {
 }
 
 type FILM_TEXT struct {
-	sq.TableInfo `sq:"name=film_text" ddl:"virtual={fts5 content='film' content_rowid='film_id'}"`
-	FILM_ID      sq.NumberField
-	TITLE        sq.StringField
-	DESCRIPTION  sq.StringField
+	sq.TableInfo
+	FILM_ID     sq.NumberField
+	TITLE       sq.StringField
+	DESCRIPTION sq.StringField
 }
 
 func (tbl FILM_TEXT) DDL(dialect string, t *T) {
