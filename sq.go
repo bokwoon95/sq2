@@ -89,7 +89,7 @@ type Query interface {
 	Dialect() string
 }
 
-func ToSQL(dialect string, q Query) (query string, args []interface{}, params map[string][]int, err error) {
+func ToSQL(dialect string, q SQLAppender) (query string, args []interface{}, params map[string][]int, err error) {
 	buf := bufpool.Get().(*bytes.Buffer)
 	defer func() {
 		buf.Reset()
@@ -97,7 +97,9 @@ func ToSQL(dialect string, q Query) (query string, args []interface{}, params ma
 	}()
 	params = make(map[string][]int)
 	if dialect == "" {
-		dialect = q.Dialect()
+		if q, ok := q.(Query); ok {
+			dialect = q.Dialect()
+		}
 	}
 	err = q.AppendSQL(dialect, buf, &args, params)
 	return buf.String(), args, params, err

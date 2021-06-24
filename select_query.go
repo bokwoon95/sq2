@@ -56,19 +56,21 @@ func (q SelectQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interf
 		return err
 	}
 	// FROM
-	if q.FromTable == nil {
-		return fmt.Errorf("SELECTing from nil table")
-	}
-	buf.WriteString(" FROM ")
-	err = q.FromTable.AppendSQL(dialect, buf, args, params)
-	if err != nil {
-		return err
-	}
-	if tableAlias := q.FromTable.GetAlias(); tableAlias != "" {
-		buf.WriteString(" AS " + QuoteIdentifier(dialect, tableAlias))
+	if q.FromTable != nil {
+		buf.WriteString(" FROM ")
+		err = q.FromTable.AppendSQL(dialect, buf, args, params)
+		if err != nil {
+			return err
+		}
+		if tableAlias := q.FromTable.GetAlias(); tableAlias != "" {
+			buf.WriteString(" AS " + QuoteIdentifier(dialect, tableAlias))
+		}
 	}
 	// JOIN
 	if len(q.JoinTables) > 0 {
+		if q.FromTable == nil {
+			return fmt.Errorf("can't JOIN without a FROM table")
+		}
 		buf.WriteString(" ")
 		err = q.JoinTables.AppendSQL(dialect, buf, args, params)
 		if err != nil {
