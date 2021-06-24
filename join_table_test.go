@@ -40,10 +40,10 @@ func Test_JoinTable(t *testing.T) {
 			t.Fatal(testcallers(), err)
 		}
 		if diff := testdiff(tt.wantQuery, buf.String()); diff != "" {
-			t.Fatal(testcallers(), diff)
+			t.Error(testcallers(), diff)
 		}
 		if diff := testdiff(tt.wantArgs, gotArgs); diff != "" {
-			t.Fatal(testcallers(), diff)
+			t.Error(testcallers(), diff)
 		}
 	}
 
