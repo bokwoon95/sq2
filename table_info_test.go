@@ -3,8 +3,6 @@ package sq
 import (
 	"bytes"
 	"testing"
-
-	"github.com/bokwoon95/testutil"
 )
 
 func Test_TableInfo(t *testing.T) {
@@ -16,7 +14,6 @@ func Test_TableInfo(t *testing.T) {
 	}
 
 	assert := func(t *testing.T, tt TT) {
-		is := testutil.New(t, testutil.Parallel)
 		buf := bufpool.Get().(*bytes.Buffer)
 		defer func() {
 			buf.Reset()
@@ -24,15 +21,28 @@ func Test_TableInfo(t *testing.T) {
 		}()
 		gotArgs, gotParams := []interface{}{}, map[string][]int{}
 		err := tt.tbl.AppendSQL(tt.dialect, buf, &gotArgs, gotParams)
-		is.NoErr(err)
-		is.Equal(tt.wantQuery, buf.String())
-		is.Equal(tt.wantArgs, gotArgs)
-		is.Equal(tt.tbl.TableSchema, tt.tbl.GetSchema())
-		is.Equal(tt.tbl.TableName, tt.tbl.GetName())
-		is.Equal(tt.tbl.TableAlias, tt.tbl.GetAlias())
+		if err != nil {
+			t.Fatal(testcallers(), err)
+		}
+		if diff := testdiff(tt.wantQuery, buf.String()); diff != "" {
+			t.Error(testcallers(), diff)
+		}
+		if diff := testdiff(tt.wantArgs, gotArgs); diff != "" {
+			t.Error(testcallers(), diff)
+		}
+		if diff := testdiff(tt.tbl.TableSchema, tt.tbl.GetSchema()); diff != "" {
+			t.Error(testcallers(), diff)
+		}
+		if diff := testdiff(tt.tbl.TableName, tt.tbl.GetName()); diff != "" {
+			t.Error(testcallers(), diff)
+		}
+		if diff := testdiff(tt.tbl.TableAlias, tt.tbl.GetAlias()); diff != "" {
+			t.Error(testcallers(), diff)
+		}
 	}
 
 	t.Run("with schema", func(t *testing.T) {
+		t.Parallel()
 		var tt TT
 		tt.tbl = TableInfo{
 			TableSchema: "public",
@@ -44,6 +54,7 @@ func Test_TableInfo(t *testing.T) {
 	})
 
 	t.Run("without schema", func(t *testing.T) {
+		t.Parallel()
 		var tt TT
 		tt.tbl = TableInfo{
 			TableName: "users",

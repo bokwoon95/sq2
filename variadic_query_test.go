@@ -3,8 +3,6 @@ package sq
 import (
 	"bytes"
 	"testing"
-
-	"github.com/bokwoon95/testutil"
 )
 
 func TestVariadicQuery(t *testing.T) {
@@ -19,7 +17,6 @@ func TestVariadicQuery(t *testing.T) {
 	const dialect = DialectMySQL
 
 	assert := func(t *testing.T, tt TT) {
-		is := testutil.New(t, testutil.Parallel)
 		buf := bufpool.Get().(*bytes.Buffer)
 		defer func() {
 			buf.Reset()
@@ -27,15 +24,24 @@ func TestVariadicQuery(t *testing.T) {
 		}()
 		gotArgs, gotParams := []interface{}{}, map[string][]int{}
 		err := tt.item.AppendSQL(tt.dialect, buf, &gotArgs, gotParams)
-		is.NoErr(err)
-		is.Equal(tt.wantQuery, buf.String())
-		is.Equal(tt.wantArgs, gotArgs)
+		if err != nil {
+			t.Fatal(testcallers(), err)
+		}
+		if diff := testdiff(tt.wantQuery, buf.String()); diff != "" {
+			t.Error(testcallers(), diff)
+		}
+		if diff := testdiff(tt.wantArgs, gotArgs); diff != "" {
+			t.Error(testcallers(), diff)
+		}
 		if tt.wantParams != nil {
-			is.Equal(tt.wantParams, gotParams)
+			if diff := testdiff(tt.wantParams, gotParams); diff != "" {
+				t.Error(testcallers(), diff)
+			}
 		}
 	}
 
 	t.Run("empty", func(t *testing.T) {
+		t.Parallel()
 		var tt TT
 		tt.item = VariadicQuery{}
 		tt.wantArgs = []interface{}{}
@@ -43,6 +49,7 @@ func TestVariadicQuery(t *testing.T) {
 	})
 
 	t.Run("nested single variadic queries", func(t *testing.T) {
+		t.Parallel()
 		var tt TT
 		tt.item = Union(UnionAll(Intersect(IntersectAll(Except(ExceptAll(Queryf(dialect, "SELECT {}", 1)))))))
 		tt.wantQuery = "SELECT ?"
@@ -51,6 +58,7 @@ func TestVariadicQuery(t *testing.T) {
 	})
 
 	t.Run("nested variadic queries", func(t *testing.T) {
+		t.Parallel()
 		var tt TT
 		tt.item = Intersect(
 			Union(Union(Queryf(dialect, "SELECT {}", 1)), Queryf(dialect, "SELECT {}", "abc")),

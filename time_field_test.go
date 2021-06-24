@@ -4,8 +4,6 @@ import (
 	"bytes"
 	"testing"
 	"time"
-
-	"github.com/bokwoon95/testutil"
 )
 
 func Test_TimeField(t *testing.T) {
@@ -33,7 +31,6 @@ func Test_TimeField(t *testing.T) {
 	timeval := time.Unix(0, 0)
 
 	assert := func(t *testing.T, tt TT) {
-		is := testutil.New(t, testutil.Parallel)
 		buf := bufpool.Get().(*bytes.Buffer)
 		defer func() {
 			buf.Reset()
@@ -41,15 +38,24 @@ func Test_TimeField(t *testing.T) {
 		}()
 		gotArgs, gotParams := []interface{}{}, map[string][]int{}
 		err := tt.item.AppendSQLExclude(tt.dialect, buf, &gotArgs, gotParams, tt.excludedTableQualifiers)
-		is.NoErr(err)
-		is.Equal(tt.wantQuery, buf.String())
-		is.Equal(tt.wantArgs, gotArgs)
+		if err != nil {
+			t.Fatal(testcallers(), err)
+		}
+		if diff := testdiff(tt.wantQuery, buf.String()); diff != "" {
+			t.Error(testcallers(), diff)
+		}
+		if diff := testdiff(tt.wantArgs, gotArgs); diff != "" {
+			t.Error(testcallers(), diff)
+		}
 		if tt.wantParams != nil {
-			is.Equal(tt.wantParams, gotParams)
+			if diff := testdiff(tt.wantParams, gotParams); diff != "" {
+				t.Error(testcallers(), diff)
+			}
 		}
 	}
 
 	t.Run("TimeField", func(t *testing.T) {
+		t.Parallel()
 		var tt TT
 		tt.item = NewTimeField("field", TableInfo{TableName: "tbl"})
 		tt.wantQuery = "tbl.field"
@@ -58,6 +64,7 @@ func Test_TimeField(t *testing.T) {
 	})
 
 	t.Run("TimeField with alias", func(t *testing.T) {
+		t.Parallel()
 		var tt TT
 		tt.item = NewTimeField("field", TableInfo{TableName: "tbl"}).As("f")
 		tt.wantQuery = "tbl.field"
@@ -66,6 +73,7 @@ func Test_TimeField(t *testing.T) {
 	})
 
 	t.Run("TimeField ASC NULLS FIRST", func(t *testing.T) {
+		t.Parallel()
 		var tt TT
 		tt.item = NewTimeField("field", TableInfo{TableName: "tbl"}).Asc().NullsFirst()
 		tt.wantQuery = "tbl.field ASC NULLS FIRST"
@@ -74,6 +82,7 @@ func Test_TimeField(t *testing.T) {
 	})
 
 	t.Run("TimeField DESC NULLS LAST", func(t *testing.T) {
+		t.Parallel()
 		var tt TT
 		tt.item = NewTimeField("field", TableInfo{TableName: "tbl"}).Desc().NullsLast()
 		tt.wantQuery = "tbl.field DESC NULLS LAST"
@@ -82,6 +91,7 @@ func Test_TimeField(t *testing.T) {
 	})
 
 	t.Run("TimeField IS NULL", func(t *testing.T) {
+		t.Parallel()
 		var tt TT
 		tt.item = NewTimeField("field", TableInfo{TableName: "tbl"}).IsNull()
 		tt.wantQuery = "tbl.field IS NULL"
@@ -90,6 +100,7 @@ func Test_TimeField(t *testing.T) {
 	})
 
 	t.Run("TimeField IS NOT NULL", func(t *testing.T) {
+		t.Parallel()
 		var tt TT
 		tt.item = NewTimeField("field", TableInfo{TableName: "tbl"}).IsNotNull()
 		tt.wantQuery = "tbl.field IS NOT NULL"
@@ -98,6 +109,7 @@ func Test_TimeField(t *testing.T) {
 	})
 
 	t.Run("TimeFieldf in (slice)", func(t *testing.T) {
+		t.Parallel()
 		var tt TT
 		tt.item = TimeFieldf(
 			"date_trunc('day', {timestamp})",
@@ -110,6 +122,7 @@ func Test_TimeField(t *testing.T) {
 	})
 
 	t.Run("TimeFieldf in (rowvalue)", func(t *testing.T) {
+		t.Parallel()
 		var tt TT
 		tt.item = TimeFieldf(
 			"date_trunc('day', {timestamp})",
@@ -122,6 +135,7 @@ func Test_TimeField(t *testing.T) {
 	})
 
 	t.Run("TimeField Eq", func(t *testing.T) {
+		t.Parallel()
 		var tt TT
 		field := NewTimeField("field", TableInfo{TableName: "tbl"})
 		tt.item = field.Eq(field)
@@ -131,6 +145,7 @@ func Test_TimeField(t *testing.T) {
 	})
 
 	t.Run("TimeField Ne", func(t *testing.T) {
+		t.Parallel()
 		var tt TT
 		field := NewTimeField("field", TableInfo{TableName: "tbl"})
 		tt.item = field.Ne(field)
@@ -140,6 +155,7 @@ func Test_TimeField(t *testing.T) {
 	})
 
 	t.Run("TimeField Gt", func(t *testing.T) {
+		t.Parallel()
 		var tt TT
 		field := NewTimeField("field", TableInfo{TableName: "tbl"})
 		tt.item = field.Gt(field)
@@ -149,6 +165,7 @@ func Test_TimeField(t *testing.T) {
 	})
 
 	t.Run("TimeField Ge", func(t *testing.T) {
+		t.Parallel()
 		var tt TT
 		field := NewTimeField("field", TableInfo{TableName: "tbl"})
 		tt.item = field.Ge(field)
@@ -158,6 +175,7 @@ func Test_TimeField(t *testing.T) {
 	})
 
 	t.Run("TimeField Lt", func(t *testing.T) {
+		t.Parallel()
 		var tt TT
 		field := NewTimeField("field", TableInfo{TableName: "tbl"})
 		tt.item = field.Lt(field)
@@ -167,6 +185,7 @@ func Test_TimeField(t *testing.T) {
 	})
 
 	t.Run("TimeField Le", func(t *testing.T) {
+		t.Parallel()
 		var tt TT
 		field := NewTimeField("field", TableInfo{TableName: "tbl"})
 		tt.item = field.Le(field)
@@ -176,6 +195,7 @@ func Test_TimeField(t *testing.T) {
 	})
 
 	t.Run("TimeField EqTime", func(t *testing.T) {
+		t.Parallel()
 		var tt TT
 		tt.item = NewTimeField("field", TableInfo{TableName: "tbl"}).EqTime(timeval)
 		tt.wantQuery = "tbl.field = ?"
@@ -184,6 +204,7 @@ func Test_TimeField(t *testing.T) {
 	})
 
 	t.Run("TimeField NeTime", func(t *testing.T) {
+		t.Parallel()
 		var tt TT
 		tt.item = NewTimeField("field", TableInfo{TableName: "tbl"}).NeTime(timeval)
 		tt.wantQuery = "tbl.field <> ?"
@@ -192,6 +213,7 @@ func Test_TimeField(t *testing.T) {
 	})
 
 	t.Run("TimeField GtTime", func(t *testing.T) {
+		t.Parallel()
 		var tt TT
 		tt.item = NewTimeField("field", TableInfo{TableName: "tbl"}).GtTime(timeval)
 		tt.wantQuery = "tbl.field > ?"
@@ -200,6 +222,7 @@ func Test_TimeField(t *testing.T) {
 	})
 
 	t.Run("TimeField GeTime", func(t *testing.T) {
+		t.Parallel()
 		var tt TT
 		tt.item = NewTimeField("field", TableInfo{TableName: "tbl"}).GeTime(timeval)
 		tt.wantQuery = "tbl.field >= ?"
@@ -208,6 +231,7 @@ func Test_TimeField(t *testing.T) {
 	})
 
 	t.Run("TimeField LtTime", func(t *testing.T) {
+		t.Parallel()
 		var tt TT
 		tt.item = NewTimeField("field", TableInfo{TableName: "tbl"}).LtTime(timeval)
 		tt.wantQuery = "tbl.field < ?"
@@ -216,6 +240,7 @@ func Test_TimeField(t *testing.T) {
 	})
 
 	t.Run("TimeField LeTime", func(t *testing.T) {
+		t.Parallel()
 		var tt TT
 		tt.item = NewTimeField("field", TableInfo{TableName: "tbl"}).LeTime(timeval)
 		tt.wantQuery = "tbl.field <= ?"
@@ -224,6 +249,7 @@ func Test_TimeField(t *testing.T) {
 	})
 
 	t.Run("TimeField SetTime", func(t *testing.T) {
+		t.Parallel()
 		var tt TT
 		tt.item = NewTimeField("field", TableInfo{TableName: "tbl"}).SetTime(timeval)
 		tt.wantQuery = "tbl.field = ?"
