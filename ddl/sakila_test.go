@@ -18,7 +18,7 @@ func NEW_ACTOR(dialect, alias string) ACTOR {
 
 type ACTOR struct {
 	sq.TableInfo
-	ACTOR_ID           sq.NumberField `ddl:"type=INTEGER autoincrement primarykey"`
+	ACTOR_ID           sq.NumberField `ddl:"primarykey"`
 	FIRST_NAME         sq.StringField `ddl:"notnull"`
 	LAST_NAME          sq.StringField `ddl:"notnull index"`
 	FULL_NAME          sq.StringField `ddl:"generated={first_name || ' ' || last_name} virtual"`
@@ -28,6 +28,8 @@ type ACTOR struct {
 
 func (tbl ACTOR) DDL(dialect string, t *T) {
 	switch dialect {
+	case sq.DialectSQLite:
+		t.Column(tbl.ACTOR_ID).Type("INTEGER").Autoincrement()
 	case sq.DialectPostgres:
 		t.Column(tbl.ACTOR_ID).Type("INT").Identity()
 		t.Column(tbl.FULL_NAME).Generated("{} || ' ' || {}", tbl.FIRST_NAME, tbl.LAST_NAME).Stored()
@@ -542,7 +544,7 @@ func (tbl FILM_TEXT) DDL(dialect string, t *T) {
 	switch dialect {
 	case sq.DialectSQLite:
 		t.VirtualTable("fts5", `content='film'`, `content_rowid='film_id'`)
-		t.Column(tbl.FILM_ID).Ignore() // Ignore will literally delete the column from t.Table.Columns
+		t.Column(tbl.FILM_ID).Ignore()
 	case sq.DialectPostgres:
 		break // no-op, postgres does not need a separate film_text table for full text search
 	case sq.DialectMySQL:

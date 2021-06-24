@@ -99,32 +99,29 @@ func createColumn(dialect string, buf *bytes.Buffer, column Column) error {
 	if column.IsNotNull {
 		buf.WriteString(" NOT NULL")
 	}
-	isAutoincrement := column.Autoincrement && (dialect == sq.DialectMySQL || dialect == sq.DialectSQLite)
-	isIdentity := column.Identity != "" && (dialect != sq.DialectMySQL && dialect != sq.DialectSQLite)
-	isGenerated := column.GeneratedExpr != ""
-	if column.ColumnDefault != "" && !isAutoincrement && !isIdentity && !isGenerated {
+	if column.ColumnDefault != "" && !column.Autoincrement && column.Identity == "" && column.GeneratedExpr == "" {
 		buf.WriteString(" DEFAULT " + column.ColumnDefault)
 	}
 	if column.IsPrimaryKey && dialect == sq.DialectSQLite {
 		// only SQLite primary key is defined inline, others are defined as separate constraints
 		buf.WriteString(" PRIMARY KEY")
 	}
-	if isAutoincrement && dialect != sq.DialectMySQL && dialect != sq.DialectSQLite {
+	if column.Autoincrement && dialect != sq.DialectMySQL && dialect != sq.DialectSQLite {
 		return fmt.Errorf("ddl: %s does not support autoincrement columns", dialect)
 	}
-	if isIdentity && (dialect == sq.DialectMySQL || dialect == sq.DialectSQLite) {
+	if column.Identity != "" && (dialect == sq.DialectMySQL || dialect == sq.DialectSQLite) {
 		return fmt.Errorf("ddl: %s does not support identity columns", dialect)
 	}
-	if isAutoincrement {
+	if column.Autoincrement {
 		switch dialect {
 		case sq.DialectMySQL:
 			buf.WriteString(" AUTO_INCREMENT")
 		case sq.DialectSQLite:
 			buf.WriteString(" AUTOINCREMENT")
 		}
-	} else if isIdentity {
+	} else if column.Identity != "" {
 		buf.WriteString(" GENERATED " + column.Identity)
-	} else if isGenerated {
+	} else if column.GeneratedExpr != "" {
 		buf.WriteString(" GENERATED ALWAYS AS (" + column.GeneratedExpr + ")")
 		if column.GeneratedExprStored {
 			buf.WriteString(" STORED")
