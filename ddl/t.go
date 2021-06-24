@@ -252,11 +252,11 @@ func getColumnNames(fields []sq.Field) ([]string, error) {
 	var columnNames []string
 	for i, field := range fields {
 		if field == nil {
-			return nil, fmt.Errorf("ddl: field #%d is nil", i+1)
+			return nil, fmt.Errorf("field #%d is nil", i+1)
 		}
 		columnName := field.GetName()
 		if columnName == "" {
-			return nil, fmt.Errorf("ddl: field #%d has no name", i+1)
+			return nil, fmt.Errorf("field #%d has no name", i+1)
 		}
 		columnNames = append(columnNames, columnName)
 	}

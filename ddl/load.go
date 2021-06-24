@@ -16,27 +16,27 @@ func (m *Metadata) LoadTable(table sq.Table) (err error) {
 			case error:
 				err = r
 			default:
-				err = fmt.Errorf("ddl: panic: " + fmt.Sprint(r))
+				err = fmt.Errorf("panic: " + fmt.Sprint(r))
 			}
 		}
 	}()
 	if table == nil {
-		return fmt.Errorf("ddl: table is nil")
+		return fmt.Errorf("table is nil")
 	}
 	tableValue := reflect.ValueOf(table)
 	tableType := tableValue.Type()
 	if tableType.Kind() != reflect.Struct {
-		return fmt.Errorf("ddl: table is not a struct")
+		return fmt.Errorf("table is not a struct")
 	}
 	if tableValue.NumField() == 0 {
-		return fmt.Errorf("ddl: table is empty struct")
+		return fmt.Errorf("table is empty struct")
 	}
 	genericTable, ok := tableValue.Field(0).Interface().(sq.TableInfo)
 	if !ok {
-		return fmt.Errorf("ddl: first field of table struct is not an embedded sq.TableInfo")
+		return fmt.Errorf("first field of table struct is not an embedded sq.TableInfo")
 	}
 	if !tableType.Field(0).Anonymous {
-		return fmt.Errorf("ddl: first field of table struct is not an embedded sq.TableInfo")
+		return fmt.Errorf("first field of table struct is not an embedded sq.TableInfo")
 	}
 	var schema Schema
 	if i := m.CachedSchemaIndex(genericTable.TableSchema); i >= 0 {
@@ -48,7 +48,7 @@ func (m *Metadata) LoadTable(table sq.Table) (err error) {
 	}
 	var tbl Table
 	if genericTable.TableName == "" {
-		return fmt.Errorf("ddl: table name is empty")
+		return fmt.Errorf("table name is empty")
 	}
 	if i := schema.CachedTableIndex(genericTable.TableName); i >= 0 {
 		tbl = schema.Tables[i]
@@ -64,14 +64,14 @@ func (m *Metadata) LoadTable(table sq.Table) (err error) {
 	tableModifiers := tableType.Field(0).Tag.Get("ddl")
 	modifiers, _, err := lexModifiers(tableModifiers)
 	if err != nil {
-		return fmt.Errorf("ddl: %s: %s", qualifiedTable, err.Error())
+		return fmt.Errorf("%s: %s", qualifiedTable, err.Error())
 	}
 	for _, modifier := range modifiers {
 		switch modifier[0] {
 		case "virtual":
 			virtualTable, modifiers, _, err := lexValue(modifier[1])
 			if err != nil {
-				return fmt.Errorf("ddl: %s: %s", qualifiedTable, err.Error())
+				return fmt.Errorf("%s: %s", qualifiedTable, err.Error())
 			}
 			tbl.VirtualTable = virtualTable
 			for _, modifier := range modifiers {
@@ -84,30 +84,30 @@ func (m *Metadata) LoadTable(table sq.Table) (err error) {
 		case "primarykey":
 			err = tbl.LoadConstraint(PRIMARY_KEY, tbl.TableSchema, tbl.TableName, nil, modifier[1])
 			if err != nil {
-				return fmt.Errorf("ddl: %s: %s", qualifiedTable, err.Error())
+				return fmt.Errorf("%s: %s", qualifiedTable, err.Error())
 			}
 		case "references":
 			err = tbl.LoadConstraint(FOREIGN_KEY, tbl.TableSchema, tbl.TableName, nil, modifier[1])
 			if err != nil {
-				return fmt.Errorf("ddl: %s: %s", qualifiedTable, err.Error())
+				return fmt.Errorf("%s: %s", qualifiedTable, err.Error())
 			}
 		case "unique":
 			err = tbl.LoadConstraint(UNIQUE, tbl.TableSchema, tbl.TableName, nil, modifier[1])
 			if err != nil {
-				return fmt.Errorf("ddl: %s: %s", qualifiedTable, err.Error())
+				return fmt.Errorf("%s: %s", qualifiedTable, err.Error())
 			}
 		case "check":
 			err = tbl.LoadConstraint(CHECK, tbl.TableSchema, tbl.TableName, nil, modifier[1])
 			if err != nil {
-				return fmt.Errorf("ddl: %s: %s", qualifiedTable, err.Error())
+				return fmt.Errorf("%s: %s", qualifiedTable, err.Error())
 			}
 		case "index":
 			err = tbl.LoadIndex(tbl.TableSchema, tbl.TableName, nil, modifier[1])
 			if err != nil {
-				return fmt.Errorf("ddl: %s: %s", qualifiedTable, err.Error())
+				return fmt.Errorf("%s: %s", qualifiedTable, err.Error())
 			}
 		default:
-			return fmt.Errorf("ddl: %s: unknown modifier '%s'", qualifiedTable, modifier[0])
+			return fmt.Errorf("%s: unknown modifier '%s'", qualifiedTable, modifier[0])
 		}
 	}
 	for i := 1; i < tableValue.NumField(); i++ {
@@ -117,7 +117,7 @@ func (m *Metadata) LoadTable(table sq.Table) (err error) {
 		}
 		columnName := field.GetName()
 		if columnName == "" {
-			return fmt.Errorf("ddl: table %s field #%d has no name", genericTable.TableName, i)
+			return fmt.Errorf("table %s field #%d has no name", genericTable.TableName, i)
 		}
 		columnType := defaultColumnType(m.Dialect, field)
 		config := tableType.Field(i).Tag.Get("ddl")
@@ -157,7 +157,7 @@ func (tbl *Table) LoadColumn(dialect, columnName, columnType, config string) err
 	}
 	modifiers, _, err := lexModifiers(config)
 	if err != nil {
-		return fmt.Errorf("ddl: %s: %s", qualifiedColumn, err.Error())
+		return fmt.Errorf("%s: %s", qualifiedColumn, err.Error())
 	}
 	var col Column
 	if i := tbl.CachedColumnIndex(columnName); i >= 0 {
@@ -217,30 +217,30 @@ func (tbl *Table) LoadColumn(dialect, columnName, columnType, config string) err
 		case "primarykey":
 			err = tbl.LoadConstraint(PRIMARY_KEY, col.TableSchema, col.TableName, []string{col.ColumnName}, modifier[1])
 			if err != nil {
-				return fmt.Errorf("ddl: %s: %s", qualifiedColumn, err.Error())
+				return fmt.Errorf("%s: %s", qualifiedColumn, err.Error())
 			}
 		case "references":
 			err = tbl.LoadConstraint(FOREIGN_KEY, col.TableSchema, col.TableName, []string{col.ColumnName}, modifier[1])
 			if err != nil {
-				return fmt.Errorf("ddl: %s: %s", qualifiedColumn, err.Error())
+				return fmt.Errorf("%s: %s", qualifiedColumn, err.Error())
 			}
 		case "unique":
 			err = tbl.LoadConstraint(UNIQUE, col.TableSchema, col.TableName, []string{col.ColumnName}, modifier[1])
 			if err != nil {
-				return fmt.Errorf("ddl: %s: %s", qualifiedColumn, err.Error())
+				return fmt.Errorf("%s: %s", qualifiedColumn, err.Error())
 			}
 		case "check":
 			err = tbl.LoadConstraint(CHECK, col.TableSchema, col.TableName, []string{col.ColumnName}, modifier[1])
 			if err != nil {
-				return fmt.Errorf("ddl: %s: %s", qualifiedColumn, err.Error())
+				return fmt.Errorf("%s: %s", qualifiedColumn, err.Error())
 			}
 		case "index":
 			err = tbl.LoadIndex(col.TableSchema, col.TableName, []string{col.ColumnName}, modifier[1])
 			if err != nil {
-				return fmt.Errorf("ddl: %s: %s", qualifiedColumn, err.Error())
+				return fmt.Errorf("%s: %s", qualifiedColumn, err.Error())
 			}
 		default:
-			return fmt.Errorf("ddl: %s: unknown modifier '%s'", qualifiedColumn, modifier[0])
+			return fmt.Errorf("%s: unknown modifier '%s'", qualifiedColumn, modifier[0])
 		}
 	}
 	return nil
@@ -317,7 +317,7 @@ func (tbl *Table) LoadConstraint(constraintType, tableSchema, tableName string, 
 			case "setdefault":
 				constraint.OnUpdate = SET_DEFAULT
 			default:
-				return fmt.Errorf("ddl: unknown value '%s' for 'references.onupdate' modifier", modifier[1])
+				return fmt.Errorf("unknown value '%s' for 'references.onupdate' modifier", modifier[1])
 			}
 		case "ondelete":
 			switch modifier[1] {
@@ -332,7 +332,7 @@ func (tbl *Table) LoadConstraint(constraintType, tableSchema, tableName string, 
 			case "setdefault":
 				constraint.OnDelete = SET_DEFAULT
 			default:
-				return fmt.Errorf("ddl: unknown value '%s' for 'references.ondelete' modifier", modifier[1])
+				return fmt.Errorf("unknown value '%s' for 'references.ondelete' modifier", modifier[1])
 			}
 		case "check":
 			constraint.CheckExpr = modifier[1]
@@ -341,7 +341,7 @@ func (tbl *Table) LoadConstraint(constraintType, tableSchema, tableName string, 
 		case "deferred":
 			constraint.IsInitiallyDeferred = true
 		default:
-			return fmt.Errorf("ddl: invalid modifier 'check.%s'", modifier[0])
+			return fmt.Errorf("invalid modifier 'check.%s'", modifier[0])
 		}
 	}
 	return nil
@@ -390,7 +390,7 @@ func (tbl *Table) LoadIndex(tableSchema, tableName string, columns []string, con
 		case "include":
 			index.Include = strings.Split(modifier[1], ",")
 		default:
-			return fmt.Errorf("ddl: invalid modifier 'index.%s'", modifier[0])
+			return fmt.Errorf("invalid modifier 'index.%s'", modifier[0])
 		}
 	}
 	return nil
