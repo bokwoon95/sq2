@@ -166,7 +166,7 @@ func (q InsertQuery) SetFetchableFields(fields []Field) (Query, error) {
 		q.ReturningFields = fields
 		return q, nil
 	default:
-		return nil, ErrUnsupported
+		return nil, fmt.Errorf("sq: %s INSERT %w", q.QueryDialect, ErrNonFetchableQuery)
 	}
 }
 
@@ -175,7 +175,7 @@ func (q InsertQuery) GetFetchableFields() ([]Field, error) {
 	case DialectPostgres:
 		return q.ReturningFields, nil
 	default:
-		return nil, ErrUnsupported
+		return nil, fmt.Errorf("sq: %s INSERT %w", q.QueryDialect, ErrNonFetchableQuery)
 	}
 }
 
