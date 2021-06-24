@@ -28,6 +28,7 @@ func (param NamedParam) AppendSQLExclude(dialect string, buf *bytes.Buffer, args
 	if param.Name == "" {
 		return fmt.Errorf("Param name cannot be empty")
 	}
+	// TODO: what happens if you next Params? Param("a", Param("b", Param("c", 11))). Need to add a test for it.
 	if v, ok := param.Value.(SQLExcludeAppender); ok && v != nil {
 		return v.AppendSQLExclude(dialect, buf, args, params, excludedTableQualifiers)
 	}
@@ -37,27 +38,28 @@ func (param NamedParam) AppendSQLExclude(dialect string, buf *bytes.Buffer, args
 	if isExplodableSlice(param.Value) {
 		return explodeSlice(dialect, buf, args, params, excludedTableQualifiers, param.Value)
 	}
+	indices := params[param.Name]
 	switch dialect {
 	case DialectPostgres, DialectSQLite:
-		if len(params[param.Name]) > 0 {
-			(*args)[params[param.Name][0]] = param.Value
+		if len(indices) > 0 {
+			(*args)[indices[0]] = param.Value
 			buf.WriteString("$" + strconv.Itoa(params[param.Name][0]+1))
 		} else {
-			params[param.Name] = []int{len(*args)}
+			params[param.Name] = append(indices, len(*args))
 			buf.WriteString("$" + strconv.Itoa(len(*args)+1))
 			*args = append(*args, param.Value)
 		}
 	case DialectSQLServer:
-		if len(params[param.Name]) > 0 {
-			(*args)[params[param.Name][0]] = param.Value
-			buf.WriteString("@p" + strconv.Itoa(params[param.Name][0]+1))
+		if len(indices) > 0 {
+			(*args)[indices[0]] = param.Value
+			buf.WriteString("@p" + strconv.Itoa(indices[0]+1))
 		} else {
-			params[param.Name] = []int{len(*args)}
+			params[param.Name] = append(indices, len(*args))
 			buf.WriteString("@p" + strconv.Itoa(len(*args)+1))
 			*args = append(*args, param.Value)
 		}
 	default:
-		params[param.Name] = append(params[param.Name], len(*args))
+		params[param.Name] = append(indices, len(*args))
 		buf.WriteString("?")
 		*args = append(*args, param.Value)
 	}
