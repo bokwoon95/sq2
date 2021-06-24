@@ -2,8 +2,6 @@ package ddl
 
 import (
 	"testing"
-
-	"github.com/bokwoon95/testutil"
 )
 
 func Test_lexModifiers(t *testing.T) {
@@ -14,14 +12,20 @@ func Test_lexModifiers(t *testing.T) {
 	}
 
 	assert := func(t *testing.T, tt TT) {
-		is := testutil.New(t, testutil.Parallel)
 		gotModifiers, gotModifierIndex, err := lexModifiers(tt.config)
-		is.NoErr(err)
-		is.Equal(tt.wantModifiers, gotModifiers)
-		is.Equal(tt.wantModifierIndex, gotModifierIndex)
+		if err != nil {
+			t.Fatal(testcallers(), err)
+		}
+		if diff := testdiff(tt.wantModifiers, gotModifiers); diff != "" {
+			t.Error(testcallers(), diff)
+		}
+		if diff := testdiff(tt.wantModifierIndex, gotModifierIndex); diff != "" {
+			t.Error(testcallers(), diff)
+		}
 	}
 
 	t.Run("empty", func(t *testing.T) {
+		t.Parallel()
 		var tt TT
 		tt.config = ""
 		tt.wantModifiers = nil
@@ -30,6 +34,7 @@ func Test_lexModifiers(t *testing.T) {
 	})
 
 	t.Run("test1", func(t *testing.T) {
+		t.Parallel()
 		var tt TT
 		tt.config = "notnull unique index={. unique} name=testing references={inventory onupdate=cascade ondelete=restrict}"
 		tt.wantModifiers = [][2]string{
@@ -50,6 +55,7 @@ func Test_lexModifiers(t *testing.T) {
 	})
 
 	t.Run("test2", func(t *testing.T) {
+		t.Parallel()
 		var tt TT
 		tt.config = "cols=a,b,c index={. where={email LIKE '%gmail'}}"
 		tt.wantModifiers = [][2]string{
@@ -73,15 +79,23 @@ func Test_lexValue(t *testing.T) {
 	}
 
 	assert := func(t *testing.T, tt TT) {
-		is := testutil.New(t, testutil.Parallel)
 		gotValue, gotModifiers, gotModifierIndex, err := lexValue(tt.config)
-		is.NoErr(err)
-		is.Equal(tt.wantValue, gotValue)
-		is.Equal(tt.wantModifiers, gotModifiers)
-		is.Equal(tt.wantModifierIndex, gotModifierIndex)
+		if err != nil {
+			t.Fatal(testcallers(), err)
+		}
+		if diff := testdiff(tt.wantValue, gotValue); diff != "" {
+			t.Error(testcallers(), diff)
+		}
+		if diff := testdiff(tt.wantModifiers, gotModifiers); diff != "" {
+			t.Error(testcallers(), diff)
+		}
+		if diff := testdiff(tt.wantModifierIndex, gotModifierIndex); diff != "" {
+			t.Error(testcallers(), diff)
+		}
 	}
 
 	t.Run("", func(t *testing.T) {
+		t.Parallel()
 		var tt TT
 		tt.config = ""
 		tt.wantModifiers = nil
@@ -90,6 +104,7 @@ func Test_lexValue(t *testing.T) {
 	})
 
 	t.Run("", func(t *testing.T) {
+		t.Parallel()
 		var tt TT
 		tt.config = "1 unique"
 		tt.wantValue = "1"
@@ -103,6 +118,7 @@ func Test_lexValue(t *testing.T) {
 	})
 
 	t.Run("", func(t *testing.T) {
+		t.Parallel()
 		var tt TT
 		tt.config = "{abcd efg} generated={first_name || ' ' || last_name} virtual name=gg=G"
 		tt.wantValue = "abcd efg"
@@ -120,6 +136,7 @@ func Test_lexValue(t *testing.T) {
 	})
 
 	t.Run("", func(t *testing.T) {
+		t.Parallel()
 		var tt TT
 		tt.config = "inventory cols=1,2,3,4 onupdate=cascade ondelete=restrict"
 		tt.wantValue = "inventory"
