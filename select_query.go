@@ -48,7 +48,7 @@ func (q SelectQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interf
 	}
 	buf.WriteString(string(q.SelectType))
 	if len(q.SelectFields) == 0 {
-		return fmt.Errorf("sq: no fields SELECT-ed")
+		return fmt.Errorf("no fields SELECT-ed")
 	}
 	buf.WriteString(" ")
 	err = q.SelectFields.AppendSQLExcludeWithAlias(dialect, buf, args, params, nil)
@@ -57,7 +57,7 @@ func (q SelectQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interf
 	}
 	// FROM
 	if q.FromTable == nil {
-		return fmt.Errorf("sq: SELECTing from nil table")
+		return fmt.Errorf("SELECTing from nil table")
 	}
 	buf.WriteString(" FROM ")
 	err = q.FromTable.AppendSQL(dialect, buf, args, params)

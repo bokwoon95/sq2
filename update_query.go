@@ -135,7 +135,7 @@ func (q UpdateQuery) SetFetchableFields(fields []Field) (Query, error) {
 		q.ReturningFields = fields
 		return q, nil
 	default:
-		return nil, fmt.Errorf("sq: %s UPDATE %w", q.QueryDialect, ErrNonFetchableQuery)
+		return nil, fmt.Errorf("%s UPDATE %w", q.QueryDialect, ErrNonFetchableQuery)
 	}
 }
 
@@ -144,7 +144,7 @@ func (q UpdateQuery) GetFetchableFields() ([]Field, error) {
 	case DialectPostgres:
 		return q.ReturningFields, nil
 	default:
-		return nil, fmt.Errorf("sq: %s UPDATE %w", q.QueryDialect, ErrNonFetchableQuery)
+		return nil, fmt.Errorf("%s UPDATE %w", q.QueryDialect, ErrNonFetchableQuery)
 	}
 }
 

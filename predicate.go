@@ -74,7 +74,7 @@ func (p VariadicPredicate) AppendSQLExclude(dialect string, buf *bytes.Buffer, a
 		}
 		switch v := p.Predicates[0].(type) {
 		case nil:
-			return fmt.Errorf("sq: nil Predicate")
+			return fmt.Errorf("nil Predicate")
 		case VariadicPredicate:
 			if !p.Toplevel {
 				buf.WriteString("(")
@@ -105,7 +105,7 @@ func (p VariadicPredicate) AppendSQLExclude(dialect string, buf *bytes.Buffer, a
 				buf.WriteString(" " + string(p.Operator) + " ")
 			}
 			if predicate == nil {
-				return fmt.Errorf("sq: nil Predicate")
+				return fmt.Errorf("nil Predicate")
 			}
 			err = predicate.AppendSQLExclude(dialect, buf, args, params, excludedTableQualifiers)
 			if err != nil {
