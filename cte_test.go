@@ -7,8 +7,7 @@ import (
 
 func TestCTE(t *testing.T) {
 	type TT struct {
-		dialect    string
-		item       SQLAppender
+		item       Query
 		wantQuery  string
 		wantArgs   []interface{}
 		wantParams map[string][]int
@@ -21,7 +20,7 @@ func TestCTE(t *testing.T) {
 			bufpool.Put(buf)
 		}()
 		gotArgs, gotParams := []interface{}{}, map[string][]int{}
-		err := tt.item.AppendSQL(tt.dialect, buf, &gotArgs, gotParams)
+		err := tt.item.AppendSQL(tt.item.Dialect(), buf, &gotArgs, gotParams)
 		if err != nil {
 			t.Fatal(testcallers(), err)
 		}
@@ -77,11 +76,10 @@ func TestCTE(t *testing.T) {
 	t.Run("recursive CTE", func(t *testing.T) {
 		t.Parallel()
 		var tt TT
-		tt.dialect = DialectSQLite
 		tt.item = SQLite.
 			SelectWith(NewRecursiveCTE("tens", []string{"n"}, UnionAll(
-				SQLite.Queryf("SELECT {ten}", Param("ten", 10)),
-				SQLite.Queryf("SELECT tens.n FROM tens WHERE tens.n + {ten} <= {hundred}", Param("ten", 10), Param("hundred", 100)),
+				Queryf("SELECT {ten}", Param("ten", 10)),
+				Queryf("SELECT tens.n FROM tens WHERE tens.n + {ten} <= {hundred}", Param("ten", 10), Param("hundred", 100)),
 			))).
 			Select(Fieldf("n")).From(Tablef("tens"))
 		tt.wantQuery = "WITH RECURSIVE tens (n) AS (" +

@@ -51,7 +51,7 @@ func TestVariadicQuery(t *testing.T) {
 	t.Run("nested single variadic queries", func(t *testing.T) {
 		t.Parallel()
 		var tt TT
-		tt.item = Union(UnionAll(Intersect(IntersectAll(Except(ExceptAll(Queryf(dialect, "SELECT {}", 1)))))))
+		tt.item = Union(UnionAll(Intersect(IntersectAll(Except(ExceptAll(Queryf("SELECT {}", 1)))))))
 		tt.wantQuery = "SELECT ?"
 		tt.wantArgs = []interface{}{1}
 		assert(t, tt)
@@ -61,8 +61,8 @@ func TestVariadicQuery(t *testing.T) {
 		t.Parallel()
 		var tt TT
 		tt.item = Intersect(
-			Union(Union(Queryf(dialect, "SELECT {}", 1)), Queryf(dialect, "SELECT {}", "abc")),
-			Union(Queryf(dialect, "SELECT {}", 3.14)),
+			Union(Union(Queryf("SELECT {}", 1)), Queryf("SELECT {}", "abc")),
+			Union(Queryf("SELECT {}", 3.14)),
 		)
 		tt.wantQuery = "(SELECT ? UNION SELECT ?) INTERSECT SELECT ?"
 		tt.wantArgs = []interface{}{1, "abc", 3.14}
