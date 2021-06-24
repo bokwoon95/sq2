@@ -3,8 +3,6 @@ package sq
 import (
 	"bytes"
 	"testing"
-
-	"github.com/bokwoon95/testutil"
 )
 
 func Test_CustomField(t *testing.T) {
@@ -217,6 +215,7 @@ func Test_Fields(t *testing.T) {
 	}
 
 	t.Run("empty", func(t *testing.T) {
+		t.Parallel()
 		var tt TT
 		tt.item = Fields{}
 		tt.wantQuery = ""
@@ -225,6 +224,7 @@ func Test_Fields(t *testing.T) {
 	})
 
 	t.Run("Fields", func(t *testing.T) {
+		t.Parallel()
 		var tt TT
 		tt.item = Fields{USERS.USER_ID, nil, FieldValue(456)}
 		tt.wantQuery = "user_id, ?, ?"
@@ -233,19 +233,26 @@ func Test_Fields(t *testing.T) {
 	})
 
 	assertWithAlias := func(t *testing.T, fs Fields, tt TT) {
-		is := testutil.New(t, testutil.Parallel)
 		buf := bufpool.Get().(*bytes.Buffer)
 		defer func() {
 			buf.Reset()
 			bufpool.Put(buf)
 		}()
 		gotArgs, gotParams := []interface{}{}, map[string][]int{}
-		fs.AppendSQLExcludeWithAlias("", buf, &gotArgs, gotParams, tt.excludedTableQualifiers)
-		is.Equal(tt.wantQuery, buf.String())
-		is.Equal(tt.wantArgs, gotArgs)
+		err := fs.AppendSQLExcludeWithAlias("", buf, &gotArgs, gotParams, tt.excludedTableQualifiers)
+		if err != nil {
+			t.Fatal(testcallers(), err)
+		}
+		if diff := testdiff(tt.wantQuery, buf.String()); diff != "" {
+			t.Fatal(testcallers(), diff)
+		}
+		if diff := testdiff(tt.wantArgs, gotArgs); diff != "" {
+			t.Fatal(testcallers(), diff)
+		}
 	}
 
 	t.Run("Fields with alias", func(t *testing.T) {
+		t.Parallel()
 		var tt TT
 		fs := Fields{USERS.USER_ID.As("uid"), nil, FieldValue(456).As("some_number")}
 		tt.wantQuery = "user_id AS uid, ?, ? AS some_number"
