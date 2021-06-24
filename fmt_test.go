@@ -42,13 +42,13 @@ func Test_Fprintf(t *testing.T) {
 			t.Fatal(testcallers(), err)
 		}
 		if diff := testdiff(tt.wantQuery, buf.String()); diff != "" {
-			t.Fatal(testcallers(), diff)
+			t.Error(testcallers(), diff)
 		}
 		if diff := testdiff(tt.wantArgs, gotArgs); diff != "" {
-			t.Fatal(testcallers(), diff)
+			t.Error(testcallers(), diff)
 		}
 		if diff := testdiff(tt.wantParams, gotParams); diff != "" {
-			t.Fatal(testcallers(), diff)
+			t.Error(testcallers(), diff)
 		}
 	}
 
@@ -343,7 +343,7 @@ func Test_Sprintf(t *testing.T) {
 			t.Fatal(testcallers(), err)
 		}
 		if diff := testdiff(tt.wantString, gotString); diff != "" {
-			t.Fatal(testcallers(), diff)
+			t.Error(testcallers(), diff)
 		}
 	}
 
