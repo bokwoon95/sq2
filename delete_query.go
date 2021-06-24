@@ -108,7 +108,7 @@ func (q DeleteQuery) SetFetchableFields(fields []Field) (Query, error) {
 		q.ReturningFields = fields
 		return q, nil
 	default:
-		return nil, ErrUnsupported
+		return nil, fmt.Errorf("%s DELETE does not return any fields: %w", q.QueryDialect, ErrUnsupported)
 	}
 }
 

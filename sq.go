@@ -10,7 +10,17 @@ import (
 	"sync"
 )
 
-var ErrUnsupported = errors.New("unsupported operation")
+var unsupportedError = errors.New("unsupported operation")
+
+type UnsupportedError struct{}
+
+func (e UnsupportedError) Error() string { return unsupportedError.Error() }
+
+func (e UnsupportedError) Unwrap() error { return unsupportedError }
+
+func (e UnsupportedError) Is(target error) bool { return errors.Is(target, unsupportedError) }
+
+var ErrUnsupported = UnsupportedError{}
 
 var (
 	bufpool  = sync.Pool{New: func() interface{} { return new(bytes.Buffer) }}
