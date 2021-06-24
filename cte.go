@@ -244,7 +244,8 @@ func (ctes CTEs) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{
 				return fmt.Errorf("CTE #%d failed to build query: %w", i+1, err)
 			}
 		}
+		buf.WriteByte(')')
 	}
-	buf.WriteString(") ")
+	buf.WriteByte(' ')
 	return nil
 }
