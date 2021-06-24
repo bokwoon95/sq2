@@ -26,8 +26,6 @@ func (f CTEField) AppendSQLExclude(dialect string, buf *bytes.Buffer, args *[]in
 			tableQualifier = f.info.TableAlias
 		}
 		if f.stickyErr != nil {
-			// TODO: rethink stance about prefixing all errors with `sq:`. This makes it very verbose when cascading sticky errors because every error has an sq prefix.
-			// I see that sqlx does not do error prefixes, I think I shall remove them as well.
 			return fmt.Errorf("CTE field %s.%s invalid due to CTE error: %w", tableQualifier, f.info.FieldName, f.stickyErr)
 		} else {
 			return fmt.Errorf("CTE field %s.%s does not exist (available fields: %s)", tableQualifier, f.info.FieldName, strings.Join(f.fieldNames, ", "))
