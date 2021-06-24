@@ -72,9 +72,15 @@ func testcallers() string {
 		callsites = append(callsites, filepath.Base(frame.File)+":"+strconv.Itoa(frame.Line))
 	}
 	buf := &strings.Builder{}
-	for i := 1; i < len(callsites)-1; i++ {
-		buf.WriteString(callsites[i] + ":")
+	last := len(callsites) - 2
+	buf.WriteString("[")
+	for i := last; i >= 0; i-- {
+		if i < last {
+			buf.WriteString(" -> ")
+		}
+		buf.WriteString(callsites[i])
 	}
+	buf.WriteString("]")
 	return buf.String()
 }
 

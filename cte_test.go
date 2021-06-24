@@ -1,30 +1,24 @@
 package sq
 
 import (
-	"bytes"
+	"fmt"
 	"testing"
 )
 
 func TestCTE(t *testing.T) {
 	type TT struct {
-		item       Query
+		item       SQLAppender
 		wantQuery  string
 		wantArgs   []interface{}
 		wantParams map[string][]int
 	}
 
 	assert := func(t *testing.T, tt TT) {
-		buf := bufpool.Get().(*bytes.Buffer)
-		defer func() {
-			buf.Reset()
-			bufpool.Put(buf)
-		}()
-		gotArgs, gotParams := []interface{}{}, map[string][]int{}
-		err := tt.item.AppendSQL(tt.item.Dialect(), buf, &gotArgs, gotParams)
+		gotQuery, gotArgs, gotParams, err := ToSQL("", tt.item)
 		if err != nil {
 			t.Fatal(testcallers(), err)
 		}
-		if diff := testdiff(tt.wantQuery, buf.String()); diff != "" {
+		if diff := testdiff(tt.wantQuery, gotQuery); diff != "" {
 			t.Error(testcallers(), diff)
 		}
 		if diff := testdiff(tt.wantArgs, gotArgs); diff != "" {
@@ -69,7 +63,6 @@ func TestCTE(t *testing.T) {
 			" SELECT s.staff_id, s.first_name, s.last_name, cte.rental_count" +
 			" FROM staff AS s" +
 			" JOIN cte_rental AS cte ON cte.staff_id = s.staff_id"
-		tt.wantArgs = []interface{}{}
 		assert(t, tt)
 	})
 
@@ -92,4 +85,150 @@ func TestCTE(t *testing.T) {
 		tt.wantParams = map[string][]int{"ten": {0}, "hundred": {1}}
 		assert(t, tt)
 	})
+
+	t.Run("CTE no name", func(t *testing.T) {
+		t.Parallel()
+		var tt TT
+		tt.item = SQLite.SelectWith(NewCTE("", nil, nil)).Select(FieldLiteral("1"))
+		_, _, _, err := ToSQL("", tt.item)
+		if err == nil {
+			t.Fatal(testcallers(), "expected error but got nil")
+		}
+		fmt.Println(testcallers(), err.Error())
+	})
+
+	t.Run("CTE nil query", func(t *testing.T) {
+		t.Parallel()
+		var tt TT
+		tt.item = SQLite.SelectWith(NewCTE("my_cte", nil, nil)).
+			Select(FieldLiteral("1"))
+		_, _, _, err := ToSQL("", tt.item)
+		if err == nil {
+			t.Fatal(testcallers(), "expected error but got nil")
+		}
+		fmt.Println(testcallers(), err.Error())
+	})
+
+	t.Run("CTE query GetFetchableFields error", func(t *testing.T) {
+		t.Parallel()
+		var tt TT
+		tt.item = SQLite.SelectWith(NewCTE("my_cte", nil, Queryf("SELECT 1"))).
+			Select(FieldLiteral("1"))
+		_, _, _, err := ToSQL("", tt.item)
+		if err == nil {
+			t.Fatal(testcallers(), "expected error but got nil")
+		}
+		fmt.Println(testcallers(), err.Error())
+	})
+
+	t.Run("CTE query no fields", func(t *testing.T) {
+		t.Parallel()
+		var tt TT
+		tt.item = SQLite.SelectWith(NewCTE("my_cte", nil, SQLite.Select())).
+			Select(FieldLiteral("1"))
+		_, _, _, err := ToSQL("", tt.item)
+		if err == nil {
+			t.Fatal(testcallers(), "expected error but got nil")
+		}
+		fmt.Println(testcallers(), err.Error())
+	})
+
+	t.Run("CTE query field no name", func(t *testing.T) {
+		t.Parallel()
+		var tt TT
+		tt.item = SQLite.SelectWith(NewCTE("my_cte", nil, SQLite.Select(Fieldf("bruh")))).
+			Select(FieldLiteral("1"))
+		_, _, _, err := ToSQL("", tt.item)
+		if err == nil {
+			t.Fatal(testcallers(), "expected error but got nil")
+		}
+		fmt.Println(testcallers(), err.Error())
+	})
+
+	t.Run("empty CTE", func(t *testing.T) {
+		t.Parallel()
+		var tt TT
+		tt.item = CTE{}
+		_, _, _, err := ToSQL("", tt.item)
+		if err == nil {
+			t.Fatal(testcallers(), "expected error but got nil")
+		}
+		fmt.Println(testcallers(), err.Error())
+	})
+
+	t.Run("aliased CTE with stickyErr", func(t *testing.T) {
+		t.Parallel()
+		var tt TT
+		tt.item = NewCTE("", nil, nil).As("aliased_cte")
+		_, _, _, err := ToSQL("", tt.item)
+		if err == nil {
+			t.Fatal(testcallers(), "expected error but got nil")
+		}
+		fmt.Println(testcallers(), err.Error())
+	})
+
+	t.Run("aliased CTE with no name", func(t *testing.T) {
+		t.Parallel()
+		var tt TT
+		tt.item = CTE{}.As("aliased_cte")
+		_, _, _, err := ToSQL("", tt.item)
+		if err == nil {
+			t.Fatal(testcallers(), "expected error but got nil")
+		}
+		fmt.Println(testcallers(), err.Error())
+	})
+
+	t.Run("aliased CTE with no query", func(t *testing.T) {
+		t.Parallel()
+		var tt TT
+		tt.item = CTE{cteName: "cte"}.As("aliased_cte")
+		_, _, _, err := ToSQL("", tt.item)
+		if err == nil {
+			t.Fatal(testcallers(), "expected error but got nil")
+		}
+		fmt.Println(testcallers(), err.Error())
+	})
+
+	t.Run("aliased CTE with no fields", func(t *testing.T) {
+		t.Parallel()
+		var tt TT
+		tt.item = CTE{cteName: "cte", query: SQLite.Select()}.As("aliased_cte")
+		_, _, _, err := ToSQL("", tt.item)
+		if err == nil {
+			t.Fatal(testcallers(), "expected error but got nil")
+		}
+		fmt.Println(testcallers(), err.Error())
+	})
+
+	t.Run("CTEs, some with no name", func(t *testing.T) {
+		t.Parallel()
+		var tt TT
+		tt.item = CTEs{
+			NewCTE("cte", nil, SQLite.Select(FieldLiteral("1"))),
+			CTE{},
+			NewCTE("cte_2", nil, SQLite.Select(FieldLiteral("1"))),
+		}
+		_, _, _, err := ToSQL("", tt.item)
+		if err == nil {
+			t.Fatal(testcallers(), "expected error but got nil")
+		}
+		fmt.Println(testcallers(), err.Error())
+	})
+
+	t.Run("CTEs, some with no query", func(t *testing.T) {
+		t.Parallel()
+		var tt TT
+		tt.item = CTEs{
+			NewCTE("cte", nil, SQLite.Select(FieldLiteral("1"))),
+			CTE{cteName: "cte"},
+			NewCTE("cte_2", nil, SQLite.Select(FieldLiteral("1"))),
+		}
+		_, _, _, err := ToSQL("", tt.item)
+		if err == nil {
+			t.Fatal(testcallers(), "expected error but got nil")
+		}
+		fmt.Println(testcallers(), err.Error())
+	})
 }
+
+// TODO: I need a query whose methods AppendSQL will always throw an error

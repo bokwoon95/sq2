@@ -104,6 +104,9 @@ func (cte CTE) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{},
 	if cte.stickyErr != nil {
 		return cte.stickyErr
 	}
+	if cte.cteName == "" {
+		return fmt.Errorf("CTE has no name")
+	}
 	buf.WriteString(cte.cteName)
 	return nil
 }
@@ -136,7 +139,7 @@ func newCTE(recursive bool, name string, columns []string, query Query) CTE {
 	if len(cte.fieldNames) == 0 {
 		fields, err := query.GetFetchableFields()
 		if err != nil {
-			cte.stickyErr = err
+			cte.stickyErr = fmt.Errorf("CTE %s failed to fetch query fields: %w", cte.cteName, err)
 			return cte
 		}
 		if len(fields) == 0 {
@@ -214,6 +217,9 @@ func (ctes CTEs) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{
 	for i, cte := range ctes {
 		if i > 0 {
 			buf.WriteString(", ")
+		}
+		if cte.stickyErr != nil {
+			return cte.stickyErr
 		}
 		if cte.cteName == "" {
 			return fmt.Errorf("CTE #%d has no name", i+1)
