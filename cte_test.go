@@ -7,10 +7,11 @@ import (
 
 func TestCTE(t *testing.T) {
 	type TT struct {
-		dialect   string
-		item      SQLAppender
-		wantQuery string
-		wantArgs  []interface{}
+		dialect    string
+		item       SQLAppender
+		wantQuery  string
+		wantArgs   []interface{}
+		wantParams map[string][]int
 	}
 
 	assert := func(t *testing.T, tt TT) {
@@ -29,6 +30,11 @@ func TestCTE(t *testing.T) {
 		}
 		if diff := testdiff(tt.wantArgs, gotArgs); diff != "" {
 			t.Error(testcallers(), diff)
+		}
+		if tt.wantParams != nil {
+			if diff := testdiff(tt.wantParams, gotParams); diff != "" {
+				t.Error(testcallers(), diff)
+			}
 		}
 	}
 
@@ -65,6 +71,27 @@ func TestCTE(t *testing.T) {
 			" FROM staff AS s" +
 			" JOIN cte_rental AS cte ON cte.staff_id = s.staff_id"
 		tt.wantArgs = []interface{}{}
+		assert(t, tt)
+	})
+
+	t.Run("recursive CTE", func(t *testing.T) {
+		t.Parallel()
+		var tt TT
+		tt.dialect = DialectSQLite
+		tt.item = SQLite.
+			SelectWith(NewRecursiveCTE("tens", []string{"n"}, UnionAll(
+				SQLite.Queryf("SELECT {ten}", Param("ten", 10)),
+				SQLite.Queryf("SELECT tens.n FROM tens WHERE tens.n + {ten} <= {hundred}", Param("ten", 10), Param("hundred", 100)),
+			))).
+			Select(Fieldf("n")).From(Tablef("tens"))
+		tt.wantQuery = "WITH RECURSIVE tens (n) AS (" +
+			"SELECT $1" +
+			" UNION ALL" +
+			" SELECT tens.n FROM tens WHERE tens.n + $1 <= $2" +
+			")" +
+			" SELECT n FROM tens"
+		tt.wantArgs = []interface{}{10, 100}
+		tt.wantParams = map[string][]int{"ten": {0}, "hundred": {1}}
 		assert(t, tt)
 	})
 }

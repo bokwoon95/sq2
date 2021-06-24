@@ -6,13 +6,19 @@ import (
 
 func NEW_ACTOR(dialect, alias string) ACTOR {
 	var tbl ACTOR
+	tbl.TableInfo = sq.TableInfo{TableName: "actor", TableAlias: alias}
 	switch dialect {
 	case sq.DialectPostgres:
 		tbl.TableInfo.TableSchema = "public"
 	case sq.DialectMySQL:
 		tbl.TableInfo.TableSchema = "db"
 	}
-	_ = sq.ReflectTable(&tbl, alias)
+	tbl.ACTOR_ID = sq.NewNumberField("actor_id", tbl.TableInfo)
+	tbl.FIRST_NAME = sq.NewStringField("first_name", tbl.TableInfo)
+	tbl.LAST_NAME = sq.NewStringField("last_name", tbl.TableInfo)
+	tbl.FULL_NAME = sq.NewStringField("full_name", tbl.TableInfo)
+	tbl.FULL_NAME_REVERSED = sq.NewStringField("full_name_reversed", tbl.TableInfo)
+	tbl.LAST_UPDATE = sq.NewTimeField("last_update", tbl.TableInfo)
 	return tbl
 }
 

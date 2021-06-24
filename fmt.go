@@ -462,17 +462,6 @@ func Queryf(dialect string, format string, values ...interface{}) Query {
 	}
 }
 
-func (q customQuery) ToSQL() (query string, args []interface{}, params map[string][]int, err error) {
-	buf := bufpool.Get().(*bytes.Buffer)
-	defer func() {
-		buf.Reset()
-		bufpool.Put(buf)
-	}()
-	params = make(map[string][]int)
-	err = q.AppendSQL(q.dialect, buf, &args, params)
-	return buf.String(), args, params, err
-}
-
 func (q customQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
 	return BufferPrintf(dialect, buf, args, params, nil, q.format, q.values)
 }
@@ -486,3 +475,15 @@ func (q customQuery) GetFetchableFields() ([]Field, error) {
 }
 
 func (q customQuery) Dialect() string { return q.dialect }
+
+func (d SQLiteDialect) Queryf(format string, values ...interface{}) Query {
+	return Queryf(DialectSQLite, format, values...)
+}
+
+func (d PostgresDialect) Queryf(format string, values ...interface{}) Query {
+	return Queryf(DialectPostgres, format, values...)
+}
+
+func (d MySQLDialect) Queryf(format string, values ...interface{}) Query {
+	return Queryf(DialectMySQL, format, values...)
+}
