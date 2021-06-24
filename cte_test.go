@@ -69,19 +69,24 @@ func TestCTE(t *testing.T) {
 		t.Parallel()
 		var tt TT
 		tt.item = SQLite.
-			SelectWith(NewRecursiveCTE("tens", []string{"n"}, UnionAll(
-				Queryf("SELECT {ten}", Param("ten", 10)),
-				Queryf("SELECT tens.n FROM tens WHERE tens.n + {ten} <= {hundred}", Param("ten", 10), Param("hundred", 100)),
-			))).
+			SelectWith(
+				NewCTE("cte_1", nil, SQLite.Select(FieldValue(1).As("some_number"))),
+				NewRecursiveCTE("tens", []string{"n"}, UnionAll(
+					Queryf("SELECT {ten}", Param("ten", 10)),
+					Queryf("SELECT tens.n FROM tens WHERE tens.n + {ten} <= {hundred}", Param("ten", 10), Param("hundred", 100)),
+				)),
+			).
 			Select(Fieldf("n")).From(Tablef("tens"))
-		tt.wantQuery = "WITH RECURSIVE tens (n) AS (" +
-			"SELECT $1" +
+		tt.wantQuery = "WITH RECURSIVE" +
+			" cte_1 AS (SELECT $1 AS some_number)" +
+			", tens (n) AS (" +
+			"SELECT $2" +
 			" UNION ALL" +
-			" SELECT tens.n FROM tens WHERE tens.n + $1 <= $2" +
+			" SELECT tens.n FROM tens WHERE tens.n + $2 <= $3" +
 			")" +
 			" SELECT n FROM tens"
-		tt.wantArgs = []interface{}{10, 100}
-		tt.wantParams = map[string][]int{"ten": {0}, "hundred": {1}}
+		tt.wantArgs = []interface{}{1, 10, 100}
+		tt.wantParams = map[string][]int{"ten": {1}, "hundred": {2}}
 		assert(t, tt)
 	})
 
@@ -259,5 +264,3 @@ func TestCTE(t *testing.T) {
 		fmt.Println(testcallers(), err.Error())
 	})
 }
-
-// TODO: I need a query whose methods AppendSQL will always throw an error
