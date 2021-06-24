@@ -33,29 +33,6 @@ TODO: currently for some dialect-specific features I'm just ignoring and moving 
 Put more succinctly: is there ever a case where the user has to convert a query from one dialect to another in a generic way? What is the context surrounding that? Because if I silently truncate some stuff (like the RETURNING clause), will the query still work fine in that context?
 I have decided: try to silently accomodate as much as possible, and do not enforce SQL semantics.
 
-Don't call it NewDB, call it Wrap(Queryer) Queryer. So users will no longer be able to call concrete methods on the DB, basically they can only make it do things through Fetch and Exec.
-God but all this interface wrapping and unwrapping, won't it be unperformant though?
-
-All this could be solved if I created a separate struct just to hold sq-specific config like loggers and hooks. The user can provide it if they want or they can just pass nil. The upside is that they can now use *sql.DB, *sql.Tx, *sql.Conn, *sql.Stmt in its full glory without wrapping it in some iffy extension interface.
-
-FetchContext(ctx, db, sq.SQLite.
-    From(),
-    rowMapper,
-)
-
-// how is this better though? The user can still forget to pass in the config struct, causing all the loggers and triggers to go to waste.
-// maybe it's just time to embrace the fact that sq triggers will not be reliable enough to enforce database-level constraints, like temporal table filters.
-FetchContext(ctx, db, nil, sq.SQLite.
-    From(),
-    rowMapper,
-)
-There -is- an alternative way... all Fetch and Exec now take in an *sq.DB, instead of a Queryer.
-    The one thing that would make this more palatable is if Fetch and Exec could be re-implemented by external packages i.e. only depedendent on exported functions and types.
-    So if you wanted a Fetch that only takes in an *sql.DB you can rewrite it yourself
-    ^ yes... I think this is the way
-
-The only downside is if you modify the SELECTed column list before it hits the database, then whatever comes back will most likely cause the rowmapper to panic.
-
 sq README needs a FAQ section, just like how Maddy mail server does. I naturally gravitaed towards the FAQ link in order to learn more about maddy, and was able to learn so much it just from reading the FAQ alone.
 
 row.Close() instead of row.Return() or row.Exit() with runtime.Goexit() shenanigans, because row.Close() can be orthogonal across Fetch, FetchOne and FetchSlice.
