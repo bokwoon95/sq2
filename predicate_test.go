@@ -3,8 +3,6 @@ package sq
 import (
 	"bytes"
 	"testing"
-
-	"github.com/bokwoon95/testutil"
 )
 
 func TestVariadicPredicate(t *testing.T) {
@@ -31,7 +29,6 @@ func TestVariadicPredicate(t *testing.T) {
 	}
 
 	assert := func(t *testing.T, tt TT) {
-		is := testutil.New(t, testutil.Parallel)
 		buf := bufpool.Get().(*bytes.Buffer)
 		defer func() {
 			buf.Reset()
@@ -39,13 +36,18 @@ func TestVariadicPredicate(t *testing.T) {
 		}()
 		gotArgs, gotParams := []interface{}{}, map[string][]int{}
 		err := tt.predicate.AppendSQLExclude(tt.dialect, buf, &gotArgs, gotParams, tt.excludedTableQualifiers)
-		is.NoErr(err)
-		is.Equal(tt.wantQuery, buf.String())
-		is.Equal(tt.wantArgs, gotArgs)
+		if err != nil {
+			t.Fatal(testcallers(), err)
+		}
+		if diff := testdiff(tt.wantQuery, buf.String()); diff != "" {
+			t.Error(testcallers(), diff)
+		}
+		if diff := testdiff(tt.wantArgs, gotArgs); diff != "" {
+			t.Error(testcallers(), diff)
+		}
 	}
 
 	assertError := func(t *testing.T, tt TT) {
-		is := testutil.New(t, testutil.Parallel)
 		buf := bufpool.Get().(*bytes.Buffer)
 		defer func() {
 			buf.Reset()
@@ -53,10 +55,13 @@ func TestVariadicPredicate(t *testing.T) {
 		}()
 		gotArgs, params := []interface{}{}, map[string][]int{}
 		err := tt.predicate.AppendSQLExclude(tt.dialect, buf, &gotArgs, params, tt.excludedTableQualifiers)
-		is.True(err != nil)
+		if err == nil {
+			t.Fatal(testcallers(), "expected error but got nil")
+		}
 	}
 
 	t.Run("empty", func(t *testing.T) {
+		t.Parallel()
 		var tt TT
 		tt.predicate = VariadicPredicate{}
 		tt.wantArgs = []interface{}{}
@@ -64,12 +69,14 @@ func TestVariadicPredicate(t *testing.T) {
 	})
 
 	t.Run("nil predicate", func(t *testing.T) {
+		t.Parallel()
 		var tt TT
 		tt.predicate = And(Predicate(nil))
 		assertError(t, tt)
 	})
 
 	t.Run("1 predicate", func(t *testing.T) {
+		t.Parallel()
 		var tt TT
 		tt.predicate = And(Not(Eq(USERS.NAME, 21)))
 		tt.wantQuery = "NOT name = ?"
@@ -78,6 +85,7 @@ func TestVariadicPredicate(t *testing.T) {
 	})
 
 	t.Run("nested variadic predicate", func(t *testing.T) {
+		t.Parallel()
 		var tt TT
 		tt.predicate = And(And(And(And(Eq(USERS.NAME, 21)))))
 		tt.wantQuery = "(name = ?)"
@@ -86,6 +94,7 @@ func TestVariadicPredicate(t *testing.T) {
 	})
 
 	t.Run("multiple predicates", func(t *testing.T) {
+		t.Parallel()
 		var tt TT
 		tt.predicate = Or(
 			IsNull(USERS.NAME),
@@ -118,6 +127,7 @@ func TestVariadicPredicate(t *testing.T) {
 	})
 
 	t.Run("multiple predicates with nil", func(t *testing.T) {
+		t.Parallel()
 		var tt TT
 		tt.predicate = Or(
 			Predicate(nil),
