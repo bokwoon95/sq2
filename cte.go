@@ -224,7 +224,7 @@ func (ctes CTEs) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{
 		buf.WriteString(" AS (")
 		switch query := cte.query.(type) {
 		case nil:
-			return fmt.Errorf("sq: CTE #%d has no query", i+1)
+			return fmt.Errorf("sq: CTE #%d query is nil", i+1)
 		case VariadicQuery:
 			query.TopLevel = true
 			err := query.AppendSQL(dialect, buf, args, params)

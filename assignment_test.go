@@ -3,8 +3,6 @@ package sq
 import (
 	"bytes"
 	"testing"
-
-	"github.com/bokwoon95/testutil"
 )
 
 func Test_Assignment(t *testing.T) {
@@ -31,7 +29,6 @@ func Test_Assignment(t *testing.T) {
 	}
 
 	assert := func(t *testing.T, tt TT) {
-		is := testutil.New(t, testutil.Parallel)
 		buf := bufpool.Get().(*bytes.Buffer)
 		defer func() {
 			buf.Reset()
@@ -39,9 +36,15 @@ func Test_Assignment(t *testing.T) {
 		}()
 		gotArgs, gotParams := []interface{}{}, map[string][]int{}
 		err := tt.item.AppendSQLExclude(tt.dialect, buf, &gotArgs, gotParams, tt.excludedTableQualifiers)
-		is.NoErr(err)
-		is.Equal(tt.wantQuery, buf.String())
-		is.Equal(tt.wantArgs, gotArgs)
+		if err != nil {
+			t.Fatal(testcallers(), err)
+		}
+		if diff := testdiff(tt.wantQuery, buf.String()); diff != "" {
+			t.Fatal(testcallers(), diff)
+		}
+		if diff := testdiff(tt.wantArgs, gotArgs); diff != "" {
+			t.Fatal(testcallers(), diff)
+		}
 	}
 
 	t.Run("field assign field", func(t *testing.T) {
@@ -111,7 +114,6 @@ func Test_Assignments(t *testing.T) {
 	}
 
 	assert := func(t *testing.T, tt TT) {
-		is := testutil.New(t, testutil.Parallel)
 		buf := bufpool.Get().(*bytes.Buffer)
 		defer func() {
 			buf.Reset()
@@ -119,9 +121,15 @@ func Test_Assignments(t *testing.T) {
 		}()
 		gotArgs, gotParams := []interface{}{}, map[string][]int{}
 		err := tt.item.AppendSQLExclude(tt.dialect, buf, &gotArgs, gotParams, tt.excludedTableQualifiers)
-		is.NoErr(err)
-		is.Equal(tt.wantQuery, buf.String())
-		is.Equal(tt.wantArgs, gotArgs)
+		if err != nil {
+			t.Fatal(testcallers(), err)
+		}
+		if diff := testdiff(tt.wantQuery, buf.String()); diff != "" {
+			t.Fatal(testcallers(), diff)
+		}
+		if diff := testdiff(tt.wantArgs, gotArgs); diff != "" {
+			t.Fatal(testcallers(), diff)
+		}
 	}
 
 	t.Run("multiple assignments", func(t *testing.T) {
