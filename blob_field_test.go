@@ -3,8 +3,6 @@ package sq
 import (
 	"bytes"
 	"testing"
-
-	"github.com/bokwoon95/testutil"
 )
 
 func Test_BlobField(t *testing.T) {
@@ -17,7 +15,6 @@ func Test_BlobField(t *testing.T) {
 	}
 
 	assert := func(t *testing.T, tt TT) {
-		is := testutil.New(t, testutil.Parallel)
 		buf := bufpool.Get().(*bytes.Buffer)
 		defer func() {
 			buf.Reset()
@@ -25,8 +22,15 @@ func Test_BlobField(t *testing.T) {
 		}()
 		gotArgs, gotParams := []interface{}{}, map[string][]int{}
 		err := tt.item.AppendSQLExclude(tt.dialect, buf, &gotArgs, gotParams, tt.excludedTableQualifiers)
-		is.NoErr(err)
-		is.Equal(tt.wantQuery, buf.String())
+		if err != nil {
+			t.Fatal(testcallers(), err)
+		}
+		if diff := testdiff(tt.wantQuery, buf.String()); diff != "" {
+			t.Fatal(testcallers(), diff)
+		}
+		if diff := testdiff(tt.wantArgs, gotArgs); diff != "" {
+			t.Fatal(testcallers(), diff)
+		}
 	}
 
 	t.Run("BlobField", func(t *testing.T) {
@@ -82,7 +86,7 @@ func Test_BlobField(t *testing.T) {
 		tt.item = NewBlobField("field", TableInfo{TableName: "tbl"}).SetBlob([]byte{'a', 'b', 'c', 'd'})
 		tt.excludedTableQualifiers = []string{"tbl"}
 		tt.wantQuery = "field = ?"
-		tt.wantArgs = []interface{}{'a', 'b', 'c', 'd'}
+		tt.wantArgs = []interface{}{[]byte{'a', 'b', 'c', 'd'}}
 		assert(t, tt)
 	})
 }

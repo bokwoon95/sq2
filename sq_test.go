@@ -54,7 +54,7 @@ func (f tmpfield) AppendSQLExclude(dialect string, buf *bytes.Buffer, args *[]in
 func testdiff(lhs, rhs interface{}) string {
 	diff := cmp.Diff(lhs, rhs, cmp.Exporter(func(typ reflect.Type) bool { return true }))
 	if diff != "" {
-		return "\n -lhs +rhs\n" + diff
+		return "\n-lhs +rhs\n" + diff
 	}
 	return ""
 }
@@ -65,7 +65,7 @@ func testcallers() string {
 	// and runtime.Callers itself.
 	n := runtime.Callers(2, pc[:])
 	if n == 0 {
-		panic("testutil: zero callers found")
+		panic("zero callers found")
 	}
 	var callsites []string
 	frames := runtime.CallersFrames(pc[:n])
