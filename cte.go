@@ -117,6 +117,7 @@ func NewRecursiveCTE(name string, columns []string, query Query) CTE {
 func newCTE(recursive bool, name string, columns []string, query Query) CTE {
 	cte := CTE{
 		query:           query,
+		isRecursive:     recursive,
 		cteName:         name,
 		explicitColumns: len(columns) > 0,
 		fieldNames:      columns,
