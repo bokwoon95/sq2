@@ -198,7 +198,6 @@ type Table struct {
 	Columns          []Column
 	Constraints      []Constraint
 	Indices          []Index
-	Modifiers        string
 	VirtualTable     string
 	VirtualTableArgs []string
 	columnsCache     map[string]int
@@ -324,7 +323,6 @@ type Column struct {
 	GeneratedExprStored      bool
 	CollationName            string
 	ColumnDefault            string
-	Modifiers                string
 	Ignore                   bool
 }
 
