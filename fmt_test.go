@@ -4,8 +4,6 @@ import (
 	"bytes"
 	"database/sql"
 	"testing"
-
-	"github.com/bokwoon95/testutil"
 )
 
 func Test_Fprintf(t *testing.T) {
@@ -33,7 +31,6 @@ func Test_Fprintf(t *testing.T) {
 	}
 
 	assert := func(t *testing.T, tt TT) {
-		is := testutil.New(t, testutil.Parallel)
 		buf := bufpool.Get().(*bytes.Buffer)
 		defer func() {
 			buf.Reset()
@@ -41,13 +38,22 @@ func Test_Fprintf(t *testing.T) {
 		}()
 		gotArgs, gotParams := []interface{}{}, map[string][]int{}
 		err := BufferPrintf(tt.dialect, buf, &gotArgs, gotParams, nil, tt.format, tt.values)
-		is.NoErr(err)
-		is.Equal(tt.wantQuery, buf.String())
-		is.Equal(tt.wantArgs, gotArgs)
-		is.Equal(tt.wantParams, gotParams)
+		if err != nil {
+			t.Fatal(testcallers(), err)
+		}
+		if diff := testdiff(tt.wantQuery, buf.String()); diff != "" {
+			t.Fatal(testcallers(), diff)
+		}
+		if diff := testdiff(tt.wantArgs, gotArgs); diff != "" {
+			t.Fatal(testcallers(), diff)
+		}
+		if diff := testdiff(tt.wantParams, gotParams); diff != "" {
+			t.Fatal(testcallers(), diff)
+		}
 	}
 
 	t.Run("empty", func(t *testing.T) {
+		t.Parallel()
 		var tt TT
 		tt.wantArgs = []interface{}{}
 		tt.wantParams = map[string][]int{}
@@ -55,6 +61,7 @@ func Test_Fprintf(t *testing.T) {
 	})
 
 	t.Run("escape curly bracket", func(t *testing.T) {
+		t.Parallel()
 		var tt TT
 		tt.format = "SELECT {} = '\\{}'"
 		tt.values = []interface{}{"{}"}
@@ -65,6 +72,7 @@ func Test_Fprintf(t *testing.T) {
 	})
 
 	t.Run("expr", func(t *testing.T) {
+		t.Parallel()
 		var tt TT
 		tt.format = "(MAX(AVG({avg1}), AVG({avg2}), SUM({sum})) + {incr}) IN ({slice})"
 		tt.values = []interface{}{
@@ -81,6 +89,7 @@ func Test_Fprintf(t *testing.T) {
 	})
 
 	t.Run("mysql anonymous", func(t *testing.T) {
+		t.Parallel()
 		var tt TT
 		tt.dialect = DialectMySQL
 		tt.format = "SELECT {} FROM {} WHERE {} = {} AND {} <> {} AND {} IN ({})"
@@ -92,6 +101,7 @@ func Test_Fprintf(t *testing.T) {
 	})
 
 	t.Run("mysql ordinal", func(t *testing.T) {
+		t.Parallel()
 		var tt TT
 		tt.dialect = DialectMySQL
 		tt.format = "SELECT {} FROM {} WHERE {} = {5} AND {} <> {5} AND {1} IN ({6})"
@@ -103,6 +113,7 @@ func Test_Fprintf(t *testing.T) {
 	})
 
 	t.Run("mysql Param", func(t *testing.T) {
+		t.Parallel()
 		var tt TT
 		tt.dialect = DialectMySQL
 		tt.format = "SELECT {} FROM {} WHERE {3} = {age} AND {3} > {age} AND {4} <> {email} AND {1} IN ({names})"
@@ -114,16 +125,19 @@ func Test_Fprintf(t *testing.T) {
 	})
 
 	t.Run("mysql sql.Named", func(t *testing.T) {
+		t.Parallel()
 		var tt TT
 		tt.dialect = DialectMySQL
 		tt.format = "SELECT {} FROM {} WHERE {3} = {age} AND {3} > {age} AND {4} <> {email}"
 		tt.values = []interface{}{USERS.NAME, USERS, USERS.AGE, USERS.EMAIL, sql.Named("email", "bob@email.com"), sql.Named("age", 5)}
 		err := BufferPrintf(tt.dialect, new(bytes.Buffer), new([]interface{}), make(map[string][]int), nil, tt.format, tt.values)
-		is := testutil.New(t)
-		is.True(err != nil)
+		if err == nil {
+			t.Error(testcallers(), "expected error but got nil")
+		}
 	})
 
 	t.Run("postgres anonymous", func(t *testing.T) {
+		t.Parallel()
 		var tt TT
 		tt.dialect = DialectPostgres
 		tt.format = "SELECT {} FROM {} WHERE {} = {} AND {} <> {} AND {} IN ({})"
@@ -135,6 +149,7 @@ func Test_Fprintf(t *testing.T) {
 	})
 
 	t.Run("postgres ordinal", func(t *testing.T) {
+		t.Parallel()
 		var tt TT
 		tt.dialect = DialectPostgres
 		tt.format = "SELECT {} FROM {} WHERE {} = {5} AND {} <> {5} AND {1} IN ({6}) AND {4} IN ({6})"
@@ -146,6 +161,7 @@ func Test_Fprintf(t *testing.T) {
 	})
 
 	t.Run("postgres Param", func(t *testing.T) {
+		t.Parallel()
 		var tt TT
 		tt.dialect = DialectPostgres
 		tt.format = "SELECT {} FROM {} WHERE {3} = {age} AND {3} > {age} AND {4} <> {email} AND {1} IN ({names}) AND {4} IN ({names})"
@@ -157,16 +173,19 @@ func Test_Fprintf(t *testing.T) {
 	})
 
 	t.Run("postgres sql.Named", func(t *testing.T) {
+		t.Parallel()
 		var tt TT
 		tt.dialect = DialectPostgres
 		tt.format = "SELECT {} FROM {} WHERE {3} = {age} AND {3} > {age} AND {4} <> {email}"
 		tt.values = []interface{}{USERS.NAME, USERS, USERS.AGE, USERS.EMAIL, sql.Named("email", "bob@email.com"), sql.Named("age", 5)}
 		err := BufferPrintf(tt.dialect, new(bytes.Buffer), new([]interface{}), make(map[string][]int), nil, tt.format, tt.values)
-		is := testutil.New(t)
-		is.True(err != nil)
+		if err == nil {
+			t.Error(testcallers(), "expected error but got nil")
+		}
 	})
 
 	t.Run("sqlite anonymous", func(t *testing.T) {
+		t.Parallel()
 		var tt TT
 		tt.dialect = DialectSQLite
 		tt.format = "SELECT {} FROM {} WHERE {} = {} AND {} <> {} AND {} IN ({})"
@@ -178,6 +197,7 @@ func Test_Fprintf(t *testing.T) {
 	})
 
 	t.Run("sqlite ordinal", func(t *testing.T) {
+		t.Parallel()
 		var tt TT
 		tt.dialect = DialectSQLite
 		tt.format = "SELECT {} FROM {} WHERE {} = {5} AND {} <> {5} AND {1} IN ({6}) AND {4} IN ({6})"
@@ -189,6 +209,7 @@ func Test_Fprintf(t *testing.T) {
 	})
 
 	t.Run("sqlite Param", func(t *testing.T) {
+		t.Parallel()
 		var tt TT
 		tt.dialect = DialectSQLite
 		tt.format = "SELECT {} FROM {} WHERE {3} = {age} AND {3} > {age} AND {4} <> {email} AND {1} IN ({names}) AND {4} IN ({names})"
@@ -200,6 +221,7 @@ func Test_Fprintf(t *testing.T) {
 	})
 
 	t.Run("sqlite sql.Named", func(t *testing.T) {
+		t.Parallel()
 		var tt TT
 		tt.dialect = DialectSQLite
 		tt.format = "SELECT {} FROM {} WHERE {3} = {age} AND {3} > {age} AND {4} <> {email}"
@@ -211,6 +233,7 @@ func Test_Fprintf(t *testing.T) {
 	})
 
 	t.Run("sqlite mixing sql.Named and sq.Param", func(t *testing.T) {
+		t.Parallel()
 		var tt TT
 		tt.dialect = DialectSQLite
 		tt.format = "SELECT {} FROM {} WHERE {3} = {age} AND {3} > {age} AND {4} <> {email}"
@@ -222,6 +245,7 @@ func Test_Fprintf(t *testing.T) {
 	})
 
 	t.Run("sqlite mixing sql.Named and sq.Param", func(t *testing.T) {
+		t.Parallel()
 		var tt TT
 		tt.dialect = DialectSQLite
 		tt.format = "SELECT {} FROM {} WHERE {4} <> {email} AND {3} = {age} AND {3} > {age}"
@@ -233,6 +257,7 @@ func Test_Fprintf(t *testing.T) {
 	})
 
 	t.Run("mssql anonymous", func(t *testing.T) {
+		t.Parallel()
 		var tt TT
 		tt.dialect = DialectSQLServer
 		tt.format = "SELECT {} FROM {} WHERE {} = {} AND {} <> {} AND {} IN ({})"
@@ -244,6 +269,7 @@ func Test_Fprintf(t *testing.T) {
 	})
 
 	t.Run("mssql ordinal", func(t *testing.T) {
+		t.Parallel()
 		var tt TT
 		tt.dialect = DialectSQLServer
 		tt.format = "SELECT {} FROM {} WHERE {} = {5} AND {} <> {5} AND {1} IN ({6}) AND {4} IN ({6})"
@@ -255,6 +281,7 @@ func Test_Fprintf(t *testing.T) {
 	})
 
 	t.Run("MSSQL Param", func(t *testing.T) {
+		t.Parallel()
 		var tt TT
 		tt.dialect = DialectSQLServer
 		tt.format = "SELECT {} FROM {} WHERE {3} = {age} AND {3} > {age} AND {4} <> {email} AND {1} IN ({names}) AND {4} IN ({names})"
@@ -266,6 +293,7 @@ func Test_Fprintf(t *testing.T) {
 	})
 
 	t.Run("MSSQL sql.Named", func(t *testing.T) {
+		t.Parallel()
 		var tt TT
 		tt.dialect = DialectSQLServer
 		tt.format = "SELECT {} FROM {} WHERE {3} = {age} AND {3} > {age} AND {4} <> {email}"
@@ -277,6 +305,7 @@ func Test_Fprintf(t *testing.T) {
 	})
 
 	t.Run("MSSQL mixing sql.Named and sq.Param", func(t *testing.T) {
+		t.Parallel()
 		var tt TT
 		tt.dialect = DialectSQLServer
 		tt.format = "SELECT {} FROM {} WHERE {3} = {age} AND {3} > {age} AND {4} <> {email}"
@@ -288,6 +317,7 @@ func Test_Fprintf(t *testing.T) {
 	})
 
 	t.Run("MSSQL mixing sql.Named and sq.Param", func(t *testing.T) {
+		t.Parallel()
 		var tt TT
 		tt.dialect = DialectSQLServer
 		tt.format = "SELECT {} FROM {} WHERE {4} <> {email} AND {3} = {age} AND {3} > {age}"
@@ -308,13 +338,17 @@ func Test_Sprintf(t *testing.T) {
 	}
 
 	assert := func(t *testing.T, tt TT) {
-		is := testutil.New(t, testutil.Parallel)
 		gotString, err := Sprintf(tt.dialect, tt.query, tt.args)
-		is.NoErr(err)
-		is.Equal(tt.wantString, gotString)
+		if err != nil {
+			t.Fatal(testcallers(), err)
+		}
+		if diff := testdiff(tt.wantString, gotString); diff != "" {
+			t.Fatal(testcallers(), diff)
+		}
 	}
 
 	t.Run("empty", func(t *testing.T) {
+		t.Parallel()
 		var tt TT
 		tt.dialect = ""
 		tt.query = ""
@@ -324,6 +358,7 @@ func Test_Sprintf(t *testing.T) {
 	})
 
 	t.Run("insideString, insideIdentifier and escaping single quotes", func(t *testing.T) {
+		t.Parallel()
 		var tt TT
 		tt.dialect = ""
 		tt.query = `SELECT ?` +
@@ -345,6 +380,7 @@ func Test_Sprintf(t *testing.T) {
 	})
 
 	t.Run("mysql", func(t *testing.T) {
+		t.Parallel()
 		var tt TT
 		tt.dialect = DialectMySQL
 		tt.query = "SELECT name FROM users WHERE age = ? AND email <> ? AND name IN (?, ?, ?)"
@@ -354,6 +390,7 @@ func Test_Sprintf(t *testing.T) {
 	})
 
 	t.Run("mysql insideString", func(t *testing.T) {
+		t.Parallel()
 		var tt TT
 		tt.dialect = DialectMySQL
 		tt.query = "SELECT name FROM users WHERE age = ? AND email <> '? ? ? ? ''bruh ?' AND name IN (?, ?) ?"
@@ -363,6 +400,7 @@ func Test_Sprintf(t *testing.T) {
 	})
 
 	t.Run("omitted dialect insideString", func(t *testing.T) {
+		t.Parallel()
 		var tt TT
 		tt.dialect = ""
 		tt.query = "SELECT name FROM users WHERE age = ? AND email <> '? ? ? ? ''bruh ?' AND name IN (?, ?) ?"
@@ -372,6 +410,7 @@ func Test_Sprintf(t *testing.T) {
 	})
 
 	t.Run("postgres", func(t *testing.T) {
+		t.Parallel()
 		var tt TT
 		tt.dialect = DialectPostgres
 		tt.query = "SELECT name FROM users WHERE age = $1 AND email <> $2 AND name IN ($2, $3, $4, $1)"
@@ -381,6 +420,7 @@ func Test_Sprintf(t *testing.T) {
 	})
 
 	t.Run("postgres insideString", func(t *testing.T) {
+		t.Parallel()
 		var tt TT
 		tt.dialect = DialectPostgres
 		tt.query = "SELECT name FROM users WHERE age = $1 AND email <> '$2 $2 $3 $4 ''bruh $1' AND name IN ($2, $3) $4"
@@ -390,6 +430,7 @@ func Test_Sprintf(t *testing.T) {
 	})
 
 	t.Run("sqlite", func(t *testing.T) {
+		t.Parallel()
 		var tt TT
 		tt.dialect = DialectSQLite
 		tt.query = "SELECT name FROM users WHERE age = $1 AND email <> $2 AND name IN ($2, $3, $4, $1)"
@@ -399,6 +440,7 @@ func Test_Sprintf(t *testing.T) {
 	})
 
 	t.Run("sqlite insideString", func(t *testing.T) {
+		t.Parallel()
 		var tt TT
 		tt.dialect = DialectSQLite
 		tt.query = "SELECT name FROM users WHERE age = $1 AND email <> '$2 $2 $3 $4 ''bruh $1' AND name IN ($2, $3) $4"
@@ -408,6 +450,7 @@ func Test_Sprintf(t *testing.T) {
 	})
 
 	t.Run("sqlite mixing ordinal param and named param", func(t *testing.T) {
+		t.Parallel()
 		var tt TT
 		tt.dialect = DialectSQLite
 		tt.query = "SELECT name FROM users WHERE age = $age AND age > $1 AND email <> $email"
@@ -417,6 +460,7 @@ func Test_Sprintf(t *testing.T) {
 	})
 
 	t.Run("sqlite supports everything", func(t *testing.T) {
+		t.Parallel()
 		var tt TT
 		tt.dialect = DialectSQLite
 		tt.query = "SELECT name FROM users WHERE age = ?age AND email <> :email AND name IN (@3, ?4, $5, :5) ? ?"
