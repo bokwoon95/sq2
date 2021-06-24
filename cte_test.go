@@ -3,8 +3,6 @@ package sq
 import (
 	"bytes"
 	"testing"
-
-	"github.com/bokwoon95/sq/testutil"
 )
 
 func TestCTE(t *testing.T) {
@@ -16,7 +14,6 @@ func TestCTE(t *testing.T) {
 	}
 
 	assert := func(t *testing.T, tt TT) {
-		t.Parallel()
 		buf := bufpool.Get().(*bytes.Buffer)
 		defer func() {
 			buf.Reset()
@@ -25,17 +22,18 @@ func TestCTE(t *testing.T) {
 		gotArgs, gotParams := []interface{}{}, map[string][]int{}
 		err := tt.item.AppendSQL(tt.dialect, buf, &gotArgs, gotParams)
 		if err != nil {
-			t.Fatal(testutil.Callers(), err)
+			t.Fatal(testcallers(), err)
 		}
-		if diff := testutil.Diff(tt.wantQuery, buf.String()); diff != "" {
-			t.Error(testutil.Callers(), diff)
+		if diff := testdiff(tt.wantQuery, buf.String()); diff != "" {
+			t.Error(testcallers(), diff)
 		}
-		if diff := testutil.Diff(tt.wantArgs, gotArgs); diff != "" {
-			t.Error(testutil.Callers(), diff)
+		if diff := testdiff(tt.wantArgs, gotArgs); diff != "" {
+			t.Error(testcallers(), diff)
 		}
 	}
 
 	t.Run("basic CTE", func(t *testing.T) {
+		t.Parallel()
 		var tt TT
 		RENTAL, STAFF := NEW_RENTAL(""), NEW_STAFF("s")
 		// https://www.postgresqltutorial.com/postgresql-cte/
