@@ -3,8 +3,6 @@ package sq
 import (
 	"bytes"
 	"testing"
-
-	"github.com/bokwoon95/testutil"
 )
 
 func TestRowValue(t *testing.T) {
@@ -30,7 +28,6 @@ func TestRowValue(t *testing.T) {
 	}
 
 	assert := func(t *testing.T, tt TT) {
-		is := testutil.New(t, testutil.Parallel)
 		buf := bufpool.Get().(*bytes.Buffer)
 		defer func() {
 			buf.Reset()
@@ -38,12 +35,19 @@ func TestRowValue(t *testing.T) {
 		}()
 		gotArgs, gotParams := []interface{}{}, map[string][]int{}
 		err := tt.value.AppendSQL(tt.dialect, buf, &gotArgs, gotParams)
-		is.NoErr(err)
-		is.Equal(tt.wantQuery, buf.String())
-		is.Equal(tt.wantArgs, gotArgs)
+		if err != nil {
+			t.Fatal(testcallers(), err)
+		}
+		if diff := testdiff(tt.wantQuery, buf.String()); diff != "" {
+			t.Error(testcallers(), diff)
+		}
+		if diff := testdiff(tt.wantArgs, gotArgs); diff != "" {
+			t.Error(testcallers(), diff)
+		}
 	}
 
 	t.Run("rowvalue", func(t *testing.T) {
+		t.Parallel()
 		var tt TT
 		tt.value = RowValue{1, 2, USERS.USER_ID, 4}
 		tt.wantQuery = "(?, ?, user_id, ?)"
@@ -52,6 +56,7 @@ func TestRowValue(t *testing.T) {
 	})
 
 	t.Run("rowvalues", func(t *testing.T) {
+		t.Parallel()
 		var tt TT
 		tt.value = RowValues{
 			{1, 2, USERS.USER_ID, 4},
@@ -64,8 +69,8 @@ func TestRowValue(t *testing.T) {
 	})
 
 	t.Run("rowvalue in rowvalues", func(t *testing.T) {
+		t.Parallel()
 		var tt TT
-		is := testutil.New(t, testutil.Parallel)
 		predicate := RowValue{USERS.USER_ID, USERS.NAME}.In(RowValues{
 			{1, "abc"},
 			{2, "def"},
@@ -80,8 +85,14 @@ func TestRowValue(t *testing.T) {
 		}()
 		gotArgs, gotParams := []interface{}{}, map[string][]int{}
 		err := predicate.AppendSQLExclude(tt.dialect, buf, &gotArgs, gotParams, nil)
-		is.NoErr(err)
-		is.Equal(tt.wantQuery, buf.String())
-		is.Equal(tt.wantArgs, gotArgs)
+		if err != nil {
+			t.Fatal(testcallers(), err)
+		}
+		if diff := testdiff(tt.wantQuery, buf.String()); diff != "" {
+			t.Error(testcallers(), diff)
+		}
+		if diff := testdiff(tt.wantArgs, gotArgs); diff != "" {
+			t.Error(testcallers(), diff)
+		}
 	})
 }
