@@ -35,7 +35,6 @@ func TestCTE(t *testing.T) {
 		t.Parallel()
 		var tt TT
 		RENTAL, STAFF := NEW_RENTAL(""), NEW_STAFF("s")
-		// https://www.postgresqltutorial.com/postgresql-cte/
 		cte_rental := NewCTE("cte_rental", nil, Postgres.
 			Select(
 				RENTAL.STAFF_ID,
@@ -54,7 +53,7 @@ func TestCTE(t *testing.T) {
 				cte.Field("rental_count"),
 			).
 			From(STAFF).
-			Join(cte, Eq(cte.Field("staff_id"), STAFF.STAFF_ID))
+			Join(cte, cte.Field("staff_id").Eq(STAFF.STAFF_ID))
 		tt.wantQuery = "WITH cte_rental AS (" +
 			"SELECT rental.staff_id, COUNT(rental.rental_id) AS rental_count" +
 			" FROM rental" +
@@ -221,6 +220,36 @@ func TestCTE(t *testing.T) {
 		tt.item = CTEs{
 			NewCTE("cte", nil, SQLite.Select(FieldLiteral("1"))),
 			CTE{cteName: "cte"},
+			NewCTE("cte_2", nil, SQLite.Select(FieldLiteral("1"))),
+		}
+		_, _, _, err := ToSQL("", tt.item)
+		if err == nil {
+			t.Fatal(testcallers(), "expected error but got nil")
+		}
+		fmt.Println(testcallers(), err.Error())
+	})
+
+	t.Run("CTEs, variadic query returns error", func(t *testing.T) {
+		t.Parallel()
+		var tt TT
+		tt.item = CTEs{
+			NewCTE("cte", nil, SQLite.Select(FieldLiteral("1"))),
+			CTE{cteName: "faulty_cte", query: Union(FaultySQL{})},
+			NewCTE("cte_2", nil, SQLite.Select(FieldLiteral("1"))),
+		}
+		_, _, _, err := ToSQL("", tt.item)
+		if err == nil {
+			t.Fatal(testcallers(), "expected error but got nil")
+		}
+		fmt.Println(testcallers(), err.Error())
+	})
+
+	t.Run("CTEs, query returns error", func(t *testing.T) {
+		t.Parallel()
+		var tt TT
+		tt.item = CTEs{
+			NewCTE("cte", nil, SQLite.Select(FieldLiteral("1"))),
+			CTE{cteName: "faulty_cte", query: FaultySQL{}},
 			NewCTE("cte_2", nil, SQLite.Select(FieldLiteral("1"))),
 		}
 		_, _, _, err := ToSQL("", tt.item)

@@ -2,6 +2,7 @@ package sq
 
 import (
 	"bytes"
+	"fmt"
 	"path/filepath"
 	"reflect"
 	"runtime"
@@ -83,6 +84,35 @@ func testcallers() string {
 	buf.WriteString("]")
 	return buf.String()
 }
+
+type FaultySQL struct{}
+
+var (
+	_ Query = FaultySQL{}
+	_ Field = FaultySQL{}
+)
+
+func (q FaultySQL) AppendSQL(string, *bytes.Buffer, *[]interface{}, map[string][]int) error {
+	return fmt.Errorf("sql broke")
+}
+
+func (q FaultySQL) SetFetchableFields([]Field) (Query, error) {
+	return nil, fmt.Errorf("sql broke")
+}
+
+func (q FaultySQL) GetFetchableFields() ([]Field, error) {
+	return nil, fmt.Errorf("sql broke")
+}
+
+func (q FaultySQL) Dialect() string { return "" }
+
+func (q FaultySQL) AppendSQLExclude(string, *bytes.Buffer, *[]interface{}, map[string][]int, []string) error {
+	return fmt.Errorf("sql broke")
+}
+
+func (q FaultySQL) GetAlias() string { return "" }
+
+func (q FaultySQL) GetName() string { return "" }
 
 func Test_explodeSlice(t *testing.T) {
 	type TT struct {
