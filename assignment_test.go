@@ -48,6 +48,7 @@ func Test_Assignment(t *testing.T) {
 	}
 
 	t.Run("field assign field", func(t *testing.T) {
+		t.Parallel()
 		var tt TT
 		tt.item = Assign(USERS.USER_ID, USERS.NAME)
 		tt.excludedTableQualifiers = []string{"users"}
@@ -57,6 +58,7 @@ func Test_Assignment(t *testing.T) {
 	})
 
 	t.Run("field assign value", func(t *testing.T) {
+		t.Parallel()
 		var tt TT
 		tt.item = Assign(USERS.USER_ID, 5)
 		tt.excludedTableQualifiers = []string{"users"}
@@ -66,6 +68,7 @@ func Test_Assignment(t *testing.T) {
 	})
 
 	t.Run("assign excluded", func(t *testing.T) {
+		t.Parallel()
 		var tt TT
 		tt.item = AssignExcluded(USERS.USER_ID)
 		tt.wantQuery = "user_id = EXCLUDED.user_id"
@@ -74,6 +77,7 @@ func Test_Assignment(t *testing.T) {
 	})
 
 	t.Run("assign values", func(t *testing.T) {
+		t.Parallel()
 		var tt TT
 		tt.item = AssignValues(USERS.USER_ID)
 		tt.wantQuery = "user_id = VALUES(user_id)"
@@ -82,6 +86,7 @@ func Test_Assignment(t *testing.T) {
 	})
 
 	t.Run("assign new", func(t *testing.T) {
+		t.Parallel()
 		var tt TT
 		tt.item = AssignNew(USERS.USER_ID)
 		tt.wantQuery = "user_id = NEW.user_id"
@@ -133,6 +138,7 @@ func Test_Assignments(t *testing.T) {
 	}
 
 	t.Run("multiple assignments", func(t *testing.T) {
+		t.Parallel()
 		var tt TT
 		tt.item = Assignments{
 			Assign(USERS.USER_ID, USERS.NAME),

@@ -3,8 +3,6 @@ package sq
 import (
 	"bytes"
 	"testing"
-
-	"github.com/bokwoon95/testutil"
 )
 
 func Test_BooleanField(t *testing.T) {
@@ -17,7 +15,6 @@ func Test_BooleanField(t *testing.T) {
 	}
 
 	assert := func(t *testing.T, tt TT) {
-		is := testutil.New(t, testutil.Parallel)
 		buf := bufpool.Get().(*bytes.Buffer)
 		defer func() {
 			buf.Reset()
@@ -25,11 +22,19 @@ func Test_BooleanField(t *testing.T) {
 		}()
 		gotArgs, gotParams := []interface{}{}, map[string][]int{}
 		err := tt.item.AppendSQLExclude(tt.dialect, buf, &gotArgs, gotParams, tt.excludedTableQualifiers)
-		is.NoErr(err)
-		is.Equal(tt.wantQuery, buf.String())
+		if err != nil {
+			t.Fatal(testcallers(), err)
+		}
+		if diff := testdiff(tt.wantQuery, buf.String()); diff != "" {
+			t.Fatal(testcallers(), diff)
+		}
+		if diff := testdiff(tt.wantArgs, gotArgs); diff != "" {
+			t.Fatal(testcallers(), diff)
+		}
 	}
 
 	t.Run("BooleanField", func(t *testing.T) {
+		t.Parallel()
 		var tt TT
 		tt.item = NewBooleanField("field", TableInfo{TableName: "tbl"})
 		tt.wantQuery = "tbl.field"
@@ -38,6 +43,7 @@ func Test_BooleanField(t *testing.T) {
 	})
 
 	t.Run("BooleanField with alias", func(t *testing.T) {
+		t.Parallel()
 		var tt TT
 		tt.item = NewBooleanField("field", TableInfo{TableName: "tbl"}).As("f")
 		tt.wantQuery = "tbl.field"
@@ -46,6 +52,7 @@ func Test_BooleanField(t *testing.T) {
 	})
 
 	t.Run("BooleanField ASC NULLS LAST", func(t *testing.T) {
+		t.Parallel()
 		var tt TT
 		tt.item = NewBooleanField("field", TableInfo{TableName: "tbl"}).Asc().NullsLast()
 		tt.wantQuery = "tbl.field ASC NULLS LAST"
@@ -54,6 +61,7 @@ func Test_BooleanField(t *testing.T) {
 	})
 
 	t.Run("BooleanField DESC NULLS FIRST", func(t *testing.T) {
+		t.Parallel()
 		var tt TT
 		tt.item = NewBooleanField("field", TableInfo{TableName: "tbl"}).Desc().NullsFirst()
 		tt.wantQuery = "tbl.field DESC NULLS FIRST"
@@ -62,6 +70,7 @@ func Test_BooleanField(t *testing.T) {
 	})
 
 	t.Run("BooleanField NOT", func(t *testing.T) {
+		t.Parallel()
 		var tt TT
 		tt.item = NewBooleanField("field", TableInfo{TableName: "tbl"}).Not()
 		tt.wantQuery = "NOT tbl.field"
@@ -70,6 +79,7 @@ func Test_BooleanField(t *testing.T) {
 	})
 
 	t.Run("BooleanField IS NULL", func(t *testing.T) {
+		t.Parallel()
 		var tt TT
 		tt.item = NewBooleanField("field", TableInfo{TableName: "tbl"}).IsNull()
 		tt.wantQuery = "tbl.field IS NULL"
@@ -78,6 +88,7 @@ func Test_BooleanField(t *testing.T) {
 	})
 
 	t.Run("BooleanField IS NOT NULL", func(t *testing.T) {
+		t.Parallel()
 		var tt TT
 		tt.item = NewBooleanField("field", TableInfo{TableName: "tbl"}).IsNotNull()
 		tt.wantQuery = "tbl.field IS NOT NULL"
@@ -86,6 +97,7 @@ func Test_BooleanField(t *testing.T) {
 	})
 
 	t.Run("BooleanField Eq", func(t *testing.T) {
+		t.Parallel()
 		var tt TT
 		f := NewBooleanField("field", TableInfo{TableName: "tbl"})
 		tt.item = f.Eq(f)
@@ -95,6 +107,7 @@ func Test_BooleanField(t *testing.T) {
 	})
 
 	t.Run("BooleanField Ne", func(t *testing.T) {
+		t.Parallel()
 		var tt TT
 		f := NewBooleanField("field", TableInfo{TableName: "tbl"})
 		tt.item = f.Ne(f)
@@ -104,6 +117,7 @@ func Test_BooleanField(t *testing.T) {
 	})
 
 	t.Run("BooleanField EqBool", func(t *testing.T) {
+		t.Parallel()
 		var tt TT
 		tt.item = NewBooleanField("field", TableInfo{TableName: "tbl"}).EqBool(true)
 		tt.wantQuery = "tbl.field = ?"
@@ -112,6 +126,7 @@ func Test_BooleanField(t *testing.T) {
 	})
 
 	t.Run("BooleanField NeBool", func(t *testing.T) {
+		t.Parallel()
 		var tt TT
 		tt.item = NewBooleanField("field", TableInfo{TableName: "tbl"}).NeBool(true)
 		tt.wantQuery = "tbl.field <> ?"
@@ -120,6 +135,7 @@ func Test_BooleanField(t *testing.T) {
 	})
 
 	t.Run("BooleanField SetBool", func(t *testing.T) {
+		t.Parallel()
 		var tt TT
 		tt.item = NewBooleanField("field", TableInfo{TableName: "tbl"}).SetBool(true)
 		tt.wantQuery = "tbl.field = ?"
