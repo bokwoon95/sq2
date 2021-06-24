@@ -28,8 +28,6 @@ func TestCTE(t *testing.T) {
 		is.Equal(tt.wantArgs, gotArgs)
 	}
 
-	// TODO: oh god change of heart change of heart, I want to copy jOOQ's syntax for CTEs a la cte.Field("field_name")
-
 	t.Run("https://www.postgresqltutorial.com/postgresql-cte/", func(t *testing.T) {
 		var tt TT
 		is := testutil.New(t, testutil.Parallel)
