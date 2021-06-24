@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"testing"
 
-	"github.com/bokwoon95/testutil"
+	"github.com/bokwoon95/sq/testutil"
 )
 
 func TestCTE(t *testing.T) {
@@ -15,7 +15,8 @@ func TestCTE(t *testing.T) {
 		wantArgs  []interface{}
 	}
 
-	assert := func(is testutil.I, tt TT) {
+	assert := func(t *testing.T, tt TT) {
+		t.Parallel()
 		buf := bufpool.Get().(*bytes.Buffer)
 		defer func() {
 			buf.Reset()
@@ -23,15 +24,21 @@ func TestCTE(t *testing.T) {
 		}()
 		gotArgs, gotParams := []interface{}{}, map[string][]int{}
 		err := tt.item.AppendSQL(tt.dialect, buf, &gotArgs, gotParams)
-		is.NoErr(err)
-		is.Equal(tt.wantQuery, buf.String())
-		is.Equal(tt.wantArgs, gotArgs)
+		if err != nil {
+			t.Fatal(testutil.Callers(), err)
+		}
+		if diff := testutil.Diff(tt.wantQuery, buf.String()); diff != "" {
+			t.Error(testutil.Callers(), diff)
+		}
+		if diff := testutil.Diff(tt.wantArgs, gotArgs); diff != "" {
+			t.Error(testutil.Callers(), diff)
+		}
 	}
 
-	t.Run("https://www.postgresqltutorial.com/postgresql-cte/", func(t *testing.T) {
+	t.Run("basic CTE", func(t *testing.T) {
 		var tt TT
-		is := testutil.New(t, testutil.Parallel)
 		RENTAL, STAFF := NEW_RENTAL(""), NEW_STAFF("s")
+		// https://www.postgresqltutorial.com/postgresql-cte/
 		cte_rental := NewCTE("cte_rental", nil, Postgres.
 			Select(
 				RENTAL.STAFF_ID,
@@ -60,6 +67,6 @@ func TestCTE(t *testing.T) {
 			" FROM staff AS s" +
 			" JOIN cte_rental AS cte ON cte.staff_id = s.staff_id"
 		tt.wantArgs = []interface{}{}
-		assert(is, tt)
+		assert(t, tt)
 	})
 }
