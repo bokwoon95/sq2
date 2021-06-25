@@ -64,4 +64,38 @@ func Test_Column(t *testing.T) {
 			t.Error(testcallers(), diff)
 		}
 	})
+
+	t.Run("ColumnModeUpdate", func(t *testing.T) {
+		col := NewColumn(ColumnModeUpdate)
+		user := struct {
+			UserID    int64
+			IsActive  bool
+			Name      string
+			Age       int
+			Score     float64
+			CreatedAt time.Time
+		}{UserID: 1, IsActive: true, Name: "bob", Age: 27, Score: 89.9, CreatedAt: time.Unix(0, 0)}
+		columnmapper := func(col *Column) error {
+			col.SetInt64(USERS.USER_ID, user.UserID)
+			col.SetBool(USERS.IS_ACTIVE, user.IsActive)
+			col.SetString(USERS.NAME, user.Name)
+			col.SetInt(USERS.AGE, user.Age)
+			col.SetFloat64(USERS.SCORE, user.Score)
+			col.SetTime(USERS.CREATED_AT, user.CreatedAt)
+			return nil
+		}
+		columnmapper(col)
+		gotAssignments := ColumnUpdateResult(col)
+		wantAssignments := Assignments{
+			Assign(USERS.USER_ID, user.UserID),
+			Assign(USERS.IS_ACTIVE, user.IsActive),
+			Assign(USERS.NAME, user.Name),
+			Assign(USERS.AGE, user.Age),
+			Assign(USERS.SCORE, user.Score),
+			Assign(USERS.CREATED_AT, user.CreatedAt),
+		}
+		if diff := testdiff(gotAssignments, wantAssignments); diff != "" {
+			t.Error(testcallers(), diff)
+		}
+	})
 }
