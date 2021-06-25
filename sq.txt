@@ -33,6 +33,8 @@ TODO: currently for some dialect-specific features I'm just ignoring and moving 
 Put more succinctly: is there ever a case where the user has to convert a query from one dialect to another in a generic way? What is the context surrounding that? Because if I silently truncate some stuff (like the RETURNING clause), will the query still work fine in that context?
 I have decided: try to silently accomodate as much as possible, and do not enforce SQL semantics.
 
+TODO: consider adding semicolon to all generated DML queries. So that they may be appended into a file without further postprocessing.
+
 sq README needs a FAQ section, just like how Maddy mail server does. I naturally gravitaed towards the FAQ link in order to learn more about maddy, and was able to learn so much it just from reading the FAQ alone.
 
 row.Close() instead of row.Return() or row.Exit() with runtime.Goexit() shenanigans, because row.Close() can be orthogonal across Fetch, FetchOne and FetchSlice.

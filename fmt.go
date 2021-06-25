@@ -423,10 +423,10 @@ func Sprint(v interface{}) (string, error) {
 		return "", fmt.Errorf("value is not valid (whatever that means??? Tell me how you got here)")
 	}
 	if rv.Kind() == reflect.Chan {
-		return "", fmt.Errorf("channels cannot be represented in SQL")
+		return "", fmt.Errorf("Go channels cannot be represented in SQL")
 	}
 	if rv.Kind() == reflect.Func {
-		return "", fmt.Errorf("functions cannot be represented in SQL")
+		return "", fmt.Errorf("Go functions cannot be represented in SQL")
 	}
 	if deref > 0 {
 		return Sprint(rv.Interface())

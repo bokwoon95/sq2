@@ -1,12 +1,14 @@
 package sq
 
 import (
+	"bytes"
 	"fmt"
 	"testing"
 )
 
 func TestCTE(t *testing.T) {
 	type TT struct {
+		dialect    string
 		item       SQLAppender
 		wantQuery  string
 		wantArgs   []interface{}
@@ -14,11 +16,17 @@ func TestCTE(t *testing.T) {
 	}
 
 	assert := func(t *testing.T, tt TT) {
-		gotQuery, gotArgs, gotParams, err := ToSQL("", tt.item)
+		buf := bufpool.Get().(*bytes.Buffer)
+		defer func() {
+			buf.Reset()
+			bufpool.Put(buf)
+		}()
+		gotArgs, gotParams := []interface{}{}, map[string][]int{}
+		err := tt.item.AppendSQL(tt.dialect, buf, &gotArgs, gotParams)
 		if err != nil {
 			t.Fatal(testcallers(), err)
 		}
-		if diff := testdiff(tt.wantQuery, gotQuery); diff != "" {
+		if diff := testdiff(tt.wantQuery, buf.String()); diff != "" {
 			t.Error(testcallers(), diff)
 		}
 		if diff := testdiff(tt.wantArgs, gotArgs); diff != "" {
@@ -62,12 +70,14 @@ func TestCTE(t *testing.T) {
 			" SELECT s.staff_id, s.first_name, s.last_name, cte.rental_count" +
 			" FROM staff AS s" +
 			" JOIN cte_rental AS cte ON cte.staff_id = s.staff_id"
+		tt.wantArgs = []interface{}{}
 		assert(t, tt)
 	})
 
 	t.Run("recursive CTE", func(t *testing.T) {
 		t.Parallel()
 		var tt TT
+		tt.dialect = DialectSQLite
 		tt.item = SQLite.
 			SelectWith(
 				NewCTE("cte_1", nil, SQLite.Select(FieldValue(1).As("some_number"))),
@@ -262,5 +272,144 @@ func TestCTE(t *testing.T) {
 			t.Fatal(testcallers(), "expected error but got nil")
 		}
 		fmt.Println(testcallers(), err.Error())
+	})
+}
+
+func Test_CTEField(t *testing.T) {
+	type TT struct {
+		dialect                 string
+		item                    SQLExcludeAppender
+		excludedTableQualifiers []string
+		wantQuery               string
+		wantArgs                []interface{}
+		wantParams              map[string][]int
+	}
+
+	assert := func(t *testing.T, tt TT) {
+		buf := bufpool.Get().(*bytes.Buffer)
+		defer func() {
+			buf.Reset()
+			bufpool.Put(buf)
+		}()
+		gotArgs, gotParams := []interface{}{}, map[string][]int{}
+		err := tt.item.AppendSQLExclude(tt.dialect, buf, &gotArgs, gotParams, tt.excludedTableQualifiers)
+		if err != nil {
+			t.Fatal(testcallers(), err)
+		}
+		if diff := testdiff(tt.wantQuery, buf.String()); diff != "" {
+			t.Error(testcallers(), diff)
+		}
+		if diff := testdiff(tt.wantArgs, gotArgs); diff != "" {
+			t.Error(testcallers(), diff)
+		}
+		if tt.wantParams != nil {
+			if diff := testdiff(tt.wantParams, gotParams); diff != "" {
+				t.Error(testcallers(), diff)
+			}
+		}
+	}
+
+	t.Run("Fieldf", func(t *testing.T) {
+		var tt TT
+		tt.item = Fieldf("lorem ipsum {} {}", 1, "a")
+		tt.wantQuery = "lorem ipsum ? ?"
+		tt.wantArgs = []interface{}{1, "a"}
+		assert(t, tt)
+	})
+
+	t.Run("CustomField alias", func(t *testing.T) {
+		var tt TT
+		tt.item = Fieldf("my_field").As("ggggggg")
+		tt.wantQuery = "my_field"
+		tt.wantArgs = []interface{}{}
+		assert(t, tt)
+	})
+
+	t.Run("CustomField ASC NULLS LAST", func(t *testing.T) {
+		var tt TT
+		tt.item = Fieldf("my_field").Asc().NullsLast()
+		tt.wantQuery = "my_field ASC NULLS LAST"
+		tt.wantArgs = []interface{}{}
+		assert(t, tt)
+	})
+
+	t.Run("CustomField DESC NULLS FIRST", func(t *testing.T) {
+		var tt TT
+		tt.item = Fieldf("my_field").Desc().NullsFirst()
+		tt.wantQuery = "my_field DESC NULLS FIRST"
+		tt.wantArgs = []interface{}{}
+		assert(t, tt)
+	})
+
+	t.Run("CustomField IS NULL", func(t *testing.T) {
+		var tt TT
+		tt.item = Fieldf("my_field").IsNull()
+		tt.wantQuery = "my_field IS NULL"
+		tt.wantArgs = []interface{}{}
+		assert(t, tt)
+	})
+
+	t.Run("CustomField IS NOT NULL", func(t *testing.T) {
+		var tt TT
+		tt.item = Fieldf("my_field").IsNotNull()
+		tt.wantQuery = "my_field IS NOT NULL"
+		tt.wantArgs = []interface{}{}
+		assert(t, tt)
+	})
+
+	t.Run("CustomField IN (slice)", func(t *testing.T) {
+		var tt TT
+		tt.item = Fieldf("my_field").In([]int{5, 6, 7})
+		tt.wantQuery = "my_field IN (?, ?, ?)"
+		tt.wantArgs = []interface{}{5, 6, 7}
+		assert(t, tt)
+	})
+
+	t.Run("CustomField Eq", func(t *testing.T) {
+		var tt TT
+		tt.item = Fieldf("my_field").Eq(123)
+		tt.wantQuery = "my_field = ?"
+		tt.wantArgs = []interface{}{123}
+		assert(t, tt)
+	})
+
+	t.Run("CustomField Ne", func(t *testing.T) {
+		var tt TT
+		tt.item = Fieldf("my_field").Ne(123)
+		tt.wantQuery = "my_field <> ?"
+		tt.wantArgs = []interface{}{123}
+		assert(t, tt)
+	})
+
+	t.Run("CustomField Gt", func(t *testing.T) {
+		var tt TT
+		tt.item = Fieldf("my_field").Gt(123)
+		tt.wantQuery = "my_field > ?"
+		tt.wantArgs = []interface{}{123}
+		assert(t, tt)
+	})
+
+	t.Run("CustomField Ge", func(t *testing.T) {
+		var tt TT
+		tt.item = Fieldf("my_field").Ge(123)
+		tt.wantQuery = "my_field >= ?"
+		tt.wantArgs = []interface{}{123}
+		assert(t, tt)
+	})
+
+	t.Run("CustomField Lt", func(t *testing.T) {
+		var tt TT
+		tt.item = Fieldf("my_field").Lt(123)
+		tt.wantQuery = "my_field < ?"
+		tt.wantArgs = []interface{}{123}
+		assert(t, tt)
+	})
+
+	t.Run("CustomField Le", func(t *testing.T) {
+		var tt TT
+		tt.item = Fieldf("my_field").Le(123)
+		tt.wantQuery = "my_field <= ?"
+		tt.wantArgs = []interface{}{123}
+		assert(t, tt)
 	})
 }
