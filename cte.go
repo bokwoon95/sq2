@@ -9,7 +9,7 @@ import (
 type CTEField struct {
 	stickyErr  error
 	fieldNames []string
-	cache      map[string]int
+	fieldCache map[string]int
 	info       FieldInfo
 }
 
@@ -20,7 +20,7 @@ func (f CTEField) GetAlias() string { return f.info.FieldAlias }
 func (f CTEField) GetName() string { return f.info.FieldName }
 
 func (f CTEField) AppendSQLExclude(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int, excludedTableQualifiers []string) error {
-	if _, ok := f.cache[f.info.FieldName]; !ok {
+	if _, ok := f.fieldCache[f.info.FieldName]; !ok {
 		tableQualifier := f.info.TableName
 		if f.info.TableAlias != "" {
 			tableQualifier = f.info.TableAlias
@@ -82,14 +82,14 @@ func (f CTEField) Lt(v interface{}) Predicate { return Lt(f, v) }
 func (f CTEField) Le(v interface{}) Predicate { return Le(f, v) }
 
 type CTE struct {
-	query           Query
-	stickyErr       error
-	isRecursive     bool
-	explicitColumns bool
-	cteName         string
-	cteAlias        string
-	fieldNames      []string
-	cache           map[string]int
+	query          Query
+	stickyErr      error
+	isRecursive    bool
+	explicitFields bool
+	cteName        string
+	cteAlias       string
+	fieldNames     []string
+	fieldCache     map[string]int
 }
 
 var _ Table = CTE{}
@@ -119,12 +119,12 @@ func NewRecursiveCTE(name string, columns []string, query Query) CTE {
 
 func newCTE(recursive bool, name string, columns []string, query Query) CTE {
 	cte := CTE{
-		query:           query,
-		isRecursive:     recursive,
-		cteName:         name,
-		explicitColumns: len(columns) > 0,
-		fieldNames:      columns,
-		cache:           make(map[string]int),
+		query:          query,
+		isRecursive:    recursive,
+		cteName:        name,
+		explicitFields: len(columns) > 0,
+		fieldNames:     columns,
+		fieldCache:     make(map[string]int),
 	}
 	if name == "" {
 		cte.stickyErr = fmt.Errorf("CTE name cannot be empty")
@@ -157,7 +157,7 @@ func newCTE(recursive bool, name string, columns []string, query Query) CTE {
 		}
 	}
 	for i, fieldName := range cte.fieldNames {
-		cte.cache[fieldName] = i
+		cte.fieldCache[fieldName] = i
 	}
 	return cte
 }
@@ -174,7 +174,7 @@ func (cte CTE) As(alias string) CTE {
 		cte.stickyErr = fmt.Errorf("CTE query cannot be nil")
 		return cte
 	}
-	if len(cte.cache) == 0 {
+	if len(cte.fieldCache) == 0 {
 		cte.stickyErr = fmt.Errorf("CTE %s does not return any fields", cte.cteName)
 		return cte
 	}
@@ -186,7 +186,7 @@ func (cte CTE) Field(fieldName string) CTEField {
 	return CTEField{
 		stickyErr:  cte.stickyErr,
 		fieldNames: cte.fieldNames,
-		cache:      cte.cache,
+		fieldCache: cte.fieldCache,
 		info: FieldInfo{
 			TableName:  cte.cteName,
 			TableAlias: cte.cteAlias,
@@ -223,7 +223,7 @@ func (ctes CTEs) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{
 			return fmt.Errorf("CTE #%d has no name", i+1)
 		}
 		buf.WriteString(cte.cteName)
-		if cte.explicitColumns {
+		if cte.explicitFields {
 			buf.WriteString(" (")
 			buf.WriteString(strings.Join(cte.fieldNames, ", "))
 			buf.WriteString(")")
@@ -244,8 +244,8 @@ func (ctes CTEs) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{
 				return fmt.Errorf("CTE #%d failed to build query: %w", i+1, err)
 			}
 		}
-		buf.WriteByte(')')
+		buf.WriteString(")")
 	}
-	buf.WriteByte(' ')
+	buf.WriteString(" ")
 	return nil
 }
