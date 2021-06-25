@@ -6,6 +6,7 @@ import (
 	"database/sql"
 	"errors"
 	"reflect"
+	"runtime"
 	"strconv"
 	"sync"
 )
@@ -226,4 +227,17 @@ func QuoteIdentifier(dialect string, identifier string) string {
 	default:
 		return `"` + EscapeQuote(identifier, '"') + `"`
 	}
+}
+
+func caller(skip int) (file string, line int, function string) {
+	/* https://talks.godoc.org/github.com/davecheney/go-1.9-release-party/presentation.slide#20
+	 * "Code that queries a single caller at a specific depth should use Caller
+	 * rather than passing a slice of length 1 to Callers."
+	 */
+	// Skip two extra frames to account for this function and runtime.Caller
+	// itself.
+	pc, file, line, _ := runtime.Caller(2)
+	fn := runtime.FuncForPC(pc)
+	function = fn.Name()
+	return file, line, function
 }

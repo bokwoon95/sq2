@@ -10,21 +10,10 @@ import (
 	"github.com/bokwoon95/sq"
 )
 
-func caller(skip int) (file string, line int) {
-	var pc [1]uintptr
-	// Skip two extra frames to account for this function
-	// and runtime.Callers itself.
-	n := runtime.Callers(skip+2, pc[:])
-	if n == 0 {
-		panic("ddl: zero callers found")
-	}
-	frames := runtime.CallersFrames(pc[:n])
-	frame, _ := frames.Next()
-	return frame.File, frame.Line
-}
-
 func panicf(format string, a ...interface{}) {
-	file, line := caller(2)
+	// Skip two extra frames to account for this function and runtime.Caller
+	// itself.
+	_, file, line, _ := runtime.Caller(2)
 	panic(fmt.Errorf("%s:%d:%s", file, line, fmt.Sprintf(format, a...)))
 }
 

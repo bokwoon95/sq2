@@ -1,7 +1,6 @@
 package sq
 
 import (
-	"bytes"
 	"testing"
 )
 
@@ -60,6 +59,16 @@ func Test_Assignment(t *testing.T) {
 		assert(t, tt)
 	})
 
+	t.Run("field assign query", func(t *testing.T) {
+		t.Parallel()
+		var tt TT
+		tt.item = Assign(USERS.USER_ID, SQLite.Select(USERS.USER_ID).From(USERS).Limit(1))
+		tt.excludedTableQualifiers = []string{"users"}
+		tt.wantQuery = "user_id = (SELECT users.user_id FROM users LIMIT ?)"
+		tt.wantArgs = []interface{}{int64(1)}
+		assert(t, tt)
+	})
+
 	t.Run("assign excluded", func(t *testing.T) {
 		t.Parallel()
 		var tt TT
@@ -109,36 +118,17 @@ func Test_Assignments(t *testing.T) {
 	}
 
 	assert := func(t *testing.T, tt TT) {
-		buf := bufpool.Get().(*bytes.Buffer)
-		defer func() {
-			buf.Reset()
-			bufpool.Put(buf)
-		}()
-		gotArgs, gotParams := []interface{}{}, map[string][]int{}
-		err := tt.item.AppendSQLExclude(tt.dialect, buf, &gotArgs, gotParams, tt.excludedTableQualifiers)
+		gotQuery, gotArgs, _, err := ToSQLExclude(tt.dialect, tt.item, tt.excludedTableQualifiers)
 		if err != nil {
 			t.Fatal(testcallers(), err)
 		}
-		if diff := testdiff(tt.wantQuery, buf.String()); diff != "" {
+		if diff := testdiff(tt.wantQuery, gotQuery); diff != "" {
 			t.Error(testcallers(), diff)
 		}
 		if diff := testdiff(tt.wantArgs, gotArgs); diff != "" {
 			t.Error(testcallers(), diff)
 		}
 	}
-
-	t.Run("assign query", func(t *testing.T) {
-		t.Parallel()
-		var tt TT
-		tt.item = Assignments{
-			Assign(USERS.USER_ID, USERS.NAME),
-			Assign(USERS.AGE, 123456),
-			Assign(USERS.EMAIL, "bob@email.com"),
-		}
-		tt.wantQuery = "user_id = name, age = ?, email = ?"
-		tt.wantArgs = []interface{}{123456, "bob@email.com"}
-		assert(t, tt)
-	})
 
 	t.Run("multiple assignments", func(t *testing.T) {
 		t.Parallel()

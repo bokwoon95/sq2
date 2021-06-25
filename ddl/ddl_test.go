@@ -19,6 +19,13 @@ func testdiff(lhs, rhs interface{}) string {
 }
 
 func testcallers() string {
+	/* https://talks.godoc.org/github.com/davecheney/go-1.9-release-party/presentation.slide#20
+	 * "Users of runtime.Callers should avoid directly inspecting the resulting PC
+	 * slice and instead use runtime.CallersFrames to get a complete view of the
+	 * call stack, or runtime.Caller to get information about a single caller.
+	 * This is because an individual element of the PC slice cannot account for
+	 * inlined frames or other nuances of the call stack."
+	 */
 	var pc [50]uintptr
 	// Skip two extra frames to account for this function
 	// and runtime.Callers itself.

@@ -1,6 +1,10 @@
 package sq
 
-import "time"
+import (
+	"fmt"
+	"path/filepath"
+	"time"
+)
 
 type ColumnMode int
 
@@ -40,8 +44,8 @@ func ColumnUpdateResult(col *Column) Assignments {
 
 func (col *Column) Set(field Field, value interface{}) {
 	if field == nil {
-		// TODO: panicf here
-		return
+		file, line, _ := caller(1)
+		panic(fmt.Errorf("%s:%d: setting a nil field", filepath.Base(file), line))
 	}
 	// UPDATE mode
 	if col.mode == ColumnModeUpdate {

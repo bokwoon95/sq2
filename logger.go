@@ -174,13 +174,3 @@ func (l logger) LogQueryStats(ctx context.Context, stats QueryStats, skip int) {
 		l.log.Printf(buf.String())
 	}
 }
-
-func caller(skip int) (file string, line int, function string) {
-	var pc [1]uintptr
-	n := runtime.Callers(skip+2, pc[:])
-	if n == 0 {
-		return "???", 1, "???"
-	}
-	frame, _ := runtime.CallersFrames(pc[:n]).Next()
-	return frame.File, frame.Line, frame.Function
-}
