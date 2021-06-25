@@ -77,3 +77,5 @@ CREATE TABLE sq_patches (
 );
 started_at, but no ended_at means what?
 started_at, ended_at but no success means what?
+
+// TODO: change from (want, got) to (got, want)

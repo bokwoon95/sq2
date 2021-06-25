@@ -105,6 +105,17 @@ func ToSQL(dialect string, q SQLAppender) (query string, args []interface{}, par
 	return buf.String(), args, params, err
 }
 
+func ToSQLExclude(dialect string, f SQLExcludeAppender, excludedTableQualifiers []string) (query string, args []interface{}, params map[string][]int, err error) {
+	buf := bufpool.Get().(*bytes.Buffer)
+	defer func() {
+		buf.Reset()
+		bufpool.Put(buf)
+	}()
+	params = make(map[string][]int)
+	err = f.AppendSQLExclude(dialect, buf, &args, params, excludedTableQualifiers)
+	return buf.String(), args, params, err
+}
+
 type Predicate interface {
 	Field
 	Not() Predicate

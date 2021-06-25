@@ -1,7 +1,6 @@
 package sq
 
 import (
-	"bytes"
 	"fmt"
 	"testing"
 )
@@ -16,17 +15,11 @@ func TestCTE(t *testing.T) {
 	}
 
 	assert := func(t *testing.T, tt TT) {
-		buf := bufpool.Get().(*bytes.Buffer)
-		defer func() {
-			buf.Reset()
-			bufpool.Put(buf)
-		}()
-		gotArgs, gotParams := []interface{}{}, map[string][]int{}
-		err := tt.item.AppendSQL(tt.dialect, buf, &gotArgs, gotParams)
+		gotQuery, gotArgs, gotParams, err := ToSQL("", tt.item)
 		if err != nil {
 			t.Fatal(testcallers(), err)
 		}
-		if diff := testdiff(tt.wantQuery, buf.String()); diff != "" {
+		if diff := testdiff(tt.wantQuery, gotQuery); diff != "" {
 			t.Error(testcallers(), diff)
 		}
 		if diff := testdiff(tt.wantArgs, gotArgs); diff != "" {
@@ -70,7 +63,6 @@ func TestCTE(t *testing.T) {
 			" SELECT s.staff_id, s.first_name, s.last_name, cte.rental_count" +
 			" FROM staff AS s" +
 			" JOIN cte_rental AS cte ON cte.staff_id = s.staff_id"
-		tt.wantArgs = []interface{}{}
 		assert(t, tt)
 	})
 
@@ -114,7 +106,7 @@ func TestCTE(t *testing.T) {
 	t.Run("CTE nil query", func(t *testing.T) {
 		t.Parallel()
 		var tt TT
-		tt.item = SQLite.SelectWith(NewCTE("my_cte", nil, nil)).
+		tt.item = SQLite.SelectWith(NewCTE("cte", nil, nil)).
 			Select(FieldLiteral("1"))
 		_, _, _, err := ToSQL("", tt.item)
 		if err == nil {
@@ -126,7 +118,7 @@ func TestCTE(t *testing.T) {
 	t.Run("CTE query GetFetchableFields error", func(t *testing.T) {
 		t.Parallel()
 		var tt TT
-		tt.item = SQLite.SelectWith(NewCTE("my_cte", nil, Queryf("SELECT 1"))).
+		tt.item = SQLite.SelectWith(NewCTE("cte", nil, Queryf("SELECT 1"))).
 			Select(FieldLiteral("1"))
 		_, _, _, err := ToSQL("", tt.item)
 		if err == nil {
@@ -138,7 +130,7 @@ func TestCTE(t *testing.T) {
 	t.Run("CTE query no fields", func(t *testing.T) {
 		t.Parallel()
 		var tt TT
-		tt.item = SQLite.SelectWith(NewCTE("my_cte", nil, SQLite.Select())).
+		tt.item = SQLite.SelectWith(NewCTE("cte", nil, SQLite.Select())).
 			Select(FieldLiteral("1"))
 		_, _, _, err := ToSQL("", tt.item)
 		if err == nil {
@@ -150,7 +142,7 @@ func TestCTE(t *testing.T) {
 	t.Run("CTE query field no name", func(t *testing.T) {
 		t.Parallel()
 		var tt TT
-		tt.item = SQLite.SelectWith(NewCTE("my_cte", nil, SQLite.Select(Fieldf("bruh")))).
+		tt.item = SQLite.SelectWith(NewCTE("cte", nil, SQLite.Select(Fieldf("bruh")))).
 			Select(FieldLiteral("1"))
 		_, _, _, err := ToSQL("", tt.item)
 		if err == nil {
@@ -275,8 +267,6 @@ func TestCTE(t *testing.T) {
 	})
 }
 
-// TODO: change from (want, got) to (got, want)
-// testx.Diff
 func Test_CTEField(t *testing.T) {
 	type TT struct {
 		dialect                 string
@@ -288,17 +278,11 @@ func Test_CTEField(t *testing.T) {
 	}
 
 	assert := func(t *testing.T, tt TT) {
-		buf := bufpool.Get().(*bytes.Buffer)
-		defer func() {
-			buf.Reset()
-			bufpool.Put(buf)
-		}()
-		gotArgs, gotParams := []interface{}{}, map[string][]int{}
-		err := tt.item.AppendSQLExclude(tt.dialect, buf, &gotArgs, gotParams, tt.excludedTableQualifiers)
+		gotQuery, gotArgs, gotParams, err := ToSQLExclude(tt.dialect, tt.item, tt.excludedTableQualifiers)
 		if err != nil {
 			t.Fatal(testcallers(), err)
 		}
-		if diff := testdiff(tt.wantQuery, buf.String()); diff != "" {
+		if diff := testdiff(tt.wantQuery, gotQuery); diff != "" {
 			t.Error(testcallers(), diff)
 		}
 		if diff := testdiff(tt.wantArgs, gotArgs); diff != "" {
@@ -311,106 +295,142 @@ func Test_CTEField(t *testing.T) {
 		}
 	}
 
-	t.Run("Fieldf", func(t *testing.T) {
+	t.Run("propagate CTE stickyErr", func(t *testing.T) {
+		t.Parallel()
 		var tt TT
-		tt.item = Fieldf("lorem ipsum {} {}", 1, "a")
-		tt.wantQuery = "lorem ipsum ? ?"
-		tt.wantArgs = []interface{}{1, "a"}
+		cte := NewCTE("cte", nil, nil)
+		tt.item = cte.Field("field")
+		_, _, _, err := ToSQLExclude(tt.dialect, tt.item, tt.excludedTableQualifiers)
+		if err == nil {
+			t.Fatal(testcallers(), "expected error but got nil")
+		}
+		fmt.Println(testcallers(), err.Error())
+	})
+
+	t.Run("CTE field not exists", func(t *testing.T) {
+		t.Parallel()
+		var tt TT
+		cte := NewCTE("cte", []string{"field"}, Queryf("SELECT 1"))
+		cte2 := cte.As("cte2")
+		tt.item = cte2.Field("nonexistent_field")
+		_, _, _, err := ToSQLExclude(tt.dialect, tt.item, tt.excludedTableQualifiers)
+		if err == nil {
+			t.Fatal(testcallers(), "expected error but got nil")
+		}
+		fmt.Println(testcallers(), err.Error())
+	})
+
+	t.Run("CTEField alias", func(t *testing.T) {
+		t.Parallel()
+		var tt TT
+		cte := NewCTE("cte", []string{"field"}, Queryf("SELECT 1"))
+		tt.item = cte.Field("field").As("f")
+		tt.wantQuery = "cte.field"
 		assert(t, tt)
 	})
 
-	t.Run("CustomField alias", func(t *testing.T) {
+	t.Run("CTEField ASC NULLS LAST", func(t *testing.T) {
+		t.Parallel()
 		var tt TT
-		tt.item = Fieldf("my_field").As("ggggggg")
-		tt.wantQuery = "my_field"
-		tt.wantArgs = []interface{}{}
+		cte := NewCTE("cte", []string{"field"}, Queryf("SELECT 1"))
+		tt.item = cte.Field("field").Asc().NullsLast()
+		tt.wantQuery = "cte.field ASC NULLS LAST"
 		assert(t, tt)
 	})
 
-	t.Run("CustomField ASC NULLS LAST", func(t *testing.T) {
+	t.Run("CTEField DESC NULLS FIRST", func(t *testing.T) {
+		t.Parallel()
 		var tt TT
-		tt.item = Fieldf("my_field").Asc().NullsLast()
-		tt.wantQuery = "my_field ASC NULLS LAST"
-		tt.wantArgs = []interface{}{}
+		cte := NewCTE("cte", []string{"field"}, Queryf("SELECT 1"))
+		tt.item = cte.Field("field").Desc().NullsFirst()
+		tt.wantQuery = "cte.field DESC NULLS FIRST"
 		assert(t, tt)
 	})
 
-	t.Run("CustomField DESC NULLS FIRST", func(t *testing.T) {
+	t.Run("CTEField IS NULL", func(t *testing.T) {
+		t.Parallel()
 		var tt TT
-		tt.item = Fieldf("my_field").Desc().NullsFirst()
-		tt.wantQuery = "my_field DESC NULLS FIRST"
-		tt.wantArgs = []interface{}{}
+		cte := NewCTE("cte", []string{"field"}, Queryf("SELECT 1"))
+		tt.item = cte.Field("field").IsNull()
+		tt.wantQuery = "cte.field IS NULL"
 		assert(t, tt)
 	})
 
-	t.Run("CustomField IS NULL", func(t *testing.T) {
+	t.Run("CTEField IS NOT NULL", func(t *testing.T) {
+		t.Parallel()
 		var tt TT
-		tt.item = Fieldf("my_field").IsNull()
-		tt.wantQuery = "my_field IS NULL"
-		tt.wantArgs = []interface{}{}
+		cte := NewCTE("cte", []string{"field"}, Queryf("SELECT 1"))
+		tt.item = cte.Field("field").IsNotNull()
+		tt.wantQuery = "cte.field IS NOT NULL"
 		assert(t, tt)
 	})
 
-	t.Run("CustomField IS NOT NULL", func(t *testing.T) {
+	t.Run("CTEField IN (slice)", func(t *testing.T) {
+		t.Parallel()
 		var tt TT
-		tt.item = Fieldf("my_field").IsNotNull()
-		tt.wantQuery = "my_field IS NOT NULL"
-		tt.wantArgs = []interface{}{}
-		assert(t, tt)
-	})
-
-	t.Run("CustomField IN (slice)", func(t *testing.T) {
-		var tt TT
-		tt.item = Fieldf("my_field").In([]int{5, 6, 7})
-		tt.wantQuery = "my_field IN (?, ?, ?)"
+		cte := NewCTE("cte", []string{"field"}, Queryf("SELECT 1"))
+		tt.item = cte.Field("field").In([]int{5, 6, 7})
+		tt.wantQuery = "cte.field IN (?, ?, ?)"
 		tt.wantArgs = []interface{}{5, 6, 7}
 		assert(t, tt)
 	})
 
-	t.Run("CustomField Eq", func(t *testing.T) {
+	t.Run("CTEField Eq", func(t *testing.T) {
+		t.Parallel()
 		var tt TT
-		tt.item = Fieldf("my_field").Eq(123)
-		tt.wantQuery = "my_field = ?"
+		cte := NewCTE("cte", []string{"field"}, Queryf("SELECT 1"))
+		tt.item = cte.Field("field").Eq(123)
+		tt.wantQuery = "cte.field = ?"
 		tt.wantArgs = []interface{}{123}
 		assert(t, tt)
 	})
 
-	t.Run("CustomField Ne", func(t *testing.T) {
+	t.Run("CTEField Ne", func(t *testing.T) {
+		t.Parallel()
 		var tt TT
-		tt.item = Fieldf("my_field").Ne(123)
-		tt.wantQuery = "my_field <> ?"
+		cte := NewCTE("cte", []string{"field"}, Queryf("SELECT 1"))
+		tt.item = cte.Field("field").Ne(123)
+		tt.wantQuery = "cte.field <> ?"
 		tt.wantArgs = []interface{}{123}
 		assert(t, tt)
 	})
 
-	t.Run("CustomField Gt", func(t *testing.T) {
+	t.Run("CTEField Gt", func(t *testing.T) {
+		t.Parallel()
 		var tt TT
-		tt.item = Fieldf("my_field").Gt(123)
-		tt.wantQuery = "my_field > ?"
+		cte := NewCTE("cte", []string{"field"}, Queryf("SELECT 1"))
+		tt.item = cte.Field("field").Gt(123)
+		tt.wantQuery = "cte.field > ?"
 		tt.wantArgs = []interface{}{123}
 		assert(t, tt)
 	})
 
-	t.Run("CustomField Ge", func(t *testing.T) {
+	t.Run("CTEField Ge", func(t *testing.T) {
+		t.Parallel()
 		var tt TT
-		tt.item = Fieldf("my_field").Ge(123)
-		tt.wantQuery = "my_field >= ?"
+		cte := NewCTE("cte", []string{"field"}, Queryf("SELECT 1"))
+		tt.item = cte.Field("field").Ge(123)
+		tt.wantQuery = "cte.field >= ?"
 		tt.wantArgs = []interface{}{123}
 		assert(t, tt)
 	})
 
-	t.Run("CustomField Lt", func(t *testing.T) {
+	t.Run("CTEField Lt", func(t *testing.T) {
+		t.Parallel()
 		var tt TT
-		tt.item = Fieldf("my_field").Lt(123)
-		tt.wantQuery = "my_field < ?"
+		cte := NewCTE("cte", []string{"field"}, Queryf("SELECT 1"))
+		tt.item = cte.Field("field").Lt(123)
+		tt.wantQuery = "cte.field < ?"
 		tt.wantArgs = []interface{}{123}
 		assert(t, tt)
 	})
 
-	t.Run("CustomField Le", func(t *testing.T) {
+	t.Run("CTEField Le", func(t *testing.T) {
+		t.Parallel()
 		var tt TT
-		tt.item = Fieldf("my_field").Le(123)
-		tt.wantQuery = "my_field <= ?"
+		cte := NewCTE("cte", []string{"field"}, Queryf("SELECT 1"))
+		tt.item = cte.Field("field").Le(123)
+		tt.wantQuery = "cte.field <= ?"
 		tt.wantArgs = []interface{}{123}
 		assert(t, tt)
 	})

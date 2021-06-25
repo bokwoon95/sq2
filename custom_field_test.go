@@ -46,6 +46,7 @@ func Test_CustomField(t *testing.T) {
 	}
 
 	t.Run("FieldValue", func(t *testing.T) {
+		t.Parallel()
 		var tt TT
 		tt.item = FieldValue("abcd")
 		tt.wantQuery = "?"
@@ -54,6 +55,7 @@ func Test_CustomField(t *testing.T) {
 	})
 
 	t.Run("Fieldf", func(t *testing.T) {
+		t.Parallel()
 		var tt TT
 		tt.item = Fieldf("lorem ipsum {} {}", 1, "a")
 		tt.wantQuery = "lorem ipsum ? ?"
@@ -62,6 +64,7 @@ func Test_CustomField(t *testing.T) {
 	})
 
 	t.Run("CustomField alias", func(t *testing.T) {
+		t.Parallel()
 		var tt TT
 		tt.item = Fieldf("my_field").As("ggggggg")
 		tt.wantQuery = "my_field"
@@ -70,6 +73,7 @@ func Test_CustomField(t *testing.T) {
 	})
 
 	t.Run("CustomField ASC NULLS LAST", func(t *testing.T) {
+		t.Parallel()
 		var tt TT
 		tt.item = Fieldf("my_field").Asc().NullsLast()
 		tt.wantQuery = "my_field ASC NULLS LAST"
@@ -78,6 +82,7 @@ func Test_CustomField(t *testing.T) {
 	})
 
 	t.Run("CustomField DESC NULLS FIRST", func(t *testing.T) {
+		t.Parallel()
 		var tt TT
 		tt.item = Fieldf("my_field").Desc().NullsFirst()
 		tt.wantQuery = "my_field DESC NULLS FIRST"
@@ -86,6 +91,7 @@ func Test_CustomField(t *testing.T) {
 	})
 
 	t.Run("CustomField IS NULL", func(t *testing.T) {
+		t.Parallel()
 		var tt TT
 		tt.item = Fieldf("my_field").IsNull()
 		tt.wantQuery = "my_field IS NULL"
@@ -94,6 +100,7 @@ func Test_CustomField(t *testing.T) {
 	})
 
 	t.Run("CustomField IS NOT NULL", func(t *testing.T) {
+		t.Parallel()
 		var tt TT
 		tt.item = Fieldf("my_field").IsNotNull()
 		tt.wantQuery = "my_field IS NOT NULL"
@@ -102,6 +109,7 @@ func Test_CustomField(t *testing.T) {
 	})
 
 	t.Run("CustomField IN (rowvalue)", func(t *testing.T) {
+		t.Parallel()
 		var tt TT
 		tt.item = Fieldf("my_field").In(RowValue{USERS.USER_ID, USERS.NAME, USERS.EMAIL})
 		tt.wantQuery = "my_field IN (user_id, name, email)"
@@ -110,6 +118,7 @@ func Test_CustomField(t *testing.T) {
 	})
 
 	t.Run("CustomField IN (slice)", func(t *testing.T) {
+		t.Parallel()
 		var tt TT
 		tt.item = Fieldf("my_field").In([]int{5, 6, 7})
 		tt.wantQuery = "my_field IN (?, ?, ?)"
@@ -118,6 +127,7 @@ func Test_CustomField(t *testing.T) {
 	})
 
 	t.Run("CustomField Eq", func(t *testing.T) {
+		t.Parallel()
 		var tt TT
 		tt.item = Fieldf("my_field").Eq(123)
 		tt.wantQuery = "my_field = ?"
@@ -126,6 +136,7 @@ func Test_CustomField(t *testing.T) {
 	})
 
 	t.Run("CustomField Ne", func(t *testing.T) {
+		t.Parallel()
 		var tt TT
 		tt.item = Fieldf("my_field").Ne(123)
 		tt.wantQuery = "my_field <> ?"
@@ -134,6 +145,7 @@ func Test_CustomField(t *testing.T) {
 	})
 
 	t.Run("CustomField Gt", func(t *testing.T) {
+		t.Parallel()
 		var tt TT
 		tt.item = Fieldf("my_field").Gt(123)
 		tt.wantQuery = "my_field > ?"
@@ -142,6 +154,7 @@ func Test_CustomField(t *testing.T) {
 	})
 
 	t.Run("CustomField Ge", func(t *testing.T) {
+		t.Parallel()
 		var tt TT
 		tt.item = Fieldf("my_field").Ge(123)
 		tt.wantQuery = "my_field >= ?"
@@ -150,6 +163,7 @@ func Test_CustomField(t *testing.T) {
 	})
 
 	t.Run("CustomField Lt", func(t *testing.T) {
+		t.Parallel()
 		var tt TT
 		tt.item = Fieldf("my_field").Lt(123)
 		tt.wantQuery = "my_field < ?"
@@ -158,6 +172,7 @@ func Test_CustomField(t *testing.T) {
 	})
 
 	t.Run("CustomField Le", func(t *testing.T) {
+		t.Parallel()
 		var tt TT
 		tt.item = Fieldf("my_field").Le(123)
 		tt.wantQuery = "my_field <= ?"
@@ -166,6 +181,7 @@ func Test_CustomField(t *testing.T) {
 	})
 
 	t.Run("FieldLiteral", func(t *testing.T) {
+		t.Parallel()
 		var tt TT
 		tt.item = FieldLiteral("lorem ipsum dolor sit amet COUNT(*)")
 		tt.wantQuery = "lorem ipsum dolor sit amet COUNT(*)"
