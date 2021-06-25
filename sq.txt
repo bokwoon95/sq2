@@ -34,6 +34,7 @@ Put more succinctly: is there ever a case where the user has to convert a query 
 I have decided: try to silently accomodate as much as possible, and do not enforce SQL semantics.
 
 TODO: consider adding semicolon to all generated DML queries. So that they may be appended into a file without further postprocessing.
+Actually, No: it would make select queries unnestable if they terminated with a semicolon by default. Instead it is up to the parent environment to insert the semicolon as necessary.
 
 sq README needs a FAQ section, just like how Maddy mail server does. I naturally gravitaed towards the FAQ link in order to learn more about maddy, and was able to learn so much it just from reading the FAQ alone.
 
@@ -53,3 +54,26 @@ https://stackoverflow.com/a/32253871
 type conversions can be used very often for converting between the XXXField types and FieldInfo, which we want to be fast.
 
 In general, will using struct values instead of struct pointers be faster when building a query? I need to know.
+
+idea: package testx
+testx.Diff() will provide coloured character-level diffing (like diff-so-fancy) by parsing the output of cmp.Diff
+testx.Diffx() is like Diff(), but accepts variadic cmp.Option arguments
+testx.Callers() will print the callers. Colouring not necessary.
+    WOW but testx.Callers might break depending on whether you invoke your tests with a TestMain. Could be fixed with a package-level config variable to indicate if you are using TestMain.
+Diff() will strictly follow the convention of (got, want). No more ambiguous LHS and RHS. The reasoning is so that the minus sign will be the typical red, which signifies the wrong output. While the plus sign, and the typical green, will be the desired output.
+
+ddl: patches
+p := ddl.NewPatches()
+p.Register(patchName, patchFunc)
+p.RegisterWithGroup(patchName, patchGroup, patchFunc)
+p.ApplyAllPatches(db, )
+p.ApplyPatches(db, patchNames...)
+p.ApplyPatchGroups(db, patchGroups...)
+CREATE TABLE sq_patches (
+    patch_name VARCHAR(255) -- most database-agnostic type
+    started_at BIGINT -- unix timestamp
+    ended_at BIGINT -- unix timestamp
+    success BOOLEAN
+);
+started_at, but no ended_at means what?
+started_at, ended_at but no success means what?

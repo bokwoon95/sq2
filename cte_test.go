@@ -275,6 +275,8 @@ func TestCTE(t *testing.T) {
 	})
 }
 
+// TODO: change from (want, got) to (got, want)
+// testx.Diff
 func Test_CTEField(t *testing.T) {
 	type TT struct {
 		dialect                 string
