@@ -48,7 +48,7 @@ func Test_TimeField(t *testing.T) {
 			t.Error(testcallers(), diff)
 		}
 		if tt.wantParams != nil {
-			if diff := testdiff(tt.wantParams, gotParams); diff != "" {
+			if diff := testdiff(gotParams, tt.wantParams); diff != "" {
 				t.Error(testcallers(), diff)
 			}
 		}

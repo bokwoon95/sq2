@@ -47,7 +47,7 @@ func Test_Fprintf(t *testing.T) {
 		if diff := testdiff(gotArgs, tt.wantArgs); diff != "" {
 			t.Error(testcallers(), diff)
 		}
-		if diff := testdiff(tt.wantParams, gotParams); diff != "" {
+		if diff := testdiff(gotParams, tt.wantParams); diff != "" {
 			t.Error(testcallers(), diff)
 		}
 	}

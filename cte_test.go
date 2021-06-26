@@ -26,7 +26,7 @@ func TestCTE(t *testing.T) {
 			t.Error(testcallers(), diff)
 		}
 		if tt.wantParams != nil {
-			if diff := testdiff(tt.wantParams, gotParams); diff != "" {
+			if diff := testdiff(gotParams, tt.wantParams); diff != "" {
 				t.Error(testcallers(), diff)
 			}
 		}
@@ -289,7 +289,7 @@ func Test_CTEField(t *testing.T) {
 			t.Error(testcallers(), diff)
 		}
 		if tt.wantParams != nil {
-			if diff := testdiff(tt.wantParams, gotParams); diff != "" {
+			if diff := testdiff(gotParams, tt.wantParams); diff != "" {
 				t.Error(testcallers(), diff)
 			}
 		}
