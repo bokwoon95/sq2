@@ -10,7 +10,6 @@ import (
 // Row represents the state of a row after a call to rows.Next().
 type Row struct {
 	active        bool
-	rows          *sql.Rows
 	index         int
 	fields        []Field
 	dest          []interface{}
@@ -19,9 +18,6 @@ type Row struct {
 }
 
 func RowResult(row *Row) (fields []Field, dest []interface{}) { return row.fields, row.dest }
-
-// TODO: I don't actually need to embed the *sql.Rows inside, I just need a boolean flag to indicate if the row is active or passive
-func RowSetSQLRows(row *Row, sqlRows *sql.Rows) { row.rows = sqlRows }
 
 func RowActivate(row *Row) { row.active = true }
 
