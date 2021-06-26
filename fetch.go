@@ -3,7 +3,6 @@ package sq
 import (
 	"bytes"
 	"context"
-	"database/sql"
 	"errors"
 	"fmt"
 	"reflect"
@@ -49,9 +48,9 @@ func fetchContext(ctx context.Context, db Queryer, q Query, rowmapper func(*Row)
 		shouldLogResults, resultsLimit = db.LogResults()
 	}
 	stats.Dialect = q.Dialect()
-	row := &Row{}
-	rowmapper(row)
-	fields, dest := RowResult(row)
+	r := &Row{}
+	rowmapper(r)
+	fields, dest := RowResult(r)
 	q, err = q.SetFetchableFields(fields)
 	if err != nil {
 		return 0, err
@@ -82,42 +81,41 @@ func fetchContext(ctx context.Context, db Queryer, q Query, rowmapper func(*Row)
 		return 0, err
 	}
 	stats.Query = buf.String()
-	var sqlRows *sql.Rows
 	start := time.Now()
-	sqlRows, err = db.QueryContext(ctx, stats.Query, stats.Args...)
+	rows, err := db.QueryContext(ctx, stats.Query, stats.Args...)
 	stats.TimeTaken = time.Since(start)
 	if err != nil {
 		return 0, err
 	}
-	defer sqlRows.Close()
-	RowSetSQLRows(row, sqlRows)
+	defer rows.Close()
+	RowSetSQLRows(r, rows)
 	if len(dest) == 0 {
 		return 0, nil
 	}
-	for sqlRows.Next() {
+	for rows.Next() {
 		rowCount++
-		err = sqlRows.Scan(dest...)
+		err = rows.Scan(dest...)
 		if err != nil {
 			return rowCount, decorateScanError(stats.Dialect, fields, dest, err)
 		}
 		if shouldLogResults && rowCount <= int64(resultsLimit) {
 			accumulateResults(stats.Dialect, resultsBuf, fields, dest, rowCount)
 		}
-		RowResetIndex(row)
-		rowmapper(row)
-		err = RowProcessingError(row)
+		RowResetIndex(r)
+		rowmapper(r)
+		err = RowProcessingError(r)
 		if err != nil {
 			return rowCount, err
 		}
-		if RowClosed(row) {
+		if RowClosed(r) {
 			break
 		}
 	}
-	err = sqlRows.Close()
+	err = rows.Close()
 	if err != nil {
 		return rowCount, err
 	}
-	err = sqlRows.Err()
+	err = rows.Err()
 	if err != nil {
 		return rowCount, err
 	}
