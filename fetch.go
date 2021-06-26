@@ -57,7 +57,6 @@ func fetchContext(ctx context.Context, db Queryer, q Query, rowmapper func(*Row)
 	}
 	buf := bufpool.Get().(*bytes.Buffer)
 	resultsBuf := bufpool.Get().(*bytes.Buffer)
-	params := paramspool.Get().(map[string][]int)
 	defer func() {
 		if stats.Query == "" && err != nil {
 			stats.Query = buf.String() + "%!(error=" + err.Error() + ")"
@@ -67,12 +66,8 @@ func fetchContext(ctx context.Context, db Queryer, q Query, rowmapper func(*Row)
 		}
 		buf.Reset()
 		resultsBuf.Reset()
-		for k := range params {
-			delete(params, k)
-		}
 		bufpool.Put(buf)
 		bufpool.Put(resultsBuf)
-		paramspool.Put(params)
 		if logQueryStats == nil {
 			return
 		}
@@ -81,7 +76,7 @@ func fetchContext(ctx context.Context, db Queryer, q Query, rowmapper func(*Row)
 		stats.RowCount.Int64 = rowCount
 		logQueryStats(ctx, stats, skip+2)
 	}()
-	err = q.AppendSQL(stats.Dialect, buf, &stats.Args, params)
+	err = q.AppendSQL(stats.Dialect, buf, &stats.Args, make(map[string][]int))
 	if err != nil {
 		return 0, err
 	}
@@ -134,24 +129,19 @@ func decorateScanError(dialect string, fields []Field, dest []interface{}, err e
 	buf := bufpool.Get().(*bytes.Buffer)
 	tmpbuf := bufpool.Get().(*bytes.Buffer)
 	tmpargs := argspool.Get().([]interface{})
-	tmpparams := paramspool.Get().(map[string][]int)
 	defer func() {
 		buf.Reset()
 		tmpbuf.Reset()
 		tmpargs = tmpargs[:0]
-		for k := range tmpparams {
-			delete(tmpparams, k)
-		}
 		bufpool.Put(buf)
 		bufpool.Put(tmpbuf)
 		argspool.Put(tmpargs)
-		paramspool.Put(tmpparams)
 	}()
 	for i := range dest {
 		buf.WriteString("\n" + strconv.Itoa(i) + ") ")
 		tmpbuf.Reset()
 		tmpargs = tmpargs[:0]
-		err2 := fields[i].AppendSQLExclude(dialect, tmpbuf, &tmpargs, tmpparams, nil)
+		err2 := fields[i].AppendSQLExclude(dialect, tmpbuf, &tmpargs, make(map[string][]int), nil)
 		if err2 != nil {
 			buf.WriteString("%!(error=" + err2.Error() + ")")
 			continue
@@ -169,23 +159,18 @@ func decorateScanError(dialect string, fields []Field, dest []interface{}, err e
 func accumulateResults(dialect string, buf *bytes.Buffer, fields []Field, dest []interface{}, rowCount int64) {
 	tmpbuf := bufpool.Get().(*bytes.Buffer)
 	tmpargs := argspool.Get().([]interface{})
-	tmpparams := paramspool.Get().(map[string][]int)
 	defer func() {
 		tmpbuf.Reset()
 		tmpargs = tmpargs[:0]
-		for k := range tmpparams {
-			delete(tmpparams, k)
-		}
 		bufpool.Put(tmpbuf)
 		argspool.Put(tmpargs)
-		paramspool.Put(tmpparams)
 	}()
 	buf.WriteString("\n----[ Row " + strconv.FormatInt(rowCount, 10) + " ]----")
 	for i := range dest {
 		buf.WriteString("\n")
 		tmpbuf.Reset()
 		tmpargs = tmpargs[:0]
-		err := fields[i].AppendSQLExclude(dialect, tmpbuf, &tmpargs, tmpparams, nil)
+		err := fields[i].AppendSQLExclude(dialect, tmpbuf, &tmpargs, make(map[string][]int), nil)
 		if err != nil {
 			buf.WriteString("%!(error=" + err.Error() + ")")
 			continue
@@ -231,17 +216,12 @@ func fetchExistsContext(ctx context.Context, db Queryer, q Query, skip int) (exi
 		return false, err
 	}
 	buf := bufpool.Get().(*bytes.Buffer)
-	params := paramspool.Get().(map[string][]int)
 	defer func() {
 		if stats.Query == "" && err != nil {
 			stats.Query = buf.String() + "%!(error=" + err.Error() + ")"
 		}
 		buf.Reset()
-		for k := range params {
-			delete(params, k)
-		}
 		bufpool.Put(buf)
-		paramspool.Put(params)
 		if logQueryStats == nil {
 			return
 		}
@@ -253,7 +233,7 @@ func fetchExistsContext(ctx context.Context, db Queryer, q Query, skip int) (exi
 		logQueryStats(ctx, stats, skip+2)
 	}()
 	buf.WriteString("SELECT EXISTS(")
-	err = q.AppendSQL(stats.Dialect, buf, &stats.Args, params)
+	err = q.AppendSQL(stats.Dialect, buf, &stats.Args, make(map[string][]int))
 	if err != nil {
 		return false, err
 	}

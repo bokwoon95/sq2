@@ -14,9 +14,8 @@ import (
 var ErrNonFetchableQuery = errors.New("query does not support fetchable fields")
 
 var (
-	bufpool    = sync.Pool{New: func() interface{} { return new(bytes.Buffer) }}
-	argspool   = sync.Pool{New: func() interface{} { return make([]interface{}, 0) }}
-	paramspool = sync.Pool{New: func() interface{} { return make(map[string][]int) }}
+	bufpool  = sync.Pool{New: func() interface{} { return new(bytes.Buffer) }}
+	argspool = sync.Pool{New: func() interface{} { return make([]interface{}, 0) }}
 )
 
 const (
