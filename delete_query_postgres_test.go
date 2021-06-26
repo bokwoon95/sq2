@@ -28,9 +28,9 @@ func Test_PostgresDeleteQuery(t *testing.T) {
 	}
 
 	t.Run("joins", func(t *testing.T) {
-		ACTOR := NEW_ACTOR("a")
 		t.Parallel()
 		var tt TT
+		ACTOR := NEW_ACTOR("a")
 		tt.item = Postgres.
 			DeleteFrom(ACTOR).
 			With(NewCTE("cte", []string{"n"}, Queryf("SELECT 1"))).
@@ -53,4 +53,32 @@ func Test_PostgresDeleteQuery(t *testing.T) {
 		tt.wantArgs = []interface{}{1, 1, 1, 1, 1, 1, 1, 1}
 		assert(t, tt)
 	})
+
+	// t.Run("delete with join", func(t *testing.T) {
+	// 	t.Parallel()
+	// 	var tt TT
+	// 	FILM, LANGUAGE := NEW_FILM("f"), NEW_LANGUAGE("l")
+	// 	lang := NewCTE("lang", nil, SQLite.
+	// 		Select(LANGUAGE.LANGUAGE_ID, LANGUAGE.NAME).
+	// 		From(LANGUAGE).
+	// 		Where(LANGUAGE.NAME.IsNotNull()),
+	// 	)
+	// 	tt.item = Postgres.
+	// 		DeleteWith(lang).
+	// 		DeleteFrom(FILM).
+	// 		Using(lang).
+	// 		Where()
+	// 	tt.wantQuery = "WITH lang AS (" +
+	// 		"SELECT l.language_id, l.name FROM language AS l WHERE l.name IS NOT NULL" +
+	// 		")" +
+	// 		" DELETE FROM film AS f1" +
+	// 		" WHERE EXISTS (" +
+	// 		"SELECT 1" +
+	// 		" FROM film AS f2" +
+	// 		" JOIN lang ON lang.language_id = f2.language_id AND f1.film_id = f2.film_id" +
+	// 		" WHERE lang.name IN ($1, $2)" +
+	// 		")"
+	// 	tt.wantArgs = []interface{}{"English", "Italian"}
+	// 	assert(t, tt)
+	// })
 }
