@@ -1,6 +1,7 @@
 package sq
 
 import (
+	"errors"
 	"fmt"
 	"testing"
 )
@@ -245,10 +246,9 @@ func TestCTE(t *testing.T) {
 			NewCTE("cte_2", nil, SQLite.Select(FieldLiteral("1"))),
 		}
 		_, _, _, err := ToSQL("", tt.item)
-		if err == nil {
-			t.Fatal(testcallers(), "expected error but got nil")
+		if !errors.Is(err, ErrFaultySQL) {
+			t.Errorf(testcallers()+" expected ErrFaultySQL but got %#v", err)
 		}
-		fmt.Println(testcallers(), err.Error())
 	})
 
 	t.Run("CTEs, query returns error", func(t *testing.T) {
@@ -260,10 +260,9 @@ func TestCTE(t *testing.T) {
 			NewCTE("cte_2", nil, SQLite.Select(FieldLiteral("1"))),
 		}
 		_, _, _, err := ToSQL("", tt.item)
-		if err == nil {
-			t.Fatal(testcallers(), "expected error but got nil")
+		if !errors.Is(err, ErrFaultySQL) {
+			t.Errorf(testcallers()+" expected ErrFaultySQL but got %#v", err)
 		}
-		fmt.Println(testcallers(), err.Error())
 	})
 }
 
