@@ -67,7 +67,7 @@ func Test_SQLiteDeleteQuery(t *testing.T) {
 		}
 	}
 
-	t.Run("delete", func(t *testing.T) {
+	t.Run("delete v1", func(t *testing.T) {
 		t.Parallel()
 		var tt TT
 		FILM1, FILM2, LANGUAGE := NEW_FILM("f1"), NEW_FILM("f2"), NEW_LANGUAGE("l")
@@ -79,6 +79,41 @@ func Test_SQLiteDeleteQuery(t *testing.T) {
 		tt.item = SQLite.
 			DeleteWith(lang).
 			DeleteFrom(FILM1).
+			Where(Exists(SQLite.
+				SelectOne().
+				From(FILM2).
+				Join(lang,
+					lang.Field("language_id").Eq(FILM2.LANGUAGE_ID),
+					FILM1.FILM_ID.Eq(FILM2.FILM_ID),
+				).
+				Where(lang.Field("name").In([]string{"English", "Italian"})),
+			))
+		tt.wantQuery = "WITH lang AS (" +
+			"SELECT l.language_id, l.name FROM language AS l WHERE l.name IS NOT NULL" +
+			")" +
+			" DELETE FROM film AS f1" +
+			" WHERE EXISTS (" +
+			"SELECT 1" +
+			" FROM film AS f2" +
+			" JOIN lang ON lang.language_id = f2.language_id AND f1.film_id = f2.film_id" +
+			" WHERE lang.name IN ($1, $2)" +
+			")"
+		tt.wantArgs = []interface{}{"English", "Italian"}
+		assert(t, tt)
+	})
+
+	t.Run("delete v2", func(t *testing.T) {
+		t.Parallel()
+		var tt TT
+		FILM1, FILM2, LANGUAGE := NEW_FILM("f1"), NEW_FILM("f2"), NEW_LANGUAGE("l")
+		lang := NewCTE("lang", nil, SQLite.
+			Select(LANGUAGE.LANGUAGE_ID, LANGUAGE.NAME).
+			From(LANGUAGE).
+			Where(LANGUAGE.NAME.IsNotNull()),
+		)
+		tt.item = SQLite.
+			DeleteFrom(FILM1).
+			With(lang).
 			Where(Exists(SQLite.
 				SelectOne().
 				From(FILM2).
