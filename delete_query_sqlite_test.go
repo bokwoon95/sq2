@@ -82,26 +82,23 @@ func Test_SQLiteDeleteQuery(t *testing.T) {
 			Where(Exists(SQLite.
 				SelectOne().
 				From(FILM2).
-				Join(lang, lang.Field("language_id").Eq(FILM2.LANGUAGE_ID)).
-				Where(
+				Join(lang,
+					lang.Field("language_id").Eq(FILM2.LANGUAGE_ID),
 					FILM1.FILM_ID.Eq(FILM2.FILM_ID),
-					lang.Field("name").In([]string{"English", "Italian"}),
-				),
-			)).
-			OrderBy(FILM1.FILM_ID).
-			Limit(10)
+				).
+				Where(lang.Field("name").In([]string{"English", "Italian"})),
+			))
 		tt.wantQuery = "WITH lang AS (" +
 			"SELECT l.language_id, l.name FROM language AS l WHERE l.name IS NOT NULL" +
 			")" +
 			" DELETE FROM film AS f1" +
 			" WHERE EXISTS (" +
 			"SELECT 1" +
-			" FROM film AS f2 JOIN lang ON lang.language_id = f2.language_id" +
-			" WHERE f1.film_id = f2.film_id AND lang.name IN ($1, $2)" +
-			")" +
-			" ORDER BY f1.film_id" +
-			" LIMIT $3"
-		tt.wantArgs = []interface{}{"English", "Italian", int64(10)}
+			" FROM film AS f2" +
+			" JOIN lang ON lang.language_id = f2.language_id AND f1.film_id = f2.film_id" +
+			" WHERE lang.name IN ($1, $2)" +
+			")"
+		tt.wantArgs = []interface{}{"English", "Italian"}
 		assert(t, tt)
 	})
 }
