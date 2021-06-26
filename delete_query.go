@@ -51,7 +51,7 @@ func (q DeleteQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interf
 	// USING
 	if q.UsingTable != nil && (dialect == DialectPostgres || dialect == DialectMySQL) {
 		buf.WriteString(" USING ")
-		err = q.FromTable.AppendSQL(dialect, buf, args, params)
+		err = q.UsingTable.AppendSQL(dialect, buf, args, params)
 		if err != nil {
 			return err
 		}
