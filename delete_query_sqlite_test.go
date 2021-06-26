@@ -81,7 +81,7 @@ func Test_SQLiteDeleteQuery(t *testing.T) {
 	t.Run("delete with join", func(t *testing.T) {
 		t.Parallel()
 		var tt TT
-		FILM1, FILM2, LANGUAGE := NEW_FILM("f1"), NEW_FILM("f2"), NEW_LANGUAGE("l")
+		FILM1, FILM2, LANGUAGE, INVENTORY := NEW_FILM("f1"), NEW_FILM("f2"), NEW_LANGUAGE("l"), NEW_INVENTORY("i")
 		lang := NewCTE("lang", nil, SQLite.
 			Select(LANGUAGE.LANGUAGE_ID, LANGUAGE.NAME).
 			From(LANGUAGE).
@@ -93,11 +93,13 @@ func Test_SQLiteDeleteQuery(t *testing.T) {
 			Where(Exists(SQLite.
 				SelectOne().
 				From(FILM2).
-				Join(lang,
-					lang.Field("language_id").Eq(FILM2.LANGUAGE_ID),
+				Join(lang, lang.Field("language_id").Eq(FILM2.LANGUAGE_ID)).
+				Join(INVENTORY, INVENTORY.FILM_ID.Eq(FILM2.FILM_ID)).
+				Where(
 					FILM1.FILM_ID.Eq(FILM2.FILM_ID),
-				).
-				Where(lang.Field("name").In([]string{"English", "Italian"})),
+					lang.Field("name").In([]string{"English", "Italian"}),
+					INVENTORY.LAST_UPDATE.IsNotNull(),
+				),
 			))
 		tt.wantQuery = "WITH lang AS (" +
 			"SELECT l.language_id, l.name FROM language AS l WHERE l.name IS NOT NULL" +
@@ -106,8 +108,9 @@ func Test_SQLiteDeleteQuery(t *testing.T) {
 			" WHERE EXISTS (" +
 			"SELECT 1" +
 			" FROM film AS f2" +
-			" JOIN lang ON lang.language_id = f2.language_id AND f1.film_id = f2.film_id" +
-			" WHERE lang.name IN ($1, $2)" +
+			" JOIN lang ON lang.language_id = f2.language_id" +
+			" JOIN inventory AS i ON i.film_id = f2.film_id" +
+			" WHERE f1.film_id = f2.film_id AND lang.name IN ($1, $2) AND i.last_update IS NOT NULL" +
 			")"
 		tt.wantArgs = []interface{}{"English", "Italian"}
 		assert(t, tt)
