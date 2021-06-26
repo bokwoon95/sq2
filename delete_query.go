@@ -38,9 +38,6 @@ func (q DeleteQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interf
 	}
 	// DELETE FROM
 	buf.WriteString("DELETE FROM ")
-	if q.FromTable == nil {
-		return fmt.Errorf("DELETE-ing from a nil table")
-	}
 	err = q.FromTable.AppendSQL(dialect, buf, args, params)
 	if err != nil {
 		return err
@@ -61,6 +58,9 @@ func (q DeleteQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interf
 	}
 	// JOIN
 	if len(q.JoinTables) > 0 {
+		if dialect == DialectSQLite {
+			return fmt.Errorf("sqlite DELETE does not support joins")
+		}
 		buf.WriteString(" ")
 		err = q.JoinTables.AppendSQL(dialect, buf, args, params)
 		if err != nil {
@@ -78,6 +78,10 @@ func (q DeleteQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interf
 	}
 	// ORDER BY
 	if len(q.OrderByFields) > 0 {
+		if dialect != DialectMySQL {
+			return fmt.Errorf("%s DELETE does not support ORDER BY", dialect)
+		}
+		// TODO: if is multi-table delete, also return an error. MySQL does not allow ORDER BY in multi-table DELETE
 		buf.WriteString(" ORDER BY ")
 		err = q.OrderByFields.AppendSQLExclude(dialect, buf, args, params, nil)
 		if err != nil {
@@ -86,6 +90,10 @@ func (q DeleteQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interf
 	}
 	// LIMIT
 	if q.QueryLimit.Valid {
+		if dialect != DialectMySQL {
+			return fmt.Errorf("%s DELETE does not support ORDER BY", dialect)
+		}
+		// TODO: if is multi-table delete, also return an error. MySQL does not allow LIMIT in multi-table DELETE
 		err = BufferPrintf(dialect, buf, args, params, nil, " LIMIT {}", []interface{}{q.QueryLimit.Int64})
 		if err != nil {
 			return err
@@ -93,6 +101,9 @@ func (q DeleteQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interf
 	}
 	// RETURNING
 	if len(q.ReturningFields) > 0 {
+		if dialect != DialectPostgres && dialect != DialectSQLite {
+			return fmt.Errorf("%s DELETE does not support RETURNING", dialect)
+		}
 		buf.WriteString(" RETURNING ")
 		err = q.ReturningFields.AppendSQLExcludeWithAlias(dialect, buf, args, params, nil)
 		if err != nil {

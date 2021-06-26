@@ -454,17 +454,27 @@ func (tbl customTable) AppendSQL(dialect string, buf *bytes.Buffer, args *[]inte
 }
 
 type customQuery struct {
-	format string
-	values []interface{}
+	dialect string
+	format  string
+	values  []interface{}
 }
 
 var _ Query = customQuery{}
 
 func Queryf(format string, values ...interface{}) Query {
-	return customQuery{
-		format: format,
-		values: values,
-	}
+	return customQuery{format: format, values: values}
+}
+
+func (d SQLiteDialect) Queryf(format string, values ...interface{}) Query {
+	return customQuery{dialect: DialectSQLite, format: format, values: values}
+}
+
+func (d PostgresDialect) Queryf(format string, values ...interface{}) Query {
+	return customQuery{dialect: DialectPostgres, format: format, values: values}
+}
+
+func (d MySQLDialect) Queryf(format string, values ...interface{}) Query {
+	return customQuery{dialect: DialectMySQL, format: format, values: values}
 }
 
 func (q customQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
@@ -479,4 +489,4 @@ func (q customQuery) GetFetchableFields() ([]Field, error) {
 	return nil, fmt.Errorf("custom %w", ErrNonFetchableQuery)
 }
 
-func (q customQuery) Dialect() string { return "" }
+func (q customQuery) Dialect() string { return q.dialect }

@@ -2,7 +2,6 @@ package sq
 
 import (
 	"bytes"
-	"fmt"
 	"path/filepath"
 	"reflect"
 	"runtime"
@@ -93,22 +92,29 @@ var (
 	_ Field = FaultySQL{}
 )
 
+type FaultySQLError struct{}
+
+func (e FaultySQLError) Error() string { return "sql broke" }
+
+// TODO: everywhere where FaultySQL is used, assert that the error returned is ErrFaultySQL
+var ErrFaultySQL error = FaultySQLError{}
+
 func (q FaultySQL) AppendSQL(string, *bytes.Buffer, *[]interface{}, map[string][]int) error {
-	return fmt.Errorf("sql broke")
+	return ErrFaultySQL
 }
 
 func (q FaultySQL) SetFetchableFields([]Field) (Query, error) {
-	return nil, fmt.Errorf("sql broke")
+	return nil, ErrFaultySQL
 }
 
 func (q FaultySQL) GetFetchableFields() ([]Field, error) {
-	return nil, fmt.Errorf("sql broke")
+	return nil, ErrFaultySQL
 }
 
 func (q FaultySQL) Dialect() string { return "" }
 
 func (q FaultySQL) AppendSQLExclude(string, *bytes.Buffer, *[]interface{}, map[string][]int, []string) error {
-	return fmt.Errorf("sql broke")
+	return ErrFaultySQL
 }
 
 func (q FaultySQL) GetAlias() string { return "" }
