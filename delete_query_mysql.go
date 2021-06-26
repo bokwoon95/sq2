@@ -50,13 +50,13 @@ func (q MySQLDeleteQuery) RightJoin(table Table, predicates ...Predicate) MySQLD
 	return q
 }
 
-func (q MySQLDeleteQuery) CrossJoin(table Table) MySQLDeleteQuery {
-	q.JoinTables = append(q.JoinTables, CrossJoin(table))
+func (q MySQLDeleteQuery) FullJoin(table Table, predicates ...Predicate) MySQLDeleteQuery {
+	q.JoinTables = append(q.JoinTables, FullJoin(table, predicates...))
 	return q
 }
 
-func (q MySQLDeleteQuery) FullJoin(table Table, predicates ...Predicate) MySQLDeleteQuery {
-	q.JoinTables = append(q.JoinTables, FullJoin(table, predicates...))
+func (q MySQLDeleteQuery) CrossJoin(table Table) MySQLDeleteQuery {
+	q.JoinTables = append(q.JoinTables, CrossJoin(table))
 	return q
 }
 
@@ -67,10 +67,5 @@ func (q MySQLDeleteQuery) CustomJoin(joinType JoinType, table Table, predicates 
 
 func (q MySQLDeleteQuery) Where(predicates ...Predicate) MySQLDeleteQuery {
 	q.WherePredicate.Predicates = append(q.WherePredicate.Predicates, predicates...)
-	return q
-}
-
-func (q MySQLDeleteQuery) Returning(fields ...Field) MySQLDeleteQuery {
-	q.ReturningFields = append(q.ReturningFields, fields...)
 	return q
 }
