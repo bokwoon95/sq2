@@ -50,13 +50,13 @@ func (q PostgresDeleteQuery) RightJoin(table Table, predicates ...Predicate) Pos
 	return q
 }
 
-func (q PostgresDeleteQuery) CrossJoin(table Table) PostgresDeleteQuery {
-	q.JoinTables = append(q.JoinTables, CrossJoin(table))
+func (q PostgresDeleteQuery) FullJoin(table Table, predicates ...Predicate) PostgresDeleteQuery {
+	q.JoinTables = append(q.JoinTables, FullJoin(table, predicates...))
 	return q
 }
 
-func (q PostgresDeleteQuery) FullJoin(table Table, predicates ...Predicate) PostgresDeleteQuery {
-	q.JoinTables = append(q.JoinTables, FullJoin(table, predicates...))
+func (q PostgresDeleteQuery) CrossJoin(table Table) PostgresDeleteQuery {
+	q.JoinTables = append(q.JoinTables, CrossJoin(table))
 	return q
 }
 
