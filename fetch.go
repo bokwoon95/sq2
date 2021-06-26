@@ -192,15 +192,15 @@ func accumulateResults(dialect string, buf *bytes.Buffer, fields []Field, dest [
 	}
 }
 
-func Exists(db Queryer, q Query) (exists bool, err error) {
-	return existsContext(context.Background(), db, q, 1)
+func FetchExists(db Queryer, q Query) (exists bool, err error) {
+	return fetchExistsContext(context.Background(), db, q, 1)
 }
 
-func ExistsContext(ctx context.Context, db Queryer, q Query) (exists bool, err error) {
-	return existsContext(context.Background(), db, q, 1)
+func FetchExistsContext(ctx context.Context, db Queryer, q Query) (exists bool, err error) {
+	return fetchExistsContext(context.Background(), db, q, 1)
 }
 
-func existsContext(ctx context.Context, db Queryer, q Query, skip int) (exists bool, err error) {
+func fetchExistsContext(ctx context.Context, db Queryer, q Query, skip int) (exists bool, err error) {
 	if db == nil {
 		return false, errors.New("sq: db is nil")
 	}

@@ -27,6 +27,13 @@ func (d SQLiteDialect) Select(fields ...Field) SQLiteSelectQuery {
 	return q
 }
 
+func (d SQLiteDialect) SelectOne() SQLiteSelectQuery {
+	var q SQLiteSelectQuery
+	q.QueryDialect = DialectSQLite
+	q.SelectFields = Fields{FieldLiteral("1")}
+	return q
+}
+
 func (d SQLiteDialect) SelectDistinct(fields ...Field) SQLiteSelectQuery {
 	var q SQLiteSelectQuery
 	q.QueryDialect = DialectSQLite
@@ -42,6 +49,11 @@ func (q SQLiteSelectQuery) With(ctes ...CTE) SQLiteSelectQuery {
 
 func (q SQLiteSelectQuery) Select(fields ...Field) SQLiteSelectQuery {
 	q.SelectFields = append(q.SelectFields, fields...)
+	return q
+}
+
+func (q SQLiteSelectQuery) SelectOne() SQLiteSelectQuery {
+	q.SelectFields = Fields{FieldLiteral("1")}
 	return q
 }
 

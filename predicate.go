@@ -158,3 +158,7 @@ func In(a, b interface{}) Predicate {
 	}
 	return Predicatef("{} IN ({})", a, b)
 }
+
+func Exists(q Query) Predicate { return Predicatef("EXISTS ({})", q) }
+
+func NotExists(q Query) Predicate { return Predicatef("NOT EXISTS ({})", q) }

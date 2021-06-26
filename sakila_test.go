@@ -107,7 +107,7 @@ type LANGUAGE struct {
 
 func NEW_LANGUAGE(alias string) LANGUAGE {
 	var tbl LANGUAGE
-	tbl.TableInfo = TableInfo{TableName: "lanugage", TableAlias: alias}
+	tbl.TableInfo = TableInfo{TableName: "language", TableAlias: alias}
 	tbl.LANGUAGE_ID = NewNumberField("language_id", tbl.TableInfo)
 	tbl.NAME = NewStringField("name", tbl.TableInfo)
 	tbl.LAST_UPDATE = NewTimeField("last_update", tbl.TableInfo)

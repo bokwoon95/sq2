@@ -27,6 +27,13 @@ func (d MySQLDialect) Select(fields ...Field) MySQLSelectQuery {
 	return q
 }
 
+func (d MySQLDialect) SelectOne() MySQLSelectQuery {
+	var q MySQLSelectQuery
+	q.QueryDialect = DialectMySQL
+	q.SelectFields = Fields{FieldLiteral("1")}
+	return q
+}
+
 func (d MySQLDialect) SelectDistinct(fields ...Field) MySQLSelectQuery {
 	var q MySQLSelectQuery
 	q.QueryDialect = DialectMySQL
@@ -42,6 +49,11 @@ func (q MySQLSelectQuery) With(ctes ...CTE) MySQLSelectQuery {
 
 func (q MySQLSelectQuery) Select(fields ...Field) MySQLSelectQuery {
 	q.SelectFields = append(q.SelectFields, fields...)
+	return q
+}
+
+func (q MySQLSelectQuery) SelectOne() MySQLSelectQuery {
+	q.SelectFields = Fields{FieldLiteral("1")}
 	return q
 }
 

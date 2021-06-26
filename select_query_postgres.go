@@ -27,6 +27,13 @@ func (d PostgresDialect) Select(fields ...Field) PostgresSelectQuery {
 	return q
 }
 
+func (d PostgresDialect) SelectOne() PostgresSelectQuery {
+	var q PostgresSelectQuery
+	q.QueryDialect = DialectPostgres
+	q.SelectFields = Fields{FieldLiteral("1")}
+	return q
+}
+
 func (d PostgresDialect) SelectDistinct(fields ...Field) PostgresSelectQuery {
 	var q PostgresSelectQuery
 	q.QueryDialect = DialectPostgres
@@ -53,6 +60,11 @@ func (q PostgresSelectQuery) With(ctes ...CTE) PostgresSelectQuery {
 
 func (q PostgresSelectQuery) Select(fields ...Field) PostgresSelectQuery {
 	q.SelectFields = append(q.SelectFields, fields...)
+	return q
+}
+
+func (q PostgresSelectQuery) SelectOne() PostgresSelectQuery {
+	q.SelectFields = Fields{FieldLiteral("1")}
 	return q
 }
 
