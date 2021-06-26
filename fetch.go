@@ -88,10 +88,10 @@ func fetchContext(ctx context.Context, db Queryer, q Query, rowmapper func(*Row)
 		return 0, err
 	}
 	defer rows.Close()
-	RowActivate(r)
 	if len(dest) == 0 {
 		return 0, nil
 	}
+	RowActivate(r)
 	for rows.Next() {
 		rowCount++
 		err = rows.Scan(dest...)

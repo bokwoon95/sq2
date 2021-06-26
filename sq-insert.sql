@@ -5,6 +5,8 @@ DELETE FROM customer;
 UPDATE staff SET store_id = NULL;
 DELETE FROM store;
 DELETE FROM staff;
+INSERT INTO film_text (rowid, title, description)
+SELECT film_id, title, description FROM film;
 DELETE FROM film_category;
 DELETE FROM film_actor;
 DELETE FROM film;
