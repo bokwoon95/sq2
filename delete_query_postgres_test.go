@@ -33,6 +33,7 @@ func Test_PostgresDeleteQuery(t *testing.T) {
 		var tt TT
 		tt.item = Postgres.
 			DeleteFrom(ACTOR).
+			With(NewCTE("cte", []string{"n"}, Queryf("SELECT 1"))).
 			Using(ACTOR).
 			Join(ACTOR, Eq(1, 1)).
 			LeftJoin(ACTOR, Eq(1, 1)).
@@ -40,7 +41,8 @@ func Test_PostgresDeleteQuery(t *testing.T) {
 			FullJoin(ACTOR, Eq(1, 1)).
 			CrossJoin(ACTOR).
 			CustomJoin("NATURAL JOIN", ACTOR)
-		tt.wantQuery = "DELETE FROM actor AS a" +
+		tt.wantQuery = "WITH cte (n) AS (SELECT 1)" +
+			" DELETE FROM actor AS a" +
 			" USING actor AS a" +
 			" JOIN actor AS a ON $1 = $2" +
 			" LEFT JOIN actor AS a ON $3 = $4" +
