@@ -89,6 +89,7 @@ type FaultySQL struct{}
 
 var (
 	_ Query = FaultySQL{}
+	_ Table = FaultySQL{}
 	_ Field = FaultySQL{}
 )
 
