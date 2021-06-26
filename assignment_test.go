@@ -32,10 +32,10 @@ func Test_Assignment(t *testing.T) {
 		if err != nil {
 			t.Fatal(testcallers(), err)
 		}
-		if diff := testdiff(tt.wantQuery, gotQuery); diff != "" {
+		if diff := testdiff(gotQuery, tt.wantQuery); diff != "" {
 			t.Error(testcallers(), diff)
 		}
-		if diff := testdiff(tt.wantArgs, gotArgs); diff != "" {
+		if diff := testdiff(gotArgs, tt.wantArgs); diff != "" {
 			t.Error(testcallers(), diff)
 		}
 	}
@@ -122,10 +122,10 @@ func Test_Assignments(t *testing.T) {
 		if err != nil {
 			t.Fatal(testcallers(), err)
 		}
-		if diff := testdiff(tt.wantQuery, gotQuery); diff != "" {
+		if diff := testdiff(gotQuery, tt.wantQuery); diff != "" {
 			t.Error(testcallers(), diff)
 		}
-		if diff := testdiff(tt.wantArgs, gotArgs); diff != "" {
+		if diff := testdiff(gotArgs, tt.wantArgs); diff != "" {
 			t.Error(testcallers(), diff)
 		}
 	}
