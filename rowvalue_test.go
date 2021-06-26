@@ -38,10 +38,10 @@ func TestRowValue(t *testing.T) {
 		if err != nil {
 			t.Fatal(testcallers(), err)
 		}
-		if diff := testdiff(tt.wantQuery, buf.String()); diff != "" {
+		if diff := testdiff(buf.String(), tt.wantQuery); diff != "" {
 			t.Error(testcallers(), diff)
 		}
-		if diff := testdiff(tt.wantArgs, gotArgs); diff != "" {
+		if diff := testdiff(gotArgs, tt.wantArgs); diff != "" {
 			t.Error(testcallers(), diff)
 		}
 	}
@@ -88,10 +88,10 @@ func TestRowValue(t *testing.T) {
 		if err != nil {
 			t.Fatal(testcallers(), err)
 		}
-		if diff := testdiff(tt.wantQuery, buf.String()); diff != "" {
+		if diff := testdiff(buf.String(), tt.wantQuery); diff != "" {
 			t.Error(testcallers(), diff)
 		}
-		if diff := testdiff(tt.wantArgs, gotArgs); diff != "" {
+		if diff := testdiff(gotArgs, tt.wantArgs); diff != "" {
 			t.Error(testcallers(), diff)
 		}
 	})

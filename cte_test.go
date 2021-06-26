@@ -22,7 +22,7 @@ func TestCTE(t *testing.T) {
 		if diff := testdiff(tt.wantQuery, gotQuery); diff != "" {
 			t.Error(testcallers(), diff)
 		}
-		if diff := testdiff(tt.wantArgs, gotArgs); diff != "" {
+		if diff := testdiff(gotArgs, tt.wantArgs); diff != "" {
 			t.Error(testcallers(), diff)
 		}
 		if tt.wantParams != nil {
@@ -285,7 +285,7 @@ func Test_CTEField(t *testing.T) {
 		if diff := testdiff(tt.wantQuery, gotQuery); diff != "" {
 			t.Error(testcallers(), diff)
 		}
-		if diff := testdiff(tt.wantArgs, gotArgs); diff != "" {
+		if diff := testdiff(gotArgs, tt.wantArgs); diff != "" {
 			t.Error(testcallers(), diff)
 		}
 		if tt.wantParams != nil {

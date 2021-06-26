@@ -41,10 +41,10 @@ func Test_Fprintf(t *testing.T) {
 		if err != nil {
 			t.Fatal(testcallers(), err)
 		}
-		if diff := testdiff(tt.wantQuery, buf.String()); diff != "" {
+		if diff := testdiff(buf.String(), tt.wantQuery); diff != "" {
 			t.Error(testcallers(), diff)
 		}
-		if diff := testdiff(tt.wantArgs, gotArgs); diff != "" {
+		if diff := testdiff(gotArgs, tt.wantArgs); diff != "" {
 			t.Error(testcallers(), diff)
 		}
 		if diff := testdiff(tt.wantParams, gotParams); diff != "" {
@@ -60,6 +60,10 @@ func Test_Fprintf(t *testing.T) {
 		assert(t, tt)
 	})
 
+	// TODO: use double curly brackets to escape instead. So if you need
+	// literally need 2 curly brackets (like for escaping in Oracle), you have
+	// to insert 4 curly brackets which get escaped to 2 curly brackets after
+	// passing through sq.
 	t.Run("escape curly bracket", func(t *testing.T) {
 		t.Parallel()
 		var tt TT
