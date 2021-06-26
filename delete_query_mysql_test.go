@@ -44,10 +44,10 @@ func Test_MySQLDeleteQuery(t *testing.T) {
 		tt.wantQuery = "WITH cte (n) AS (SELECT 1)" +
 			" DELETE FROM actor AS a" +
 			" USING actor AS a" +
-			" JOIN actor AS a ON $1 = $2" +
-			" LEFT JOIN actor AS a ON $3 = $4" +
-			" RIGHT JOIN actor AS a ON $5 = $6" +
-			" FULL JOIN actor AS a ON $7 = $8" +
+			" JOIN actor AS a ON ? = ?" +
+			" LEFT JOIN actor AS a ON ? = ?" +
+			" RIGHT JOIN actor AS a ON ? = ?" +
+			" FULL JOIN actor AS a ON ? = ?" +
 			" CROSS JOIN actor AS a" +
 			" NATURAL JOIN actor AS a"
 		tt.wantArgs = []interface{}{1, 1, 1, 1, 1, 1, 1, 1}

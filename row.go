@@ -9,6 +9,7 @@ import (
 
 // Row represents the state of a row after a call to rows.Next().
 type Row struct {
+	active        bool
 	rows          *sql.Rows
 	index         int
 	fields        []Field
@@ -19,7 +20,10 @@ type Row struct {
 
 func RowResult(row *Row) (fields []Field, dest []interface{}) { return row.fields, row.dest }
 
+// TODO: I don't actually need to embed the *sql.Rows inside, I just need a boolean flag to indicate if the row is active or passive
 func RowSetSQLRows(row *Row, sqlRows *sql.Rows) { row.rows = sqlRows }
+
+func RowActivate(row *Row) { row.active = true }
 
 func RowResetIndex(row *Row) { row.index = 0 }
 
@@ -28,7 +32,7 @@ func RowProcessingError(row *Row) error { return row.processingErr }
 func RowClosed(row *Row) bool { return row.closed }
 
 func (r *Row) Process(fn func() error) {
-	if r.rows == nil || r.processingErr != nil {
+	if !r.active || r.processingErr != nil {
 		return
 	}
 	r.processingErr = fn()
@@ -41,7 +45,7 @@ func (r *Row) Close() { r.closed = true }
 
 // ScanInto scans the field into a dest, where dest is a pointer.
 func (r *Row) ScanInto(dest interface{}, field Field) {
-	if r.rows == nil {
+	if !r.active {
 		r.fields = append(r.fields, field)
 		switch dest.(type) {
 		case *bool, *sql.NullBool:
@@ -115,7 +119,7 @@ func (r *Row) ScanInto(dest interface{}, field Field) {
 }
 
 func (r *Row) Bytes(field Field) []byte {
-	if r.rows == nil {
+	if !r.active {
 		var b []byte
 		r.fields = append(r.fields, field)
 		r.dest = append(r.dest, &b)
@@ -142,7 +146,7 @@ func (r *Row) BoolValid(predicate Predicate) bool {
 
 // NullBool returns the sql.NullBool value of the Predicate.
 func (r *Row) NullBool(predicate Predicate) sql.NullBool {
-	if r.rows == nil {
+	if !r.active {
 		var nullbool sql.NullBool
 		r.fields = append(r.fields, predicate)
 		r.dest = append(r.dest, &nullbool)
@@ -168,7 +172,7 @@ func (r *Row) Float64Valid(field NumberField) bool {
 
 // NullFloat64 returns the sql.NullFloat64 value of the NumberField.
 func (r *Row) NullFloat64(field NumberField) sql.NullFloat64 {
-	if r.rows == nil {
+	if !r.active {
 		var nullfloat64 sql.NullFloat64
 		r.fields = append(r.fields, field)
 		r.dest = append(r.dest, &nullfloat64)
@@ -205,7 +209,7 @@ func (r *Row) Int64Valid(field NumberField) bool {
 
 // NullInt64 returns the sql.NullInt64 value of the NumberField.
 func (r *Row) NullInt64(field NumberField) sql.NullInt64 {
-	if r.rows == nil {
+	if !r.active {
 		var nullint64 sql.NullInt64
 		r.fields = append(r.fields, field)
 		r.dest = append(r.dest, &nullint64)
@@ -231,7 +235,7 @@ func (r *Row) StringValid(field StringField) bool {
 
 // NullString returns the sql.NullString value of the StringField.
 func (r *Row) NullString(field StringField) sql.NullString {
-	if r.rows == nil {
+	if !r.active {
 		var nullstring sql.NullString
 		r.fields = append(r.fields, field)
 		r.dest = append(r.dest, &nullstring)
@@ -256,7 +260,7 @@ func (r *Row) TimeValid(field TimeField) bool {
 
 // NullTime returns the sql.NullTime value of the TimeField.
 func (r *Row) NullTime(field TimeField) sql.NullTime {
-	if r.rows == nil {
+	if !r.active {
 		var nulltime sql.NullTime
 		r.fields = append(r.fields, field)
 		r.dest = append(r.dest, &nulltime)
