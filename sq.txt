@@ -79,3 +79,12 @@ started_at, but no ended_at means what?
 started_at, ended_at but no success means what?
 
 // TODO: change from (want, got) to (got, want)
+
+IMPORTANT: before I do any kind of performance testing, I need to know:
+- given a simple SQL query that instantiates a query, runs it and then exits, does the query get stack allocated?
+    - I really need this to happen because it's the main reason why I went with queries as struct values instead of struct pointers
+    - If I changed the queries to struct pointers instead, would the allocation/performance change?
+- assuming a simple query is stack allocated, if I passed the entire query to LogQueryStats would it change to heap allocation?
+    - I need to know this because it determines if I want to pass the Query interface to LogQueryStats for analytics purposes.
+    - If LogQueryStats gets the Query interface, it can do interesting things like analyzing which tables and columns were most commonly used
+    - But if performance takes a hit compared to just passing in the compiled query string and args, then maybe I'll leave it out
