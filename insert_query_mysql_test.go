@@ -123,6 +123,27 @@ func Test_MySQLInsertQuery(t *testing.T) {
 		assert(t, tt)
 	})
 
+	// TODO: mysql docs say to use a derived table to avoid using VALUES() for
+	// ON DUPLICATE KEY UPDATE. Can I just directly alias my SELECT-ed fields
+	// instead? Need to test it out. Not important though because I'm not going
+	// to be using it here.
 	t.Run("INSERT from SELECT", func(t *testing.T) {
+		t.Parallel()
+		var tt TT
+		ACTOR1, ACTOR2 := NEW_ACTOR(""), NEW_ACTOR("a2")
+		tt.item = MySQL.
+			InsertInto(ACTOR1).
+			Columns(ACTOR1.FIRST_NAME, ACTOR1.LAST_NAME).
+			Select(MySQL.
+				Select(ACTOR2.FIRST_NAME, ACTOR2.LAST_NAME).
+				From(ACTOR2).
+				Where(ACTOR2.ACTOR_ID.In([]int64{1, 2})),
+			)
+		tt.wantQuery = "INSERT INTO actor (first_name, last_name)" +
+			" SELECT a2.first_name, a2.last_name" +
+			" FROM actor AS a2" +
+			" WHERE a2.actor_id IN (?, ?)"
+		tt.wantArgs = []interface{}{int64(1), int64(2)}
+		assert(t, tt)
 	})
 }
