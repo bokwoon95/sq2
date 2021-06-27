@@ -1,6 +1,7 @@
 package sq
 
 import (
+	"database/sql"
 	"errors"
 	"testing"
 )
@@ -120,7 +121,7 @@ func Test_DeleteQuery(t *testing.T) {
 		}
 	})
 
-	t.Run("OrderByFields not MySQL", func(t *testing.T) {
+	t.Run("OrderByFields not mysql", func(t *testing.T) {
 		t.Parallel()
 		ACTOR := NEW_ACTOR("")
 		var q DeleteQuery
@@ -130,6 +131,88 @@ func Test_DeleteQuery(t *testing.T) {
 		_, _, _, err := ToSQL("", q)
 		if err == nil {
 			t.Error(testcallers(), "expected error but got nil")
+		}
+	})
+
+	t.Run("OrderByFields with multi-table DELETE", func(t *testing.T) {
+		t.Parallel()
+		ACTOR := NEW_ACTOR("")
+		var q DeleteQuery
+		q.Dialect = DialectMySQL
+		q.FromTables = append(q.FromTables, ACTOR)
+		q.UsingTable = ACTOR
+		q.JoinTables = append(q.JoinTables, Join(ACTOR, Eq(1, 1)))
+		q.OrderByFields = Fields{ACTOR.ACTOR_ID, ACTOR.FIRST_NAME}
+		_, _, _, err := ToSQL("", q)
+		if err == nil {
+			t.Error(testcallers(), "expected error but got nil")
+		}
+	})
+
+	t.Run("OrderByFields faulty sql", func(t *testing.T) {
+		t.Parallel()
+		ACTOR := NEW_ACTOR("")
+		var q DeleteQuery
+		q.Dialect = DialectMySQL
+		q.FromTables = append(q.FromTables, ACTOR)
+		q.OrderByFields = Fields{FaultySQL{}}
+		_, _, _, err := ToSQL("", q)
+		if !errors.Is(err, ErrFaultySQL) {
+			t.Errorf(testcallers()+" expected ErrFaultySQL but got %#v", err)
+		}
+	})
+
+	t.Run("RowLimit not mysql", func(t *testing.T) {
+		t.Parallel()
+		ACTOR := NEW_ACTOR("")
+		var q DeleteQuery
+		q.Dialect = DialectPostgres
+		q.FromTables = append(q.FromTables, ACTOR)
+		q.RowLimit = sql.NullInt64{Valid: true, Int64: 10}
+		_, _, _, err := ToSQL("", q)
+		if err == nil {
+			t.Error(testcallers(), "expected error but got nil")
+		}
+	})
+
+	t.Run("RowLimit with multi-table DELETE", func(t *testing.T) {
+		t.Parallel()
+		ACTOR := NEW_ACTOR("")
+		var q DeleteQuery
+		q.Dialect = DialectMySQL
+		q.FromTables = append(q.FromTables, ACTOR)
+		q.UsingTable = ACTOR
+		q.JoinTables = append(q.JoinTables, Join(ACTOR, Eq(1, 1)))
+		q.RowLimit = sql.NullInt64{Valid: true, Int64: 10}
+		_, _, _, err := ToSQL("", q)
+		if err == nil {
+			t.Error(testcallers(), "expected error but got nil")
+		}
+	})
+
+	t.Run("ReturningFields not postgres or sqlite", func(t *testing.T) {
+		t.Parallel()
+		ACTOR := NEW_ACTOR("")
+		var q DeleteQuery
+		q.Dialect = DialectMySQL
+		q.FromTables = append(q.FromTables, ACTOR)
+		q.ReturningFields = Fields{ACTOR.ACTOR_ID}
+		_, _, _, err := ToSQL("", q)
+		if err == nil {
+			t.Error(testcallers(), "expected error but got nil")
+		}
+	})
+
+	t.Run("ReturningFields faulty sql", func(t *testing.T) {
+		t.Parallel()
+		ACTOR := NEW_ACTOR("")
+		var q DeleteQuery
+		q.Dialect = DialectPostgres
+		q.FromTables = append(q.FromTables, ACTOR)
+		q.ReturningFields = Fields{FaultySQL{}}
+		_, _, _, err := ToSQL("", q)
+		if !errors.Is(err, ErrFaultySQL) {
+			t.Errorf(testcallers()+" expected ErrFaultySQL but got %#v", err)
 		}
 	})
 }
