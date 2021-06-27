@@ -39,3 +39,19 @@ func (q SQLiteDeleteQuery) Where(predicates ...Predicate) SQLiteDeleteQuery {
 	q.WherePredicate.Predicates = append(q.WherePredicate.Predicates, predicates...)
 	return q
 }
+
+func (q SQLiteDeleteQuery) OrderBy(fields ...Field) SQLiteDeleteQuery {
+	q.OrderByFields = fields
+	return q
+}
+
+func (q SQLiteDeleteQuery) Limit(limit int64) SQLiteDeleteQuery {
+	q.RowLimit.Valid = true
+	q.RowLimit.Int64 = limit
+	return q
+}
+
+func (q SQLiteDeleteQuery) Returning(fields ...Field) SQLiteDeleteQuery {
+	q.ReturningFields = append(q.ReturningFields, fields...)
+	return q
+}

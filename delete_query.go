@@ -104,7 +104,7 @@ func (q DeleteQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interf
 	}
 	// ORDER BY
 	if len(q.OrderByFields) > 0 {
-		if dialect != DialectMySQL {
+		if dialect != DialectMySQL && dialect != DialectSQLite {
 			return fmt.Errorf("%s DELETE does not support ORDER BY", dialect)
 		}
 		if q.UsingTable != nil {
@@ -118,7 +118,7 @@ func (q DeleteQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interf
 	}
 	// LIMIT
 	if q.RowLimit.Valid {
-		if dialect != DialectMySQL {
+		if dialect != DialectMySQL && dialect != DialectSQLite {
 			return fmt.Errorf("%s DELETE does not support LIMIT", dialect)
 		}
 		if q.UsingTable != nil {
