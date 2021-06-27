@@ -88,3 +88,8 @@ IMPORTANT: before I do any kind of performance testing, I need to know:
     - I need to know this because it determines if I want to pass the Query interface to LogQueryStats for analytics purposes.
     - If LogQueryStats gets the Query interface, it can do interesting things like analyzing which tables and columns were most commonly used
     - But if performance takes a hit compared to just passing in the compiled query string and args, then maybe I'll leave it out
+
+once the query API is finalized, consider switching from embedded structs to
+type definitions. If the dialect-specific queries really do not hold any state
+other than the query struct, it seems cleaner to convert it into a type
+definition instead of embedding the struct.
