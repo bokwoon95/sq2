@@ -85,6 +85,25 @@ func Test_MySQLDeleteQuery(t *testing.T) {
 		assert(t, tt)
 	})
 
+	t.Run("Multi-table DELETE", func(t *testing.T) {
+		t.Parallel()
+		var tt TT
+		ADDRESS, CITY, COUNTRY := NEW_ADDRESS("a"), NEW_CITY("ci"), NEW_COUNTRY("co")
+		tt.item = MySQL.
+			DeleteFrom(ADDRESS, CITY, COUNTRY).
+			Using(ADDRESS).
+			Join(CITY, CITY.CITY_ID.Eq(ADDRESS.CITY_ID)).
+			Join(COUNTRY, COUNTRY.COUNTRY_ID.Eq(CITY.COUNTRY_ID)).
+			Where(COUNTRY.COUNTRY_ID.EqInt(112))
+		tt.wantQuery = "DELETE FROM a, ci, co" +
+			" USING address AS a" +
+			" JOIN city AS ci ON ci.city_id = a.city_id" +
+			" JOIN country AS co ON co.country_id = ci.country_id" +
+			" WHERE co.country_id = ?"
+		tt.wantArgs = []interface{}{112}
+		assert(t, tt)
+	})
+
 	t.Run("ORDER BY LIMIT", func(t *testing.T) {
 		t.Parallel()
 		var tt TT

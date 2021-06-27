@@ -33,6 +33,7 @@ func Test_PostgresDeleteQuery(t *testing.T) {
 		ACTOR := NEW_ACTOR("a")
 		tt.item = Postgres.
 			DeleteFrom(ACTOR).
+			DeleteFrom(ACTOR).
 			With(NewCTE("cte", []string{"n"}, Queryf("SELECT 1"))).
 			Using(ACTOR).
 			Join(ACTOR, Eq(1, 1)).
