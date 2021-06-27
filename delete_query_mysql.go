@@ -69,3 +69,14 @@ func (q MySQLDeleteQuery) Where(predicates ...Predicate) MySQLDeleteQuery {
 	q.WherePredicate.Predicates = append(q.WherePredicate.Predicates, predicates...)
 	return q
 }
+
+func (q MySQLDeleteQuery) OrderBy(fields ...Field) MySQLDeleteQuery {
+	q.OrderByFields = fields
+	return q
+}
+
+func (q MySQLDeleteQuery) Limit(limit int64) MySQLDeleteQuery {
+	q.QueryLimit.Valid = true
+	q.QueryLimit.Int64 = limit
+	return q
+}

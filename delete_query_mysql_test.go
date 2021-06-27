@@ -84,4 +84,14 @@ func Test_MySQLDeleteQuery(t *testing.T) {
 		tt.wantArgs = []interface{}{"English", "Italian"}
 		assert(t, tt)
 	})
+
+	t.Run("ORDER BY LIMIT", func(t *testing.T) {
+		t.Parallel()
+		var tt TT
+		ACTOR := NEW_ACTOR("a")
+		tt.item = MySQL.DeleteFrom(ACTOR).OrderBy(ACTOR.ACTOR_ID).Limit(0)
+		tt.wantQuery = "DELETE FROM actor AS a ORDER BY a.actor_id LIMIT ?"
+		tt.wantArgs = []interface{}{int64(0)}
+		assert(t, tt)
+	})
 }
