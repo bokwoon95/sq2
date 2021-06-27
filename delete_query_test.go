@@ -47,9 +47,11 @@ func Test_DeleteQuery(t *testing.T) {
 
 	t.Run("UsingTable not supported by sqlite", func(t *testing.T) {
 		t.Parallel()
+		ACTOR := NEW_ACTOR("")
 		var q DeleteQuery
 		q.Dialect = DialectSQLite
-		q.UsingTable = NEW_ACTOR("")
+		q.FromTables = append(q.FromTables, ACTOR)
+		q.UsingTable = ACTOR
 		_, _, _, err := ToSQL("", q)
 		if err == nil {
 			t.Error(testcallers(), "expected error but got nil")
@@ -58,8 +60,9 @@ func Test_DeleteQuery(t *testing.T) {
 
 	t.Run("UsingTable faulty sql", func(t *testing.T) {
 		t.Parallel()
+		ACTOR := NEW_ACTOR("")
 		var q DeleteQuery
-		q.FromTables = append(q.FromTables, NEW_ACTOR(""))
+		q.FromTables = append(q.FromTables, ACTOR)
 		q.UsingTable = FaultySQL{}
 		_, _, _, err := ToSQL("", q)
 		if !errors.Is(err, ErrFaultySQL) {
@@ -69,9 +72,11 @@ func Test_DeleteQuery(t *testing.T) {
 
 	t.Run("JoinTables not supported by sqlite", func(t *testing.T) {
 		t.Parallel()
+		ACTOR := NEW_ACTOR("")
 		var q DeleteQuery
 		q.Dialect = DialectSQLite
-		q.JoinTables = append(q.JoinTables, Join(NEW_ACTOR("")))
+		q.FromTables = append(q.FromTables, ACTOR)
+		q.JoinTables = append(q.JoinTables, Join(ACTOR))
 		_, _, _, err := ToSQL("", q)
 		if err == nil {
 			t.Error(testcallers(), "expected error but got nil")
@@ -80,9 +85,10 @@ func Test_DeleteQuery(t *testing.T) {
 
 	t.Run("JoinTables without UsingTable", func(t *testing.T) {
 		t.Parallel()
+		ACTOR := NEW_ACTOR("")
 		var q DeleteQuery
-		q.FromTables = append(q.FromTables, NEW_ACTOR(""))
-		q.JoinTables = append(q.JoinTables, Join(NEW_ACTOR("")))
+		q.FromTables = append(q.FromTables, ACTOR)
+		q.JoinTables = append(q.JoinTables, Join(ACTOR))
 		_, _, _, err := ToSQL("", q)
 		if err == nil {
 			t.Error(testcallers(), "expected error but got nil")
@@ -91,9 +97,10 @@ func Test_DeleteQuery(t *testing.T) {
 
 	t.Run("JoinTables faulty sql", func(t *testing.T) {
 		t.Parallel()
+		ACTOR := NEW_ACTOR("")
 		var q DeleteQuery
-		q.FromTables = append(q.FromTables, NEW_ACTOR(""))
-		q.UsingTable = NEW_ACTOR("")
+		q.FromTables = append(q.FromTables, ACTOR)
+		q.UsingTable = ACTOR
 		q.JoinTables = append(q.JoinTables, Join(FaultySQL{}, Eq(1, 1)))
 		_, _, _, err := ToSQL("", q)
 		if !errors.Is(err, ErrFaultySQL) {
@@ -103,8 +110,9 @@ func Test_DeleteQuery(t *testing.T) {
 
 	t.Run("WherePredicate faulty sql", func(t *testing.T) {
 		t.Parallel()
+		ACTOR := NEW_ACTOR("")
 		var q DeleteQuery
-		q.FromTables = append(q.FromTables, NEW_ACTOR(""))
+		q.FromTables = append(q.FromTables, ACTOR)
 		q.WherePredicate = And(FaultySQL{})
 		_, _, _, err := ToSQL("", q)
 		if !errors.Is(err, ErrFaultySQL) {
