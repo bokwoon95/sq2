@@ -224,9 +224,7 @@ func (ctes CTEs) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{
 		}
 		buf.WriteString(cte.cteName)
 		if cte.explicitFields {
-			buf.WriteString(" (")
-			buf.WriteString(strings.Join(cte.fieldNames, ", "))
-			buf.WriteString(")")
+			buf.WriteString(" (" + strings.Join(cte.fieldNames, ", ") + ")")
 		}
 		buf.WriteString(" AS (")
 		switch query := cte.query.(type) {
