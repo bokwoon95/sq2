@@ -93,9 +93,9 @@ var ErrFaultySQL error = FaultySQLError{}
 type FaultySQL struct{}
 
 var (
-	_ Query = FaultySQL{}
-	_ Table = FaultySQL{}
-	_ Field = FaultySQL{}
+	_ Query     = FaultySQL{}
+	_ BaseTable = FaultySQL{}
+	_ Field     = FaultySQL{}
 )
 
 func (q FaultySQL) AppendSQL(string, *bytes.Buffer, *[]interface{}, map[string][]int) error {
@@ -119,6 +119,8 @@ func (q FaultySQL) AppendSQLExclude(string, *bytes.Buffer, *[]interface{}, map[s
 func (q FaultySQL) GetAlias() string { return "" }
 
 func (q FaultySQL) GetName() string { return "" }
+
+func (q FaultySQL) GetSchema() string { return "" }
 
 func Test_explodeSlice(t *testing.T) {
 	type TT struct {

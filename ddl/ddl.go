@@ -104,6 +104,13 @@ func defaultColumnType(dialect string, field sq.Field) (columnType string) {
 	return "TEXT"
 }
 
+// To take ddl from being a go-specific tool to a general database management
+// tool like flyway or liquibase, it needs to be able to support JSON/YAML/CUE.
+// Schema is edited as JSON, YAML or CUE, data is specified using CSV. You can
+// specify your tables as Go structs (which can then translated to JSON), or
+// you can specify the JSON (or YAML or CUE) directly. I would include JS in
+// the list (using goja), but ES5 doesn't support multiline strings which make
+// editing the views and triggers very difficult.
 type Metadata struct {
 	Dialect       string
 	VersionString string
