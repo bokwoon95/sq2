@@ -43,7 +43,37 @@ func Test_MySQLInsertQuery(t *testing.T) {
 		assert(t, tt)
 	})
 
+	// TODO: time to bite the bullet and investigate
+	// SQLServer/Oracle/Clickhouse what kind of non-standard crap they
+	// can shove between 'INSERT' and 'INTO'. This will be the
+	// mechanism to which I implement MySQL's INSERT IGNORE INTO and
+	// SQLite's INSERT OR ABORT/FAIL/IGNORE/REPLACE/ROLLBACK
 	t.Run("INSERT ignore duplicates", func(t *testing.T) {
+		t.Parallel()
+		var tt TT
+		ACTOR := NEW_ACTOR("a")
+		tt.item = MySQL.
+			InsertInto(ACTOR).
+			Valuesx(func(c *Column) error {
+				// bob
+				c.SetInt64(ACTOR.ACTOR_ID, 1)
+				c.SetString(ACTOR.FIRST_NAME, "bob")
+				c.SetString(ACTOR.LAST_NAME, "the builder")
+				// alice
+				c.SetInt64(ACTOR.ACTOR_ID, 2)
+				c.SetString(ACTOR.FIRST_NAME, "alice")
+				c.SetString(ACTOR.LAST_NAME, "in wonderland")
+				return nil
+			}).
+			OnDuplicateKeyUpdate()
+		tt.wantQuery = "WITH cte (n) AS (SELECT 1)" +
+			" INSERT INTO actor AS a (actor_id, first_name, last_name)" +
+			" VALUES ($1, $2, $3), ($4, $5, $6)" +
+			" ON CONFLICT (actor_id)" +
+			" WHERE actor_id IS NOT NULL AND first_name <> $7" +
+			" DO NOTHING"
+		tt.wantArgs = []interface{}{int64(1), "bob", "the builder", int64(2), "alice", "in wonderland", ""}
+		// assert(t, tt)
 	})
 
 	t.Run("upsert", func(t *testing.T) {
