@@ -66,7 +66,7 @@ func Test_PostgresDeleteQuery(t *testing.T) {
 		tt.item = Postgres.
 			DeleteWith(lang).
 			DeleteFrom(FILM).
-			Using(LANGUAGE).
+			Using(lang).
 			Join(INVENTORY, INVENTORY.FILM_ID.Eq(FILM.FILM_ID)).
 			Where(
 				lang.Field("language_id").Eq(FILM.LANGUAGE_ID),
@@ -78,7 +78,7 @@ func Test_PostgresDeleteQuery(t *testing.T) {
 			"SELECT l.language_id, l.name FROM language AS l WHERE l.name IS NOT NULL" +
 			")" +
 			" DELETE FROM film AS f" +
-			" USING language AS l" +
+			" USING lang" +
 			" JOIN inventory AS i ON i.film_id = f.film_id" +
 			" WHERE lang.language_id = f.language_id AND lang.name IN ($1, $2) AND i.last_update IS NOT NULL" +
 			" RETURNING f.film_id"

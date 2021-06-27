@@ -54,30 +54,34 @@ func Test_MySQLDeleteQuery(t *testing.T) {
 		assert(t, tt)
 	})
 
-	t.Run("DELETE ... FROM ...", func(t *testing.T) {
+	t.Run("delete with join", func(t *testing.T) {
 		t.Parallel()
 		var tt TT
-		ACTOR := NEW_ACTOR("a")
+		FILM, LANGUAGE, INVENTORY := NEW_FILM("f"), NEW_LANGUAGE("l"), NEW_INVENTORY("i")
+		lang := NewCTE("lang", nil, MySQL.
+			Select(LANGUAGE.LANGUAGE_ID, LANGUAGE.NAME).
+			From(LANGUAGE).
+			Where(LANGUAGE.NAME.IsNotNull()),
+		)
 		tt.item = MySQL.
-			DeleteWith(NewCTE("cte", []string{"n"}, Queryf("SELECT 1"))).
-			Delete(ACTOR).
-			From(ACTOR).
-			Join(ACTOR, Eq(1, 1)).
-			LeftJoin(ACTOR, Eq(1, 1)).
-			RightJoin(ACTOR, Eq(1, 1)).
-			FullJoin(ACTOR, Eq(1, 1)).
-			CrossJoin(ACTOR).
-			CustomJoin("NATURAL JOIN", ACTOR)
-		tt.wantQuery = "WITH cte (n) AS (SELECT 1)" +
-			" DELETE FROM a" +
-			" USING actor AS a" +
-			" JOIN actor AS a ON ? = ?" +
-			" LEFT JOIN actor AS a ON ? = ?" +
-			" RIGHT JOIN actor AS a ON ? = ?" +
-			" FULL JOIN actor AS a ON ? = ?" +
-			" CROSS JOIN actor AS a" +
-			" NATURAL JOIN actor AS a"
-		tt.wantArgs = []interface{}{1, 1, 1, 1, 1, 1, 1, 1}
+			DeleteWith(lang).
+			DeleteFrom(FILM).
+			Using(FILM).
+			Join(lang, lang.Field("language_id").Eq(FILM.LANGUAGE_ID)).
+			Join(INVENTORY, INVENTORY.FILM_ID.Eq(FILM.FILM_ID)).
+			Where(
+				lang.Field("name").In([]string{"English", "Italian"}),
+				INVENTORY.LAST_UPDATE.IsNotNull(),
+			)
+		tt.wantQuery = "WITH lang AS (" +
+			"SELECT l.language_id, l.name FROM language AS l WHERE l.name IS NOT NULL" +
+			")" +
+			" DELETE FROM f" +
+			" USING film AS f" +
+			" JOIN lang ON lang.language_id = f.language_id" +
+			" JOIN inventory AS i ON i.film_id = f.film_id" +
+			" WHERE lang.name IN (?, ?) AND i.last_update IS NOT NULL"
+		tt.wantArgs = []interface{}{"English", "Italian"}
 		assert(t, tt)
 	})
 }
