@@ -11,7 +11,6 @@ type DeleteQuery struct {
 	// WITH
 	CTEs CTEs
 	// DELETE FROM
-	FromTable  BaseTable
 	FromTables []BaseTable
 	// USING
 	UsingTable Table
@@ -39,15 +38,41 @@ func (q DeleteQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interf
 	}
 	// DELETE FROM
 	buf.WriteString("DELETE FROM ")
-	err = q.FromTable.AppendSQL(dialect, buf, args, params)
-	if err != nil {
-		return err
+	if len(q.FromTables) == 0 {
+		return fmt.Errorf("no table provided to DELETE")
 	}
-	if alias := q.FromTable.GetAlias(); alias != "" {
-		buf.WriteString(" AS " + QuoteIdentifier(dialect, alias))
+	if q.UsingTable != nil && dialect == DialectMySQL {
+		for i, table := range q.FromTables {
+			if i > 0 {
+				buf.WriteString(", ")
+			}
+			nameOrAlias := table.GetAlias()
+			if nameOrAlias == "" {
+				nameOrAlias = table.GetName()
+			}
+			if nameOrAlias == "" {
+				return fmt.Errorf("table #%d has no name and no alias", i+1)
+			}
+			buf.WriteString(nameOrAlias)
+		}
+	} else {
+		fromTable := q.FromTables[0]
+		if fromTable == nil {
+			return fmt.Errorf("no table provided to DELETE")
+		}
+		err = fromTable.AppendSQL(dialect, buf, args, params)
+		if err != nil {
+			return err
+		}
+		if alias := fromTable.GetAlias(); alias != "" {
+			buf.WriteString(" AS " + QuoteIdentifier(dialect, alias))
+		}
 	}
 	// USING
-	if q.UsingTable != nil && (dialect == DialectPostgres || dialect == DialectMySQL) {
+	if q.UsingTable != nil {
+		if dialect == DialectSQLite {
+			return fmt.Errorf("sqlite DELETE does not support joins")
+		}
 		buf.WriteString(" USING ")
 		err = q.UsingTable.AppendSQL(dialect, buf, args, params)
 		if err != nil {
@@ -61,6 +86,9 @@ func (q DeleteQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interf
 	if len(q.JoinTables) > 0 {
 		if dialect == DialectSQLite {
 			return fmt.Errorf("sqlite DELETE does not support joins")
+		}
+		if q.UsingTable == nil {
+			return fmt.Errorf("can't use JOIN without providing an initial table to join on")
 		}
 		buf.WriteString(" ")
 		err = q.JoinTables.AppendSQL(dialect, buf, args, params)
@@ -82,7 +110,9 @@ func (q DeleteQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interf
 		if dialect != DialectMySQL {
 			return fmt.Errorf("%s DELETE does not support ORDER BY", dialect)
 		}
-		// TODO: if is multi-table delete, also return an error. MySQL does not allow ORDER BY in multi-table DELETE
+		if q.UsingTable != nil {
+			return fmt.Errorf("ORDER BY not allowed in a multi-table DELETE")
+		}
 		buf.WriteString(" ORDER BY ")
 		err = q.OrderByFields.AppendSQLExclude(dialect, buf, args, params, nil)
 		if err != nil {
@@ -92,9 +122,11 @@ func (q DeleteQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interf
 	// LIMIT
 	if q.QueryLimit.Valid {
 		if dialect != DialectMySQL {
-			return fmt.Errorf("%s DELETE does not support ORDER BY", dialect)
+			return fmt.Errorf("%s DELETE does not support LIMIT", dialect)
 		}
-		// TODO: if is multi-table delete, also return an error. MySQL does not allow LIMIT in multi-table DELETE
+		if q.UsingTable != nil {
+			return fmt.Errorf("LIMIT not allowed in a multi-table DELETE")
+		}
 		err = BufferPrintf(dialect, buf, args, params, nil, " LIMIT {}", []interface{}{q.QueryLimit.Int64})
 		if err != nil {
 			return err
