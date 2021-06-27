@@ -35,9 +35,10 @@ func Test_MySQLInsertQuery(t *testing.T) {
 			InsertInto(ACTOR).
 			Columns(ACTOR.FIRST_NAME, ACTOR.LAST_NAME).
 			Values("bob", "the builder").
-			Values("alice", "in wonderland")
+			Values("alice", "in wonderland").
+			As("NEW", "fname", "lname")
 		tt.wantQuery = "INSERT INTO actor (first_name, last_name)" +
-			" VALUES (?, ?), (?, ?)"
+			" VALUES (?, ?), (?, ?) AS NEW (fname, lname)"
 		tt.wantArgs = []interface{}{"bob", "the builder", "alice", "in wonderland"}
 		assert(t, tt)
 	})
@@ -94,6 +95,32 @@ func Test_MySQLInsertQuery(t *testing.T) {
 	})
 
 	t.Run("upsert", func(t *testing.T) {
+		t.Parallel()
+		var tt TT
+		ACTOR := NEW_ACTOR("")
+		tt.item = MySQL.
+			InsertInto(ACTOR).
+			Valuesx(func(c *Column) error {
+				// bob
+				c.SetInt64(ACTOR.ACTOR_ID, 1)
+				c.SetString(ACTOR.FIRST_NAME, "bob")
+				c.SetString(ACTOR.LAST_NAME, "the builder")
+				// alice
+				c.SetInt64(ACTOR.ACTOR_ID, 2)
+				c.SetString(ACTOR.FIRST_NAME, "alice")
+				c.SetString(ACTOR.LAST_NAME, "in wonderland")
+				return nil
+			}).
+			As("NEW").
+			OnDuplicateKeyUpdate(
+				AssignAlias(ACTOR.FIRST_NAME, "NEW"),
+				AssignAlias(ACTOR.LAST_NAME, "NEW"),
+			)
+		tt.wantQuery = "INSERT INTO actor (actor_id, first_name, last_name)" +
+			" VALUES (?, ?, ?), (?, ?, ?) AS NEW" +
+			" ON DUPLICATE KEY UPDATE first_name = NEW.first_name, last_name = NEW.last_name"
+		tt.wantArgs = []interface{}{int64(1), "bob", "the builder", int64(2), "alice", "in wonderland"}
+		assert(t, tt)
 	})
 
 	t.Run("INSERT from SELECT", func(t *testing.T) {

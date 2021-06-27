@@ -23,23 +23,23 @@ const (
 	DialectPostgres  = "postgres"
 	DialectMySQL     = "mysql"
 	DialectSQLServer = "sqlserver"
-	// DialectOracle   = "Oracle"
+	DialectOracle    = "oracle"
 )
 
 type (
-	SQLiteDialect   struct{}
-	PostgresDialect struct{}
-	MySQLDialect    struct{}
-	// MSSQLDialect    struct{}
-	// OracleDialect   struct{}
+	SQLiteDialect    struct{}
+	PostgresDialect  struct{}
+	MySQLDialect     struct{}
+	SQLServerDialect struct{}
+	OracleDialect    struct{}
 )
 
 var (
-	SQLite   = SQLiteDialect{}
-	Postgres = PostgresDialect{}
-	MySQL    = MySQLDialect{}
-	// MSSQL    = MSSQLDialect{}
-	// Oracle   = OracleDialect{}
+	SQLite    = SQLiteDialect{}
+	Postgres  = PostgresDialect{}
+	MySQL     = MySQLDialect{}
+	SQLServer = SQLServerDialect{}
+	Oracle    = OracleDialect{}
 )
 
 type SelectType string

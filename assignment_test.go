@@ -77,18 +77,10 @@ func Test_Assignment(t *testing.T) {
 		assert(t, tt)
 	})
 
-	t.Run("assign values", func(t *testing.T) {
+	t.Run("assign alias", func(t *testing.T) {
 		t.Parallel()
 		var tt TT
-		tt.item = AssignValues(USERS.USER_ID)
-		tt.wantQuery = "user_id = VALUES(user_id)"
-		assert(t, tt)
-	})
-
-	t.Run("assign new", func(t *testing.T) {
-		t.Parallel()
-		var tt TT
-		tt.item = AssignNew(USERS.USER_ID)
+		tt.item = AssignAlias(USERS.USER_ID, "NEW")
 		tt.wantQuery = "user_id = NEW.user_id"
 		assert(t, tt)
 	})
