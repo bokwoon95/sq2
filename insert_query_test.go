@@ -58,6 +58,18 @@ func Test_InsertQuery(t *testing.T) {
 		}
 	})
 
+	t.Run("IntoTable alias, dialect == mysql", func(t *testing.T) {
+		t.Parallel()
+		ACTOR := NEW_ACTOR("a")
+		var q InsertQuery
+		q.Dialect = DialectMySQL
+		q.IntoTable = ACTOR
+		_, _, _, err := ToSQL("", q)
+		if err == nil {
+			t.Error(testcallers(), "expected error but got nil")
+		}
+	})
+
 	t.Run("InsertColumns faulty sql", func(t *testing.T) {
 		t.Parallel()
 		ACTOR := NEW_ACTOR("")
