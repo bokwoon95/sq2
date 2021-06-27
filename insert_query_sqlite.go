@@ -80,3 +80,8 @@ func (q SQLiteInsertQuery) Where(predicates ...Predicate) SQLiteInsertQuery {
 	q.ResolutionPredicate.Predicates = append(q.ResolutionPredicate.Predicates, predicates...)
 	return q
 }
+
+func (q SQLiteInsertQuery) Returning(fields ...Field) SQLiteInsertQuery {
+	q.ReturningFields = append(q.ReturningFields, fields...)
+	return q
+}

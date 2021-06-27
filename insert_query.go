@@ -150,7 +150,10 @@ func (q InsertQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interf
 		}
 	}
 	// RETURNING
-	if len(q.ReturningFields) > 0 && dialect == DialectPostgres {
+	if len(q.ReturningFields) > 0 {
+		if dialect != DialectPostgres && dialect != DialectSQLite {
+			return fmt.Errorf("%s DELETE does not support RETURNING", dialect)
+		}
 		buf.WriteString(" RETURNING ")
 		err = q.ReturningFields.AppendSQLExcludeWithAlias(dialect, buf, args, params, nil)
 		if err != nil {
