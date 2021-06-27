@@ -16,7 +16,12 @@ func (d SQLiteDialect) DeleteWith(ctes ...CTE) SQLiteDeleteQuery {
 func (d SQLiteDialect) DeleteFrom(table BaseTable) SQLiteDeleteQuery {
 	var q SQLiteDeleteQuery
 	q.QueryDialect = DialectSQLite
-	q.FromTable = table
+	if len(q.FromTables) == 0 {
+		q.FromTables = append(q.FromTables, table)
+	} else {
+		q.FromTables[0] = table
+		q.FromTables = q.FromTables[:1]
+	}
 	return q
 }
 
@@ -26,7 +31,12 @@ func (q SQLiteDeleteQuery) With(ctes ...CTE) SQLiteDeleteQuery {
 }
 
 func (q SQLiteDeleteQuery) DeleteFrom(table BaseTable) SQLiteDeleteQuery {
-	q.FromTable = table
+	if len(q.FromTables) == 0 {
+		q.FromTables = append(q.FromTables, table)
+	} else {
+		q.FromTables[0] = table
+		q.FromTables = q.FromTables[:1]
+	}
 	return q
 }
 

@@ -2,7 +2,6 @@ package sq
 
 import (
 	"errors"
-	"fmt"
 	"testing"
 )
 
@@ -101,7 +100,6 @@ func TestCTE(t *testing.T) {
 		if err == nil {
 			t.Fatal(testcallers(), "expected error but got nil")
 		}
-		fmt.Println(testcallers(), err.Error())
 	})
 
 	t.Run("CTE nil query", func(t *testing.T) {
@@ -113,7 +111,6 @@ func TestCTE(t *testing.T) {
 		if err == nil {
 			t.Fatal(testcallers(), "expected error but got nil")
 		}
-		fmt.Println(testcallers(), err.Error())
 	})
 
 	t.Run("CTE query GetFetchableFields error", func(t *testing.T) {
@@ -125,7 +122,6 @@ func TestCTE(t *testing.T) {
 		if err == nil {
 			t.Fatal(testcallers(), "expected error but got nil")
 		}
-		fmt.Println(testcallers(), err.Error())
 	})
 
 	t.Run("CTE query no fields", func(t *testing.T) {
@@ -137,7 +133,6 @@ func TestCTE(t *testing.T) {
 		if err == nil {
 			t.Fatal(testcallers(), "expected error but got nil")
 		}
-		fmt.Println(testcallers(), err.Error())
 	})
 
 	t.Run("CTE query field no name", func(t *testing.T) {
@@ -149,7 +144,6 @@ func TestCTE(t *testing.T) {
 		if err == nil {
 			t.Fatal(testcallers(), "expected error but got nil")
 		}
-		fmt.Println(testcallers(), err.Error())
 	})
 
 	t.Run("empty CTE", func(t *testing.T) {
@@ -160,7 +154,6 @@ func TestCTE(t *testing.T) {
 		if err == nil {
 			t.Fatal(testcallers(), "expected error but got nil")
 		}
-		fmt.Println(testcallers(), err.Error())
 	})
 
 	t.Run("aliased CTE with stickyErr", func(t *testing.T) {
@@ -171,7 +164,6 @@ func TestCTE(t *testing.T) {
 		if err == nil {
 			t.Fatal(testcallers(), "expected error but got nil")
 		}
-		fmt.Println(testcallers(), err.Error())
 	})
 
 	t.Run("aliased CTE with no name", func(t *testing.T) {
@@ -182,7 +174,6 @@ func TestCTE(t *testing.T) {
 		if err == nil {
 			t.Fatal(testcallers(), "expected error but got nil")
 		}
-		fmt.Println(testcallers(), err.Error())
 	})
 
 	t.Run("aliased CTE with no query", func(t *testing.T) {
@@ -193,7 +184,6 @@ func TestCTE(t *testing.T) {
 		if err == nil {
 			t.Fatal(testcallers(), "expected error but got nil")
 		}
-		fmt.Println(testcallers(), err.Error())
 	})
 
 	t.Run("aliased CTE with no fields", func(t *testing.T) {
@@ -204,7 +194,6 @@ func TestCTE(t *testing.T) {
 		if err == nil {
 			t.Fatal(testcallers(), "expected error but got nil")
 		}
-		fmt.Println(testcallers(), err.Error())
 	})
 
 	t.Run("CTEs, some with no name", func(t *testing.T) {
@@ -219,7 +208,6 @@ func TestCTE(t *testing.T) {
 		if err == nil {
 			t.Fatal(testcallers(), "expected error but got nil")
 		}
-		fmt.Println(testcallers(), err.Error())
 	})
 
 	t.Run("CTEs, some with no query", func(t *testing.T) {
@@ -234,7 +222,6 @@ func TestCTE(t *testing.T) {
 		if err == nil {
 			t.Fatal(testcallers(), "expected error but got nil")
 		}
-		fmt.Println(testcallers(), err.Error())
 	})
 
 	t.Run("CTEs, variadic query returns error", func(t *testing.T) {
@@ -303,7 +290,6 @@ func Test_CTEField(t *testing.T) {
 		if err == nil {
 			t.Fatal(testcallers(), "expected error but got nil")
 		}
-		fmt.Println(testcallers(), err.Error())
 	})
 
 	t.Run("CTE field not exists", func(t *testing.T) {
@@ -316,7 +302,6 @@ func Test_CTEField(t *testing.T) {
 		if err == nil {
 			t.Fatal(testcallers(), "expected error but got nil")
 		}
-		fmt.Println(testcallers(), err.Error())
 	})
 
 	t.Run("CTEField alias", func(t *testing.T) {

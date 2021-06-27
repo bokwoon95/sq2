@@ -58,7 +58,7 @@ func (q InsertQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interf
 		buf.WriteString("INSERT INTO ")
 	}
 	if q.IntoTable == nil {
-		return fmt.Errorf("INSERTing into nil table")
+		return fmt.Errorf("no table provided to INSERT")
 	}
 	err := q.IntoTable.AppendSQL(dialect, buf, args, params)
 	if err != nil {

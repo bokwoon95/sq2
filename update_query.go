@@ -50,6 +50,9 @@ func (q UpdateQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interf
 	}
 	// UPDATE
 	buf.WriteString("UPDATE ")
+	if q.UpdateTable == nil {
+		return fmt.Errorf("no table provided to UPDATE")
+	}
 	err = q.UpdateTable.AppendSQL(dialect, buf, args, params)
 	if err != nil {
 		return err
