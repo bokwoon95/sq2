@@ -7,7 +7,7 @@ import (
 )
 
 type DeleteQuery struct {
-	QueryDialect string
+	Dialect string
 	// WITH
 	CTEs CTEs
 	// DELETE FROM
@@ -20,7 +20,7 @@ type DeleteQuery struct {
 	// ORDER BY
 	OrderByFields Fields
 	// LIMIT
-	QueryLimit sql.NullInt64
+	RowLimit sql.NullInt64
 	// RETURNING
 	ReturningFields Fields
 }
@@ -117,14 +117,14 @@ func (q DeleteQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interf
 		}
 	}
 	// LIMIT
-	if q.QueryLimit.Valid {
+	if q.RowLimit.Valid {
 		if dialect != DialectMySQL {
 			return fmt.Errorf("%s DELETE does not support LIMIT", dialect)
 		}
 		if q.UsingTable != nil {
 			return fmt.Errorf("LIMIT not allowed in a multi-table DELETE")
 		}
-		err = BufferPrintf(dialect, buf, args, params, nil, " LIMIT {}", []interface{}{q.QueryLimit.Int64})
+		err = BufferPrintf(dialect, buf, args, params, nil, " LIMIT {}", []interface{}{q.RowLimit.Int64})
 		if err != nil {
 			return err
 		}
@@ -144,22 +144,22 @@ func (q DeleteQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interf
 }
 
 func (q DeleteQuery) SetFetchableFields(fields []Field) (Query, error) {
-	switch q.QueryDialect {
+	switch q.Dialect {
 	case DialectPostgres:
 		q.ReturningFields = fields
 		return q, nil
 	default:
-		return nil, fmt.Errorf("%s DELETE %w", q.QueryDialect, ErrNonFetchableQuery)
+		return nil, fmt.Errorf("%s DELETE %w", q.Dialect, ErrNonFetchableQuery)
 	}
 }
 
 func (q DeleteQuery) GetFetchableFields() ([]Field, error) {
-	switch q.QueryDialect {
+	switch q.Dialect {
 	case DialectPostgres:
 		return q.ReturningFields, nil
 	default:
-		return nil, fmt.Errorf("%s DELETE %w", q.QueryDialect, ErrNonFetchableQuery)
+		return nil, fmt.Errorf("%s DELETE %w", q.Dialect, ErrNonFetchableQuery)
 	}
 }
 
-func (q DeleteQuery) Dialect() string { return q.QueryDialect }
+func (q DeleteQuery) GetDialect() string { return q.Dialect }

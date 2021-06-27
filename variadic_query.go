@@ -90,11 +90,11 @@ func (vq VariadicQuery) GetFetchableFields() ([]Field, error) {
 	return vq.Queries[0].GetFetchableFields()
 }
 
-func (vq VariadicQuery) Dialect() string {
+func (vq VariadicQuery) GetDialect() string {
 	if len(vq.Queries) == 0 {
 		return ""
 	}
-	return vq.Queries[0].Dialect()
+	return vq.Queries[0].GetDialect()
 }
 
 func Union(queries ...Query) VariadicQuery {

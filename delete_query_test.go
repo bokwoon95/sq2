@@ -48,7 +48,7 @@ func Test_DeleteQuery(t *testing.T) {
 	t.Run("UsingTable not supported by sqlite", func(t *testing.T) {
 		t.Parallel()
 		var q DeleteQuery
-		q.QueryDialect = DialectSQLite
+		q.Dialect = DialectSQLite
 		q.UsingTable = NEW_ACTOR("")
 		_, _, _, err := ToSQL("", q)
 		if err == nil {
@@ -70,7 +70,7 @@ func Test_DeleteQuery(t *testing.T) {
 	t.Run("JoinTables not supported by sqlite", func(t *testing.T) {
 		t.Parallel()
 		var q DeleteQuery
-		q.QueryDialect = DialectSQLite
+		q.Dialect = DialectSQLite
 		q.JoinTables = append(q.JoinTables, Join(NEW_ACTOR("")))
 		_, _, _, err := ToSQL("", q)
 		if err == nil {
@@ -116,7 +116,7 @@ func Test_DeleteQuery(t *testing.T) {
 		t.Parallel()
 		ACTOR := NEW_ACTOR("")
 		var q DeleteQuery
-		q.QueryDialect = DialectPostgres
+		q.Dialect = DialectPostgres
 		q.FromTables = append(q.FromTables, ACTOR)
 		q.OrderByFields = Fields{ACTOR.ACTOR_ID, ACTOR.FIRST_NAME}
 		_, _, _, err := ToSQL("", q)

@@ -8,14 +8,14 @@ var _ Query = PostgresDeleteQuery{}
 
 func (d PostgresDialect) DeleteWith(ctes ...CTE) PostgresDeleteQuery {
 	var q PostgresDeleteQuery
-	q.QueryDialect = DialectPostgres
+	q.Dialect = DialectPostgres
 	q.CTEs = ctes
 	return q
 }
 
 func (d PostgresDialect) DeleteFrom(table BaseTable) PostgresDeleteQuery {
 	var q PostgresDeleteQuery
-	q.QueryDialect = DialectPostgres
+	q.Dialect = DialectPostgres
 	q.FromTables = append(q.FromTables, table)
 	return q
 }

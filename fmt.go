@@ -489,4 +489,4 @@ func (q customQuery) GetFetchableFields() ([]Field, error) {
 	return nil, fmt.Errorf("custom %w", ErrNonFetchableQuery)
 }
 
-func (q customQuery) Dialect() string { return q.dialect }
+func (q customQuery) GetDialect() string { return q.dialect }

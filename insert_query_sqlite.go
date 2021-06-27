@@ -8,14 +8,14 @@ var _ Query = SQLiteInsertQuery{}
 
 func (d SQLiteDialect) InsertWith(ctes ...CTE) SQLiteInsertQuery {
 	var q SQLiteInsertQuery
-	q.QueryDialect = DialectSQLite
+	q.Dialect = DialectSQLite
 	q.CTEs = ctes
 	return q
 }
 
 func (d SQLiteDialect) InsertInto(table BaseTable) SQLiteInsertQuery {
 	var q SQLiteInsertQuery
-	q.QueryDialect = DialectSQLite
+	q.Dialect = DialectSQLite
 	q.IntoTable = table
 	return q
 }

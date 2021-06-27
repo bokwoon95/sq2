@@ -6,7 +6,7 @@ import (
 )
 
 type InsertQuery struct {
-	QueryDialect string
+	Dialect      string
 	ColumnMapper func(*Column) error
 	// WITH
 	CTEs CTEs
@@ -161,22 +161,22 @@ func (q InsertQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interf
 }
 
 func (q InsertQuery) SetFetchableFields(fields []Field) (Query, error) {
-	switch q.QueryDialect {
+	switch q.Dialect {
 	case DialectPostgres:
 		q.ReturningFields = fields
 		return q, nil
 	default:
-		return nil, fmt.Errorf("%s INSERT %w", q.QueryDialect, ErrNonFetchableQuery)
+		return nil, fmt.Errorf("%s INSERT %w", q.Dialect, ErrNonFetchableQuery)
 	}
 }
 
 func (q InsertQuery) GetFetchableFields() ([]Field, error) {
-	switch q.QueryDialect {
+	switch q.Dialect {
 	case DialectPostgres:
 		return q.ReturningFields, nil
 	default:
-		return nil, fmt.Errorf("%s INSERT %w", q.QueryDialect, ErrNonFetchableQuery)
+		return nil, fmt.Errorf("%s INSERT %w", q.Dialect, ErrNonFetchableQuery)
 	}
 }
 
-func (q InsertQuery) Dialect() string { return q.QueryDialect }
+func (q InsertQuery) GetDialect() string { return q.Dialect }

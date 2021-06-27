@@ -7,7 +7,7 @@ import (
 )
 
 type UpdateQuery struct {
-	QueryDialect string
+	Dialect      string
 	ColumnMapper func(*Column) error
 	// WITH
 	CTEs CTEs
@@ -25,7 +25,7 @@ type UpdateQuery struct {
 	// ORDER BY
 	OrderByFields Fields
 	// LIMIT
-	QueryLimit sql.NullInt64
+	RowLimit sql.NullInt64
 }
 
 var _ Query = UpdateQuery{}
@@ -118,8 +118,8 @@ func (q UpdateQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interf
 		}
 	}
 	// LIMIT
-	if q.QueryLimit.Valid && dialect == DialectMySQL {
-		err = BufferPrintf(dialect, buf, args, params, nil, " LIMIT {}", []interface{}{q.QueryLimit.Int64})
+	if q.RowLimit.Valid && dialect == DialectMySQL {
+		err = BufferPrintf(dialect, buf, args, params, nil, " LIMIT {}", []interface{}{q.RowLimit.Int64})
 		if err != nil {
 			return err
 		}
@@ -133,22 +133,22 @@ func (q UpdateQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interf
 }
 
 func (q UpdateQuery) SetFetchableFields(fields []Field) (Query, error) {
-	switch q.QueryDialect {
+	switch q.Dialect {
 	case DialectPostgres:
 		q.ReturningFields = fields
 		return q, nil
 	default:
-		return nil, fmt.Errorf("%s UPDATE %w", q.QueryDialect, ErrNonFetchableQuery)
+		return nil, fmt.Errorf("%s UPDATE %w", q.Dialect, ErrNonFetchableQuery)
 	}
 }
 
 func (q UpdateQuery) GetFetchableFields() ([]Field, error) {
-	switch q.QueryDialect {
+	switch q.Dialect {
 	case DialectPostgres:
 		return q.ReturningFields, nil
 	default:
-		return nil, fmt.Errorf("%s UPDATE %w", q.QueryDialect, ErrNonFetchableQuery)
+		return nil, fmt.Errorf("%s UPDATE %w", q.Dialect, ErrNonFetchableQuery)
 	}
 }
 
-func (q UpdateQuery) Dialect() string { return q.QueryDialect }
+func (q UpdateQuery) GetDialect() string { return q.Dialect }

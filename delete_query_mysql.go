@@ -8,14 +8,14 @@ var _ Query = MySQLDeleteQuery{}
 
 func (d MySQLDialect) DeleteWith(ctes ...CTE) MySQLDeleteQuery {
 	var q MySQLDeleteQuery
-	q.QueryDialect = DialectMySQL
+	q.Dialect = DialectMySQL
 	q.CTEs = ctes
 	return q
 }
 
 func (d MySQLDialect) DeleteFrom(tables ...BaseTable) MySQLDeleteQuery {
 	var q MySQLDeleteQuery
-	q.QueryDialect = DialectMySQL
+	q.Dialect = DialectMySQL
 	q.FromTables = tables
 	return q
 }
@@ -76,7 +76,7 @@ func (q MySQLDeleteQuery) OrderBy(fields ...Field) MySQLDeleteQuery {
 }
 
 func (q MySQLDeleteQuery) Limit(limit int64) MySQLDeleteQuery {
-	q.QueryLimit.Valid = true
-	q.QueryLimit.Int64 = limit
+	q.RowLimit.Valid = true
+	q.RowLimit.Int64 = limit
 	return q
 }

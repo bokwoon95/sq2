@@ -47,7 +47,7 @@ func fetchContext(ctx context.Context, db Queryer, q Query, rowmapper func(*Row)
 		logQueryStats = db.LogQueryStats
 		shouldLogResults, resultsLimit = db.LogResults()
 	}
-	stats.Dialect = q.Dialect()
+	stats.Dialect = q.GetDialect()
 	r := &Row{}
 	rowmapper(r)
 	fields, dest := RowResult(r)
@@ -210,7 +210,7 @@ func fetchExistsContext(ctx context.Context, db Queryer, q Query, skip int) (exi
 	if db, ok := db.(QueryerLogger); ok {
 		logQueryStats = db.LogQueryStats
 	}
-	stats.Dialect = q.Dialect()
+	stats.Dialect = q.GetDialect()
 	q, err = q.SetFetchableFields([]Field{FieldLiteral("1")})
 	if err != nil {
 		return false, err

@@ -8,14 +8,14 @@ var _ Query = PostgresUpdateQuery{}
 
 func (d PostgresDialect) UpdateWith(ctes ...CTE) PostgresUpdateQuery {
 	var q PostgresUpdateQuery
-	q.QueryDialect = DialectPostgres
+	q.Dialect = DialectPostgres
 	q.CTEs = ctes
 	return q
 }
 
 func (d PostgresDialect) Update(table BaseTable) PostgresUpdateQuery {
 	var q PostgresUpdateQuery
-	q.QueryDialect = DialectPostgres
+	q.Dialect = DialectPostgres
 	q.UpdateTable = table
 	return q
 }

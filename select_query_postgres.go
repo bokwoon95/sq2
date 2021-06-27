@@ -8,35 +8,35 @@ var _ Query = PostgresSelectQuery{}
 
 func (d PostgresDialect) From(table Table) PostgresSelectQuery {
 	var q PostgresSelectQuery
-	q.QueryDialect = DialectPostgres
+	q.Dialect = DialectPostgres
 	q.FromTable = table
 	return q
 }
 
 func (d PostgresDialect) SelectWith(ctes ...CTE) PostgresSelectQuery {
 	var q PostgresSelectQuery
-	q.QueryDialect = DialectPostgres
+	q.Dialect = DialectPostgres
 	q.CTEs = ctes
 	return q
 }
 
 func (d PostgresDialect) Select(fields ...Field) PostgresSelectQuery {
 	var q PostgresSelectQuery
-	q.QueryDialect = DialectPostgres
+	q.Dialect = DialectPostgres
 	q.SelectFields = fields
 	return q
 }
 
 func (d PostgresDialect) SelectOne() PostgresSelectQuery {
 	var q PostgresSelectQuery
-	q.QueryDialect = DialectPostgres
+	q.Dialect = DialectPostgres
 	q.SelectFields = Fields{FieldLiteral("1")}
 	return q
 }
 
 func (d PostgresDialect) SelectDistinct(fields ...Field) PostgresSelectQuery {
 	var q PostgresSelectQuery
-	q.QueryDialect = DialectPostgres
+	q.Dialect = DialectPostgres
 	q.SelectType = SelectTypeDistinct
 	q.SelectFields = fields
 	return q
@@ -45,9 +45,9 @@ func (d PostgresDialect) SelectDistinct(fields ...Field) PostgresSelectQuery {
 func (d PostgresDialect) SelectDistinctOn(distinctFields ...Field) func(...Field) PostgresSelectQuery {
 	return func(fields ...Field) PostgresSelectQuery {
 		var q PostgresSelectQuery
-		q.QueryDialect = DialectPostgres
+		q.Dialect = DialectPostgres
 		q.SelectType = SelectTypeDistinct
-		q.DistinctOn = distinctFields
+		q.DistinctOnFields = distinctFields
 		q.SelectFields = fields
 		return q
 	}
@@ -77,9 +77,9 @@ func (q PostgresSelectQuery) SelectDistinct(fields ...Field) PostgresSelectQuery
 func (q PostgresSelectQuery) SelectDistinctOn(distinctFields ...Field) func(...Field) PostgresSelectQuery {
 	return func(fields ...Field) PostgresSelectQuery {
 		var q PostgresSelectQuery
-		q.QueryDialect = DialectPostgres
+		q.Dialect = DialectPostgres
 		q.SelectType = SelectTypeDistinct
-		q.DistinctOn = distinctFields
+		q.DistinctOnFields = distinctFields
 		q.SelectFields = fields
 		return q
 	}
@@ -141,13 +141,13 @@ func (q PostgresSelectQuery) OrderBy(fields ...Field) PostgresSelectQuery {
 }
 
 func (q PostgresSelectQuery) Limit(limit int64) PostgresSelectQuery {
-	q.QueryLimit.Valid = true
-	q.QueryLimit.Int64 = limit
+	q.RowLimit.Valid = true
+	q.RowLimit.Int64 = limit
 	return q
 }
 
 func (q PostgresSelectQuery) Offset(offset int64) PostgresSelectQuery {
-	q.QueryOffset.Valid = true
-	q.QueryOffset.Int64 = offset
+	q.RowOffset.Valid = true
+	q.RowOffset.Int64 = offset
 	return q
 }
