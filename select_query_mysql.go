@@ -8,35 +8,35 @@ var _ Query = MySQLSelectQuery{}
 
 func (d MySQLDialect) From(table Table) MySQLSelectQuery {
 	var q MySQLSelectQuery
-	q.QueryDialect = DialectMySQL
+	q.Dialect = DialectMySQL
 	q.FromTable = table
 	return q
 }
 
 func (d MySQLDialect) SelectWith(ctes ...CTE) MySQLSelectQuery {
 	var q MySQLSelectQuery
-	q.QueryDialect = DialectMySQL
+	q.Dialect = DialectMySQL
 	q.CTEs = ctes
 	return q
 }
 
 func (d MySQLDialect) Select(fields ...Field) MySQLSelectQuery {
 	var q MySQLSelectQuery
-	q.QueryDialect = DialectMySQL
+	q.Dialect = DialectMySQL
 	q.SelectFields = fields
 	return q
 }
 
 func (d MySQLDialect) SelectOne() MySQLSelectQuery {
 	var q MySQLSelectQuery
-	q.QueryDialect = DialectMySQL
+	q.Dialect = DialectMySQL
 	q.SelectFields = Fields{FieldLiteral("1")}
 	return q
 }
 
 func (d MySQLDialect) SelectDistinct(fields ...Field) MySQLSelectQuery {
 	var q MySQLSelectQuery
-	q.QueryDialect = DialectMySQL
+	q.Dialect = DialectMySQL
 	q.SelectType = SelectTypeDistinct
 	q.SelectFields = fields
 	return q
@@ -119,13 +119,13 @@ func (q MySQLSelectQuery) OrderBy(fields ...Field) MySQLSelectQuery {
 }
 
 func (q MySQLSelectQuery) Limit(limit int64) MySQLSelectQuery {
-	q.QueryLimit.Valid = true
-	q.QueryLimit.Int64 = limit
+	q.RowLimit.Valid = true
+	q.RowLimit.Int64 = limit
 	return q
 }
 
 func (q MySQLSelectQuery) Offset(offset int64) MySQLSelectQuery {
-	q.QueryOffset.Valid = true
-	q.QueryOffset.Int64 = offset
+	q.RowOffset.Valid = true
+	q.RowOffset.Int64 = offset
 	return q
 }

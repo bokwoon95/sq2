@@ -87,7 +87,7 @@ type Query interface {
 	SQLAppender
 	SetFetchableFields([]Field) (Query, error)
 	GetFetchableFields() ([]Field, error)
-	Dialect() string
+	GetDialect() string
 }
 
 func ToSQL(dialect string, q SQLAppender) (query string, args []interface{}, params map[string][]int, err error) {
@@ -99,7 +99,7 @@ func ToSQL(dialect string, q SQLAppender) (query string, args []interface{}, par
 	params = make(map[string][]int)
 	if dialect == "" {
 		if q, ok := q.(Query); ok {
-			dialect = q.Dialect()
+			dialect = q.GetDialect()
 		}
 	}
 	err = q.AppendSQL(dialect, buf, &args, params)

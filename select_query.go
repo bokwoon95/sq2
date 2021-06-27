@@ -7,13 +7,13 @@ import (
 )
 
 type SelectQuery struct {
-	QueryDialect string
+	Dialect string
 	// WITH
 	CTEs CTEs
 	// SELECT
-	SelectType   SelectType
-	SelectFields Fields
-	DistinctOn   Fields
+	SelectType       SelectType
+	SelectFields     Fields
+	DistinctOnFields Fields
 	// FROM
 	FromTable  Table
 	JoinTables JoinTables
@@ -26,9 +26,9 @@ type SelectQuery struct {
 	// ORDER BY
 	OrderByFields Fields
 	// LIMIT
-	QueryLimit sql.NullInt64
+	RowLimit sql.NullInt64
 	// OFFSET
-	QueryOffset sql.NullInt64
+	RowOffset sql.NullInt64
 }
 
 var _ Query = SelectQuery{}
@@ -112,15 +112,15 @@ func (q SelectQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interf
 		}
 	}
 	// LIMIT
-	if q.QueryLimit.Valid {
-		err = BufferPrintf(dialect, buf, args, params, nil, " LIMIT {}", []interface{}{q.QueryLimit.Int64})
+	if q.RowLimit.Valid {
+		err = BufferPrintf(dialect, buf, args, params, nil, " LIMIT {}", []interface{}{q.RowLimit.Int64})
 		if err != nil {
 			return err
 		}
 	}
 	// OFFSET
-	if q.QueryOffset.Valid {
-		err = BufferPrintf(dialect, buf, args, params, nil, " OFFSET {}", []interface{}{q.QueryOffset.Int64})
+	if q.RowOffset.Valid {
+		err = BufferPrintf(dialect, buf, args, params, nil, " OFFSET {}", []interface{}{q.RowOffset.Int64})
 		if err != nil {
 			return err
 		}
@@ -137,4 +137,4 @@ func (q SelectQuery) GetFetchableFields() ([]Field, error) {
 	return q.SelectFields, nil
 }
 
-func (q SelectQuery) Dialect() string { return q.QueryDialect }
+func (q SelectQuery) GetDialect() string { return q.Dialect }

@@ -8,14 +8,14 @@ var _ Query = SQLiteUpdateQuery{}
 
 func (d SQLiteDialect) UpdateWith(ctes ...CTE) SQLiteUpdateQuery {
 	var q SQLiteUpdateQuery
-	q.QueryDialect = DialectSQLite
+	q.Dialect = DialectSQLite
 	q.CTEs = ctes
 	return q
 }
 
 func (d SQLiteDialect) Update(table BaseTable) SQLiteUpdateQuery {
 	var q SQLiteUpdateQuery
-	q.QueryDialect = DialectSQLite
+	q.Dialect = DialectSQLite
 	q.UpdateTable = table
 	return q
 }

@@ -8,14 +8,14 @@ var _ Query = PostgresInsertQuery{}
 
 func (d PostgresDialect) InsertWith(ctes ...CTE) PostgresInsertQuery {
 	var q PostgresInsertQuery
-	q.QueryDialect = DialectPostgres
+	q.Dialect = DialectPostgres
 	q.CTEs = ctes
 	return q
 }
 
 func (d PostgresDialect) InsertInto(table BaseTable) PostgresInsertQuery {
 	var q PostgresInsertQuery
-	q.QueryDialect = DialectPostgres
+	q.Dialect = DialectPostgres
 	q.IntoTable = table
 	return q
 }

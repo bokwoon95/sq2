@@ -111,7 +111,7 @@ func (q FaultySQL) GetFetchableFields() ([]Field, error) {
 	return nil, ErrFaultySQL
 }
 
-func (q FaultySQL) Dialect() string { return "" }
+func (q FaultySQL) GetDialect() string { return "" }
 
 func (q FaultySQL) AppendSQLExclude(string, *bytes.Buffer, *[]interface{}, map[string][]int, []string) error {
 	return ErrFaultySQL

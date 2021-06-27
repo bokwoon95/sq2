@@ -27,7 +27,7 @@ func execContext(ctx context.Context, db Queryer, q Query, execflag int, skip in
 	if db, ok := db.(QueryerLogger); ok {
 		logQueryStats = db.LogQueryStats
 	}
-	stats.Dialect = q.Dialect()
+	stats.Dialect = q.GetDialect()
 	buf := bufpool.Get().(*bytes.Buffer)
 	defer func() {
 		if stats.Query == "" && err != nil {

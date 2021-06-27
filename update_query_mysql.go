@@ -8,7 +8,7 @@ var _ Query = MySQLUpdateQuery{}
 
 func (d MySQLDialect) Update(table BaseTable) MySQLUpdateQuery {
 	var q MySQLUpdateQuery
-	q.QueryDialect = DialectMySQL
+	q.Dialect = DialectMySQL
 	q.UpdateTable = table
 	return q
 }
@@ -74,7 +74,7 @@ func (q MySQLUpdateQuery) OrderBy(fields ...Field) MySQLUpdateQuery {
 }
 
 func (q MySQLUpdateQuery) Limit(limit int64) MySQLUpdateQuery {
-	q.QueryLimit.Valid = true
-	q.QueryLimit.Int64 = limit
+	q.RowLimit.Valid = true
+	q.RowLimit.Int64 = limit
 	return q
 }

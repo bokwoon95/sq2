@@ -8,35 +8,35 @@ var _ Query = SQLiteSelectQuery{}
 
 func (d SQLiteDialect) From(table Table) SQLiteSelectQuery {
 	var q SQLiteSelectQuery
-	q.QueryDialect = DialectSQLite
+	q.Dialect = DialectSQLite
 	q.FromTable = table
 	return q
 }
 
 func (d SQLiteDialect) SelectWith(ctes ...CTE) SQLiteSelectQuery {
 	var q SQLiteSelectQuery
-	q.QueryDialect = DialectSQLite
+	q.Dialect = DialectSQLite
 	q.CTEs = ctes
 	return q
 }
 
 func (d SQLiteDialect) Select(fields ...Field) SQLiteSelectQuery {
 	var q SQLiteSelectQuery
-	q.QueryDialect = DialectSQLite
+	q.Dialect = DialectSQLite
 	q.SelectFields = fields
 	return q
 }
 
 func (d SQLiteDialect) SelectOne() SQLiteSelectQuery {
 	var q SQLiteSelectQuery
-	q.QueryDialect = DialectSQLite
+	q.Dialect = DialectSQLite
 	q.SelectFields = Fields{FieldLiteral("1")}
 	return q
 }
 
 func (d SQLiteDialect) SelectDistinct(fields ...Field) SQLiteSelectQuery {
 	var q SQLiteSelectQuery
-	q.QueryDialect = DialectSQLite
+	q.Dialect = DialectSQLite
 	q.SelectType = SelectTypeDistinct
 	q.SelectFields = fields
 	return q
@@ -109,13 +109,13 @@ func (q SQLiteSelectQuery) OrderBy(fields ...Field) SQLiteSelectQuery {
 }
 
 func (q SQLiteSelectQuery) Limit(limit int64) SQLiteSelectQuery {
-	q.QueryLimit.Valid = true
-	q.QueryLimit.Int64 = limit
+	q.RowLimit.Valid = true
+	q.RowLimit.Int64 = limit
 	return q
 }
 
 func (q SQLiteSelectQuery) Offset(offset int64) SQLiteSelectQuery {
-	q.QueryOffset.Valid = true
-	q.QueryOffset.Int64 = offset
+	q.RowOffset.Valid = true
+	q.RowOffset.Int64 = offset
 	return q
 }

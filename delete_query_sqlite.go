@@ -8,14 +8,14 @@ var _ Query = SQLiteDeleteQuery{}
 
 func (d SQLiteDialect) DeleteWith(ctes ...CTE) SQLiteDeleteQuery {
 	var q SQLiteDeleteQuery
-	q.QueryDialect = DialectSQLite
+	q.Dialect = DialectSQLite
 	q.CTEs = ctes
 	return q
 }
 
 func (d SQLiteDialect) DeleteFrom(table BaseTable) SQLiteDeleteQuery {
 	var q SQLiteDeleteQuery
-	q.QueryDialect = DialectSQLite
+	q.Dialect = DialectSQLite
 	q.FromTables = append(q.FromTables, table)
 	return q
 }

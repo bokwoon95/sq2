@@ -8,7 +8,7 @@ var _ Query = MySQLInsertQuery{}
 
 func (d MySQLDialect) InsertInto(table BaseTable) MySQLInsertQuery {
 	var q MySQLInsertQuery
-	q.QueryDialect = DialectMySQL
+	q.Dialect = DialectMySQL
 	q.IntoTable = table
 	return q
 }
