@@ -96,6 +96,7 @@ var (
 	_ Query     = FaultySQL{}
 	_ BaseTable = FaultySQL{}
 	_ Field     = FaultySQL{}
+	_ Predicate = FaultySQL{}
 )
 
 func (q FaultySQL) AppendSQL(string, *bytes.Buffer, *[]interface{}, map[string][]int) error {
@@ -121,6 +122,8 @@ func (q FaultySQL) GetAlias() string { return "" }
 func (q FaultySQL) GetName() string { return "" }
 
 func (q FaultySQL) GetSchema() string { return "" }
+
+func (q FaultySQL) Not() Predicate { return q }
 
 func Test_explodeSlice(t *testing.T) {
 	type TT struct {

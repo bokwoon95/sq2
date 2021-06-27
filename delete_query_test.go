@@ -100,4 +100,28 @@ func Test_DeleteQuery(t *testing.T) {
 			t.Errorf(testcallers()+" expected ErrFaultySQL but got %#v", err)
 		}
 	})
+
+	t.Run("WherePredicate faulty sql", func(t *testing.T) {
+		t.Parallel()
+		var q DeleteQuery
+		q.FromTables = append(q.FromTables, NEW_ACTOR(""))
+		q.WherePredicate = And(FaultySQL{})
+		_, _, _, err := ToSQL("", q)
+		if !errors.Is(err, ErrFaultySQL) {
+			t.Errorf(testcallers()+" expected ErrFaultySQL but got %#v", err)
+		}
+	})
+
+	t.Run("OrderByFields not MySQL", func(t *testing.T) {
+		t.Parallel()
+		ACTOR := NEW_ACTOR("")
+		var q DeleteQuery
+		q.QueryDialect = DialectPostgres
+		q.FromTables = append(q.FromTables, ACTOR)
+		q.OrderByFields = Fields{ACTOR.ACTOR_ID, ACTOR.FIRST_NAME}
+		_, _, _, err := ToSQL("", q)
+		if err == nil {
+			t.Error(testcallers(), "expected error but got nil")
+		}
+	})
 }
