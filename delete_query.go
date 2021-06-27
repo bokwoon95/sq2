@@ -50,9 +50,6 @@ func (q DeleteQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interf
 			if nameOrAlias == "" {
 				nameOrAlias = table.GetName()
 			}
-			if nameOrAlias == "" {
-				return fmt.Errorf("table #%d has no name and no alias", i+1)
-			}
 			buf.WriteString(nameOrAlias)
 		}
 	} else {
