@@ -226,7 +226,7 @@ func (tbl CITY) DDL(dialect string, t *T) {
 		t.Column(tbl.CITY_ID).Type("INT").Autoincrement()
 		t.Column(tbl.CITY).Type("VARCHAR(50)")
 		t.Column(tbl.LAST_UPDATE).Type("TIMESTAMP").Default("CURRENT_TIMESTAMP").OnUpdateCurrentTimestamp()
-		t.ForeignKey(tbl.COUNTRY_ID).References(COUNTRY, COUNTRY.COUNTRY_ID).OnUpdate(CASCADE).OnDelete(RESTRICT)
+		t.ForeignKey(tbl.COUNTRY_ID).References(COUNTRY, COUNTRY.COUNTRY_ID).OnUpdate(CASCADE).OnDelete(CASCADE)
 	}
 }
 
@@ -259,7 +259,7 @@ const CITY_MySQL = `CREATE TABLE db.city (
 
     ,CONSTRAINT city_city_id_pkey PRIMARY KEY (city_id)
 );
-ALTER TABLE db.city ADD CONSTRAINT city_country_id_fkey FOREIGN KEY (country_id) REFERENCES country (country_id) ON UPDATE CASCADE ON DELETE RESTRICT;
+ALTER TABLE db.city ADD CONSTRAINT city_country_id_fkey FOREIGN KEY (country_id) REFERENCES country (country_id) ON UPDATE CASCADE ON DELETE CASCADE;
 CREATE INDEX city_country_id_idx ON db.city (country_id);`
 
 func NEW_ADDRESS(dialect, alias string) ADDRESS {
@@ -287,6 +287,7 @@ type ADDRESS struct {
 }
 
 func (tbl ADDRESS) DDL(dialect string, t *T) {
+	CITY := NEW_CITY(dialect, "")
 	switch dialect {
 	case sq.DialectPostgres:
 		t.Column(tbl.ADDRESS_ID).Type("INT").Identity()
@@ -296,6 +297,7 @@ func (tbl ADDRESS) DDL(dialect string, t *T) {
 		t.Column(tbl.ADDRESS).Type("VARCHAR(50)")
 		t.Column(tbl.ADDRESS2).Type("VARCHAR(50)")
 		t.Column(tbl.DISTRICT).Type("VARCHAR(20)")
+		t.ForeignKey(tbl.CITY_ID).References(CITY, CITY.CITY_ID).OnUpdate(CASCADE).OnDelete(CASCADE)
 		t.Column(tbl.POSTAL_CODE).Type("VARCHAR(10)")
 		t.Column(tbl.PHONE).Type("VARCHAR(20)")
 		t.Column(tbl.LAST_UPDATE).Type("TIMESTAMP").Default("CURRENT_TIMESTAMP").OnUpdateCurrentTimestamp()
@@ -343,7 +345,7 @@ const ADDRESS_MySQL = `CREATE TABLE db.address (
 
     ,CONSTRAINT address_address_id_pkey PRIMARY KEY (address_id)
 );
-ALTER TABLE db.address ADD CONSTRAINT address_city_id_fkey FOREIGN KEY (city_id) REFERENCES city (city_id) ON UPDATE CASCADE ON DELETE RESTRICT;
+ALTER TABLE db.address ADD CONSTRAINT address_city_id_fkey FOREIGN KEY (city_id) REFERENCES city (city_id) ON UPDATE CASCADE ON DELETE CASCADE;
 CREATE INDEX address_city_id_idx ON db.address (city_id);`
 
 func NEW_LANGUAGE(dialect, alias string) LANGUAGE {

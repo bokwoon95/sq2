@@ -73,6 +73,7 @@ func Test_SQLiteDeleteQuery(t *testing.T) {
 		ACTOR := NEW_ACTOR("a")
 		tt.item = SQLite.
 			DeleteFrom(ACTOR).
+			DeleteFrom(ACTOR).
 			With(NewCTE("cte", []string{"n"}, Queryf("SELECT 1")))
 		tt.wantQuery = "WITH cte (n) AS (SELECT 1) DELETE FROM actor AS a"
 		assert(t, tt)

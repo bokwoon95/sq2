@@ -60,7 +60,6 @@ DELETE FROM address
     JOIN city AS ci ON ci.city_id = address.city_id
     JOIN country AS co ON co.country_id = ci.country_id
 WHERE
-    ci.city_id = address.city_id
     AND ci.city_id = 609
 ;
 
@@ -70,6 +69,21 @@ DELETE FROM a
     JOIN city AS ci ON ci.city_id = a.city_id
     JOIN country AS co ON co.country_id = ci.country_id
 WHERE
-    ci.city_id = a.city_id
     AND ci.city_id = 609
 ;
+
+-- [OK] multi-table delete
+-- Warning! SELECT ROW_COUNT(); is unreliable after a multi-table delete. Do not rely on it!
+DELETE FROM
+    a, ci, co
+USING
+    address AS a
+    JOIN city AS ci ON ci.city_id = a.city_id
+    JOIN country AS co ON co.country_id = ci.country_id
+WHERE
+    co.country_id = 112
+;
+
+-- run this before and after the multi-table delete to verify that all 9
+-- addresses associated with country_id 112 have been deleted
+SELECT * from address where address_id > 623;
