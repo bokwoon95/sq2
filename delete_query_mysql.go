@@ -20,13 +20,6 @@ func (d MySQLDialect) DeleteFrom(tables ...BaseTable) MySQLDeleteQuery {
 	return q
 }
 
-func (d MySQLDialect) Delete(tables ...BaseTable) MySQLDeleteQuery {
-	var q MySQLDeleteQuery
-	q.QueryDialect = DialectMySQL
-	q.FromTables = tables
-	return q
-}
-
 func (q MySQLDeleteQuery) With(ctes ...CTE) MySQLDeleteQuery {
 	q.CTEs = append(q.CTEs, ctes...)
 	return q
@@ -37,17 +30,7 @@ func (q MySQLDeleteQuery) DeleteFrom(tables ...BaseTable) MySQLDeleteQuery {
 	return q
 }
 
-func (q MySQLDeleteQuery) Delete(tables ...BaseTable) MySQLDeleteQuery {
-	q.FromTables = tables
-	return q
-}
-
 func (q MySQLDeleteQuery) Using(table Table) MySQLDeleteQuery {
-	q.UsingTable = table
-	return q
-}
-
-func (q MySQLDeleteQuery) From(table Table) MySQLDeleteQuery {
 	q.UsingTable = table
 	return q
 }
