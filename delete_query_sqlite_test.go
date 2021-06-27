@@ -101,7 +101,8 @@ func Test_SQLiteDeleteQuery(t *testing.T) {
 					lang.Field("name").In([]string{"English", "Italian"}),
 					INVENTORY.LAST_UPDATE.IsNotNull(),
 				),
-			))
+			)).
+			Returning(FILM1.FILM_ID)
 		tt.wantQuery = "WITH lang AS (" +
 			"SELECT l.language_id, l.name FROM language AS l WHERE l.name IS NOT NULL" +
 			")" +
@@ -112,8 +113,19 @@ func Test_SQLiteDeleteQuery(t *testing.T) {
 			" JOIN lang ON lang.language_id = f2.language_id" +
 			" JOIN inventory AS i ON i.film_id = f2.film_id" +
 			" WHERE f1.film_id = f2.film_id AND lang.name IN ($1, $2) AND i.last_update IS NOT NULL" +
-			")"
+			")" + 
+			" RETURNING f1.film_id"
 		tt.wantArgs = []interface{}{"English", "Italian"}
+		assert(t, tt)
+	})
+
+	t.Run("ORDER BY LIMIT", func(t *testing.T) {
+		t.Parallel()
+		var tt TT
+		ACTOR := NEW_ACTOR("a")
+		tt.item = SQLite.DeleteFrom(ACTOR).OrderBy(ACTOR.ACTOR_ID).Limit(0)
+		tt.wantQuery = "DELETE FROM actor AS a ORDER BY a.actor_id LIMIT $1"
+		tt.wantArgs = []interface{}{int64(0)}
 		assert(t, tt)
 	})
 }

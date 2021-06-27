@@ -46,7 +46,7 @@ func Test_DeleteQuery(t *testing.T) {
 		}
 	})
 
-	t.Run("UsingTable not supported by sqlite", func(t *testing.T) {
+	t.Run("UsingTable dialect == sqlite", func(t *testing.T) {
 		t.Parallel()
 		ACTOR := NEW_ACTOR("")
 		var q DeleteQuery
@@ -71,7 +71,7 @@ func Test_DeleteQuery(t *testing.T) {
 		}
 	})
 
-	t.Run("JoinTables not supported by sqlite", func(t *testing.T) {
+	t.Run("JoinTables dialect == sqlite", func(t *testing.T) {
 		t.Parallel()
 		ACTOR := NEW_ACTOR("")
 		var q DeleteQuery
@@ -121,7 +121,7 @@ func Test_DeleteQuery(t *testing.T) {
 		}
 	})
 
-	t.Run("OrderByFields not mysql", func(t *testing.T) {
+	t.Run("OrderByFields dialect != mysql && dialect != sqlite", func(t *testing.T) {
 		t.Parallel()
 		ACTOR := NEW_ACTOR("")
 		var q DeleteQuery
@@ -162,7 +162,7 @@ func Test_DeleteQuery(t *testing.T) {
 		}
 	})
 
-	t.Run("RowLimit not mysql", func(t *testing.T) {
+	t.Run("RowLimit dialect != mysql && dialect != sqlite", func(t *testing.T) {
 		t.Parallel()
 		ACTOR := NEW_ACTOR("")
 		var q DeleteQuery
@@ -190,7 +190,7 @@ func Test_DeleteQuery(t *testing.T) {
 		}
 	})
 
-	t.Run("ReturningFields not postgres or sqlite", func(t *testing.T) {
+	t.Run("ReturningFields dialect != postgres && dialect != sqlite", func(t *testing.T) {
 		t.Parallel()
 		ACTOR := NEW_ACTOR("")
 		var q DeleteQuery
@@ -213,6 +213,41 @@ func Test_DeleteQuery(t *testing.T) {
 		_, _, _, err := ToSQL("", q)
 		if !errors.Is(err, ErrFaultySQL) {
 			t.Errorf(testcallers()+" expected ErrFaultySQL but got %#v", err)
+		}
+	})
+
+	t.Run("FetchableFields dialect == postgres", func(t *testing.T) {
+		t.Parallel()
+		ACTOR := NEW_ACTOR("")
+		var q DeleteQuery
+		q.Dialect = DialectPostgres
+		query, err := q.SetFetchableFields(Fields{ACTOR.ACTOR_ID, ACTOR.FIRST_NAME, ACTOR.LAST_NAME})
+		if err != nil {
+			t.Fatalf(testcallers()+" expected nil error, got %#v", err)
+		}
+		q = query.(DeleteQuery)
+		fields, err := q.GetFetchableFields()
+		if err != nil {
+			t.Fatalf(testcallers()+" expected nil error, got %#v", err)
+		}
+		diff := testdiff(fields, []Field{ACTOR.ACTOR_ID, ACTOR.FIRST_NAME, ACTOR.LAST_NAME})
+		if diff != "" {
+			t.Error(testcallers(), diff)
+		}
+	})
+
+	t.Run("FetchableFields dialect != postgres", func(t *testing.T) {
+		t.Parallel()
+		ACTOR := NEW_ACTOR("")
+		var q DeleteQuery
+		q.Dialect = DialectMySQL
+		_, err := q.SetFetchableFields(Fields{ACTOR.ACTOR_ID, ACTOR.FIRST_NAME, ACTOR.LAST_NAME})
+		if !errors.Is(err, ErrNonFetchableQuery) {
+			t.Error(testcallers()+" expected ErrNonFetchableQuery, got %#v", err)
+		}
+		_, err = q.GetFetchableFields()
+		if !errors.Is(err, ErrNonFetchableQuery) {
+			t.Error(testcallers()+" expected ErrNonFetchableQuery, got %#v", err)
 		}
 	})
 }
