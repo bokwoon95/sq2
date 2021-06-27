@@ -68,3 +68,8 @@ func AssignNew(field Field) Assignment {
 	name := field.GetName()
 	return Assign(FieldLiteral(name), FieldLiteral("NEW."+name))
 }
+
+func AssignSelf(field Field) Assignment {
+	name := field.GetName()
+	return Assign(FieldLiteral(name), FieldLiteral(name))
+}
