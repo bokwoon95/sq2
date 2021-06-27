@@ -10,11 +10,16 @@ func (d MySQLDialect) InsertInto(table BaseTable) MySQLInsertQuery {
 	var q MySQLInsertQuery
 	q.Dialect = DialectMySQL
 	q.IntoTable = table
+	q.Modifiers = make(map[string]string)
 	return q
 }
 
-func (q MySQLInsertQuery) InsertInto(table BaseTable) MySQLInsertQuery {
+func (d MySQLDialect) InsertIgnoreInto(table BaseTable) MySQLInsertQuery {
+	var q MySQLInsertQuery
+	q.Dialect = DialectMySQL
 	q.IntoTable = table
+	q.Modifiers = make(map[string]string)
+	q.Modifiers["IGNORE"] = ""
 	return q
 }
 

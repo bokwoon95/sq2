@@ -92,6 +92,14 @@ func Test_Assignment(t *testing.T) {
 		tt.wantQuery = "user_id = NEW.user_id"
 		assert(t, tt)
 	})
+
+	t.Run("self assign", func(t *testing.T) {
+		t.Parallel()
+		var tt TT
+		tt.item = AssignSelf(USERS.USER_ID)
+		tt.wantQuery = "user_id = user_id"
+		assert(t, tt)
+	})
 }
 
 func Test_Assignments(t *testing.T) {

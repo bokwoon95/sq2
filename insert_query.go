@@ -10,10 +10,6 @@ type InsertQuery struct {
 	ColumnMapper func(*Column) error
 	// WITH
 	CTEs CTEs
-	// NOTE: added MySQL's INSERT IGNORE functionality but disabled it for now
-	// because I'm not sure if INSERT IGNORE is something I want to encourage.
-	// https://stackoverflow.com/questions/548541/insert-ignore-vs-insert-on-duplicate-key-update
-	ignore bool
 	// INSERT INTO
 	IntoTable     BaseTable
 	InsertColumns Fields
@@ -30,6 +26,12 @@ type InsertQuery struct {
 	ResolutionPredicate VariadicPredicate
 	// RETURNING
 	ReturningFields Fields
+	// misc
+	// NOTE: TODO: the moment you introduce a map here, queries cease to become
+	// separate values. Assigning a query to another variable will only copy
+	// the outside, but the internal map will be shared between copies. Think
+	// about it.
+	Modifiers map[string]string
 }
 
 var _ Query = InsertQuery{}
@@ -52,7 +54,10 @@ func (q InsertQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interf
 		}
 	}
 	// INSERT INTO
-	if q.ignore && dialect == DialectMySQL {
+	if _, ok := q.Modifiers["IGNORE"]; ok {
+		if dialect != DialectMySQL {
+			return fmt.Errorf("%s does not support INSERT IGNORE", dialect)
+		}
 		buf.WriteString("INSERT IGNORE INTO ")
 	} else {
 		buf.WriteString("INSERT INTO ")
@@ -65,6 +70,9 @@ func (q InsertQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interf
 		return err
 	}
 	if alias := q.IntoTable.GetAlias(); alias != "" {
+		if dialect == DialectMySQL {
+			return fmt.Errorf("mysql does not allow an alias for the INSERT table")
+		}
 		buf.WriteString(" AS " + QuoteIdentifier(dialect, alias))
 		excludedTableQualifiers = append(excludedTableQualifiers, alias)
 	} else {
