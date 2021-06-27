@@ -11,7 +11,8 @@ type DeleteQuery struct {
 	// WITH
 	CTEs CTEs
 	// DELETE FROM
-	FromTable BaseTable
+	FromTable  BaseTable
+	FromTables []BaseTable
 	// USING
 	UsingTable Table
 	JoinTables JoinTables

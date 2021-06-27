@@ -84,6 +84,12 @@ func testcallers() string {
 	return buf.String()
 }
 
+type FaultySQLError struct{}
+
+func (e FaultySQLError) Error() string { return "sql broke" }
+
+var ErrFaultySQL error = FaultySQLError{}
+
 type FaultySQL struct{}
 
 var (
@@ -91,13 +97,6 @@ var (
 	_ Table = FaultySQL{}
 	_ Field = FaultySQL{}
 )
-
-type FaultySQLError struct{}
-
-func (e FaultySQLError) Error() string { return "sql broke" }
-
-// TODO: everywhere where FaultySQL is used, assert that the error returned is ErrFaultySQL
-var ErrFaultySQL error = FaultySQLError{}
 
 func (q FaultySQL) AppendSQL(string, *bytes.Buffer, *[]interface{}, map[string][]int) error {
 	return ErrFaultySQL
