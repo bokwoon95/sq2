@@ -11,6 +11,7 @@ type InsertQuery struct {
 	// WITH
 	CTEs CTEs
 	// INSERT INTO
+	InsertIgnore  bool
 	IntoTable     BaseTable
 	InsertColumns Fields
 	// VALUES
@@ -26,12 +27,6 @@ type InsertQuery struct {
 	ResolutionPredicate VariadicPredicate
 	// RETURNING
 	ReturningFields Fields
-	// misc
-	// NOTE: TODO: the moment you introduce a map here, queries cease to become
-	// separate values. Assigning a query to another variable will only copy
-	// the outside, but the internal map will be shared between copies. Think
-	// about it.
-	Modifiers map[string]string
 }
 
 var _ Query = InsertQuery{}
@@ -54,7 +49,7 @@ func (q InsertQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interf
 		}
 	}
 	// INSERT INTO
-	if _, ok := q.Modifiers["IGNORE"]; ok {
+	if q.InsertIgnore {
 		if dialect != DialectMySQL {
 			return fmt.Errorf("%s does not support INSERT IGNORE", dialect)
 		}
