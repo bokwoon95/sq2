@@ -1,0 +1,138 @@
+package sq
+
+import (
+	"errors"
+	"testing"
+)
+
+func Test_InsertQuery(t *testing.T) {
+	t.Run("ColumnMapper return error", func(t *testing.T) {
+		t.Parallel()
+		var ErrColumnMapper = errors.New("some error")
+		var q InsertQuery
+		q.ColumnMapper = func(c *Column) error { return ErrColumnMapper }
+		_, _, _, err := ToSQL("", q)
+		if !errors.Is(err, ErrColumnMapper) {
+			t.Errorf(testcallers()+" expected ErrColumnMapper but got %#v", err)
+		}
+	})
+
+	t.Run("CTE faulty sql", func(t *testing.T) {
+		t.Parallel()
+		var q InsertQuery
+		q.CTEs = CTEs{NewCTE("cte", []string{"n"}, FaultySQL{})}
+		_, _, _, err := ToSQL("", q)
+		if !errors.Is(err, ErrFaultySQL) {
+			t.Errorf(testcallers()+" expected ErrFaultySQL but got %#v", err)
+		}
+	})
+
+	t.Run("INSERT IGNORE dialect != mysql", func(t *testing.T) {
+		t.Parallel()
+		var q InsertQuery
+		q.Dialect = DialectPostgres
+		q.InsertIgnore = true
+		_, _, _, err := ToSQL("", q)
+		if err == nil {
+			t.Error(testcallers(), "expected error but got nil")
+		}
+	})
+
+	t.Run("nil table provided to INSERT", func(t *testing.T) {
+		t.Parallel()
+		var q InsertQuery
+		q.IntoTable = nil
+		_, _, _, err := ToSQL("", q)
+		if err == nil {
+			t.Error(testcallers(), "expected error but got nil")
+		}
+	})
+
+	t.Run("IntoTable faulty sql", func(t *testing.T) {
+		t.Parallel()
+		var q InsertQuery
+		q.IntoTable = FaultySQL{}
+		_, _, _, err := ToSQL("", q)
+		if !errors.Is(err, ErrFaultySQL) {
+			t.Errorf(testcallers()+" expected ErrFaultySQL but got %#v", err)
+		}
+	})
+
+	t.Run("InsertColumns faulty sql", func(t *testing.T) {
+		t.Parallel()
+		ACTOR := NEW_ACTOR("")
+		var q InsertQuery
+		q.IntoTable = ACTOR
+		q.InsertColumns = Fields{FaultySQL{}}
+		_, _, _, err := ToSQL("", q)
+		if !errors.Is(err, ErrFaultySQL) {
+			t.Errorf(testcallers()+" expected ErrFaultySQL but got %#v", err)
+		}
+	})
+
+	t.Run("RowValues faulty sql", func(t *testing.T) {
+		t.Parallel()
+		ACTOR := NEW_ACTOR("")
+		var q InsertQuery
+		q.IntoTable = ACTOR
+		q.RowValues = RowValues{{FaultySQL{}}}
+		_, _, _, err := ToSQL("", q)
+		if !errors.Is(err, ErrFaultySQL) {
+			t.Errorf(testcallers()+" expected ErrFaultySQL but got %#v", err)
+		}
+	})
+
+	t.Run("RowAlias dialect != mysql", func(t *testing.T) {
+		t.Parallel()
+		ACTOR := NEW_ACTOR("")
+		var q InsertQuery
+		q.Dialect = DialectPostgres
+		q.IntoTable = ACTOR
+		q.InsertColumns = Fields{ACTOR.ACTOR_ID, ACTOR.FIRST_NAME, ACTOR.LAST_NAME}
+		q.RowValues = RowValues{{1, "bob", "the builder"}, {2, "alice", "in wonderland"}}
+		q.RowAlias = "NEW"
+		_, _, _, err := ToSQL("", q)
+		if err == nil {
+			t.Error(testcallers(), "expected error but got nil")
+		}
+	})
+
+	t.Run("SelectQuery faulty sql", func(t *testing.T) {
+		t.Parallel()
+		ACTOR := NEW_ACTOR("")
+		var q InsertQuery
+		q.IntoTable = ACTOR
+		q.SelectQuery = &SelectQuery{SelectFields: Fields{FaultySQL{}}}
+		_, _, _, err := ToSQL("", q)
+		if !errors.Is(err, ErrFaultySQL) {
+			t.Errorf(testcallers()+" expected ErrFaultySQL but got %#v", err)
+		}
+	})
+
+	t.Run("missing RowValues and SelectQuery", func(t *testing.T) {
+		t.Parallel()
+		ACTOR := NEW_ACTOR("")
+		var q InsertQuery
+		q.IntoTable = ACTOR
+		_, _, _, err := ToSQL("", q)
+		if err == nil {
+			t.Error(testcallers(), "expected error but got nil")
+		}
+	})
+
+	t.Run("ConflictFields faulty sql", func(t *testing.T) {
+		t.Parallel()
+		ACTOR := NEW_ACTOR("")
+		var q InsertQuery
+		q.Dialect = DialectPostgres
+		q.IntoTable = ACTOR
+		q.InsertColumns = Fields{ACTOR.ACTOR_ID}
+		q.RowValues = RowValues{{1}, {2}, {3}}
+		q.HandleConflict = true
+		q.ConflictFields = Fields{FaultySQL{}}
+		_, _, _, err := ToSQL("", q)
+		if !errors.Is(err, ErrFaultySQL) {
+			t.Errorf(testcallers()+" expected ErrFaultySQL but got %#v", err)
+		}
+	})
+}

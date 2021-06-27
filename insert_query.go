@@ -22,7 +22,7 @@ type InsertQuery struct {
 	// SELECT
 	SelectQuery *SelectQuery
 	// ON CONFLICT
-	HandleConflict      bool
+	HandleConflict      bool // TODO: this field is unnecessary. Just check if handleConflict := len(ConflictFields) > 0 || ConflictConstraint != ""
 	ConflictFields      Fields
 	ConflictPredicate   VariadicPredicate
 	ConflictConstraint  string
