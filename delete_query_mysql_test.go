@@ -53,4 +53,31 @@ func Test_MySQLDeleteQuery(t *testing.T) {
 		tt.wantArgs = []interface{}{1, 1, 1, 1, 1, 1, 1, 1}
 		assert(t, tt)
 	})
+
+	t.Run("DELETE ... FROM ...", func(t *testing.T) {
+		t.Parallel()
+		var tt TT
+		ACTOR := NEW_ACTOR("a")
+		tt.item = MySQL.
+			DeleteWith(NewCTE("cte", []string{"n"}, Queryf("SELECT 1"))).
+			Delete(ACTOR).
+			From(ACTOR).
+			Join(ACTOR, Eq(1, 1)).
+			LeftJoin(ACTOR, Eq(1, 1)).
+			RightJoin(ACTOR, Eq(1, 1)).
+			FullJoin(ACTOR, Eq(1, 1)).
+			CrossJoin(ACTOR).
+			CustomJoin("NATURAL JOIN", ACTOR)
+		tt.wantQuery = "WITH cte (n) AS (SELECT 1)" +
+			" DELETE FROM a" +
+			" USING actor AS a" +
+			" JOIN actor AS a ON ? = ?" +
+			" LEFT JOIN actor AS a ON ? = ?" +
+			" RIGHT JOIN actor AS a ON ? = ?" +
+			" FULL JOIN actor AS a ON ? = ?" +
+			" CROSS JOIN actor AS a" +
+			" NATURAL JOIN actor AS a"
+		tt.wantArgs = []interface{}{1, 1, 1, 1, 1, 1, 1, 1}
+		assert(t, tt)
+	})
 }
