@@ -36,6 +36,12 @@ func (q MySQLInsertQuery) Valuesx(mapper func(*Column) error) MySQLInsertQuery {
 	return q
 }
 
+func (q MySQLInsertQuery) As(rowAlias string, columnAliases ...string) MySQLInsertQuery {
+	q.RowAlias = rowAlias
+	q.ColumnAliases = columnAliases
+	return q
+}
+
 func (q MySQLInsertQuery) Select(query MySQLSelectQuery) MySQLInsertQuery {
 	q.SelectQuery = &query.SelectQuery
 	return q

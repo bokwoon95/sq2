@@ -3,6 +3,7 @@ package sq
 import (
 	"bytes"
 	"fmt"
+	"strings"
 )
 
 type InsertQuery struct {
@@ -15,7 +16,9 @@ type InsertQuery struct {
 	IntoTable     BaseTable
 	InsertColumns Fields
 	// VALUES
-	RowValues RowValues
+	RowValues     RowValues
+	RowAlias      string
+	ColumnAliases []string
 	// SELECT
 	SelectQuery *SelectQuery
 	// ON CONFLICT
@@ -89,6 +92,15 @@ func (q InsertQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interf
 		err = q.RowValues.AppendSQL(dialect, buf, args, nil)
 		if err != nil {
 			return err
+		}
+		if q.RowAlias != "" {
+			if dialect != DialectMySQL {
+				return fmt.Errorf("%s does not support row aliases", dialect)
+			}
+			buf.WriteString(" AS " + q.RowAlias)
+			if len(q.ColumnAliases) > 0 {
+				buf.WriteString(" (" + strings.Join(q.ColumnAliases, ", ") + ")")
+			}
 		}
 	case q.SelectQuery != nil:
 		buf.WriteString(" ")

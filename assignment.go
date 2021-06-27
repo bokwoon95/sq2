@@ -59,14 +59,9 @@ func AssignExcluded(field Field) Assignment {
 	return Assign(FieldLiteral(name), FieldLiteral("EXCLUDED."+name))
 }
 
-func AssignValues(field Field) Assignment {
+func AssignAlias(field Field, alias string) Assignment {
 	name := field.GetName()
-	return Assign(FieldLiteral(name), FieldLiteral("VALUES("+name+")"))
-}
-
-func AssignNew(field Field) Assignment {
-	name := field.GetName()
-	return Assign(FieldLiteral(name), FieldLiteral("NEW."+name))
+	return Assign(FieldLiteral(name), FieldLiteral(alias+"."+name))
 }
 
 func AssignSelf(field Field) Assignment {
