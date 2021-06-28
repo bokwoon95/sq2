@@ -69,3 +69,20 @@ func (q SQLiteUpdateQuery) Where(predicates ...Predicate) SQLiteUpdateQuery {
 	q.WherePredicate.Predicates = append(q.WherePredicate.Predicates, predicates...)
 	return q
 }
+
+func (q SQLiteUpdateQuery) OrderBy(fields ...Field) SQLiteUpdateQuery {
+	q.OrderByFields = append(q.OrderByFields, fields...)
+	return q
+}
+
+func (q SQLiteUpdateQuery) Limit(limit int64) SQLiteUpdateQuery {
+	q.RowLimit.Valid = true
+	q.RowLimit.Int64 = limit
+	return q
+}
+
+func (q SQLiteUpdateQuery) Offset(offset int64) SQLiteUpdateQuery {
+	q.RowOffset.Valid = true
+	q.RowOffset.Int64 = offset
+	return q
+}
