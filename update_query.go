@@ -94,6 +94,9 @@ func (q UpdateQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interf
 	}
 	// JOIN
 	if len(q.JoinTables) > 0 {
+		if q.FromTable == nil && dialect != DialectMySQL {
+			return fmt.Errorf("%s can't JOIN without a FROM table", dialect)
+		}
 		buf.WriteString(" ")
 		err = q.JoinTables.AppendSQL(dialect, buf, args, params)
 		if err != nil {

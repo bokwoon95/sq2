@@ -30,7 +30,7 @@ func Test_SQLiteUpdateQuery(t *testing.T) {
 	t.Run("joins", func(t *testing.T) {
 		t.Parallel()
 		var tt TT
-		ACTOR := NEW_ACTOR("a")
+		ACTOR := NEW_ACTOR("")
 		tt.item = SQLite.
 			Update(ACTOR).
 			With(NewCTE("cte", []string{"n"}, Queryf("SELECT 1"))).
@@ -42,14 +42,14 @@ func Test_SQLiteUpdateQuery(t *testing.T) {
 			CustomJoin(",", ACTOR).
 			Where(ACTOR.ACTOR_ID.EqInt64(1))
 		tt.wantQuery = "WITH cte (n) AS (SELECT 1)" +
-			" UPDATE actor AS a" +
+			" UPDATE actor" +
 			" SET actor_id = $1" +
-			" FROM actor AS a" +
-			" JOIN actor AS a ON $2 = $3" +
-			" LEFT JOIN actor AS a ON $4 = $5" +
-			" CROSS JOIN actor AS a" +
-			" , actor AS a" +
-			" WHERE a.actor_id = $6"
+			" FROM actor" +
+			" JOIN actor ON $2 = $3" +
+			" LEFT JOIN actor ON $4 = $5" +
+			" CROSS JOIN actor" +
+			" , actor" +
+			" WHERE actor.actor_id = $6"
 		tt.wantArgs = []interface{}{int64(1), 1, 1, 1, 1, int64(1)}
 		assert(t, tt)
 	})
