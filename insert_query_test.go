@@ -13,7 +13,7 @@ func Test_InsertQuery(t *testing.T) {
 		q.ColumnMapper = func(c *Column) error { return ErrColumnMapper }
 		_, _, _, err := ToSQL("", q)
 		if !errors.Is(err, ErrColumnMapper) {
-			t.Errorf(testcallers()+" expected ErrColumnMapper but got %#v", err)
+			t.Errorf(Callers()+" expected ErrColumnMapper but got %#v", err)
 		}
 	})
 
@@ -23,7 +23,7 @@ func Test_InsertQuery(t *testing.T) {
 		q.CTEs = CTEs{NewCTE("cte", []string{"n"}, FaultySQL{})}
 		_, _, _, err := ToSQL("", q)
 		if !errors.Is(err, ErrFaultySQL) {
-			t.Errorf(testcallers()+" expected ErrFaultySQL but got %#v", err)
+			t.Errorf(Callers()+" expected ErrFaultySQL but got %#v", err)
 		}
 	})
 
@@ -34,7 +34,7 @@ func Test_InsertQuery(t *testing.T) {
 		q.InsertIgnore = true
 		_, _, _, err := ToSQL("", q)
 		if err == nil {
-			t.Error(testcallers(), "expected error but got nil")
+			t.Error(Callers(), "expected error but got nil")
 		}
 	})
 
@@ -44,7 +44,7 @@ func Test_InsertQuery(t *testing.T) {
 		q.IntoTable = nil
 		_, _, _, err := ToSQL("", q)
 		if err == nil {
-			t.Error(testcallers(), "expected error but got nil")
+			t.Error(Callers(), "expected error but got nil")
 		}
 	})
 
@@ -54,7 +54,7 @@ func Test_InsertQuery(t *testing.T) {
 		q.IntoTable = FaultySQL{}
 		_, _, _, err := ToSQL("", q)
 		if !errors.Is(err, ErrFaultySQL) {
-			t.Errorf(testcallers()+" expected ErrFaultySQL but got %#v", err)
+			t.Errorf(Callers()+" expected ErrFaultySQL but got %#v", err)
 		}
 	})
 
@@ -66,7 +66,7 @@ func Test_InsertQuery(t *testing.T) {
 		q.IntoTable = ACTOR
 		_, _, _, err := ToSQL("", q)
 		if err == nil {
-			t.Error(testcallers(), "expected error but got nil")
+			t.Error(Callers(), "expected error but got nil")
 		}
 	})
 
@@ -78,7 +78,7 @@ func Test_InsertQuery(t *testing.T) {
 		q.InsertColumns = Fields{FaultySQL{}}
 		_, _, _, err := ToSQL("", q)
 		if !errors.Is(err, ErrFaultySQL) {
-			t.Errorf(testcallers()+" expected ErrFaultySQL but got %#v", err)
+			t.Errorf(Callers()+" expected ErrFaultySQL but got %#v", err)
 		}
 	})
 
@@ -90,7 +90,7 @@ func Test_InsertQuery(t *testing.T) {
 		q.RowValues = RowValues{{FaultySQL{}}}
 		_, _, _, err := ToSQL("", q)
 		if !errors.Is(err, ErrFaultySQL) {
-			t.Errorf(testcallers()+" expected ErrFaultySQL but got %#v", err)
+			t.Errorf(Callers()+" expected ErrFaultySQL but got %#v", err)
 		}
 	})
 
@@ -105,7 +105,7 @@ func Test_InsertQuery(t *testing.T) {
 		q.RowAlias = "NEW"
 		_, _, _, err := ToSQL("", q)
 		if err == nil {
-			t.Error(testcallers(), "expected error but got nil")
+			t.Error(Callers(), "expected error but got nil")
 		}
 	})
 
@@ -117,7 +117,7 @@ func Test_InsertQuery(t *testing.T) {
 		q.SelectQuery = &SelectQuery{SelectFields: AliasFields{FaultySQL{}}}
 		_, _, _, err := ToSQL("", q)
 		if !errors.Is(err, ErrFaultySQL) {
-			t.Errorf(testcallers()+" expected ErrFaultySQL but got %#v", err)
+			t.Errorf(Callers()+" expected ErrFaultySQL but got %#v", err)
 		}
 	})
 
@@ -128,7 +128,7 @@ func Test_InsertQuery(t *testing.T) {
 		q.IntoTable = ACTOR
 		_, _, _, err := ToSQL("", q)
 		if err == nil {
-			t.Error(testcallers(), "expected error but got nil")
+			t.Error(Callers(), "expected error but got nil")
 		}
 	})
 
@@ -143,7 +143,7 @@ func Test_InsertQuery(t *testing.T) {
 		q.ConflictConstraint = "actor_actor_id_pkey"
 		_, _, _, err := ToSQL("", q)
 		if err == nil {
-			t.Error(testcallers(), "expected error but got nil")
+			t.Error(Callers(), "expected error but got nil")
 		}
 	})
 
@@ -158,7 +158,7 @@ func Test_InsertQuery(t *testing.T) {
 		q.ConflictFields = Fields{FaultySQL{}}
 		_, _, _, err := ToSQL("", q)
 		if !errors.Is(err, ErrFaultySQL) {
-			t.Errorf(testcallers()+" expected ErrFaultySQL but got %#v", err)
+			t.Errorf(Callers()+" expected ErrFaultySQL but got %#v", err)
 		}
 	})
 
@@ -174,7 +174,7 @@ func Test_InsertQuery(t *testing.T) {
 		q.ConflictPredicate = And(FaultySQL{})
 		_, _, _, err := ToSQL("", q)
 		if !errors.Is(err, ErrFaultySQL) {
-			t.Errorf(testcallers()+" expected ErrFaultySQL but got %#v", err)
+			t.Errorf(Callers()+" expected ErrFaultySQL but got %#v", err)
 		}
 	})
 
@@ -190,7 +190,7 @@ func Test_InsertQuery(t *testing.T) {
 		q.Resolution = Assignments{Assign(FaultySQL{}, FaultySQL{})}
 		_, _, _, err := ToSQL("", q)
 		if !errors.Is(err, ErrFaultySQL) {
-			t.Errorf(testcallers()+" expected ErrFaultySQL but got %#v", err)
+			t.Errorf(Callers()+" expected ErrFaultySQL but got %#v", err)
 		}
 	})
 
@@ -205,7 +205,7 @@ func Test_InsertQuery(t *testing.T) {
 		q.Resolution = Assignments{Assign(FaultySQL{}, FaultySQL{})}
 		_, _, _, err := ToSQL("", q)
 		if !errors.Is(err, ErrFaultySQL) {
-			t.Errorf(testcallers()+" expected ErrFaultySQL but got %#v", err)
+			t.Errorf(Callers()+" expected ErrFaultySQL but got %#v", err)
 		}
 	})
 
@@ -222,7 +222,7 @@ func Test_InsertQuery(t *testing.T) {
 		q.ResolutionPredicate = And(FaultySQL{})
 		_, _, _, err := ToSQL("", q)
 		if !errors.Is(err, ErrFaultySQL) {
-			t.Errorf(testcallers()+" expected ErrFaultySQL but got %#v", err)
+			t.Errorf(Callers()+" expected ErrFaultySQL but got %#v", err)
 		}
 	})
 
@@ -237,7 +237,7 @@ func Test_InsertQuery(t *testing.T) {
 		q.ReturningFields = AliasFields{ACTOR.ACTOR_ID}
 		_, _, _, err := ToSQL("", q)
 		if err == nil {
-			t.Error(testcallers(), "expected error but got nil")
+			t.Error(Callers(), "expected error but got nil")
 		}
 	})
 
@@ -252,7 +252,7 @@ func Test_InsertQuery(t *testing.T) {
 		q.ReturningFields = AliasFields{FaultySQL{}}
 		_, _, _, err := ToSQL("", q)
 		if !errors.Is(err, ErrFaultySQL) {
-			t.Errorf(testcallers()+" expected ErrFaultySQL but got %#v", err)
+			t.Errorf(Callers()+" expected ErrFaultySQL but got %#v", err)
 		}
 	})
 
@@ -263,16 +263,16 @@ func Test_InsertQuery(t *testing.T) {
 		q.Dialect = DialectPostgres
 		query, err := q.SetFetchableFields(Fields{ACTOR.ACTOR_ID, ACTOR.FIRST_NAME, ACTOR.LAST_NAME})
 		if err != nil {
-			t.Fatalf(testcallers()+" expected nil error, got %#v", err)
+			t.Fatalf(Callers()+" expected nil error, got %#v", err)
 		}
 		q = query.(InsertQuery)
 		fields, err := q.GetFetchableFields()
 		if err != nil {
-			t.Fatalf(testcallers()+" expected nil error, got %#v", err)
+			t.Fatalf(Callers()+" expected nil error, got %#v", err)
 		}
-		diff := testdiff(fields, []Field{ACTOR.ACTOR_ID, ACTOR.FIRST_NAME, ACTOR.LAST_NAME})
+		diff := Diff(fields, []Field{ACTOR.ACTOR_ID, ACTOR.FIRST_NAME, ACTOR.LAST_NAME})
 		if diff != "" {
-			t.Error(testcallers(), diff)
+			t.Error(Callers(), diff)
 		}
 	})
 
@@ -283,11 +283,11 @@ func Test_InsertQuery(t *testing.T) {
 		q.Dialect = DialectMySQL
 		_, err := q.SetFetchableFields(Fields{ACTOR.ACTOR_ID, ACTOR.FIRST_NAME, ACTOR.LAST_NAME})
 		if !errors.Is(err, ErrNonFetchableQuery) {
-			t.Error(testcallers()+" expected ErrNonFetchableQuery, got %#v", err)
+			t.Error(Callers()+" expected ErrNonFetchableQuery, got %#v", err)
 		}
 		_, err = q.GetFetchableFields()
 		if !errors.Is(err, ErrNonFetchableQuery) {
-			t.Error(testcallers()+" expected ErrNonFetchableQuery, got %#v", err)
+			t.Error(Callers()+" expected ErrNonFetchableQuery, got %#v", err)
 		}
 	})
 }
