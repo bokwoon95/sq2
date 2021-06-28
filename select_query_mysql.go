@@ -52,11 +52,6 @@ func (q MySQLSelectQuery) Select(fields ...Field) MySQLSelectQuery {
 	return q
 }
 
-func (q MySQLSelectQuery) SelectOne() MySQLSelectQuery {
-	q.SelectFields = AliasFields{FieldLiteral("1")}
-	return q
-}
-
 func (q MySQLSelectQuery) SelectDistinct(fields ...Field) MySQLSelectQuery {
 	q.Distinct = true
 	q.SelectFields = fields
