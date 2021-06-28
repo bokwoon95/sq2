@@ -50,4 +50,30 @@ func Test_SQLiteSelectQuery(t *testing.T) {
 		tt.wantArgs = []interface{}{1, 1, 1, 1}
 		assert(t, tt)
 	})
+
+	t.Run("simple", func(t *testing.T) {
+		t.Parallel()
+		var tt TT
+		ACTOR := NEW_ACTOR("a")
+		tt.item = SQLite.
+			SelectDistinct(ACTOR.ACTOR_ID, ACTOR.FIRST_NAME, ACTOR.LAST_NAME).
+			SelectDistinct(ACTOR.ACTOR_ID, ACTOR.FIRST_NAME, ACTOR.LAST_NAME).
+			From(ACTOR).
+			With(NewCTE("cte", []string{"n"}, Queryf("SELECT 1"))).
+			GroupBy(ACTOR.FIRST_NAME).
+			Having(ACTOR.FIRST_NAME.IsNotNull()).
+			OrderBy(ACTOR.LAST_NAME).
+			Limit(10).
+			Offset(20)
+		tt.wantQuery = "WITH cte (n) AS (SELECT 1)" +
+			" SELECT DISTINCT a.actor_id, a.first_name, a.last_name" +
+			" FROM actor AS a" +
+			" GROUP BY a.first_name" +
+			" HAVING a.first_name IS NOT NULL" +
+			" ORDER BY a.last_name" +
+			" LIMIT $1" +
+			" OFFSET $2"
+		tt.wantArgs = []interface{}{int64(10), int64(20)}
+		assert(t, tt)
+	})
 }
