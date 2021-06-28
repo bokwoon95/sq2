@@ -93,3 +93,27 @@ once the query API is finalized, consider switching from embedded structs to
 type definitions. If the dialect-specific queries really do not hold any state
 other than the query struct, it seems cleaner to convert it into a type
 definition instead of embedding the struct.
+
+func (TBL) View(dialect string) sq.Query {
+    return SQLite.
+        Select(fields..).
+        From(table).
+        Join(table).
+        Where(predicates...)
+} // what about materialized views and their different refresh configs?
+func (TBL) DDL(dialect string, t *T) {
+    t.Trigger(name, strings.NewReader(`CREATE TRIGGER ON UPDATE...`))
+    t.Trigger(name, t.File(filename)) // if the user didn't pass in an fs.FS, it will panic
+    /*
+    okay, but there is no way of creating a templated trigger. You have to
+    manually keep the columns references in the trigger up to date with
+    changes, or the trigger breaks. Is there no way around this?
+    */
+    /*
+    Also, trigger procedures should not be defined in tables. The actual
+    attaching of a trigger procedure to a table should be defined in the table,
+    but the trigger source must be defined outside because Postgres allows the
+    same trigger procedure to be reused across multiple tables. But where to
+    hook this in?
+    */
+}
