@@ -48,13 +48,13 @@ func (q MySQLUpdateQuery) RightJoin(table Table, predicates ...Predicate) MySQLU
 	return q
 }
 
-func (q MySQLUpdateQuery) CrossJoin(table Table) MySQLUpdateQuery {
-	q.JoinTables = append(q.JoinTables, CrossJoin(table))
+func (q MySQLUpdateQuery) FullJoin(table Table, predicates ...Predicate) MySQLUpdateQuery {
+	q.JoinTables = append(q.JoinTables, FullJoin(table, predicates...))
 	return q
 }
 
-func (q MySQLUpdateQuery) FullJoin(table Table, predicates ...Predicate) MySQLUpdateQuery {
-	q.JoinTables = append(q.JoinTables, FullJoin(table, predicates...))
+func (q MySQLUpdateQuery) CrossJoin(table Table) MySQLUpdateQuery {
+	q.JoinTables = append(q.JoinTables, CrossJoin(table))
 	return q
 }
 

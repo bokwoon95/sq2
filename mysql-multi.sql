@@ -87,3 +87,38 @@ WHERE
 -- run this before and after the multi-table delete to verify that all 9
 -- addresses associated with country_id 112 have been deleted
 SELECT * from address where address_id > 623;
+
+------------
+-- UPDATE --
+------------
+
+-- [OK] USING join, with no aliases
+UPDATE address
+    JOIN city ON city.city_id = address.city_id
+    JOIN country ON country.country_id = city.country_id
+SET
+    address.address = '3 CC Street (modified)'
+    ,city.city = 'CITY C-C (modified)'
+    ,country.country = 'Country C (modified)'
+WHERE
+    address.address_id = 632
+;
+
+-- [OK] USING join, with aliases
+UPDATE address AS a
+    JOIN city AS ci ON ci.city_id = a.city_id
+    JOIN country AS co ON co.country_id = ci.country_id
+SET
+    a.address = '3 CC Street'
+    ,ci.city = 'CITY C-C'
+    ,co.country = 'Country C'
+WHERE
+    a.address_id = 632
+;
+
+-- rune this before and after the multi-table update to verify that all 9
+-- addresses, cities and countries associated with country_id 112 have been
+-- modified
+SELECT *
+FROM address AS a JOIN city AS ci ON ci.city_id = a.city_id JOIN country AS co ON co.country_id = ci.country_id
+WHERE co.country_id = 112;
