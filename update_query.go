@@ -66,8 +66,11 @@ func (q UpdateQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interf
 		name := q.UpdateTable.GetName()
 		excludedTableQualifiers = append(excludedTableQualifiers, name)
 	}
-	// SET
-	if len(q.Assignments) > 0 && dialect != DialectMySQL {
+	if len(q.Assignments) == 0 {
+		return fmt.Errorf("no fields to update")
+	}
+	// SET (not MySQL)
+	if dialect != DialectMySQL {
 		buf.WriteString(" SET ")
 		err = q.Assignments.AppendSQLExclude(dialect, buf, args, params, excludedTableQualifiers)
 		if err != nil {
@@ -75,7 +78,10 @@ func (q UpdateQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interf
 		}
 	}
 	// FROM
-	if q.FromTable != nil && dialect != DialectMySQL {
+	if q.FromTable != nil {
+		if dialect == DialectMySQL {
+			return fmt.Errorf("mysql UPDATE does not support FROM")
+		}
 		buf.WriteString(" FROM ")
 		err = q.FromTable.AppendSQL(dialect, buf, args, params)
 		if err != nil {
@@ -94,10 +100,10 @@ func (q UpdateQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interf
 			return err
 		}
 	}
-	// SET
+	// SET (MySQL)
 	if len(q.Assignments) > 0 && dialect == DialectMySQL {
 		buf.WriteString(" SET ")
-		err = q.Assignments.AppendSQLExclude(dialect, buf, args, params, excludedTableQualifiers)
+		err = q.Assignments.AppendSQLExclude(dialect, buf, args, params, nil)
 		if err != nil {
 			return err
 		}
@@ -112,7 +118,10 @@ func (q UpdateQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interf
 		}
 	}
 	// ORDER BY
-	if len(q.OrderByFields) > 0 && dialect == DialectMySQL {
+	if len(q.OrderByFields) > 0 {
+		if dialect != DialectMySQL && dialect != DialectSQLite {
+			return fmt.Errorf("%s UPDATE does not support ORDER BY", dialect)
+		}
 		buf.WriteString(" ORDER BY ")
 		err = q.OrderByFields.AppendSQLExclude(dialect, buf, args, params, nil)
 		if err != nil {
@@ -120,21 +129,30 @@ func (q UpdateQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interf
 		}
 	}
 	// LIMIT
-	if q.RowLimit.Valid && dialect == DialectMySQL {
+	if q.RowLimit.Valid {
+		if dialect != DialectMySQL && dialect != DialectSQLite {
+			return fmt.Errorf("%s UPDATE does not support LIMIT", dialect)
+		}
 		err = BufferPrintf(dialect, buf, args, params, nil, " LIMIT {}", []interface{}{q.RowLimit.Int64})
 		if err != nil {
 			return err
 		}
 	}
 	// OFFSET
-	if q.RowOffset.Valid && dialect == DialectMySQL {
-		err = BufferPrintf(dialect, buf, args, params, nil, " LIMIT {}", []interface{}{q.RowLimit.Int64})
+	if q.RowOffset.Valid {
+		if dialect != DialectSQLite {
+			return fmt.Errorf("%s UPDATE does not support OFFSET", dialect)
+		}
+		err = BufferPrintf(dialect, buf, args, params, nil, " OFFSET {}", []interface{}{q.RowOffset.Int64})
 		if err != nil {
 			return err
 		}
 	}
 	// RETURNING
-	if len(q.ReturningFields) > 0 && dialect == DialectPostgres {
+	if len(q.ReturningFields) > 0 {
+		if dialect != DialectPostgres && dialect != DialectSQLite {
+			return fmt.Errorf("%s UPDATE does not support RETURNING", dialect)
+		}
 		buf.WriteString(" RETURNING ")
 		q.ReturningFields.AppendSQLExclude(dialect, buf, args, params, nil)
 	}
