@@ -196,7 +196,7 @@ func Test_DeleteQuery(t *testing.T) {
 		var q DeleteQuery
 		q.Dialect = DialectMySQL
 		q.FromTables = append(q.FromTables, ACTOR)
-		q.ReturningFields = Fields{ACTOR.ACTOR_ID}
+		q.ReturningFields = AliasFields{ACTOR.ACTOR_ID}
 		_, _, _, err := ToSQL("", q)
 		if err == nil {
 			t.Error(testcallers(), "expected error but got nil")
@@ -209,7 +209,7 @@ func Test_DeleteQuery(t *testing.T) {
 		var q DeleteQuery
 		q.Dialect = DialectPostgres
 		q.FromTables = append(q.FromTables, ACTOR)
-		q.ReturningFields = Fields{FaultySQL{}}
+		q.ReturningFields = AliasFields{FaultySQL{}}
 		_, _, _, err := ToSQL("", q)
 		if !errors.Is(err, ErrFaultySQL) {
 			t.Errorf(testcallers()+" expected ErrFaultySQL but got %#v", err)

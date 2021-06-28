@@ -30,7 +30,7 @@ func (d PostgresDialect) Select(fields ...Field) PostgresSelectQuery {
 func (d PostgresDialect) SelectOne() PostgresSelectQuery {
 	var q PostgresSelectQuery
 	q.Dialect = DialectPostgres
-	q.SelectFields = Fields{FieldLiteral("1")}
+	q.SelectFields = AliasFields{FieldLiteral("1")}
 	return q
 }
 
@@ -64,7 +64,7 @@ func (q PostgresSelectQuery) Select(fields ...Field) PostgresSelectQuery {
 }
 
 func (q PostgresSelectQuery) SelectOne() PostgresSelectQuery {
-	q.SelectFields = Fields{FieldLiteral("1")}
+	q.SelectFields = AliasFields{FieldLiteral("1")}
 	return q
 }
 

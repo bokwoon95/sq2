@@ -212,17 +212,11 @@ func Test_Fields(t *testing.T) {
 	}
 
 	assert := func(t *testing.T, tt TT) {
-		buf := bufpool.Get().(*bytes.Buffer)
-		defer func() {
-			buf.Reset()
-			bufpool.Put(buf)
-		}()
-		gotArgs, gotParams := []interface{}{}, map[string][]int{}
-		err := tt.item.AppendSQLExclude(tt.dialect, buf, &gotArgs, gotParams, tt.excludedTableQualifiers)
+		gotQuery, gotArgs, _, err := ToSQLExclude(tt.dialect, tt.item, tt.excludedTableQualifiers)
 		if err != nil {
 			t.Fatal(testcallers(), err)
 		}
-		if diff := testdiff(buf.String(), tt.wantQuery); diff != "" {
+		if diff := testdiff(gotQuery, tt.wantQuery); diff != "" {
 			t.Error(testcallers(), diff)
 		}
 		if diff := testdiff(gotArgs, tt.wantArgs); diff != "" {
@@ -235,7 +229,6 @@ func Test_Fields(t *testing.T) {
 		var tt TT
 		tt.item = Fields{}
 		tt.wantQuery = ""
-		tt.wantArgs = []interface{}{}
 		assert(t, tt)
 	})
 
@@ -248,31 +241,12 @@ func Test_Fields(t *testing.T) {
 		assert(t, tt)
 	})
 
-	assertWithAlias := func(t *testing.T, fs Fields, tt TT) {
-		buf := bufpool.Get().(*bytes.Buffer)
-		defer func() {
-			buf.Reset()
-			bufpool.Put(buf)
-		}()
-		gotArgs, gotParams := []interface{}{}, map[string][]int{}
-		err := fs.AppendSQLExcludeWithAlias("", buf, &gotArgs, gotParams, tt.excludedTableQualifiers)
-		if err != nil {
-			t.Fatal(testcallers(), err)
-		}
-		if diff := testdiff(buf.String(), tt.wantQuery); diff != "" {
-			t.Error(testcallers(), diff)
-		}
-		if diff := testdiff(gotArgs, tt.wantArgs); diff != "" {
-			t.Error(testcallers(), diff)
-		}
-	}
-
-	t.Run("Fields with alias", func(t *testing.T) {
+	t.Run("AliasFields", func(t *testing.T) {
 		t.Parallel()
 		var tt TT
-		fs := Fields{USERS.USER_ID.As("uid"), nil, FieldValue(456).As("some_number")}
+		tt.item = AliasFields{USERS.USER_ID.As("uid"), nil, FieldValue(456).As("some_number")}
 		tt.wantQuery = "user_id AS uid, ?, ? AS some_number"
 		tt.wantArgs = []interface{}{nil, 456}
-		assertWithAlias(t, fs, tt)
+		assert(t, tt)
 	})
 }

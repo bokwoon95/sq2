@@ -30,7 +30,7 @@ func (d MySQLDialect) Select(fields ...Field) MySQLSelectQuery {
 func (d MySQLDialect) SelectOne() MySQLSelectQuery {
 	var q MySQLSelectQuery
 	q.Dialect = DialectMySQL
-	q.SelectFields = Fields{FieldLiteral("1")}
+	q.SelectFields = AliasFields{FieldLiteral("1")}
 	return q
 }
 
@@ -53,7 +53,7 @@ func (q MySQLSelectQuery) Select(fields ...Field) MySQLSelectQuery {
 }
 
 func (q MySQLSelectQuery) SelectOne() MySQLSelectQuery {
-	q.SelectFields = Fields{FieldLiteral("1")}
+	q.SelectFields = AliasFields{FieldLiteral("1")}
 	return q
 }
 

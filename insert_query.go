@@ -28,7 +28,7 @@ type InsertQuery struct {
 	Resolution          Assignments
 	ResolutionPredicate VariadicPredicate
 	// RETURNING
-	ReturningFields Fields
+	ReturningFields AliasFields
 }
 
 var _ Query = InsertQuery{}
@@ -170,7 +170,7 @@ func (q InsertQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interf
 			return fmt.Errorf("%s DELETE does not support RETURNING", dialect)
 		}
 		buf.WriteString(" RETURNING ")
-		err = q.ReturningFields.AppendSQLExcludeWithAlias(dialect, buf, args, params, nil)
+		err = q.ReturningFields.AppendSQLExclude(dialect, buf, args, params, nil)
 		if err != nil {
 			return err
 		}
