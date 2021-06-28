@@ -37,7 +37,7 @@ func (d SQLiteDialect) SelectOne() SQLiteSelectQuery {
 func (d SQLiteDialect) SelectDistinct(fields ...Field) SQLiteSelectQuery {
 	var q SQLiteSelectQuery
 	q.Dialect = DialectSQLite
-	q.SelectType = SelectTypeDistinct
+	q.Distinct = true
 	q.SelectFields = fields
 	return q
 }
@@ -58,7 +58,7 @@ func (q SQLiteSelectQuery) SelectOne() SQLiteSelectQuery {
 }
 
 func (q SQLiteSelectQuery) SelectDistinct(fields ...Field) SQLiteSelectQuery {
-	q.SelectType = SelectTypeDistinct
+	q.Distinct = true
 	q.SelectFields = fields
 	return q
 }

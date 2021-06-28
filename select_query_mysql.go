@@ -37,7 +37,7 @@ func (d MySQLDialect) SelectOne() MySQLSelectQuery {
 func (d MySQLDialect) SelectDistinct(fields ...Field) MySQLSelectQuery {
 	var q MySQLSelectQuery
 	q.Dialect = DialectMySQL
-	q.SelectType = SelectTypeDistinct
+	q.Distinct = true
 	q.SelectFields = fields
 	return q
 }
@@ -58,7 +58,7 @@ func (q MySQLSelectQuery) SelectOne() MySQLSelectQuery {
 }
 
 func (q MySQLSelectQuery) SelectDistinct(fields ...Field) MySQLSelectQuery {
-	q.SelectType = SelectTypeDistinct
+	q.Distinct = true
 	q.SelectFields = fields
 	return q
 }

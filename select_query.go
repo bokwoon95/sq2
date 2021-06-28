@@ -11,7 +11,7 @@ type SelectQuery struct {
 	// WITH
 	CTEs CTEs
 	// SELECT
-	SelectType       SelectType
+	Distinct         bool
 	SelectFields     AliasFields
 	DistinctOnFields Fields
 	// FROM
@@ -43,14 +43,26 @@ func (q SelectQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interf
 		}
 	}
 	// SELECT
-	if q.SelectType == "" {
-		q.SelectType = SelectTypeDefault
+	buf.WriteString("SELECT ")
+	if len(q.DistinctOnFields) > 0 {
+		if dialect != DialectPostgres {
+			return fmt.Errorf("%s does not support SELECT DISTINCT ON", dialect)
+		}
+		if q.Distinct {
+			return fmt.Errorf("postgres SELECT cannot be DISTINCT and DISTINCT ON at the same time")
+		}
+		buf.WriteString("DISTINCT ON (")
+		err = q.DistinctOnFields.AppendSQLExclude(dialect, buf, args, params, nil)
+		if err != nil {
+			return err
+		}
+		buf.WriteString(") ")
+	} else if q.Distinct {
+		buf.WriteString("DISTINCT ")
 	}
-	buf.WriteString(string(q.SelectType))
 	if len(q.SelectFields) == 0 {
 		return fmt.Errorf("no fields SELECT-ed")
 	}
-	buf.WriteString(" ")
 	err = q.SelectFields.AppendSQLExclude(dialect, buf, args, params, nil)
 	if err != nil {
 		return err
