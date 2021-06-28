@@ -22,7 +22,10 @@ type InsertQuery struct {
 	// SELECT
 	SelectQuery *SelectQuery
 	// ON CONFLICT
-	HandleConflict      bool // TODO: this field is unnecessary. Just check if handleConflict := len(ConflictFields) > 0 || ConflictConstraint != ""
+	HandleConflict      bool
+	// Pros: conveniently explicit for the user to indicate their intent of handling/not handling conflicts using a crsytal clear flag, compared to wiping out the conflict fields and conflict constraint.
+	// Cons: possibility for invalid state, i.e. HandleConflict but both ConflictFields and ConflictConstraint are missing. Or user added ConflictFields or a ConflictConstraint, but nothing got refleted but he forgot to set the HandleConflict flag as well.
+	// I think my vote goes to removing it entirely.
 	ConflictFields      Fields
 	ConflictPredicate   VariadicPredicate
 	ConflictConstraint  string
