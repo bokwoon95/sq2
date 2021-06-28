@@ -55,18 +55,8 @@ func (q SQLiteUpdateQuery) LeftJoin(table Table, predicates ...Predicate) SQLite
 	return q
 }
 
-func (q SQLiteUpdateQuery) RightJoin(table Table, predicates ...Predicate) SQLiteUpdateQuery {
-	q.JoinTables = append(q.JoinTables, RightJoin(table, predicates...))
-	return q
-}
-
 func (q SQLiteUpdateQuery) CrossJoin(table Table) SQLiteUpdateQuery {
 	q.JoinTables = append(q.JoinTables, CrossJoin(table))
-	return q
-}
-
-func (q SQLiteUpdateQuery) FullJoin(table Table, predicates ...Predicate) SQLiteUpdateQuery {
-	q.JoinTables = append(q.JoinTables, FullJoin(table, predicates...))
 	return q
 }
 

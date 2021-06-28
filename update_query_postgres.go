@@ -60,13 +60,13 @@ func (q PostgresUpdateQuery) RightJoin(table Table, predicates ...Predicate) Pos
 	return q
 }
 
-func (q PostgresUpdateQuery) CrossJoin(table Table) PostgresUpdateQuery {
-	q.JoinTables = append(q.JoinTables, CrossJoin(table))
+func (q PostgresUpdateQuery) FullJoin(table Table, predicates ...Predicate) PostgresUpdateQuery {
+	q.JoinTables = append(q.JoinTables, FullJoin(table, predicates...))
 	return q
 }
 
-func (q PostgresUpdateQuery) FullJoin(table Table, predicates ...Predicate) PostgresUpdateQuery {
-	q.JoinTables = append(q.JoinTables, FullJoin(table, predicates...))
+func (q PostgresUpdateQuery) CrossJoin(table Table) PostgresUpdateQuery {
+	q.JoinTables = append(q.JoinTables, CrossJoin(table))
 	return q
 }
 

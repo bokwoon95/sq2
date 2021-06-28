@@ -26,6 +26,8 @@ type UpdateQuery struct {
 	OrderByFields Fields
 	// LIMIT
 	RowLimit sql.NullInt64
+	// OFFSET
+	RowOffset sql.NullInt64
 }
 
 var _ Query = UpdateQuery{}
@@ -119,6 +121,13 @@ func (q UpdateQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interf
 	}
 	// LIMIT
 	if q.RowLimit.Valid && dialect == DialectMySQL {
+		err = BufferPrintf(dialect, buf, args, params, nil, " LIMIT {}", []interface{}{q.RowLimit.Int64})
+		if err != nil {
+			return err
+		}
+	}
+	// OFFSET
+	if q.RowOffset.Valid && dialect == DialectMySQL {
 		err = BufferPrintf(dialect, buf, args, params, nil, " LIMIT {}", []interface{}{q.RowLimit.Int64})
 		if err != nil {
 			return err
