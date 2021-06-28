@@ -42,14 +42,6 @@ var (
 	Oracle    = OracleDialect{}
 )
 
-type SelectType string
-
-const (
-	SelectTypeDefault    SelectType = "SELECT"
-	SelectTypeDistinct   SelectType = "SELECT DISTINCT"
-	SelectTypeDistinctOn SelectType = "SELECT DISTINCT ON"
-)
-
 type SQLAppender interface {
 	AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error
 }
@@ -64,6 +56,13 @@ type SQLExcludeAppender interface {
 	// This is to play nice with certain clauses in the INSERT and UPDATE
 	// queries that expressly forbid table qualified columns.
 	AppendSQLExclude(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int, excludedTableQualifiers []string) error
+	// TODO: mention that excludedTableQualifiers must be sorted, because
+	// existing *Field implementations depend on binary search to find the
+	// item. The reason for sticking with a slice instead of a map? Because
+	// it's smaller and more memory efficient. I strongly suspect that binary
+	// search over a small slice will outperform a map lookup. Hell, linearly
+	// searching a slice is probably more efficient that a map lookup when n is
+	// small.
 }
 
 type Table interface {

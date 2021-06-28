@@ -113,7 +113,7 @@ func Test_SQLiteDeleteQuery(t *testing.T) {
 			" JOIN lang ON lang.language_id = f2.language_id" +
 			" JOIN inventory AS i ON i.film_id = f2.film_id" +
 			" WHERE f1.film_id = f2.film_id AND lang.name IN ($1, $2) AND i.last_update IS NOT NULL" +
-			")" + 
+			")" +
 			" RETURNING f1.film_id"
 		tt.wantArgs = []interface{}{"English", "Italian"}
 		assert(t, tt)
