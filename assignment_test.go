@@ -30,13 +30,13 @@ func Test_Assignment(t *testing.T) {
 	assert := func(t *testing.T, tt TT) {
 		gotQuery, gotArgs, _, err := ToSQLExclude(tt.dialect, tt.item, tt.excludedTableQualifiers)
 		if err != nil {
-			t.Fatal(testcallers(), err)
+			t.Fatal(Callers(), err)
 		}
-		if diff := testdiff(gotQuery, tt.wantQuery); diff != "" {
-			t.Error(testcallers(), diff)
+		if diff := Diff(gotQuery, tt.wantQuery); diff != "" {
+			t.Error(Callers(), diff)
 		}
-		if diff := testdiff(gotArgs, tt.wantArgs); diff != "" {
-			t.Error(testcallers(), diff)
+		if diff := Diff(gotArgs, tt.wantArgs); diff != "" {
+			t.Error(Callers(), diff)
 		}
 	}
 
@@ -120,13 +120,13 @@ func Test_Assignments(t *testing.T) {
 	assert := func(t *testing.T, tt TT) {
 		gotQuery, gotArgs, _, err := ToSQLExclude(tt.dialect, tt.item, tt.excludedTableQualifiers)
 		if err != nil {
-			t.Fatal(testcallers(), err)
+			t.Fatal(Callers(), err)
 		}
-		if diff := testdiff(gotQuery, tt.wantQuery); diff != "" {
-			t.Error(testcallers(), diff)
+		if diff := Diff(gotQuery, tt.wantQuery); diff != "" {
+			t.Error(Callers(), diff)
 		}
-		if diff := testdiff(gotArgs, tt.wantArgs); diff != "" {
-			t.Error(testcallers(), diff)
+		if diff := Diff(gotArgs, tt.wantArgs); diff != "" {
+			t.Error(Callers(), diff)
 		}
 	}
 

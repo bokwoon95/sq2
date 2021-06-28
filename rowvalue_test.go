@@ -36,13 +36,13 @@ func TestRowValue(t *testing.T) {
 		gotArgs, gotParams := []interface{}{}, map[string][]int{}
 		err := tt.value.AppendSQL(tt.dialect, buf, &gotArgs, gotParams)
 		if err != nil {
-			t.Fatal(testcallers(), err)
+			t.Fatal(Callers(), err)
 		}
-		if diff := testdiff(buf.String(), tt.wantQuery); diff != "" {
-			t.Error(testcallers(), diff)
+		if diff := Diff(buf.String(), tt.wantQuery); diff != "" {
+			t.Error(Callers(), diff)
 		}
-		if diff := testdiff(gotArgs, tt.wantArgs); diff != "" {
-			t.Error(testcallers(), diff)
+		if diff := Diff(gotArgs, tt.wantArgs); diff != "" {
+			t.Error(Callers(), diff)
 		}
 	}
 
@@ -86,13 +86,13 @@ func TestRowValue(t *testing.T) {
 		gotArgs, gotParams := []interface{}{}, map[string][]int{}
 		err := predicate.AppendSQLExclude(tt.dialect, buf, &gotArgs, gotParams, nil)
 		if err != nil {
-			t.Fatal(testcallers(), err)
+			t.Fatal(Callers(), err)
 		}
-		if diff := testdiff(buf.String(), tt.wantQuery); diff != "" {
-			t.Error(testcallers(), diff)
+		if diff := Diff(buf.String(), tt.wantQuery); diff != "" {
+			t.Error(Callers(), diff)
 		}
-		if diff := testdiff(gotArgs, tt.wantArgs); diff != "" {
-			t.Error(testcallers(), diff)
+		if diff := Diff(gotArgs, tt.wantArgs); diff != "" {
+			t.Error(Callers(), diff)
 		}
 	})
 }
