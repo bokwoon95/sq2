@@ -6,10 +6,22 @@ type MySQLUpdateQuery struct {
 
 var _ Query = MySQLUpdateQuery{}
 
+func (d MySQLDialect) UpdateWith(ctes ...CTE) MySQLUpdateQuery {
+	var q MySQLUpdateQuery
+	q.Dialect = DialectMySQL
+	q.CTEs = ctes
+	return q
+}
+
 func (d MySQLDialect) Update(table BaseTable) MySQLUpdateQuery {
 	var q MySQLUpdateQuery
 	q.Dialect = DialectMySQL
 	q.UpdateTable = table
+	return q
+}
+
+func (q MySQLUpdateQuery) With(ctes ...CTE) MySQLUpdateQuery {
+	q.CTEs = append(q.CTEs, ctes...)
 	return q
 }
 
@@ -25,11 +37,6 @@ func (q MySQLUpdateQuery) Set(assignments ...Assignment) MySQLUpdateQuery {
 
 func (q MySQLUpdateQuery) Setx(mapper func(*Column) error) MySQLUpdateQuery {
 	q.ColumnMapper = mapper
-	return q
-}
-
-func (q MySQLUpdateQuery) From(table Table) MySQLUpdateQuery {
-	q.FromTable = table
 	return q
 }
 
