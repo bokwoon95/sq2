@@ -140,7 +140,6 @@ func Test_InsertQuery(t *testing.T) {
 		q.IntoTable = ACTOR
 		q.InsertColumns = Fields{ACTOR.ACTOR_ID}
 		q.RowValues = RowValues{{1}, {2}, {3}}
-		q.HandleConflict = true
 		q.ConflictFields = Fields{FaultySQL{}}
 		_, _, _, err := ToSQL("", q)
 		if !errors.Is(err, ErrFaultySQL) {
