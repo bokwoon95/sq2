@@ -56,7 +56,6 @@ type PostgresInsertConflict struct {
 
 func (q PostgresInsertQuery) OnConflict(fields ...Field) PostgresInsertConflict {
 	var c PostgresInsertConflict
-	q.HandleConflict = true
 	q.ConflictFields = fields
 	c.insertQuery = &q
 	return c
@@ -64,7 +63,6 @@ func (q PostgresInsertQuery) OnConflict(fields ...Field) PostgresInsertConflict 
 
 func (q PostgresInsertQuery) OnConflictOnConstraint(name string) PostgresInsertConflict {
 	var c PostgresInsertConflict
-	q.HandleConflict = true
 	q.ConflictConstraint = name
 	c.insertQuery = &q
 	return c

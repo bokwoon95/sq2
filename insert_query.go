@@ -22,10 +22,6 @@ type InsertQuery struct {
 	// SELECT
 	SelectQuery *SelectQuery
 	// ON CONFLICT
-	HandleConflict      bool
-	// Pros: conveniently explicit for the user to indicate their intent of handling/not handling conflicts using a crsytal clear flag, compared to wiping out the conflict fields and conflict constraint.
-	// Cons: possibility for invalid state, i.e. HandleConflict but both ConflictFields and ConflictConstraint are missing. Or user added ConflictFields or a ConflictConstraint, but nothing got refleted but he forgot to set the HandleConflict flag as well.
-	// I think my vote goes to removing it entirely.
 	ConflictFields      Fields
 	ConflictPredicate   VariadicPredicate
 	ConflictConstraint  string
@@ -117,46 +113,47 @@ func (q InsertQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interf
 	// ON CONFLICT
 	switch dialect {
 	case DialectSQLite, DialectPostgres:
-		if q.HandleConflict {
-			buf.WriteString(" ON CONFLICT")
-			if q.ConflictConstraint != "" && dialect == DialectPostgres {
-				buf.WriteString(" ON CONSTRAINT " + q.ConflictConstraint)
-			} else if len(q.ConflictFields) > 0 {
-				buf.WriteString(" (")
-				err = q.ConflictFields.AppendSQLExclude(dialect, buf, args, params, excludedTableQualifiers)
-				if err != nil {
-					return err
-				}
-				buf.WriteString(")")
-				if len(q.ConflictPredicate.Predicates) > 0 {
-					buf.WriteString(" WHERE ")
-					q.ConflictPredicate.Toplevel = true
-					err = q.ConflictPredicate.AppendSQLExclude(dialect, buf, args, params, excludedTableQualifiers)
-					if err != nil {
-						return err
-					}
-				}
-			} else {
-				return fmt.Errorf("INSERT query has no conflict target specified")
-			}
+		if q.ConflictConstraint == "" && len(q.ConflictFields) == 0 {
+			break
 		}
-		if q.HandleConflict && len(q.Resolution) > 0 {
-			buf.WriteString(" DO UPDATE SET ")
-			err = q.Resolution.AppendSQLExclude(dialect, buf, args, params, excludedTableQualifiers)
+		buf.WriteString(" ON CONFLICT")
+		if q.ConflictConstraint != "" {
+			if dialect != DialectPostgres {
+				return fmt.Errorf("%s does not support ON CONFLICT ON CONSTRAINT", dialect)
+			}
+			buf.WriteString(" ON CONSTRAINT " + q.ConflictConstraint)
+		} else if len(q.ConflictFields) > 0 {
+			buf.WriteString(" (")
+			err = q.ConflictFields.AppendSQLExclude(dialect, buf, args, params, excludedTableQualifiers)
 			if err != nil {
 				return err
 			}
-			if len(q.ResolutionPredicate.Predicates) > 0 {
+			buf.WriteString(")")
+			if len(q.ConflictPredicate.Predicates) > 0 {
 				buf.WriteString(" WHERE ")
-				q.ResolutionPredicate.Toplevel = true
-				err = q.ResolutionPredicate.AppendSQLExclude(dialect, buf, args, params, nil)
+				q.ConflictPredicate.Toplevel = true
+				err = q.ConflictPredicate.AppendSQLExclude(dialect, buf, args, params, excludedTableQualifiers)
 				if err != nil {
 					return err
 				}
 			}
 		}
-		if q.HandleConflict && len(q.Resolution) == 0 {
+		if len(q.Resolution) == 0 {
 			buf.WriteString(" DO NOTHING")
+			break
+		}
+		buf.WriteString(" DO UPDATE SET ")
+		err = q.Resolution.AppendSQLExclude(dialect, buf, args, params, excludedTableQualifiers)
+		if err != nil {
+			return err
+		}
+		if len(q.ResolutionPredicate.Predicates) > 0 {
+			buf.WriteString(" WHERE ")
+			q.ResolutionPredicate.Toplevel = true
+			err = q.ResolutionPredicate.AppendSQLExclude(dialect, buf, args, params, nil)
+			if err != nil {
+				return err
+			}
 		}
 	case DialectMySQL:
 		if len(q.Resolution) > 0 {

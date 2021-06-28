@@ -56,7 +56,6 @@ type SQLiteInsertConflict struct {
 
 func (q SQLiteInsertQuery) OnConflict(fields ...Field) SQLiteInsertConflict {
 	var c SQLiteInsertConflict
-	q.HandleConflict = true
 	q.ConflictFields = fields
 	c.insertQuery = &q
 	return c
