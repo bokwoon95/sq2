@@ -22,9 +22,9 @@ type InsertQuery struct {
 	// SELECT
 	SelectQuery *SelectQuery
 	// ON CONFLICT
+	ConflictConstraint  string
 	ConflictFields      Fields
 	ConflictPredicate   VariadicPredicate
-	ConflictConstraint  string
 	Resolution          Assignments
 	ResolutionPredicate VariadicPredicate
 	// RETURNING

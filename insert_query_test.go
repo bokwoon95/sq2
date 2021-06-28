@@ -132,6 +132,21 @@ func Test_InsertQuery(t *testing.T) {
 		}
 	})
 
+	t.Run("ConflictConstraint dialect != postgres", func(t *testing.T) {
+		t.Parallel()
+		ACTOR := NEW_ACTOR("")
+		var q InsertQuery
+		q.Dialect = DialectSQLite
+		q.IntoTable = ACTOR
+		q.InsertColumns = Fields{ACTOR.ACTOR_ID}
+		q.RowValues = RowValues{{1}, {2}, {3}}
+		q.ConflictConstraint = "actor_actor_id_pkey"
+		_, _, _, err := ToSQL("", q)
+		if err == nil {
+			t.Error(testcallers(), "expected error but got nil")
+		}
+	})
+
 	t.Run("ConflictFields faulty sql", func(t *testing.T) {
 		t.Parallel()
 		ACTOR := NEW_ACTOR("")
@@ -144,6 +159,135 @@ func Test_InsertQuery(t *testing.T) {
 		_, _, _, err := ToSQL("", q)
 		if !errors.Is(err, ErrFaultySQL) {
 			t.Errorf(testcallers()+" expected ErrFaultySQL but got %#v", err)
+		}
+	})
+
+	t.Run("ConflictPredicate faulty sql", func(t *testing.T) {
+		t.Parallel()
+		ACTOR := NEW_ACTOR("")
+		var q InsertQuery
+		q.Dialect = DialectPostgres
+		q.IntoTable = ACTOR
+		q.InsertColumns = Fields{ACTOR.ACTOR_ID}
+		q.RowValues = RowValues{{1}, {2}, {3}}
+		q.ConflictFields = Fields{ACTOR.ACTOR_ID}
+		q.ConflictPredicate = And(FaultySQL{})
+		_, _, _, err := ToSQL("", q)
+		if !errors.Is(err, ErrFaultySQL) {
+			t.Errorf(testcallers()+" expected ErrFaultySQL but got %#v", err)
+		}
+	})
+
+	t.Run("Resolution faulty sql", func(t *testing.T) {
+		t.Parallel()
+		ACTOR := NEW_ACTOR("")
+		var q InsertQuery
+		q.Dialect = DialectPostgres
+		q.IntoTable = ACTOR
+		q.InsertColumns = Fields{ACTOR.ACTOR_ID}
+		q.RowValues = RowValues{{1}, {2}, {3}}
+		q.ConflictFields = Fields{ACTOR.ACTOR_ID}
+		q.Resolution = Assignments{Assign(FaultySQL{}, FaultySQL{})}
+		_, _, _, err := ToSQL("", q)
+		if !errors.Is(err, ErrFaultySQL) {
+			t.Errorf(testcallers()+" expected ErrFaultySQL but got %#v", err)
+		}
+	})
+
+	t.Run("ResolutionPredicate faulty sql, dialect == mysql", func(t *testing.T) {
+		t.Parallel()
+		ACTOR := NEW_ACTOR("")
+		var q InsertQuery
+		q.Dialect = DialectMySQL
+		q.IntoTable = ACTOR
+		q.InsertColumns = Fields{ACTOR.ACTOR_ID}
+		q.RowValues = RowValues{{1}, {2}, {3}}
+		q.Resolution = Assignments{Assign(FaultySQL{}, FaultySQL{})}
+		_, _, _, err := ToSQL("", q)
+		if !errors.Is(err, ErrFaultySQL) {
+			t.Errorf(testcallers()+" expected ErrFaultySQL but got %#v", err)
+		}
+	})
+
+	t.Run("ResolutionPredicate faulty sql", func(t *testing.T) {
+		t.Parallel()
+		ACTOR := NEW_ACTOR("")
+		var q InsertQuery
+		q.Dialect = DialectPostgres
+		q.IntoTable = ACTOR
+		q.InsertColumns = Fields{ACTOR.ACTOR_ID}
+		q.RowValues = RowValues{{1}, {2}, {3}}
+		q.ConflictFields = Fields{ACTOR.ACTOR_ID}
+		q.Resolution = Assignments{AssignExcluded(ACTOR.ACTOR_ID)}
+		q.ResolutionPredicate = And(FaultySQL{})
+		_, _, _, err := ToSQL("", q)
+		if !errors.Is(err, ErrFaultySQL) {
+			t.Errorf(testcallers()+" expected ErrFaultySQL but got %#v", err)
+		}
+	})
+
+	t.Run("ReturningFields dialect != postgres && dialect != sqlite", func(t *testing.T) {
+		t.Parallel()
+		ACTOR := NEW_ACTOR("")
+		var q InsertQuery
+		q.Dialect = DialectMySQL
+		q.IntoTable = ACTOR
+		q.InsertColumns = Fields{ACTOR.ACTOR_ID}
+		q.RowValues = RowValues{{1}, {2}, {3}}
+		q.ReturningFields = Fields{ACTOR.ACTOR_ID}
+		_, _, _, err := ToSQL("", q)
+		if err == nil {
+			t.Error(testcallers(), "expected error but got nil")
+		}
+	})
+
+	t.Run("ReturningFields faulty sql", func(t *testing.T) {
+		t.Parallel()
+		ACTOR := NEW_ACTOR("")
+		var q InsertQuery
+		q.Dialect = DialectPostgres
+		q.IntoTable = ACTOR
+		q.InsertColumns = Fields{ACTOR.ACTOR_ID}
+		q.RowValues = RowValues{{1}, {2}, {3}}
+		q.ReturningFields = Fields{FaultySQL{}}
+		_, _, _, err := ToSQL("", q)
+		if !errors.Is(err, ErrFaultySQL) {
+			t.Errorf(testcallers()+" expected ErrFaultySQL but got %#v", err)
+		}
+	})
+
+	t.Run("FetchableFields dialect == postgres", func(t *testing.T) {
+		t.Parallel()
+		ACTOR := NEW_ACTOR("")
+		var q InsertQuery
+		q.Dialect = DialectPostgres
+		query, err := q.SetFetchableFields(Fields{ACTOR.ACTOR_ID, ACTOR.FIRST_NAME, ACTOR.LAST_NAME})
+		if err != nil {
+			t.Fatalf(testcallers()+" expected nil error, got %#v", err)
+		}
+		q = query.(InsertQuery)
+		fields, err := q.GetFetchableFields()
+		if err != nil {
+			t.Fatalf(testcallers()+" expected nil error, got %#v", err)
+		}
+		diff := testdiff(fields, []Field{ACTOR.ACTOR_ID, ACTOR.FIRST_NAME, ACTOR.LAST_NAME})
+		if diff != "" {
+			t.Error(testcallers(), diff)
+		}
+	})
+
+	t.Run("FetchableFields dialect != postgres", func(t *testing.T) {
+		t.Parallel()
+		ACTOR := NEW_ACTOR("")
+		var q InsertQuery
+		q.Dialect = DialectMySQL
+		_, err := q.SetFetchableFields(Fields{ACTOR.ACTOR_ID, ACTOR.FIRST_NAME, ACTOR.LAST_NAME})
+		if !errors.Is(err, ErrNonFetchableQuery) {
+			t.Error(testcallers()+" expected ErrNonFetchableQuery, got %#v", err)
+		}
+		_, err = q.GetFetchableFields()
+		if !errors.Is(err, ErrNonFetchableQuery) {
+			t.Error(testcallers()+" expected ErrNonFetchableQuery, got %#v", err)
 		}
 	})
 }
