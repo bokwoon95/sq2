@@ -6,7 +6,7 @@ import (
 	. "github.com/bokwoon95/sq"
 )
 
-func Test_PostgresUpdateQuery(t *testing.T) {
+func Test_MySQLUpdateQuery(t *testing.T) {
 	type TT struct {
 		dialect   string
 		item      Query
@@ -31,11 +31,10 @@ func Test_PostgresUpdateQuery(t *testing.T) {
 		t.Parallel()
 		var tt TT
 		ACTOR := NEW_ACTOR("a")
-		tt.item = Postgres.
+		tt.item = MySQL.
 			Update(ACTOR).
 			With(NewCTE("cte", []string{"n"}, Queryf("SELECT 1"))).
 			Set(ACTOR.ACTOR_ID.SetInt64(1)).
-			From(ACTOR).
 			Join(ACTOR, Eq(1, 1)).
 			LeftJoin(ACTOR, Eq(1, 1)).
 			RightJoin(ACTOR, Eq(1, 1)).
@@ -45,16 +44,15 @@ func Test_PostgresUpdateQuery(t *testing.T) {
 			Where(ACTOR.ACTOR_ID.EqInt64(1))
 		tt.wantQuery = "WITH cte (n) AS (SELECT 1)" +
 			" UPDATE actor AS a" +
-			" SET actor_id = $1" +
-			" FROM actor AS a" +
-			" JOIN actor AS a ON $2 = $3" +
-			" LEFT JOIN actor AS a ON $4 = $5" +
-			" RIGHT JOIN actor AS a ON $6 = $7" +
-			" FULL JOIN actor AS a ON $8 = $9" +
+			" JOIN actor AS a ON ? = ?" +
+			" LEFT JOIN actor AS a ON ? = ?" +
+			" RIGHT JOIN actor AS a ON ? = ?" +
+			" FULL JOIN actor AS a ON ? = ?" +
 			" CROSS JOIN actor AS a" +
 			" CROSS JOIN LATERAL actor AS a" +
-			" WHERE a.actor_id = $10"
-		tt.wantArgs = []interface{}{int64(1), 1, 1, 1, 1, 1, 1, 1, 1, int64(1)}
+			" SET a.actor_id = ?" +
+			" WHERE a.actor_id = ?"
+		tt.wantArgs = []interface{}{1, 1, 1, 1, 1, 1, 1, 1, int64(1), int64(1)}
 		assert(t, tt)
 	})
 
@@ -62,7 +60,7 @@ func Test_PostgresUpdateQuery(t *testing.T) {
 		t.Parallel()
 		var tt TT
 		ACTOR := NEW_ACTOR("a")
-		tt.item = Postgres.
+		tt.item = MySQL.
 			UpdateWith(NewCTE("cte", []string{"n"}, Queryf("SELECT 1"))).
 			Update(ACTOR).
 			Setx(func(c *Column) error {
@@ -70,13 +68,15 @@ func Test_PostgresUpdateQuery(t *testing.T) {
 				return nil
 			}).
 			Where(ACTOR.ACTOR_ID.EqInt64(1)).
-			Returning(ACTOR.ACTOR_ID)
+			OrderBy(ACTOR.ACTOR_ID).
+			Limit(10)
 		tt.wantQuery = "WITH cte (n) AS (SELECT 1)" +
 			" UPDATE actor AS a" +
-			" SET actor_id = $1" +
-			" WHERE a.actor_id = $2" +
-			" RETURNING a.actor_id"
-		tt.wantArgs = []interface{}{int64(1), int64(1)}
+			" SET a.actor_id = ?" +
+			" WHERE a.actor_id = ?" +
+			" ORDER BY a.actor_id" +
+			" LIMIT ?"
+		tt.wantArgs = []interface{}{int64(1), int64(1), int64(10)}
 		assert(t, tt)
 	})
 }
