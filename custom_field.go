@@ -121,7 +121,9 @@ func (fs Fields) AppendSQLExclude(dialect string, buf *bytes.Buffer, args *[]int
 	return nil
 }
 
-func (fs Fields) AppendSQLExcludeWithAlias(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int, excludedTableQualifiers []string) error {
+type AliasFields []Field
+
+func (fs AliasFields) AppendSQLExclude(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int, excludedTableQualifiers []string) error {
 	var alias string
 	var err error
 	for i, f := range fs {

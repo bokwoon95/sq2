@@ -12,7 +12,7 @@ type SelectQuery struct {
 	CTEs CTEs
 	// SELECT
 	SelectType       SelectType
-	SelectFields     Fields
+	SelectFields     AliasFields
 	DistinctOnFields Fields
 	// FROM
 	FromTable  Table
@@ -51,7 +51,7 @@ func (q SelectQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interf
 		return fmt.Errorf("no fields SELECT-ed")
 	}
 	buf.WriteString(" ")
-	err = q.SelectFields.AppendSQLExcludeWithAlias(dialect, buf, args, params, nil)
+	err = q.SelectFields.AppendSQLExclude(dialect, buf, args, params, nil)
 	if err != nil {
 		return err
 	}

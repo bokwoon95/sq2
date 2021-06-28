@@ -156,7 +156,7 @@ func decorateScanError(dialect string, fields []Field, dest []interface{}, err e
 	return fmt.Errorf("please check if your mapper function is correct:%s\n%w", buf.String(), err)
 }
 
-func accumulateResults(dialect string, buf *bytes.Buffer, fields []Field, dest []interface{}, rowCount int64) {
+func accumulateResults(dialect string, buf *bytes.Buffer, fields []Field, dest []interface{}, rowNumber int64) {
 	tmpbuf := bufpool.Get().(*bytes.Buffer)
 	tmpargs := argspool.Get().([]interface{})
 	defer func() {
@@ -165,7 +165,7 @@ func accumulateResults(dialect string, buf *bytes.Buffer, fields []Field, dest [
 		bufpool.Put(tmpbuf)
 		argspool.Put(tmpargs)
 	}()
-	buf.WriteString("\n----[ Row " + strconv.FormatInt(rowCount, 10) + " ]----")
+	buf.WriteString("\n----[ Row " + strconv.FormatInt(rowNumber, 10) + " ]----")
 	for i := range dest {
 		buf.WriteString("\n")
 		tmpbuf.Reset()
@@ -176,11 +176,11 @@ func accumulateResults(dialect string, buf *bytes.Buffer, fields []Field, dest [
 			continue
 		}
 		lhs, err := Sprintf(dialect, tmpbuf.String(), tmpargs)
-		buf.WriteString(lhs + ": ")
 		if err != nil {
 			buf.WriteString("%!(error=" + err.Error() + ")")
 			continue
 		}
+		buf.WriteString(lhs + ": ")
 		rhs, err := Sprint(dest[i])
 		if err != nil {
 			buf.WriteString("%!(error=" + err.Error() + ")")

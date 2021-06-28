@@ -114,7 +114,7 @@ func Test_InsertQuery(t *testing.T) {
 		ACTOR := NEW_ACTOR("")
 		var q InsertQuery
 		q.IntoTable = ACTOR
-		q.SelectQuery = &SelectQuery{SelectFields: Fields{FaultySQL{}}}
+		q.SelectQuery = &SelectQuery{SelectFields: AliasFields{FaultySQL{}}}
 		_, _, _, err := ToSQL("", q)
 		if !errors.Is(err, ErrFaultySQL) {
 			t.Errorf(testcallers()+" expected ErrFaultySQL but got %#v", err)
@@ -234,7 +234,7 @@ func Test_InsertQuery(t *testing.T) {
 		q.IntoTable = ACTOR
 		q.InsertColumns = Fields{ACTOR.ACTOR_ID}
 		q.RowValues = RowValues{{1}, {2}, {3}}
-		q.ReturningFields = Fields{ACTOR.ACTOR_ID}
+		q.ReturningFields = AliasFields{ACTOR.ACTOR_ID}
 		_, _, _, err := ToSQL("", q)
 		if err == nil {
 			t.Error(testcallers(), "expected error but got nil")
@@ -249,7 +249,7 @@ func Test_InsertQuery(t *testing.T) {
 		q.IntoTable = ACTOR
 		q.InsertColumns = Fields{ACTOR.ACTOR_ID}
 		q.RowValues = RowValues{{1}, {2}, {3}}
-		q.ReturningFields = Fields{FaultySQL{}}
+		q.ReturningFields = AliasFields{FaultySQL{}}
 		_, _, _, err := ToSQL("", q)
 		if !errors.Is(err, ErrFaultySQL) {
 			t.Errorf(testcallers()+" expected ErrFaultySQL but got %#v", err)

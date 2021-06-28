@@ -21,7 +21,7 @@ type UpdateQuery struct {
 	// WHERE
 	WherePredicate VariadicPredicate
 	// RETURNING
-	ReturningFields Fields
+	ReturningFields AliasFields
 	// ORDER BY
 	OrderByFields Fields
 	// LIMIT
@@ -127,7 +127,7 @@ func (q UpdateQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interf
 	// RETURNING
 	if len(q.ReturningFields) > 0 && dialect == DialectPostgres {
 		buf.WriteString(" RETURNING ")
-		q.ReturningFields.AppendSQLExcludeWithAlias(dialect, buf, args, params, nil)
+		q.ReturningFields.AppendSQLExclude(dialect, buf, args, params, nil)
 	}
 	return nil
 }
