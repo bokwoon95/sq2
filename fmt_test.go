@@ -362,8 +362,8 @@ func Test_Sprintf(t *testing.T) {
 		var tt TT
 		tt.dialect = ""
 		tt.query = `SELECT ?` +
-			`, 'do not "rebind" ? ? ?'` + // sql string
-			`, "do not 'rebind' ? ? ?"` + // sql identifier
+			`, 'do not "rebind" ? ? ?'` + // string
+			`, "do not 'rebind' ? ? ?"` + // identifier
 			`, ?` +
 			`, ?`
 		tt.args = []interface{}{
@@ -374,6 +374,28 @@ func Test_Sprintf(t *testing.T) {
 		tt.wantString = `SELECT 'normal string'` +
 			`, 'do not "rebind" ? ? ?'` +
 			`, "do not 'rebind' ? ? ?"` +
+			`, 'string with ''quotes'' must be escaped'` +
+			`, 'string with already escaped ''quotes'' except for ''this'''`
+		assert(t, tt)
+	})
+
+	t.Run("insideString, insideIdentifier and escaping single quotes (dialect == mysql)", func(t *testing.T) {
+		t.Parallel()
+		var tt TT
+		tt.dialect = DialectMySQL
+		tt.query = `SELECT ?` +
+			`, 'do not "rebind" ? ? ?'` + // string
+			", `do not 'rebind' ? ? ?`" + // identifier
+			`, ?` +
+			`, ?`
+		tt.args = []interface{}{
+			"normal string",
+			"string with 'quotes' must be escaped",
+			"string with already escaped ''quotes'' except for 'this'",
+		}
+		tt.wantString = `SELECT 'normal string'` +
+			`, 'do not "rebind" ? ? ?'` +
+			", `do not 'rebind' ? ? ?`" +
 			`, 'string with ''quotes'' must be escaped'` +
 			`, 'string with already escaped ''quotes'' except for ''this'''`
 		assert(t, tt)
