@@ -1,6 +1,8 @@
 package ddl
 
 import (
+	"fmt"
+
 	"github.com/bokwoon95/sq"
 )
 
@@ -1345,3 +1347,56 @@ const DUMMY_TABLE_2_MySQL = `CREATE TABLE db.dummy_table_2 (
     ,id2 VARCHAR(255)
 );
 ALTER TABLE db.dummy_table_2 ADD CONSTRAINT dummy_table_2_id1_id2_fkey FOREIGN KEY (id1, id2) REFERENCES dummy_table (id1, id2) ON UPDATE CASCADE ON DELETE RESTRICT;`
+
+type ACTOR_INFO struct {
+	sq.TableInfo
+	ACTOR_ID   sq.NumberField
+	FIRST_NAME sq.StringField
+	LAST_NAME  sq.StringField
+	FILM_INFO  sq.JSONField
+}
+
+func (_ ACTOR_INFO) View(dialect string) (sq.Query, error) {
+	ACTOR := NEW_ACTOR(dialect, "a")
+	FILM := NEW_FILM(dialect, "f")
+	FILM_ACTOR := NEW_FILM_ACTOR(dialect, "fa")
+	FILM_CATEGORY := NEW_FILM_CATEGORY(dialect, "fc")
+	CATEGORY := NEW_CATEGORY(dialect, "c")
+	var object_agg, array_agg string
+	switch dialect {
+	case sq.DialectSQLite:
+		object_agg, array_agg = "json_group_object({}, ({}))", "json_group_array({})"
+	case sq.DialectPostgres:
+		object_agg, array_agg = "jsonb_object_agg({}, ({}))", "jsonb_agg({})"
+	case sq.DialectMySQL:
+		object_agg, array_agg = "json_objectagg({}, ({}))", "json_arrayagg({})"
+	default:
+		return nil, fmt.Errorf("unrecognized dialect '%s'", dialect)
+	}
+	var q sq.SelectQuery
+	q.Dialect = dialect
+	q.FromTable = ACTOR
+	q.JoinTables = sq.JoinTables{
+		sq.LeftJoin(FILM_ACTOR, FILM_ACTOR.ACTOR_ID.Eq(ACTOR.ACTOR_ID)),
+		sq.LeftJoin(FILM_CATEGORY, FILM_CATEGORY.FILM_ID.Eq(FILM_ACTOR.FILM_ID)),
+		sq.LeftJoin(CATEGORY, CATEGORY.CATEGORY_ID.Eq(FILM_CATEGORY.CATEGORY_ID)),
+	}
+	q.GroupByFields = sq.Fields{ACTOR.ACTOR_ID, ACTOR.FIRST_NAME, ACTOR.LAST_NAME}
+	q.SelectFields = sq.AliasFields{
+		ACTOR.ACTOR_ID,
+		ACTOR.FIRST_NAME,
+		ACTOR.LAST_NAME,
+		sq.Fieldf(object_agg, CATEGORY.NAME, sq.SQLite.
+			Select(sq.Fieldf(array_agg, FILM.TITLE)).
+			From(FILM).
+			Join(FILM_CATEGORY, FILM_CATEGORY.FILM_ID.Eq(FILM.FILM_ID)).
+			Join(FILM_ACTOR, FILM_ACTOR.FILM_ID.Eq(FILM.FILM_ID)).
+			Where(
+				FILM_CATEGORY.CATEGORY_ID.Eq(CATEGORY.CATEGORY_ID),
+				FILM_ACTOR.ACTOR_ID.Eq(ACTOR.ACTOR_ID),
+			).
+			GroupBy(FILM_ACTOR.ACTOR_ID),
+		).As("film_info"),
+	}
+	return q, nil
+}

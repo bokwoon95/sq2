@@ -145,9 +145,8 @@ func isExplodableSlice(value interface{}) bool {
 
 func explodeSlice(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int, excludedTableQualifiers []string, value interface{}) error {
 	slice := reflect.ValueOf(value)
-	length := slice.Len()
 	var err error
-	for i := 0; i < length; i++ {
+	for i := 0; i < slice.Len(); i++ {
 		if i > 0 {
 			buf.WriteString(", ")
 		}
