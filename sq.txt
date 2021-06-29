@@ -51,8 +51,6 @@ CREATE TABLE sq_patches (
 started_at, but no ended_at means what?
 started_at, ended_at but no success means what?
 
-// TODO: change from (want, got) to (got, want)
-
 IMPORTANT: before I do any kind of performance testing, I need to know:
 - given a simple SQL query that instantiates a query, runs it and then exits, does the query get stack allocated?
     - I really need this to happen because it's the main reason why I went with queries as struct values instead of struct pointers
