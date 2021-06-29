@@ -43,27 +43,17 @@ func (p CustomPredicate) Not() Predicate {
 	return p
 }
 
-type VariadicPredicateOperator string
-
-const (
-	PredicateOr  VariadicPredicateOperator = "OR"
-	PredicateAnd VariadicPredicateOperator = "AND"
-)
-
 type VariadicPredicate struct {
 	// Toplevel indicates if the variadic predicate is the top level predicate
 	// i.e. it does not need enclosing brackets
 	Toplevel   bool
 	Alias      string
-	Operator   VariadicPredicateOperator // TODO: convert this to a bool
+	Or         bool
 	Predicates []Predicate
 	Negative   bool
 }
 
 func (p VariadicPredicate) AppendSQLExclude(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int, excludedTableQualifiers []string) error {
-	if p.Operator == "" {
-		p.Operator = PredicateAnd
-	}
 	var err error
 	switch len(p.Predicates) {
 	case 0:
@@ -102,7 +92,11 @@ func (p VariadicPredicate) AppendSQLExclude(dialect string, buf *bytes.Buffer, a
 		}
 		for i, predicate := range p.Predicates {
 			if i > 0 {
-				buf.WriteString(" " + string(p.Operator) + " ")
+				if p.Or {
+					buf.WriteString(" OR ")
+				} else {
+					buf.WriteString(" AND ")
+				}
 			}
 			if predicate == nil {
 				return fmt.Errorf("predicate #%d is nil", i+1)
@@ -129,11 +123,11 @@ func (p VariadicPredicate) GetAlias() string { return p.Alias }
 func (p VariadicPredicate) GetName() string { return "" }
 
 func And(predicates ...Predicate) VariadicPredicate {
-	return VariadicPredicate{Operator: PredicateAnd, Predicates: predicates}
+	return VariadicPredicate{Or: false, Predicates: predicates}
 }
 
 func Or(predicates ...Predicate) VariadicPredicate {
-	return VariadicPredicate{Operator: PredicateOr, Predicates: predicates}
+	return VariadicPredicate{Or: true, Predicates: predicates}
 }
 
 func IsNull(f Field) Predicate { return Predicatef("{} IS NULL", f) }
