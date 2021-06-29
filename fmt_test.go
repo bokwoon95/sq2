@@ -532,4 +532,14 @@ func Test_Sprintf(t *testing.T) {
 		tt.wantString = "SELECT name FROM users WHERE age = 5 AND email <> '@p2 @p2 @p3 @p4 ''bruh @p1' AND name IN ('tom', 'dick') 'harry'"
 		assert(t, tt)
 	})
+
+	t.Run("sqlserver mixing ordinal param and named param", func(t *testing.T) {
+		t.Parallel()
+		var tt TT
+		tt.dialect = DialectSQLServer
+		tt.query = "SELECT name FROM users WHERE age = @age AND age > @p1 AND email <> @email"
+		tt.args = []interface{}{sql.Named("age", 5), sql.Named("email", "bob@email.com")}
+		tt.wantString = "SELECT name FROM users WHERE age = 5 AND age > 5 AND email <> 'bob@email.com'"
+		assert(t, tt)
+	})
 }
