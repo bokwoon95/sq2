@@ -68,7 +68,7 @@ func (q Subquery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface
 	}
 	buf.WriteString(")")
 	if q.subqueryAlias == "" && (dialect == DialectPostgres || dialect == DialectMySQL) {
-		return fmt.Errorf("%s subquery need an alias", dialect)
+		return fmt.Errorf("%s subquery needs an alias", dialect)
 	}
 	return nil
 }
