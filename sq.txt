@@ -12,34 +12,7 @@ subquery_field.go | cte.go
 ...
 window.go (at very last because nothing depends on it)
 
-BeforeQuery Hook
-AfterQuery Hook
-Before the query gets run by Fetch/Exec, you have the option to reach in and manipulate that query into one or more queries which are then run one after the other.
-This is incredibly powerful for things like audit logging (INSERT into an audit table after any sensitive SELECT/INSERT/UPDATE/DELETE), as well as enforcing an application-wide constraints like for application-level temporal tables.
-AfterQuery hook -could- be used to replace the logger hook
-More importantly AfterQuery gives you the option to add post-query triggers: queries that are run only if the previous query succeeded. You can use it to validate DB state after running a particular query, and raising an error if so.
-By running the AfterQuery Hook with a transaction, it gives you the ability to run one or more arbitrary queries on the database after the initial query and rollback the entire transaction if you wish.
-
-A CompiledQuery[T] Fetch will check if there are any BeforeQuery hooks on the database for the current table, and if there are it will submit the underlying query to that hook (losing all the compiled-ness of the query). But if there are no BeforeQuery hooks, or if the BeforeQuery hooks don't modify the query, then the compiled query's query string can be used as-is.
-
-NOTE: should I change `excludedTableQualifiers []string` to `excludeTableQualifier func(name string) bool`? It affords more filtering power, but at the cost of the param being a complete black box to functions that receive it.
-
-INCOMPATIBILITY.txt
-due to the ever-changing nature of database features, some of the semantic stuff we forbid today may become irrelvant tomorrow
-- e.g. currently named params are not allowed for postgres and mysql, because they don't support it. There is a small chance that it may eventually be added, but when it does do we undo the behavior? Would that be considered a breaking change?
-- I think it's safe to just forbid that stuff today, so that you can be reasonably sure that no one's codebase has that code. Allowing previously-forbidden behavior is then backwards compatible, because no one was coding like that anyway.
-
-TODO: currently for some dialect-specific features I'm just ignoring and moving on e.g. MySQL's OnUpdateCurrentTimestamp is ignored by other dialects. This contrasts to my attitude with other things, like returning an error if the using tries to use RIGHT JOIN or FULL JOIN with SQLite because it isn't supported. So do I ignore non-applicable dialect-specific features, or do I return an error to the user to point it out? Where do I draw the line? I need to take a principled stand on this, preferably in a forwards-compatible way.
-Put more succinctly: is there ever a case where the user has to convert a query from one dialect to another in a generic way? What is the context surrounding that? Because if I silently truncate some stuff (like the RETURNING clause), will the query still work fine in that context?
-I have decided: try to silently accomodate as much as possible, and do not enforce SQL semantics.
-
-TODO: consider adding semicolon to all generated DML queries. So that they may be appended into a file without further postprocessing.
-Actually, No: it would make select queries unnestable if they terminated with a semicolon by default. Instead it is up to the parent environment to insert the semicolon as necessary.
-
 sq README needs a FAQ section, just like how Maddy mail server does. I naturally gravitaed towards the FAQ link in order to learn more about maddy, and was able to learn so much it just from reading the FAQ alone.
-
-row.Close() instead of row.Return() or row.Exit() with runtime.Goexit() shenanigans, because row.Close() can be orthogonal across Fetch, FetchOne and FetchSlice.
-That is, instead of terminating the function there and then you simply mark the row iteration as complete and that subsequent row iterations should not occur.
 
 How much slower is checking before quoting an identifier compared to just quoting it? Need to run some benchmarks, decide if it's worth it.
 
@@ -88,11 +61,6 @@ IMPORTANT: before I do any kind of performance testing, I need to know:
     - I need to know this because it determines if I want to pass the Query interface to LogQueryStats for analytics purposes.
     - If LogQueryStats gets the Query interface, it can do interesting things like analyzing which tables and columns were most commonly used
     - But if performance takes a hit compared to just passing in the compiled query string and args, then maybe I'll leave it out
-
-once the query API is finalized, consider switching from embedded structs to
-type definitions. If the dialect-specific queries really do not hold any state
-other than the query struct, it seems cleaner to convert it into a type
-definition instead of embedding the struct.
 
 func (TBL) View(dialect string) sq.Query {
     return SQLite.
