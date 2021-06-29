@@ -27,7 +27,7 @@ func Join(table Table, predicates ...Predicate) JoinTable {
 	return JoinTable{
 		JoinType:     JoinTypeInner,
 		Table:        table,
-		OnPredicates: VariadicPredicate{Predicates: predicates},
+		OnPredicates: And(predicates...),
 	}
 }
 
@@ -35,7 +35,7 @@ func LeftJoin(table Table, predicates ...Predicate) JoinTable {
 	return JoinTable{
 		JoinType:     JoinTypeLeft,
 		Table:        table,
-		OnPredicates: VariadicPredicate{Predicates: predicates},
+		OnPredicates: And(predicates...),
 	}
 }
 
@@ -43,7 +43,7 @@ func RightJoin(table Table, predicates ...Predicate) JoinTable {
 	return JoinTable{
 		JoinType:     JoinTypeRight,
 		Table:        table,
-		OnPredicates: VariadicPredicate{Predicates: predicates},
+		OnPredicates: And(predicates...),
 	}
 }
 
@@ -51,7 +51,7 @@ func FullJoin(table Table, predicates ...Predicate) JoinTable {
 	return JoinTable{
 		JoinType:     JoinTypeFull,
 		Table:        table,
-		OnPredicates: VariadicPredicate{Predicates: predicates},
+		OnPredicates: And(predicates...),
 	}
 }
 
@@ -66,7 +66,7 @@ func CustomJoin(joinType JoinType, table Table, predicates ...Predicate) JoinTab
 	return JoinTable{
 		JoinType:     joinType,
 		Table:        table,
-		OnPredicates: VariadicPredicate{Predicates: predicates},
+		OnPredicates: And(predicates...),
 	}
 }
 
