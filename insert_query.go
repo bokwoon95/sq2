@@ -47,7 +47,7 @@ func (q InsertQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interf
 	if len(q.CTEs) > 0 {
 		err := q.CTEs.AppendSQL(dialect, buf, args, params)
 		if err != nil {
-			return err
+			return fmt.Errorf("WITH: %w", err)
 		}
 	}
 	// INSERT INTO
@@ -64,7 +64,7 @@ func (q InsertQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interf
 	}
 	err := q.IntoTable.AppendSQL(dialect, buf, args, params)
 	if err != nil {
-		return err
+		return fmt.Errorf("INSERT INTO: %w", err)
 	}
 	if alias := q.IntoTable.GetAlias(); alias != "" {
 		if dialect == DialectMySQL {
@@ -80,7 +80,7 @@ func (q InsertQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interf
 		buf.WriteString(" (")
 		err = q.InsertColumns.AppendSQLExclude(dialect, buf, args, params, excludedTableQualifiers)
 		if err != nil {
-			return err
+			return fmt.Errorf("INSERT INTO (columns): %w", err)
 		}
 		buf.WriteString(")")
 	}
@@ -90,7 +90,7 @@ func (q InsertQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interf
 		buf.WriteString(" VALUES ")
 		err = q.RowValues.AppendSQL(dialect, buf, args, nil)
 		if err != nil {
-			return err
+			return fmt.Errorf("VALUES: %w", err)
 		}
 		if q.RowAlias != "" {
 			if dialect != DialectMySQL {
@@ -105,7 +105,7 @@ func (q InsertQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interf
 		buf.WriteString(" ")
 		err = q.SelectQuery.AppendSQL(dialect, buf, args, nil)
 		if err != nil {
-			return err
+			return fmt.Errorf("SELECT: %w", err)
 		}
 	default:
 		return fmt.Errorf("RowValues not provided and SelectQuery not provided to INSERT query")
@@ -126,7 +126,7 @@ func (q InsertQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interf
 			buf.WriteString(" (")
 			err = q.ConflictFields.AppendSQLExclude(dialect, buf, args, params, excludedTableQualifiers)
 			if err != nil {
-				return err
+				return fmt.Errorf("ON CONFLICT (fields): %w", err)
 			}
 			buf.WriteString(")")
 			if len(q.ConflictPredicate.Predicates) > 0 {
@@ -134,7 +134,7 @@ func (q InsertQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interf
 				q.ConflictPredicate.Toplevel = true
 				err = q.ConflictPredicate.AppendSQLExclude(dialect, buf, args, params, excludedTableQualifiers)
 				if err != nil {
-					return err
+					return fmt.Errorf("ON CONFLICT ... WHERE: %w", err)
 				}
 			}
 		}
@@ -145,14 +145,14 @@ func (q InsertQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interf
 		buf.WriteString(" DO UPDATE SET ")
 		err = q.Resolution.AppendSQLExclude(dialect, buf, args, params, excludedTableQualifiers)
 		if err != nil {
-			return err
+			return fmt.Errorf("DO UPDATE SET: %w", err)
 		}
 		if len(q.ResolutionPredicate.Predicates) > 0 {
 			buf.WriteString(" WHERE ")
 			q.ResolutionPredicate.Toplevel = true
 			err = q.ResolutionPredicate.AppendSQLExclude(dialect, buf, args, params, nil)
 			if err != nil {
-				return err
+				return fmt.Errorf("DO UPDATE SET ... WHERE: %w", err)
 			}
 		}
 	case DialectMySQL:
@@ -160,7 +160,7 @@ func (q InsertQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interf
 			buf.WriteString(" ON DUPLICATE KEY UPDATE ")
 			err = q.Resolution.AppendSQLExclude(dialect, buf, args, params, excludedTableQualifiers)
 			if err != nil {
-				return err
+				return fmt.Errorf("ON DUPLICATE KEY UPDATE: %w", err)
 			}
 		}
 	}
@@ -172,7 +172,7 @@ func (q InsertQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interf
 		buf.WriteString(" RETURNING ")
 		err = q.ReturningFields.AppendSQLExclude(dialect, buf, args, params, nil)
 		if err != nil {
-			return err
+			return fmt.Errorf("RETURNING: %w", err)
 		}
 	}
 	return nil
