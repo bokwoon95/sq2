@@ -242,11 +242,30 @@ func Sprintf(dialect string, query string, args []interface{}) (string, error) {
 }
 
 func lookupParam(dialect string, args []interface{}, paramName []rune, namedArgsLookup map[string]int, runningArgsIndex int) (paramValue string, err error) {
-	if paramName[0] == '@' && dialect == DialectSQLServer {
-		// TODO: implement MSSQL support
+	// if paramName[0] == '@' && dialect == DialectSQLServer {
+	// 	if len(paramName) > 2 && paramName[1] == 'p' || paramName[1] == 'P' {
+	// 		num, err := strconv.Atoi(string(paramName[2:]))
+	// 		if err == nil {
+	// 			num--
+	// 			if num < 0 || num >= len(args) {
+	// 				return "", fmt.Errorf("args index %d out of bounds", num)
+	// 			}
+	// 			paramValue, err = Sprint(args[num])
+	// 			if err != nil {
+	// 				return "", err
+	// 			}
+	// 			return paramValue, nil
+	// 		}
+	// 	}
+	// 	// TODO: implement MSSQL support
+	// }
+	var maybeNum string
+	if paramName[0] == '@' && dialect == DialectSQLServer && len(paramName) > 2 && (paramName[1] == 'p' || paramName[1] == 'P') {
+		maybeNum = string(paramName[2:])
+	} else {
+		maybeNum = string(paramName[1:])
 	}
-	name := string(paramName[1:])
-	if name == "" {
+	if maybeNum == "" {
 		if paramName[0] != '?' {
 			return "", fmt.Errorf("parameter name missing")
 		}
@@ -257,7 +276,7 @@ func lookupParam(dialect string, args []interface{}, paramName []rune, namedArgs
 		return paramValue, nil
 	}
 	// attempt to parse name as an integer
-	num, err := strconv.Atoi(name)
+	num, err := strconv.Atoi(maybeNum)
 	if err == nil {
 		num-- // decrement because ordinal numbers always lead the index by 1 (e.g. $1 corresponds to index 0)
 		if num < 0 || num >= len(args) {
@@ -273,9 +292,9 @@ func lookupParam(dialect string, args []interface{}, paramName []rune, namedArgs
 	if dialect == DialectPostgres || dialect == DialectMySQL {
 		return "", fmt.Errorf("%s does not support %s named parameter", dialect, string(paramName))
 	}
-	num, ok := namedArgsLookup[name]
+	num, ok := namedArgsLookup[string(paramName[1:])]
 	if !ok {
-		return "", fmt.Errorf("named parameter $%s not provided", name)
+		return "", fmt.Errorf("named parameter $%s not provided", maybeNum)
 	}
 	if num < 0 || num >= len(args) {
 		return "", fmt.Errorf("args index %d out of bounds", num)
