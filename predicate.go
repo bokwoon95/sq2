@@ -55,7 +55,7 @@ type VariadicPredicate struct {
 	// i.e. it does not need enclosing brackets
 	Toplevel   bool
 	Alias      string
-	Operator   VariadicPredicateOperator
+	Operator   VariadicPredicateOperator // TODO: convert this to a bool
 	Predicates []Predicate
 	Negative   bool
 }
@@ -74,7 +74,7 @@ func (p VariadicPredicate) AppendSQLExclude(dialect string, buf *bytes.Buffer, a
 		}
 		switch v := p.Predicates[0].(type) {
 		case nil:
-			return fmt.Errorf("nil Predicate")
+			return fmt.Errorf("predicate #1 is nil")
 		case VariadicPredicate:
 			if !p.Toplevel {
 				buf.WriteString("(")
