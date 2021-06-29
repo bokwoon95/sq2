@@ -95,7 +95,7 @@ func TestSubquery(t *testing.T) {
 	t.Run("subquery no alias, dialect == postgres || dialect == mysql", func(t *testing.T) {
 		t.Parallel()
 		var tt TT
-		tt.item = Postgres.From(NewSubquery("", Postgres.Select(FieldValue(1).As("n")))).Select(FieldLiteral("*"))
+		tt.item = Postgres.From(NewSubquery("", Postgres.Select(Value(1).As("n")))).Select(FieldLiteral("*"))
 		_, _, _, err := ToSQL("", tt.item)
 		if err == nil {
 			t.Fatal(Callers(), "expected error but got nil")

@@ -34,8 +34,6 @@ func Fieldf(format string, values ...interface{}) CustomField {
 	}}
 }
 
-func FieldValue(value interface{}) CustomField { return Fieldf("{}", value) }
-
 func (f CustomField) As(alias string) CustomField {
 	f.info.FieldAlias = alias
 	return f
@@ -95,6 +93,30 @@ func (f FieldLiteral) AppendSQLExclude(dialect string, buf *bytes.Buffer, args *
 func (f FieldLiteral) GetAlias() string { return "" }
 
 func (f FieldLiteral) GetName() string { return string(f) }
+
+type FieldValue struct {
+	value interface{}
+	alias string
+}
+
+var _ Field = FieldValue{}
+
+func (f FieldValue) GetAlias() string { return f.alias }
+
+func (f FieldValue) GetName() string { return "" }
+
+func (f FieldValue) AppendSQLExclude(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int, excludedTableQualifiers []string) error {
+	return BufferPrintValue(dialect, buf, args, params, excludedTableQualifiers, f.value, "")
+}
+
+func Value(value interface{}) FieldValue {
+	return FieldValue{value: value}
+}
+
+func (f FieldValue) As(alias string) FieldValue {
+	f.alias = alias
+	return f
+}
 
 type Fields []Field
 

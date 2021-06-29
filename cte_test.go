@@ -72,7 +72,7 @@ func TestCTE(t *testing.T) {
 		tt.dialect = DialectSQLite
 		tt.item = SQLite.
 			SelectWith(
-				NewCTE("cte_1", nil, SQLite.Select(FieldValue(1).As("some_number"))),
+				NewCTE("cte_1", nil, SQLite.Select(Value(1).As("some_number"))),
 				NewRecursiveCTE("tens", []string{"n"}, UnionAll(
 					Queryf("SELECT {ten}", Param("ten", 10)),
 					Queryf("SELECT tens.n FROM tens WHERE tens.n + {ten} <= {hundred}", Param("ten", 10), Param("hundred", 100)),

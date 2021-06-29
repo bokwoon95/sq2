@@ -48,7 +48,7 @@ func Test_CustomField(t *testing.T) {
 	t.Run("FieldValue", func(t *testing.T) {
 		t.Parallel()
 		var tt TT
-		tt.item = FieldValue("abcd")
+		tt.item = Value("abcd")
 		tt.wantQuery = "?"
 		tt.wantArgs = []interface{}{"abcd"}
 		assert(t, tt)
@@ -235,7 +235,7 @@ func Test_Fields(t *testing.T) {
 	t.Run("Fields", func(t *testing.T) {
 		t.Parallel()
 		var tt TT
-		tt.item = Fields{USERS.USER_ID, nil, FieldValue(456)}
+		tt.item = Fields{USERS.USER_ID, nil, Value(456)}
 		tt.wantQuery = "user_id, ?, ?"
 		tt.wantArgs = []interface{}{nil, 456}
 		assert(t, tt)
@@ -244,7 +244,7 @@ func Test_Fields(t *testing.T) {
 	t.Run("AliasFields", func(t *testing.T) {
 		t.Parallel()
 		var tt TT
-		tt.item = AliasFields{USERS.USER_ID.As("uid"), nil, FieldValue(456).As("some_number")}
+		tt.item = AliasFields{USERS.USER_ID.As("uid"), nil, Value(456).As("some_number")}
 		tt.wantQuery = "user_id AS uid, ?, ? AS some_number"
 		tt.wantArgs = []interface{}{nil, 456}
 		assert(t, tt)
