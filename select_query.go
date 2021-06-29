@@ -39,7 +39,7 @@ func (q SelectQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interf
 	if len(q.CTEs) > 0 {
 		err = q.CTEs.AppendSQL(dialect, buf, args, params)
 		if err != nil {
-			return err
+			return fmt.Errorf("WITH: %w", err)
 		}
 	}
 	// SELECT
@@ -54,7 +54,7 @@ func (q SelectQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interf
 		buf.WriteString("DISTINCT ON (")
 		err = q.DistinctOnFields.AppendSQLExclude(dialect, buf, args, params, nil)
 		if err != nil {
-			return err
+			return fmt.Errorf("DISTINCT ON: %w", err)
 		}
 		buf.WriteString(") ")
 	} else if q.Distinct {
@@ -65,14 +65,14 @@ func (q SelectQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interf
 	}
 	err = q.SelectFields.AppendSQLExclude(dialect, buf, args, params, nil)
 	if err != nil {
-		return err
+		return fmt.Errorf("SELECT: %w", err)
 	}
 	// FROM
 	if q.FromTable != nil {
 		buf.WriteString(" FROM ")
 		err = q.FromTable.AppendSQL(dialect, buf, args, params)
 		if err != nil {
-			return err
+			return fmt.Errorf("FROM: %w", err)
 		}
 		if tableAlias := q.FromTable.GetAlias(); tableAlias != "" {
 			buf.WriteString(" AS " + QuoteIdentifier(dialect, tableAlias))
@@ -86,7 +86,7 @@ func (q SelectQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interf
 		buf.WriteString(" ")
 		err = q.JoinTables.AppendSQL(dialect, buf, args, params)
 		if err != nil {
-			return err
+			return fmt.Errorf("JOIN: %w", err)
 		}
 	}
 	// WHERE
@@ -95,7 +95,7 @@ func (q SelectQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interf
 		q.WherePredicate.Toplevel = true
 		err = q.WherePredicate.AppendSQLExclude(dialect, buf, args, params, nil)
 		if err != nil {
-			return err
+			return fmt.Errorf("WHERE: %w", err)
 		}
 	}
 	// GROUP BY
@@ -103,7 +103,7 @@ func (q SelectQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interf
 		buf.WriteString(" GROUP BY ")
 		err = q.GroupByFields.AppendSQLExclude(dialect, buf, args, params, nil)
 		if err != nil {
-			return err
+			return fmt.Errorf("GROUP BY: %w", err)
 		}
 	}
 	// HAVING
@@ -112,7 +112,7 @@ func (q SelectQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interf
 		q.HavingPredicate.Toplevel = true
 		err = q.HavingPredicate.AppendSQLExclude(dialect, buf, args, params, nil)
 		if err != nil {
-			return err
+			return fmt.Errorf("HAVING: %w", err)
 		}
 	}
 	// ORDER BY
@@ -120,21 +120,21 @@ func (q SelectQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interf
 		buf.WriteString(" ORDER BY ")
 		err = q.OrderByFields.AppendSQLExclude(dialect, buf, args, params, nil)
 		if err != nil {
-			return err
+			return fmt.Errorf("ORDER BY: %w", err)
 		}
 	}
 	// LIMIT
 	if q.RowLimit.Valid {
 		err = BufferPrintf(dialect, buf, args, params, nil, " LIMIT {}", []interface{}{q.RowLimit.Int64})
 		if err != nil {
-			return err
+			return fmt.Errorf("LIMIT: %w", err)
 		}
 	}
 	// OFFSET
 	if q.RowOffset.Valid {
 		err = BufferPrintf(dialect, buf, args, params, nil, " OFFSET {}", []interface{}{q.RowOffset.Int64})
 		if err != nil {
-			return err
+			return fmt.Errorf("OFFSET: %w", err)
 		}
 	}
 	return nil
