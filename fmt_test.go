@@ -401,27 +401,27 @@ func Test_Sprintf(t *testing.T) {
 		assert(t, tt)
 	})
 
-	// t.Run("insideString, insideIdentifier and escaping single quotes (dialect == sqlserver)", func(t *testing.T) {
-	// 	t.Parallel()
-	// 	var tt TT
-	// 	tt.dialect = DialectSQLServer
-	// 	tt.query = `SELECT ?` +
-	// 		`, 'do not [[rebind] ? ? ?'` + // string
-	// 		", [do not 'rebind' [[[[[?]] ? ?]" + // identifier // NOTE: this will fail because the escaped closing braces are ignored
-	// 		`, ?` +
-	// 		`, ?`
-	// 	tt.args = []interface{}{
-	// 		"normal string",
-	// 		"string with 'quotes' must be escaped",
-	// 		"string with already escaped ''quotes'' except for 'this'",
-	// 	}
-	// 	tt.wantString = `SELECT 'normal string'` +
-	// 		`, 'do not "rebind" ? ? ?'` +
-	// 		", `do not 'rebind' ? ? ?`" +
-	// 		`, 'string with ''quotes'' must be escaped'` +
-	// 		`, 'string with already escaped ''quotes'' except for ''this'''`
-	// 	assert(t, tt)
-	// })
+	t.Run("insideString, insideIdentifier and escaping single quotes (dialect == sqlserver)", func(t *testing.T) {
+		t.Parallel()
+		var tt TT
+		tt.dialect = DialectSQLServer
+		tt.query = `SELECT ?` +
+			`, 'do not [[rebind] @p1 @p2 @name'` + // string
+			", [do not 'rebind' [[[[[@pp]] @p3 @p1]" + // identifier
+			`, ?` +
+			`, ?`
+		tt.args = []interface{}{
+			"normal string",
+			"string with 'quotes' must be escaped",
+			"string with already escaped ''quotes'' except for 'this'",
+		}
+		tt.wantString = `SELECT 'normal string'` +
+			`, 'do not [[rebind] @p1 @p2 @name'` +
+			", [do not 'rebind' [[[[[@pp]] @p3 @p1]" + // identifier
+			`, 'string with ''quotes'' must be escaped'` +
+			`, 'string with already escaped ''quotes'' except for ''this'''`
+		assert(t, tt)
+	})
 
 	t.Run("mysql", func(t *testing.T) {
 		t.Parallel()

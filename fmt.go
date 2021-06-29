@@ -157,8 +157,9 @@ func Sprintf(dialect string, query string, args []interface{}) (string, error) {
 		}
 	}
 	runningArgsIndex := 0
-	var insideString bool
-	var insideIdentifier bool
+	var insideStringOrIdentifier bool
+	var openingQuote rune
+	var mustWriteCharAt int
 	var paramName []rune
 	nameTerminatingChars := map[rune]bool{
 		',': true, '(': true, ')': true, ';': true,
@@ -166,33 +167,49 @@ func Sprintf(dialect string, query string, args []interface{}) (string, error) {
 		'+': true, '-': true, '*': true, '/': true,
 		'\t': true, '\n': true, '\v': true, '\f': true, '\r': true, ' ': true, 0x85: true, 0xA0: true,
 	}
-	for _, char := range query {
-		if char == '\'' && !insideIdentifier {
-			insideString = !insideString
+	for i, char := range query {
+		if mustWriteCharAt == i {
+			buf.WriteRune(char)
+			mustWriteCharAt = -1
+			continue
+		}
+		if insideStringOrIdentifier {
+			buf.WriteRune(char)
+			switch openingQuote {
+			case '\'', '"', '`':
+				if char == openingQuote {
+					if i+1 < len(query) && rune(query[i+1]) == openingQuote {
+						mustWriteCharAt = i + 1
+					} else {
+						insideStringOrIdentifier = false
+					}
+				}
+			case '[':
+				if char == ']' {
+					if i+1 < len(query) && query[i+1] == ']' {
+						mustWriteCharAt = i + 1
+					} else {
+						insideStringOrIdentifier = false
+					}
+				}
+			}
+			continue
+		}
+		if char == '\'' || char == '"' {
+			insideStringOrIdentifier = true
+			openingQuote = char
 			buf.WriteRune(char)
 			continue
 		}
-		if char == '"' && !insideString && dialect != DialectSQLServer {
-			insideIdentifier = !insideIdentifier
+		if char == '`' && dialect == DialectMySQL {
+			insideStringOrIdentifier = true
+			openingQuote = char
 			buf.WriteRune(char)
 			continue
 		}
-		if char == '`' && !insideString && dialect == DialectMySQL {
-			insideIdentifier = !insideIdentifier
-			buf.WriteRune(char)
-			continue
-		}
-		if char == '[' && !insideString && dialect == DialectSQLServer {
-			insideIdentifier = true
-			buf.WriteRune(char)
-			continue
-		}
-		if char == ']' && insideIdentifier {
-			insideIdentifier = false
-			buf.WriteRune(char)
-			continue
-		}
-		if insideString || insideIdentifier {
+		if char == '[' && dialect == DialectSQLServer {
+			insideStringOrIdentifier = true
+			openingQuote = char
 			buf.WriteRune(char)
 			continue
 		}
@@ -250,7 +267,7 @@ func Sprintf(dialect string, query string, args []interface{}) (string, error) {
 		}
 		buf.WriteString(paramValue)
 	}
-	if insideString || insideIdentifier {
+	if insideStringOrIdentifier {
 		return buf.String(), fmt.Errorf("unclosed string or identifier")
 	}
 	return buf.String(), nil
