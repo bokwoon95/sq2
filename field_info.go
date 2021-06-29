@@ -3,6 +3,7 @@ package sq
 import (
 	"bytes"
 	"database/sql"
+	"sort"
 )
 
 // TODO: move this to a file of its own, together with the `GetFieldInfo(field Field) (FieldInfo, error)` function
@@ -48,11 +49,9 @@ func (f FieldInfo) AppendSQLExclude(dialect string, buf *bytes.Buffer, args *[]i
 			tableQualifier = f.TableAlias
 		}
 		if tableQualifier != "" {
-			for _, excludedTableQualifier := range excludedTableQualifiers {
-				if tableQualifier == excludedTableQualifier {
-					tableQualifier = ""
-					break
-				}
+			i := sort.SearchStrings(excludedTableQualifiers, tableQualifier)
+			if i < len(excludedTableQualifiers) && excludedTableQualifiers[i] == tableQualifier {
+				tableQualifier = ""
 			}
 		}
 		if tableQualifier != "" {

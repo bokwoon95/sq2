@@ -5,6 +5,7 @@ import (
 	"path/filepath"
 	"reflect"
 	"runtime"
+	"sort"
 	"strconv"
 	"strings"
 	"testing"
@@ -36,11 +37,9 @@ func (f tmpfield) GetName() string { return f[1] }
 func (f tmpfield) AppendSQLExclude(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int, excludedTableQualifiers []string) error {
 	tableQualifier := f[0]
 	if tableQualifier != "" {
-		for _, excludedTableQualifier := range excludedTableQualifiers {
-			if tableQualifier == excludedTableQualifier {
-				tableQualifier = ""
-				break
-			}
+		i := sort.SearchStrings(excludedTableQualifiers, tableQualifier)
+		if i < len(excludedTableQualifiers) && excludedTableQualifiers[i] == tableQualifier {
+			tableQualifier = ""
 		}
 	}
 	if tableQualifier != "" {
