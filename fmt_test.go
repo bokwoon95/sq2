@@ -60,10 +60,6 @@ func Test_Fprintf(t *testing.T) {
 		assert(t, tt)
 	})
 
-	// TODO: use double curly brackets to escape instead. So if you need
-	// literally need 2 curly brackets (like for escaping in Oracle), you have
-	// to insert 4 curly brackets which get escaped to 2 curly brackets after
-	// passing through sq.
 	t.Run("escape curly bracket", func(t *testing.T) {
 		t.Parallel()
 		var tt TT
@@ -346,7 +342,7 @@ func Test_Sprintf(t *testing.T) {
 		if err != nil {
 			t.Fatal(Callers(), err)
 		}
-		if diff := Diff(tt.wantString, gotString); diff != "" {
+		if diff := Diff(gotString, tt.wantString); diff != "" {
 			t.Error(Callers(), diff)
 		}
 	}
