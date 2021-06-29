@@ -21,6 +21,8 @@ type DeleteQuery struct {
 	OrderByFields Fields
 	// LIMIT
 	RowLimit sql.NullInt64
+	// LIMIT
+	RowOffset sql.NullInt64
 	// RETURNING
 	ReturningFields AliasFields
 }
@@ -127,6 +129,16 @@ func (q DeleteQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interf
 		err = BufferPrintf(dialect, buf, args, params, nil, " LIMIT {}", []interface{}{q.RowLimit.Int64})
 		if err != nil {
 			return fmt.Errorf("LIMIT: %w", err)
+		}
+	}
+	// OFFSET
+	if q.RowOffset.Valid {
+		if dialect != DialectSQLite {
+			return fmt.Errorf("%s UPDATE does not support OFFSET", dialect)
+		}
+		err = BufferPrintf(dialect, buf, args, params, nil, " OFFSET {}", []interface{}{q.RowOffset.Int64})
+		if err != nil {
+			return fmt.Errorf("OFFSET: %w", err)
 		}
 	}
 	// RETURNING

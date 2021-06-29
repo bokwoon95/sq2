@@ -51,6 +51,12 @@ func (q SQLiteDeleteQuery) Limit(limit int64) SQLiteDeleteQuery {
 	return q
 }
 
+func (q SQLiteDeleteQuery) Offset(offset int64) SQLiteDeleteQuery {
+	q.RowOffset.Valid = true
+	q.RowOffset.Int64 = offset
+	return q
+}
+
 func (q SQLiteDeleteQuery) Returning(fields ...Field) SQLiteDeleteQuery {
 	q.ReturningFields = append(q.ReturningFields, fields...)
 	return q
