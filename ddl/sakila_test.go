@@ -1346,13 +1346,7 @@ const DUMMY_TABLE_2_MySQL = `CREATE TABLE db.dummy_table_2 (
 );
 ALTER TABLE db.dummy_table_2 ADD CONSTRAINT dummy_table_2_id1_id2_fkey FOREIGN KEY (id1, id2) REFERENCES dummy_table (id1, id2) ON UPDATE CASCADE ON DELETE RESTRICT;`
 
-type ACTOR_INFO struct {
-	sq.TableInfo
-	ACTOR_ID   sq.NumberField
-	FIRST_NAME sq.StringField
-	LAST_NAME  sq.StringField
-	FILM_INFO  sq.JSONField
-}
+// TODO: define the rest of the views, then make it work in ddl
 
 func object_agg(dialect string, name, value interface{}) sq.CustomField {
 	nameParam := sq.Param("name", name)
@@ -1390,6 +1384,14 @@ func array_agg(dialect string, value interface{}) sq.CustomField {
 	}
 }
 
+type ACTOR_INFO struct {
+	sq.TableInfo
+	ACTOR_ID   sq.NumberField
+	FIRST_NAME sq.StringField
+	LAST_NAME  sq.StringField
+	FILM_INFO  sq.JSONField
+}
+
 func (_ ACTOR_INFO) View(dialect string) (sq.Query, error) {
 	ACTOR := NEW_ACTOR(dialect, "a")
 	FILM := NEW_FILM(dialect, "f")
@@ -1424,4 +1426,45 @@ func (_ ACTOR_INFO) View(dialect string) (sq.Query, error) {
 	return q, nil
 }
 
-// TODO: define the rest of the views, then make it work in ddl
+type CUSTOMER_LIST struct {
+	ID       sq.NumberField
+	NAME     sq.StringField
+	ADDRESS  sq.StringField
+	ZIP_CODE sq.StringField
+	PHONE    sq.StringField
+	CITY     sq.StringField
+	COUNTRY  sq.StringField
+	NOTES    sq.StringField
+	SID      sq.NumberField
+}
+
+func (_ CUSTOMER_LIST) View(dialect string) (sq.Query, error) {
+	CUSTOMER := NEW_CUSTOMER(dialect, "cu")
+	ADDRESS := NEW_ADDRESS(dialect, "a")
+	CITY := NEW_CITY(dialect, "")
+	COUNTRY := NEW_COUNTRY(dialect, "")
+	var q sq.SelectQuery
+	q.Dialect = dialect
+	q.FromTable = CUSTOMER
+	q.JoinTables = sq.JoinTables{
+		sq.Join(ADDRESS, ADDRESS.ADDRESS_ID.Eq(CUSTOMER.ADDRESS_ID)),
+		sq.Join(CITY, CITY.CITY_ID.Eq(ADDRESS.CITY_ID)),
+		sq.Join(COUNTRY, COUNTRY.COUNTRY_ID.Eq(CITY.COUNTRY_ID)),
+	}
+	nameExpr := "{} || ' ' || {}"
+	if dialect == sq.DialectMySQL {
+		nameExpr = "CONCAT({}, ' ', {})"
+	}
+	q.SelectFields = sq.AliasFields{
+		CUSTOMER.CUSTOMER_ID.As("id"),
+		sq.Fieldf(nameExpr, CUSTOMER.FIRST_NAME, CUSTOMER.LAST_NAME).As("name"),
+		ADDRESS.ADDRESS,
+		ADDRESS.POSTAL_CODE.As("zip_code"),
+		ADDRESS.PHONE,
+		CITY.CITY,
+		COUNTRY.COUNTRY,
+		nil, // TODO: Case, CaseWhen
+		CUSTOMER.STORE_ID.As("sid"),
+	}
+	return q, nil
+}
