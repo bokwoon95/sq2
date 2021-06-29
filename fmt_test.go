@@ -412,7 +412,7 @@ func Test_Sprintf(t *testing.T) {
 			", [do not \" 'rebind' [[[[[@pp]] @p3 @p1]" + // identifier
 			", \"do not [[[ 'rebind' [[[[[@pp]] @p3 @p1\"" + // identifier
 			`, ?` +
-			`, ?`
+			`, @p3`
 		tt.args = []interface{}{
 			"normal string",
 			"string with 'quotes' must be escaped",
