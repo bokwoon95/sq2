@@ -66,7 +66,7 @@ func TestSubquery(t *testing.T) {
 	t.Run("subquery nil query", func(t *testing.T) {
 		t.Parallel()
 		var tt TT
-		tt.item = SQLite.From(NewSubquery("subquery", nil)).Select(FieldLiteral("*"))
+		tt.item = SQLite.From(NewSubquery("subquery", nil)).Select(Literal("*"))
 		_, _, _, err := ToSQL("", tt.item)
 		if err == nil {
 			t.Fatal(Callers(), "expected error but got nil")
@@ -76,7 +76,7 @@ func TestSubquery(t *testing.T) {
 	t.Run("subquery query GetFetchableFields error", func(t *testing.T) {
 		t.Parallel()
 		var tt TT
-		tt.item = SQLite.From(NewSubquery("subquery", Queryf("SELECT 1"))).Select(FieldLiteral("*"))
+		tt.item = SQLite.From(NewSubquery("subquery", Queryf("SELECT 1"))).Select(Literal("*"))
 		_, _, _, err := ToSQL("", tt.item)
 		if err == nil {
 			t.Fatal(Callers(), "expected error but got nil")
@@ -86,7 +86,7 @@ func TestSubquery(t *testing.T) {
 	t.Run("subquery query no fields", func(t *testing.T) {
 		t.Parallel()
 		var tt TT
-		tt.item = SQLite.From(NewSubquery("subquery", MySQL.Select())).Select(FieldLiteral("*"))
+		tt.item = SQLite.From(NewSubquery("subquery", MySQL.Select())).Select(Literal("*"))
 		_, _, _, err := ToSQL("", tt.item)
 		if err == nil {
 			t.Fatal(Callers(), "expected error but got nil")
@@ -96,7 +96,7 @@ func TestSubquery(t *testing.T) {
 	t.Run("subquery query field no name", func(t *testing.T) {
 		t.Parallel()
 		var tt TT
-		tt.item = SQLite.From(NewSubquery("subquery", MySQL.Select(Value(1)))).Select(FieldLiteral("*"))
+		tt.item = SQLite.From(NewSubquery("subquery", MySQL.Select(Value(1)))).Select(Literal("*"))
 		_, _, _, err := ToSQL("", tt.item)
 		if err == nil {
 			t.Fatal(Callers(), "expected error but got nil")
@@ -108,7 +108,7 @@ func TestSubquery(t *testing.T) {
 		var tt TT
 		tt.item = SQLite.
 			From(NewSubquery("subquery", MySQL.Select(Value(1).As("field")).Where(FaultySQL{}))).
-			Select(FieldLiteral("*"))
+			Select(Literal("*"))
 		_, _, _, err := ToSQL("", tt.item)
 		if !errors.Is(err, ErrFaultySQL) {
 			t.Errorf(Callers()+" expected ErrFaultySQL but got %#v", err)
@@ -118,7 +118,7 @@ func TestSubquery(t *testing.T) {
 	t.Run("subquery no alias, dialect == postgres || dialect == mysql", func(t *testing.T) {
 		t.Parallel()
 		var tt TT
-		tt.item = Postgres.From(NewSubquery("", Postgres.Select(Value(1).As("n")))).Select(FieldLiteral("*"))
+		tt.item = Postgres.From(NewSubquery("", Postgres.Select(Value(1).As("n")))).Select(Literal("*"))
 		_, _, _, err := ToSQL("", tt.item)
 		if err == nil {
 			t.Fatal(Callers(), "expected error but got nil")

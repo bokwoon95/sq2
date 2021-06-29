@@ -95,7 +95,7 @@ func TestCTE(t *testing.T) {
 	t.Run("CTE no name", func(t *testing.T) {
 		t.Parallel()
 		var tt TT
-		tt.item = SQLite.SelectWith(NewCTE("", nil, nil)).Select(FieldLiteral("1"))
+		tt.item = SQLite.SelectWith(NewCTE("", nil, nil)).Select(Literal("1"))
 		_, _, _, err := ToSQL("", tt.item)
 		if err == nil {
 			t.Fatal(Callers(), "expected error but got nil")
@@ -106,7 +106,7 @@ func TestCTE(t *testing.T) {
 		t.Parallel()
 		var tt TT
 		tt.item = SQLite.SelectWith(NewCTE("cte", nil, nil)).
-			Select(FieldLiteral("1"))
+			Select(Literal("1"))
 		_, _, _, err := ToSQL("", tt.item)
 		if err == nil {
 			t.Fatal(Callers(), "expected error but got nil")
@@ -117,7 +117,7 @@ func TestCTE(t *testing.T) {
 		t.Parallel()
 		var tt TT
 		tt.item = SQLite.SelectWith(NewCTE("cte", nil, Queryf("SELECT 1"))).
-			Select(FieldLiteral("1"))
+			Select(Literal("1"))
 		_, _, _, err := ToSQL("", tt.item)
 		if err == nil {
 			t.Fatal(Callers(), "expected error but got nil")
@@ -128,7 +128,7 @@ func TestCTE(t *testing.T) {
 		t.Parallel()
 		var tt TT
 		tt.item = SQLite.SelectWith(NewCTE("cte", nil, SQLite.Select())).
-			Select(FieldLiteral("1"))
+			Select(Literal("1"))
 		_, _, _, err := ToSQL("", tt.item)
 		if err == nil {
 			t.Fatal(Callers(), "expected error but got nil")
@@ -139,7 +139,7 @@ func TestCTE(t *testing.T) {
 		t.Parallel()
 		var tt TT
 		tt.item = SQLite.SelectWith(NewCTE("cte", nil, SQLite.Select(Fieldf("bruh")))).
-			Select(FieldLiteral("1"))
+			Select(Literal("1"))
 		_, _, _, err := ToSQL("", tt.item)
 		if err == nil {
 			t.Fatal(Callers(), "expected error but got nil")
@@ -200,9 +200,9 @@ func TestCTE(t *testing.T) {
 		t.Parallel()
 		var tt TT
 		tt.item = CTEs{
-			NewCTE("cte", nil, SQLite.Select(FieldLiteral("1"))),
+			NewCTE("cte", nil, SQLite.Select(Literal("1"))),
 			CTE{},
-			NewCTE("cte_2", nil, SQLite.Select(FieldLiteral("1"))),
+			NewCTE("cte_2", nil, SQLite.Select(Literal("1"))),
 		}
 		_, _, _, err := ToSQL("", tt.item)
 		if err == nil {
@@ -214,9 +214,9 @@ func TestCTE(t *testing.T) {
 		t.Parallel()
 		var tt TT
 		tt.item = CTEs{
-			NewCTE("cte", nil, SQLite.Select(FieldLiteral("1"))),
+			NewCTE("cte", nil, SQLite.Select(Literal("1"))),
 			CTE{cteName: "cte"},
-			NewCTE("cte_2", nil, SQLite.Select(FieldLiteral("1"))),
+			NewCTE("cte_2", nil, SQLite.Select(Literal("1"))),
 		}
 		_, _, _, err := ToSQL("", tt.item)
 		if err == nil {
@@ -228,9 +228,9 @@ func TestCTE(t *testing.T) {
 		t.Parallel()
 		var tt TT
 		tt.item = CTEs{
-			NewCTE("cte", nil, SQLite.Select(FieldLiteral("1"))),
+			NewCTE("cte", nil, SQLite.Select(Literal("1"))),
 			CTE{cteName: "faulty_cte", query: Union(FaultySQL{})},
-			NewCTE("cte_2", nil, SQLite.Select(FieldLiteral("1"))),
+			NewCTE("cte_2", nil, SQLite.Select(Literal("1"))),
 		}
 		_, _, _, err := ToSQL("", tt.item)
 		if !errors.Is(err, ErrFaultySQL) {
@@ -242,9 +242,9 @@ func TestCTE(t *testing.T) {
 		t.Parallel()
 		var tt TT
 		tt.item = CTEs{
-			NewCTE("cte", nil, SQLite.Select(FieldLiteral("1"))),
+			NewCTE("cte", nil, SQLite.Select(Literal("1"))),
 			CTE{cteName: "faulty_cte", query: FaultySQL{}},
-			NewCTE("cte_2", nil, SQLite.Select(FieldLiteral("1"))),
+			NewCTE("cte_2", nil, SQLite.Select(Literal("1"))),
 		}
 		_, _, _, err := ToSQL("", tt.item)
 		if !errors.Is(err, ErrFaultySQL) {

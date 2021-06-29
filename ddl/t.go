@@ -470,8 +470,8 @@ func getColumnNamesAndExprs(dialect, tableName string, fields []sq.Field) (colum
 		var columnName, expr string
 		columnName = field.GetName()
 		if columnName == "" {
-			if fieldliteral, ok := field.(sq.FieldLiteral); ok {
-				expr = string(fieldliteral)
+			if f, ok := field.(sq.FieldLiteral); ok {
+				expr = f.GetName()
 			} else {
 				var err error
 				expr, err = appendSQLExclude(dialect, tableName, field)
