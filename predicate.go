@@ -105,11 +105,11 @@ func (p VariadicPredicate) AppendSQLExclude(dialect string, buf *bytes.Buffer, a
 				buf.WriteString(" " + string(p.Operator) + " ")
 			}
 			if predicate == nil {
-				return fmt.Errorf("nil Predicate")
+				return fmt.Errorf("predicate #%d is nil", i+1)
 			}
 			err = predicate.AppendSQLExclude(dialect, buf, args, params, excludedTableQualifiers)
 			if err != nil {
-				return err
+				return fmt.Errorf("predicate #%d: %w", i+1, err)
 			}
 		}
 		if !p.Toplevel {

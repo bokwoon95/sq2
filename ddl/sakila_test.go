@@ -1,8 +1,6 @@
 package ddl
 
 import (
-	"fmt"
-
 	"github.com/bokwoon95/sq"
 )
 
@@ -1356,25 +1354,48 @@ type ACTOR_INFO struct {
 	FILM_INFO  sq.JSONField
 }
 
+func object_agg(dialect string, name, value interface{}) sq.CustomField {
+	nameParam := sq.Param("name", name)
+	valueParam := sq.Param("value", value)
+	if query, ok := value.(sq.Query); ok {
+		valueParam.Value = sq.Fieldf("({})", query)
+	}
+	// TODO: if dialect not recognized, CustomField's StickyError should be set
+	// instead. This will be -incredibly- useful for people who want to define
+	// their own SQL functions but need some way to signal an error. But how do
+	// I want to expose this API to the user?
+	switch dialect {
+	case sq.DialectSQLite:
+		return sq.Fieldf("json_group_object({name}, {value})", nameParam, valueParam)
+	case sq.DialectPostgres:
+		return sq.Fieldf("jsonb_object_agg({name}, {value})", nameParam, valueParam)
+	case sq.DialectMySQL:
+		return sq.Fieldf("jsonb_object_agg({name}, {value})", nameParam, valueParam)
+	default:
+		return sq.Fieldf("%!(unrecognized dialect=" + dialect + ")")
+	}
+}
+
+func array_agg(dialect string, value interface{}) sq.CustomField {
+	valueParam := sq.Param("value", value)
+	switch dialect {
+	case sq.DialectSQLite:
+		return sq.Fieldf("json_group_array({value})", valueParam)
+	case sq.DialectPostgres:
+		return sq.Fieldf("jsonb_agg({value})", valueParam)
+	case sq.DialectMySQL:
+		return sq.Fieldf("jsonb_arrayagg({value})", valueParam)
+	default:
+		return sq.Fieldf("%!(unrecognized dialect=" + dialect + ")")
+	}
+}
+
 func (_ ACTOR_INFO) View(dialect string) (sq.Query, error) {
 	ACTOR := NEW_ACTOR(dialect, "a")
 	FILM := NEW_FILM(dialect, "f")
 	FILM_ACTOR := NEW_FILM_ACTOR(dialect, "fa")
 	FILM_CATEGORY := NEW_FILM_CATEGORY(dialect, "fc")
 	CATEGORY := NEW_CATEGORY(dialect, "c")
-	// TODO: object_agg and array_agg can be refactored into Go functions that
-	// take in their necessary arguments and return an sq.Field.
-	var object_agg, array_agg string
-	switch dialect {
-	case sq.DialectSQLite:
-		object_agg, array_agg = "json_group_object({}, ({}))", "json_group_array({})"
-	case sq.DialectPostgres:
-		object_agg, array_agg = "jsonb_object_agg({}, ({}))", "jsonb_agg({})"
-	case sq.DialectMySQL:
-		object_agg, array_agg = "json_objectagg({}, ({}))", "json_arrayagg({})"
-	default:
-		return nil, fmt.Errorf("unrecognized dialect '%s'", dialect)
-	}
 	var q sq.SelectQuery
 	q.Dialect = dialect
 	q.FromTable = ACTOR
@@ -1388,8 +1409,8 @@ func (_ ACTOR_INFO) View(dialect string) (sq.Query, error) {
 		ACTOR.ACTOR_ID,
 		ACTOR.FIRST_NAME,
 		ACTOR.LAST_NAME,
-		sq.Fieldf(object_agg, CATEGORY.NAME, sq.SQLite.
-			Select(sq.Fieldf(array_agg, FILM.TITLE)).
+		object_agg(dialect, CATEGORY.NAME, sq.SQLite.
+			Select(array_agg(dialect, FILM.TITLE)).
 			From(FILM).
 			Join(FILM_CATEGORY, FILM_CATEGORY.FILM_ID.Eq(FILM.FILM_ID)).
 			Join(FILM_ACTOR, FILM_ACTOR.FILM_ID.Eq(FILM.FILM_ID)).
