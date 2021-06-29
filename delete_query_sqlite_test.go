@@ -79,13 +79,13 @@ func Test_SQLiteDeleteQuery(t *testing.T) {
 		assert(t, tt)
 	})
 
-	t.Run("ORDER BY LIMIT", func(t *testing.T) {
+	t.Run("ORDER BY LIMIT OFFSET", func(t *testing.T) {
 		t.Parallel()
 		var tt TT
 		ACTOR := NEW_ACTOR("a")
-		tt.item = SQLite.DeleteFrom(ACTOR).OrderBy(ACTOR.ACTOR_ID).Limit(0)
-		tt.wantQuery = "DELETE FROM actor AS a ORDER BY a.actor_id LIMIT $1"
-		tt.wantArgs = []interface{}{int64(0)}
+		tt.item = SQLite.DeleteFrom(ACTOR).OrderBy(ACTOR.ACTOR_ID).Limit(0).Offset(10)
+		tt.wantQuery = "DELETE FROM actor AS a ORDER BY a.actor_id LIMIT $1 OFFSET $2"
+		tt.wantArgs = []interface{}{int64(0), int64(10)}
 		assert(t, tt)
 	})
 }

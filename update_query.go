@@ -47,7 +47,7 @@ func (q UpdateQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interf
 	if len(q.CTEs) > 0 {
 		err = q.CTEs.AppendSQL(dialect, buf, args, params)
 		if err != nil {
-			return err
+			return fmt.Errorf("WITH: %w", err)
 		}
 	}
 	// UPDATE
@@ -57,7 +57,7 @@ func (q UpdateQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interf
 	}
 	err = q.UpdateTable.AppendSQL(dialect, buf, args, params)
 	if err != nil {
-		return err
+		return fmt.Errorf("UPDATE: %w", err)
 	}
 	if alias := q.UpdateTable.GetAlias(); alias != "" {
 		buf.WriteString(" AS " + QuoteIdentifier(dialect, alias))
@@ -74,7 +74,7 @@ func (q UpdateQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interf
 		buf.WriteString(" SET ")
 		err = q.Assignments.AppendSQLExclude(dialect, buf, args, params, excludedTableQualifiers)
 		if err != nil {
-			return err
+			return fmt.Errorf("SET: %w", err)
 		}
 	}
 	// FROM
@@ -85,7 +85,7 @@ func (q UpdateQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interf
 		buf.WriteString(" FROM ")
 		err = q.FromTable.AppendSQL(dialect, buf, args, params)
 		if err != nil {
-			return err
+			return fmt.Errorf("FROM: %w", err)
 		}
 		alias := q.FromTable.GetAlias()
 		if alias != "" {
@@ -100,7 +100,7 @@ func (q UpdateQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interf
 		buf.WriteString(" ")
 		err = q.JoinTables.AppendSQL(dialect, buf, args, params)
 		if err != nil {
-			return err
+			return fmt.Errorf("JOIN: %w", err)
 		}
 	}
 	// SET (MySQL)
@@ -108,7 +108,7 @@ func (q UpdateQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interf
 		buf.WriteString(" SET ")
 		err = q.Assignments.AppendSQLExclude(dialect, buf, args, params, nil)
 		if err != nil {
-			return err
+			return fmt.Errorf("SET: %w", err)
 		}
 	}
 	// WHERE
@@ -117,7 +117,7 @@ func (q UpdateQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interf
 		q.WherePredicate.Toplevel = true
 		err = q.WherePredicate.AppendSQLExclude(dialect, buf, args, params, nil)
 		if err != nil {
-			return err
+			return fmt.Errorf("WHERE: %w", err)
 		}
 	}
 	// ORDER BY
@@ -128,7 +128,7 @@ func (q UpdateQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interf
 		buf.WriteString(" ORDER BY ")
 		err = q.OrderByFields.AppendSQLExclude(dialect, buf, args, params, nil)
 		if err != nil {
-			return err
+			return fmt.Errorf("ORDER BY: %w", err)
 		}
 	}
 	// LIMIT
@@ -138,7 +138,7 @@ func (q UpdateQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interf
 		}
 		err = BufferPrintf(dialect, buf, args, params, nil, " LIMIT {}", []interface{}{q.RowLimit.Int64})
 		if err != nil {
-			return err
+			return fmt.Errorf("LIMIT: %w", err)
 		}
 	}
 	// OFFSET
@@ -148,7 +148,7 @@ func (q UpdateQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interf
 		}
 		err = BufferPrintf(dialect, buf, args, params, nil, " OFFSET {}", []interface{}{q.RowOffset.Int64})
 		if err != nil {
-			return err
+			return fmt.Errorf("OFFSET: %w", err)
 		}
 	}
 	// RETURNING
@@ -157,7 +157,10 @@ func (q UpdateQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interf
 			return fmt.Errorf("%s UPDATE does not support RETURNING", dialect)
 		}
 		buf.WriteString(" RETURNING ")
-		q.ReturningFields.AppendSQLExclude(dialect, buf, args, params, nil)
+		err = q.ReturningFields.AppendSQLExclude(dialect, buf, args, params, nil)
+		if err != nil {
+			return fmt.Errorf("RETURNING: %w", err)
+		}
 	}
 	return nil
 }
