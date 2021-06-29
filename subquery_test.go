@@ -103,10 +103,12 @@ func TestSubquery(t *testing.T) {
 		}
 	})
 
-	t.Run("subquery qeury faulty sql", func(t *testing.T) {
+	t.Run("subquery query faulty sql", func(t *testing.T) {
 		t.Parallel()
 		var tt TT
-		tt.item = SQLite.From(NewSubquery("subquery", FaultySQL{})).Select(FieldLiteral("*"))
+		tt.item = SQLite.
+			From(NewSubquery("subquery", MySQL.Select(Value(1).As("field")).Where(FaultySQL{}))).
+			Select(FieldLiteral("*"))
 		_, _, _, err := ToSQL("", tt.item)
 		if !errors.Is(err, ErrFaultySQL) {
 			t.Errorf(Callers()+" expected ErrFaultySQL but got %#v", err)
@@ -151,6 +153,18 @@ func Test_SubqueryField(t *testing.T) {
 			}
 		}
 	}
+
+	t.Run("subquery no alias, dialect == postgres || dialect == mysql", func(t *testing.T) {
+		t.Parallel()
+		var tt TT
+		tt.dialect = DialectPostgres
+		q := NewSubquery("", Postgres.Select(Value(1).As("field")))
+		tt.item = q.Field("field")
+		_, _, _, err := ToSQLExclude(tt.dialect, tt.item, tt.excludedTableQualifiers)
+		if err == nil {
+			t.Fatal(Callers(), "expected error but got nil")
+		}
+	})
 
 	t.Run("propagate Subquery stickyErr", func(t *testing.T) {
 		t.Parallel()
