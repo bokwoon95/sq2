@@ -173,7 +173,7 @@ func lookupParam(dialect string, args []interface{}, argsLookup map[string]int, 
 		return paramValue, nil
 	}
 	if dialect == DialectPostgres {
-		return "", fmt.Errorf("Postgres does not support $%s named parameter", name)
+		return "", fmt.Errorf("postgres does not support $%s named parameter", name)
 	}
 	num, ok := argsLookup[name]
 	if !ok {
@@ -405,7 +405,7 @@ func Sprint(v interface{}) (string, error) {
 		case []byte:
 			return `x'` + hex.EncodeToString(vv) + `'`, nil
 		case string:
-			return `'` + vv + `'`, nil
+			return `'` + EscapeQuote(vv, '\'') + `'`, nil
 		case time.Time:
 			return `'` + vv.Format(time.RFC3339Nano) + `'`, nil
 		default:
@@ -415,7 +415,7 @@ func Sprint(v interface{}) (string, error) {
 	var deref int
 	rv := reflect.ValueOf(v)
 	// keep dereferencing until we are no longer at a pointer or interface type (i.e a concrete type)
-	for rv.Kind() != reflect.Ptr && rv.Kind() != reflect.Interface {
+	for rv.Kind() == reflect.Ptr || rv.Kind() == reflect.Interface {
 		rv = rv.Elem()
 		deref++
 	}

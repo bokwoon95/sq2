@@ -6,80 +6,6 @@ import (
 	"strings"
 )
 
-type SubqueryField struct {
-	stickyErr  error
-	fieldNames []string
-	fieldCache map[string]int
-	info       FieldInfo
-}
-
-var _ Field = SubqueryField{}
-
-func (f SubqueryField) GetAlias() string { return f.info.FieldAlias }
-
-func (f SubqueryField) GetName() string { return f.info.FieldName }
-
-func (f SubqueryField) AppendSQLExclude(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int, excludedTableQualifiers []string) error {
-	if f.info.TableAlias == "" && (dialect == DialectPostgres || dialect == DialectMySQL) {
-		return fmt.Errorf("subquery field %s invalid because %s subquery needs an alias", f.info.FieldName, dialect)
-	}
-	if _, ok := f.fieldCache[f.info.FieldName]; !ok {
-		if f.stickyErr != nil {
-			return fmt.Errorf("subquery field %s.%s invalid due to Subquery error: %w", f.info.TableAlias, f.info.FieldName, f.stickyErr)
-		} else {
-			return fmt.Errorf("subquery field %s.%s does not exist (available fields: %s)", f.info.TableAlias, f.info.FieldName, strings.Join(f.fieldNames, ", "))
-		}
-	}
-	return f.info.AppendSQLExclude(dialect, buf, args, params, excludedTableQualifiers)
-}
-
-func (f SubqueryField) As(alias string) SubqueryField {
-	f.info.FieldAlias = alias
-	return f
-}
-
-func (f SubqueryField) Asc() SubqueryField {
-	f.info.Descending.Valid = true
-	f.info.Descending.Bool = false
-	return f
-}
-
-func (f SubqueryField) Desc() SubqueryField {
-	f.info.Descending.Valid = true
-	f.info.Descending.Bool = true
-	return f
-}
-
-func (f SubqueryField) NullsLast() SubqueryField {
-	f.info.NullsFirst.Valid = true
-	f.info.NullsFirst.Bool = false
-	return f
-}
-
-func (f SubqueryField) NullsFirst() SubqueryField {
-	f.info.NullsFirst.Valid = true
-	f.info.NullsFirst.Bool = true
-	return f
-}
-
-func (f SubqueryField) IsNull() Predicate { return IsNull(f) }
-
-func (f SubqueryField) IsNotNull() Predicate { return IsNotNull(f) }
-
-func (f SubqueryField) In(v interface{}) Predicate { return In(f, v) }
-
-func (f SubqueryField) Eq(v interface{}) Predicate { return Eq(f, v) }
-
-func (f SubqueryField) Ne(v interface{}) Predicate { return Ne(f, v) }
-
-func (f SubqueryField) Gt(v interface{}) Predicate { return Gt(f, v) }
-
-func (f SubqueryField) Ge(v interface{}) Predicate { return Ge(f, v) }
-
-func (f SubqueryField) Lt(v interface{}) Predicate { return Lt(f, v) }
-
-func (f SubqueryField) Le(v interface{}) Predicate { return Le(f, v) }
-
 type Subquery struct {
 	query          Query
 	stickyErr      error
@@ -158,3 +84,77 @@ func (q Subquery) Field(fieldName string) SubqueryField {
 		},
 	}
 }
+
+type SubqueryField struct {
+	stickyErr  error
+	fieldNames []string
+	fieldCache map[string]int
+	info       FieldInfo
+}
+
+var _ Field = SubqueryField{}
+
+func (f SubqueryField) GetAlias() string { return f.info.FieldAlias }
+
+func (f SubqueryField) GetName() string { return f.info.FieldName }
+
+func (f SubqueryField) AppendSQLExclude(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int, excludedTableQualifiers []string) error {
+	if f.info.TableAlias == "" && (dialect == DialectPostgres || dialect == DialectMySQL) {
+		return fmt.Errorf("subquery field %s invalid because %s subquery needs an alias", f.info.FieldName, dialect)
+	}
+	if _, ok := f.fieldCache[f.info.FieldName]; !ok {
+		if f.stickyErr != nil {
+			return fmt.Errorf("subquery field %s.%s invalid due to Subquery error: %w", f.info.TableAlias, f.info.FieldName, f.stickyErr)
+		} else {
+			return fmt.Errorf("subquery field %s.%s does not exist (available fields: %s)", f.info.TableAlias, f.info.FieldName, strings.Join(f.fieldNames, ", "))
+		}
+	}
+	return f.info.AppendSQLExclude(dialect, buf, args, params, excludedTableQualifiers)
+}
+
+func (f SubqueryField) As(alias string) SubqueryField {
+	f.info.FieldAlias = alias
+	return f
+}
+
+func (f SubqueryField) Asc() SubqueryField {
+	f.info.Descending.Valid = true
+	f.info.Descending.Bool = false
+	return f
+}
+
+func (f SubqueryField) Desc() SubqueryField {
+	f.info.Descending.Valid = true
+	f.info.Descending.Bool = true
+	return f
+}
+
+func (f SubqueryField) NullsLast() SubqueryField {
+	f.info.NullsFirst.Valid = true
+	f.info.NullsFirst.Bool = false
+	return f
+}
+
+func (f SubqueryField) NullsFirst() SubqueryField {
+	f.info.NullsFirst.Valid = true
+	f.info.NullsFirst.Bool = true
+	return f
+}
+
+func (f SubqueryField) IsNull() Predicate { return IsNull(f) }
+
+func (f SubqueryField) IsNotNull() Predicate { return IsNotNull(f) }
+
+func (f SubqueryField) In(v interface{}) Predicate { return In(f, v) }
+
+func (f SubqueryField) Eq(v interface{}) Predicate { return Eq(f, v) }
+
+func (f SubqueryField) Ne(v interface{}) Predicate { return Ne(f, v) }
+
+func (f SubqueryField) Gt(v interface{}) Predicate { return Gt(f, v) }
+
+func (f SubqueryField) Ge(v interface{}) Predicate { return Ge(f, v) }
+
+func (f SubqueryField) Lt(v interface{}) Predicate { return Lt(f, v) }
+
+func (f SubqueryField) Le(v interface{}) Predicate { return Le(f, v) }

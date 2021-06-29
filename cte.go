@@ -6,81 +6,6 @@ import (
 	"strings"
 )
 
-type CTEField struct {
-	stickyErr  error
-	fieldNames []string
-	fieldCache map[string]int
-	info       FieldInfo
-}
-
-var _ Field = CTEField{}
-
-func (f CTEField) GetAlias() string { return f.info.FieldAlias }
-
-func (f CTEField) GetName() string { return f.info.FieldName }
-
-func (f CTEField) AppendSQLExclude(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int, excludedTableQualifiers []string) error {
-	if _, ok := f.fieldCache[f.info.FieldName]; !ok {
-		tableQualifier := f.info.TableName
-		if f.info.TableAlias != "" {
-			tableQualifier = f.info.TableAlias
-		}
-		if f.stickyErr != nil {
-			return fmt.Errorf("CTE field %s.%s invalid due to CTE error: %w", tableQualifier, f.info.FieldName, f.stickyErr)
-		} else {
-			return fmt.Errorf("CTE field %s.%s does not exist (available fields: %s)", tableQualifier, f.info.FieldName, strings.Join(f.fieldNames, ", "))
-		}
-	}
-	return f.info.AppendSQLExclude(dialect, buf, args, params, excludedTableQualifiers)
-}
-
-func (f CTEField) As(alias string) CTEField {
-	f.info.FieldAlias = alias
-	return f
-}
-
-func (f CTEField) Asc() CTEField {
-	f.info.Descending.Valid = true
-	f.info.Descending.Bool = false
-	return f
-}
-
-func (f CTEField) Desc() CTEField {
-	f.info.Descending.Valid = true
-	f.info.Descending.Bool = true
-	return f
-}
-
-func (f CTEField) NullsLast() CTEField {
-	f.info.NullsFirst.Valid = true
-	f.info.NullsFirst.Bool = false
-	return f
-}
-
-func (f CTEField) NullsFirst() CTEField {
-	f.info.NullsFirst.Valid = true
-	f.info.NullsFirst.Bool = true
-	return f
-}
-
-func (f CTEField) IsNull() Predicate { return IsNull(f) }
-
-func (f CTEField) IsNotNull() Predicate { return IsNotNull(f) }
-
-func (f CTEField) In(v interface{}) Predicate { return In(f, v) }
-
-func (f CTEField) Eq(v interface{}) Predicate { return Eq(f, v) }
-
-func (f CTEField) Ne(v interface{}) Predicate { return Ne(f, v) }
-
-func (f CTEField) Gt(v interface{}) Predicate { return Gt(f, v) }
-
-func (f CTEField) Ge(v interface{}) Predicate { return Ge(f, v) }
-
-func (f CTEField) Lt(v interface{}) Predicate { return Lt(f, v) }
-
-func (f CTEField) Le(v interface{}) Predicate { return Le(f, v) }
-
 type CTE struct {
 	query          Query
 	stickyErr      error
@@ -247,3 +172,78 @@ func (ctes CTEs) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{
 	buf.WriteString(" ")
 	return nil
 }
+
+type CTEField struct {
+	stickyErr  error
+	fieldNames []string
+	fieldCache map[string]int
+	info       FieldInfo
+}
+
+var _ Field = CTEField{}
+
+func (f CTEField) GetAlias() string { return f.info.FieldAlias }
+
+func (f CTEField) GetName() string { return f.info.FieldName }
+
+func (f CTEField) AppendSQLExclude(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int, excludedTableQualifiers []string) error {
+	if _, ok := f.fieldCache[f.info.FieldName]; !ok {
+		tableQualifier := f.info.TableName
+		if f.info.TableAlias != "" {
+			tableQualifier = f.info.TableAlias
+		}
+		if f.stickyErr != nil {
+			return fmt.Errorf("CTE field %s.%s invalid due to CTE error: %w", tableQualifier, f.info.FieldName, f.stickyErr)
+		} else {
+			return fmt.Errorf("CTE field %s.%s does not exist (available fields: %s)", tableQualifier, f.info.FieldName, strings.Join(f.fieldNames, ", "))
+		}
+	}
+	return f.info.AppendSQLExclude(dialect, buf, args, params, excludedTableQualifiers)
+}
+
+func (f CTEField) As(alias string) CTEField {
+	f.info.FieldAlias = alias
+	return f
+}
+
+func (f CTEField) Asc() CTEField {
+	f.info.Descending.Valid = true
+	f.info.Descending.Bool = false
+	return f
+}
+
+func (f CTEField) Desc() CTEField {
+	f.info.Descending.Valid = true
+	f.info.Descending.Bool = true
+	return f
+}
+
+func (f CTEField) NullsLast() CTEField {
+	f.info.NullsFirst.Valid = true
+	f.info.NullsFirst.Bool = false
+	return f
+}
+
+func (f CTEField) NullsFirst() CTEField {
+	f.info.NullsFirst.Valid = true
+	f.info.NullsFirst.Bool = true
+	return f
+}
+
+func (f CTEField) IsNull() Predicate { return IsNull(f) }
+
+func (f CTEField) IsNotNull() Predicate { return IsNotNull(f) }
+
+func (f CTEField) In(v interface{}) Predicate { return In(f, v) }
+
+func (f CTEField) Eq(v interface{}) Predicate { return Eq(f, v) }
+
+func (f CTEField) Ne(v interface{}) Predicate { return Ne(f, v) }
+
+func (f CTEField) Gt(v interface{}) Predicate { return Gt(f, v) }
+
+func (f CTEField) Ge(v interface{}) Predicate { return Ge(f, v) }
+
+func (f CTEField) Lt(v interface{}) Predicate { return Lt(f, v) }
+
+func (f CTEField) Le(v interface{}) Predicate { return Le(f, v) }
