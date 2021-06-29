@@ -1,6 +1,7 @@
 package sq
 
 import (
+	"errors"
 	"testing"
 )
 
@@ -89,6 +90,26 @@ func TestSubquery(t *testing.T) {
 		_, _, _, err := ToSQL("", tt.item)
 		if err == nil {
 			t.Fatal(Callers(), "expected error but got nil")
+		}
+	})
+
+	t.Run("subquery query field no name", func(t *testing.T) {
+		t.Parallel()
+		var tt TT
+		tt.item = SQLite.From(NewSubquery("subquery", SQLite.Select(Value(1)))).Select(FieldLiteral("*"))
+		_, _, _, err := ToSQL("", tt.item)
+		if err == nil {
+			t.Fatal(Callers(), "expected error but got nil")
+		}
+	})
+
+	t.Run("subquery qeury faulty sql", func(t *testing.T) {
+		t.Parallel()
+		var tt TT
+		tt.item = SQLite.From(NewSubquery("subquery", FaultySQL{})).Select(FieldLiteral("*"))
+		_, _, _, err := ToSQL("", tt.item)
+		if !errors.Is(err, ErrFaultySQL) {
+			t.Errorf(Callers()+" expected ErrFaultySQL but got %#v", err)
 		}
 	})
 
