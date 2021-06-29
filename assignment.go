@@ -1,6 +1,9 @@
 package sq
 
-import "bytes"
+import (
+	"bytes"
+	"fmt"
+)
 
 type Assignment struct {
 	LHS interface{}
@@ -48,7 +51,7 @@ func (as Assignments) AppendSQLExclude(dialect string, buf *bytes.Buffer, args *
 		}
 		err = a.AppendSQLExclude(dialect, buf, args, params, excludedTableQualifiers)
 		if err != nil {
-			return err
+			return fmt.Errorf("assignment #%d: %w", i+1, err)
 		}
 	}
 	return nil

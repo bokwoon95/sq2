@@ -1,6 +1,9 @@
 package sq
 
-import "bytes"
+import (
+	"bytes"
+	"fmt"
+)
 
 type RowValue []interface{}
 
@@ -13,7 +16,7 @@ func (r RowValue) AppendSQLExclude(dialect string, buf *bytes.Buffer, args *[]in
 		}
 		err = BufferPrintValue(dialect, buf, args, params, excludedTableQualifiers, value, "")
 		if err != nil {
-			return err
+			return fmt.Errorf("rowvalue #%d: %w", i+1, err)
 		}
 	}
 	buf.WriteString(")")
@@ -40,7 +43,7 @@ func (rs RowValues) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interfa
 		}
 		err = r.AppendSQL(dialect, buf, args, params)
 		if err != nil {
-			return err
+			return fmt.Errorf("rowvalues #%d: %w", i+1, err)
 		}
 	}
 	return nil

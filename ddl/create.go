@@ -37,7 +37,7 @@ func CreateTable(dialect string, tbl Table) (string, error) {
 	}
 	buf.WriteString(" (")
 	var columnWritten bool
-	for _, column := range tbl.Columns {
+	for i, column := range tbl.Columns {
 		if column.Ignore {
 			continue
 		}
@@ -52,7 +52,7 @@ func CreateTable(dialect string, tbl Table) (string, error) {
 		}
 		err := createColumn(dialect, buf, column)
 		if err != nil {
-			return buf.String(), err
+			return buf.String(), fmt.Errorf("column #%d: %w", i+1, err)
 		}
 	}
 	if len(tbl.VirtualTableArgs) > 0 && tbl.VirtualTable == "" {
@@ -70,7 +70,7 @@ func CreateTable(dialect string, tbl Table) (string, error) {
 		}
 	}
 	var newlineWritten bool
-	for _, constraint := range tbl.Constraints {
+	for i, constraint := range tbl.Constraints {
 		if dialect == sq.DialectSQLite && constraint.ConstraintType == PRIMARY_KEY && len(constraint.Columns) == 1 {
 			continue
 		}
@@ -84,7 +84,7 @@ func CreateTable(dialect string, tbl Table) (string, error) {
 		buf.WriteString("\n    ,CONSTRAINT ")
 		err := createConstraint(dialect, buf, constraint)
 		if err != nil {
-			return buf.String(), err
+			return buf.String(), fmt.Errorf("constraint #%d: %w", i+1, err)
 		}
 	}
 	buf.WriteString("\n);")
