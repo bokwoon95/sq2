@@ -64,12 +64,12 @@ func (vq VariadicQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]int
 			q.TopLevel = false
 			err = q.AppendSQL(dialect, buf, args, params)
 			if err != nil {
-				return err
+				return fmt.Errorf("VariadicQuery query #%d: %w", i+1, err)
 			}
 		default:
 			err = q.AppendSQL(dialect, buf, args, params)
 			if err != nil {
-				return err
+				return fmt.Errorf("VariadicQuery query #%d: %w", i+1, err)
 			}
 		}
 	}

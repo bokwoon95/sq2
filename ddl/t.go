@@ -476,7 +476,7 @@ func getColumnNamesAndExprs(dialect, tableName string, fields []sq.Field) (colum
 				var err error
 				expr, err = appendSQLExclude(dialect, tableName, field)
 				if err != nil {
-					return nil, nil, err
+					return nil, nil, fmt.Errorf("field #%d, :%w", i+1, err)
 				}
 				expr = "(" + expr + ")"
 			}

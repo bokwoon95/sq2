@@ -2,6 +2,7 @@ package sq
 
 import (
 	"bytes"
+	"fmt"
 )
 
 type CustomField struct {
@@ -143,12 +144,12 @@ func (fs Fields) AppendSQLExclude(dialect string, buf *bytes.Buffer, args *[]int
 		if field == nil {
 			err = BufferPrintValue(dialect, buf, args, params, excludedTableQualifiers, nil, "")
 			if err != nil {
-				return err
+				return fmt.Errorf("field #%d: %w", i+1, err)
 			}
 		} else {
 			err = field.AppendSQLExclude(dialect, buf, args, params, excludedTableQualifiers)
 			if err != nil {
-				return err
+				return fmt.Errorf("field #%d: %w", i+1, err)
 			}
 		}
 	}
@@ -164,19 +165,15 @@ func (fs AliasFields) AppendSQLExclude(dialect string, buf *bytes.Buffer, args *
 		if i > 0 {
 			buf.WriteString(", ")
 		}
-		// TODO: Fields and AliasFields and anything that loops over
-		// SQLAppenders or SQLExcludeAppenders should mention the numerical
-		// index of the SQLAppender that returned an error. Use fmt.Errorf to
-		// embed the underlying error.
 		if f == nil {
 			err = BufferPrintValue(dialect, buf, args, params, excludedTableQualifiers, nil, "")
 			if err != nil {
-				return err
+				return fmt.Errorf("field #%d: %w", i+1, err)
 			}
 		} else {
 			err = f.AppendSQLExclude(dialect, buf, args, params, excludedTableQualifiers)
 			if err != nil {
-				return err
+				return fmt.Errorf("field #%d: %w", i+1, err)
 			}
 			if alias = f.GetAlias(); alias != "" {
 				buf.WriteString(" AS " + QuoteIdentifier(dialect, alias))

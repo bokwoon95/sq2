@@ -118,7 +118,7 @@ func (joins JoinTables) AppendSQL(dialect string, buf *bytes.Buffer, args *[]int
 		}
 		err = join.AppendSQL(dialect, buf, args, params)
 		if err != nil {
-			return err
+			return fmt.Errorf("join #%d: %w", i+1, err)
 		}
 	}
 	return nil
