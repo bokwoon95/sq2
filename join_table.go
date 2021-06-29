@@ -16,42 +16,42 @@ const (
 )
 
 type JoinTable struct {
-	JoinType     JoinType
-	Table        Table
-	OnPredicates VariadicPredicate
+	JoinType    JoinType
+	Table       Table
+	OnPredicate VariadicPredicate
 }
 
 var _ SQLAppender = JoinTable{}
 
 func Join(table Table, predicates ...Predicate) JoinTable {
 	return JoinTable{
-		JoinType:     JoinTypeInner,
-		Table:        table,
-		OnPredicates: And(predicates...),
+		JoinType:    JoinTypeInner,
+		Table:       table,
+		OnPredicate: And(predicates...),
 	}
 }
 
 func LeftJoin(table Table, predicates ...Predicate) JoinTable {
 	return JoinTable{
-		JoinType:     JoinTypeLeft,
-		Table:        table,
-		OnPredicates: And(predicates...),
+		JoinType:    JoinTypeLeft,
+		Table:       table,
+		OnPredicate: And(predicates...),
 	}
 }
 
 func RightJoin(table Table, predicates ...Predicate) JoinTable {
 	return JoinTable{
-		JoinType:     JoinTypeRight,
-		Table:        table,
-		OnPredicates: And(predicates...),
+		JoinType:    JoinTypeRight,
+		Table:       table,
+		OnPredicate: And(predicates...),
 	}
 }
 
 func FullJoin(table Table, predicates ...Predicate) JoinTable {
 	return JoinTable{
-		JoinType:     JoinTypeFull,
-		Table:        table,
-		OnPredicates: And(predicates...),
+		JoinType:    JoinTypeFull,
+		Table:       table,
+		OnPredicate: And(predicates...),
 	}
 }
 
@@ -64,9 +64,9 @@ func CrossJoin(table Table) JoinTable {
 
 func CustomJoin(joinType JoinType, table Table, predicates ...Predicate) JoinTable {
 	return JoinTable{
-		JoinType:     joinType,
-		Table:        table,
-		OnPredicates: And(predicates...),
+		JoinType:    joinType,
+		Table:       table,
+		OnPredicate: And(predicates...),
 	}
 }
 
@@ -74,7 +74,7 @@ func (join JoinTable) AppendSQL(dialect string, buf *bytes.Buffer, args *[]inter
 	if join.JoinType == "" {
 		join.JoinType = JoinTypeInner
 	}
-	if len(join.OnPredicates.Predicates) == 0 &&
+	if len(join.OnPredicate.Predicates) == 0 &&
 		(join.JoinType == JoinTypeInner ||
 			join.JoinType == JoinTypeRight ||
 			join.JoinType == JoinTypeFull) {
@@ -95,10 +95,10 @@ func (join JoinTable) AppendSQL(dialect string, buf *bytes.Buffer, args *[]inter
 		buf.WriteString(" AS ")
 		buf.WriteString(QuoteIdentifier(dialect, tableAlias))
 	}
-	if len(join.OnPredicates.Predicates) > 0 {
+	if len(join.OnPredicate.Predicates) > 0 {
 		buf.WriteString(" ON ")
-		join.OnPredicates.Toplevel = true
-		err = join.OnPredicates.AppendSQLExclude(dialect, buf, args, params, nil)
+		join.OnPredicate.Toplevel = true
+		err = join.OnPredicate.AppendSQLExclude(dialect, buf, args, params, nil)
 		if err != nil {
 			return err
 		}
