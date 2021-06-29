@@ -1362,6 +1362,8 @@ func (_ ACTOR_INFO) View(dialect string) (sq.Query, error) {
 	FILM_ACTOR := NEW_FILM_ACTOR(dialect, "fa")
 	FILM_CATEGORY := NEW_FILM_CATEGORY(dialect, "fc")
 	CATEGORY := NEW_CATEGORY(dialect, "c")
+	// TODO: object_agg and array_agg can be refactored into Go functions that
+	// take in their necessary arguments and return an sq.Field.
 	var object_agg, array_agg string
 	switch dialect {
 	case sq.DialectSQLite:
