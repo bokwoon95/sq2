@@ -33,7 +33,7 @@ func (q DeleteQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interf
 	if len(q.CTEs) > 0 {
 		err = q.CTEs.AppendSQL(dialect, buf, args, params)
 		if err != nil {
-			return err
+			return fmt.Errorf("WITH: %w", err)
 		}
 	}
 	// DELETE FROM
@@ -59,7 +59,7 @@ func (q DeleteQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interf
 		}
 		err = fromTable.AppendSQL(dialect, buf, args, params)
 		if err != nil {
-			return err
+			return fmt.Errorf("DELETE FROM: %w", err)
 		}
 		if alias := fromTable.GetAlias(); alias != "" {
 			buf.WriteString(" AS " + QuoteIdentifier(dialect, alias))
@@ -73,7 +73,7 @@ func (q DeleteQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interf
 		buf.WriteString(" USING ")
 		err = q.UsingTable.AppendSQL(dialect, buf, args, params)
 		if err != nil {
-			return err
+			return fmt.Errorf("USING: %w", err)
 		}
 		if alias := q.UsingTable.GetAlias(); alias != "" {
 			buf.WriteString(" AS " + QuoteIdentifier(dialect, alias))
@@ -90,7 +90,7 @@ func (q DeleteQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interf
 		buf.WriteString(" ")
 		err = q.JoinTables.AppendSQL(dialect, buf, args, params)
 		if err != nil {
-			return err
+			return fmt.Errorf("JOIN: %w", err)
 		}
 	}
 	// WHERE
@@ -99,7 +99,7 @@ func (q DeleteQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interf
 		q.WherePredicate.Toplevel = true
 		err = q.WherePredicate.AppendSQLExclude(dialect, buf, args, params, nil)
 		if err != nil {
-			return err
+			return fmt.Errorf("WHERE: %w", err)
 		}
 	}
 	// ORDER BY
@@ -113,7 +113,7 @@ func (q DeleteQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interf
 		buf.WriteString(" ORDER BY ")
 		err = q.OrderByFields.AppendSQLExclude(dialect, buf, args, params, nil)
 		if err != nil {
-			return err
+			return fmt.Errorf("ORDER BY: %w", err)
 		}
 	}
 	// LIMIT
@@ -126,7 +126,7 @@ func (q DeleteQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interf
 		}
 		err = BufferPrintf(dialect, buf, args, params, nil, " LIMIT {}", []interface{}{q.RowLimit.Int64})
 		if err != nil {
-			return err
+			return fmt.Errorf("LIMIT: %w", err)
 		}
 	}
 	// RETURNING
@@ -137,7 +137,7 @@ func (q DeleteQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interf
 		buf.WriteString(" RETURNING ")
 		err = q.ReturningFields.AppendSQLExclude(dialect, buf, args, params, nil)
 		if err != nil {
-			return err
+			return fmt.Errorf("RETURNING: %w", err)
 		}
 	}
 	return nil
