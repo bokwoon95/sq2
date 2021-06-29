@@ -26,17 +26,19 @@ services:
       MYSQL_PASSWORD: 'mysql'
       MYSQL_DATABASE: 'db'
 
-  # mssql:
-  #   container_name: 'sq_mssql'
-  #   image: 'mcr.microsoft.com/mssql/server:2019-latest'
-  #   ports:
-  #     - '1440:1433'
-  #   volumes:
-  #     - 'mssql_data:/var/opt/mssql/data'
-  #   environment:
-  #     ACCEPT_EULA: 'Y'
-  #     SA_PASSWORD: 'mssql-ABC10'
-  #
+  mssql:
+    container_name: 'sq_mssql'
+    image: 'mcr.microsoft.com/mssql/server:2019-latest'
+    ports:
+      - '1440:1433'
+    volumes:
+      - 'mssql_data:/var/opt/mssql/data'
+    environment:
+      ACCEPT_EULA: 'Y'
+      # SA_PASSWORD: 'mssql-ABC10'
+      SA_PASSWORD: 'r00t.R00T'
+  # docker run -it -e 'ACCEPT_EULA=Y' -e 'MSSQL_SA_PASSWORD=r00t.R00T' -p 1401:1433 --name sqlserver1 microsoft/mssql-server-linux:2017-latest
+
   # postgres_9_5:
   #   container_name: "sq_postgres_9_5"
   #   image: 'postgres:9.5'
@@ -66,6 +68,6 @@ services:
 volumes:
   postgres_data:
   mysql_data:
-  # mssql_data:
+  mssql_data:
   # postgres_data_9_5:
   # mysql_data_5_7:
