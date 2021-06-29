@@ -21,7 +21,7 @@ type DeleteQuery struct {
 	OrderByFields Fields
 	// LIMIT
 	RowLimit sql.NullInt64
-	// LIMIT
+	// OFFSET
 	RowOffset sql.NullInt64
 	// RETURNING
 	ReturningFields AliasFields
