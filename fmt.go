@@ -31,10 +31,10 @@ func BufferPrintf(dialect string, buf *bytes.Buffer, args *[]interface{}, params
 	}
 	var ordinalNames []string
 	for i := strings.IndexByte(format, '{'); i >= 0; i = strings.IndexByte(format, '{') {
-		if i > 0 && format[i-1] == '\\' {
-			buf.WriteString(format[:i-1])
+		if i+2 <= len(format) && format[i:i+2] == "{{" {
+			buf.WriteString(format[:i])
 			buf.WriteByte('{')
-			format = format[i+1:]
+			format = format[i+2:]
 			continue
 		}
 		buf.WriteString(format[:i])

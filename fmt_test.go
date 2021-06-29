@@ -67,7 +67,7 @@ func Test_Fprintf(t *testing.T) {
 	t.Run("escape curly bracket", func(t *testing.T) {
 		t.Parallel()
 		var tt TT
-		tt.format = "SELECT {} = '\\{}'"
+		tt.format = "SELECT {} = '{{}'"
 		tt.values = []interface{}{"{}"}
 		tt.wantQuery = "SELECT ? = '{}'"
 		tt.wantArgs = []interface{}{"{}"}
