@@ -172,8 +172,23 @@ func Sprintf(dialect string, query string, args []interface{}) (string, error) {
 			buf.WriteRune(char)
 			continue
 		}
-		if char == '"' && !insideString {
+		if char == '"' && !insideString && dialect != DialectSQLServer {
 			insideIdentifier = !insideIdentifier
+			buf.WriteRune(char)
+			continue
+		}
+		if char == '`' && !insideString && dialect == DialectMySQL {
+			insideIdentifier = !insideIdentifier
+			buf.WriteRune(char)
+			continue
+		}
+		if char == '[' && !insideString && dialect == DialectSQLServer {
+			insideIdentifier = true
+			buf.WriteRune(char)
+			continue
+		}
+		if char == ']' && insideIdentifier {
+			insideIdentifier = false
 			buf.WriteRune(char)
 			continue
 		}
@@ -242,23 +257,6 @@ func Sprintf(dialect string, query string, args []interface{}) (string, error) {
 }
 
 func lookupParam(dialect string, args []interface{}, paramName []rune, namedArgsLookup map[string]int, runningArgsIndex int) (paramValue string, err error) {
-	// if paramName[0] == '@' && dialect == DialectSQLServer {
-	// 	if len(paramName) > 2 && paramName[1] == 'p' || paramName[1] == 'P' {
-	// 		num, err := strconv.Atoi(string(paramName[2:]))
-	// 		if err == nil {
-	// 			num--
-	// 			if num < 0 || num >= len(args) {
-	// 				return "", fmt.Errorf("args index %d out of bounds", num)
-	// 			}
-	// 			paramValue, err = Sprint(args[num])
-	// 			if err != nil {
-	// 				return "", err
-	// 			}
-	// 			return paramValue, nil
-	// 		}
-	// 	}
-	// 	// TODO: implement MSSQL support
-	// }
 	var maybeNum string
 	if paramName[0] == '@' && dialect == DialectSQLServer && len(paramName) > 2 && (paramName[1] == 'p' || paramName[1] == 'P') {
 		maybeNum = string(paramName[2:])
@@ -275,10 +273,10 @@ func lookupParam(dialect string, args []interface{}, paramName []rune, namedArgs
 		}
 		return paramValue, nil
 	}
-	// attempt to parse name as an integer
+	// attempt to parse paramName as an ordinal parameter
 	num, err := strconv.Atoi(maybeNum)
 	if err == nil {
-		num-- // decrement because ordinal numbers always lead the index by 1 (e.g. $1 corresponds to index 0)
+		num-- // decrement because ordinal parameters always lead the index by 1 (e.g. $1 corresponds to index 0)
 		if num < 0 || num >= len(args) {
 			return "", fmt.Errorf("args index %d out of bounds", num)
 		}
@@ -288,13 +286,13 @@ func lookupParam(dialect string, args []interface{}, paramName []rune, namedArgs
 		}
 		return paramValue, nil
 	}
-	// if we reach here, we know name is not an integer
+	// if we reach here, we know that paramName is not an ordinal parameter
 	if dialect == DialectPostgres || dialect == DialectMySQL {
 		return "", fmt.Errorf("%s does not support %s named parameter", dialect, string(paramName))
 	}
 	num, ok := namedArgsLookup[string(paramName[1:])]
 	if !ok {
-		return "", fmt.Errorf("named parameter $%s not provided", maybeNum)
+		return "", fmt.Errorf("named parameter %s not provided", string(paramName))
 	}
 	if num < 0 || num >= len(args) {
 		return "", fmt.Errorf("args index %d out of bounds", num)

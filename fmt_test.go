@@ -362,8 +362,8 @@ func Test_Sprintf(t *testing.T) {
 		var tt TT
 		tt.dialect = ""
 		tt.query = `SELECT ?` +
-			`, 'do not "rebind" ? ? ?'` + // string containing double quotes
-			`, "do not 'rebind' ? ? ?"` + // identifier containing single quotes
+			`, 'do not "rebind" ? ? ?'` + // sql string
+			`, "do not 'rebind' ? ? ?"` + // sql identifier
 			`, ?` +
 			`, ?`
 		tt.args = []interface{}{
@@ -466,6 +466,26 @@ func Test_Sprintf(t *testing.T) {
 		tt.query = "SELECT name FROM users WHERE age = ?age AND email <> :email AND name IN (@3, ?4, $5, :5) ? ?"
 		tt.args = []interface{}{sql.Named("age", 5), sql.Named("email", "bob@email.com"), "tom", "dick", "harry"}
 		tt.wantString = "SELECT name FROM users WHERE age = 5 AND email <> 'bob@email.com' AND name IN ('tom', 'dick', 'harry', 'harry') 5 'bob@email.com'"
+		assert(t, tt)
+	})
+
+	t.Run("sqlserver", func(t *testing.T) {
+		t.Parallel()
+		var tt TT
+		tt.dialect = DialectSQLServer
+		tt.query = "SELECT name FROM users WHERE age = @p1 AND email <> @P2 AND name IN (@p2, @p3, @p4, @P1)"
+		tt.args = []interface{}{5, "tom", "dick", "harry"}
+		tt.wantString = "SELECT name FROM users WHERE age = 5 AND email <> 'tom' AND name IN ('tom', 'dick', 'harry', 5)"
+		assert(t, tt)
+	})
+
+	t.Run("sqlserver insideString", func(t *testing.T) {
+		t.Parallel()
+		var tt TT
+		tt.dialect = DialectSQLServer
+		tt.query = "SELECT name FROM users WHERE age = @p1 AND email <> '@p2 @p2 @p3 @p4 ''bruh @p1' AND name IN (@p2, @p3) @p4"
+		tt.args = []interface{}{5, "tom", "dick", "harry"}
+		tt.wantString = "SELECT name FROM users WHERE age = 5 AND email <> '@p2 @p2 @p3 @p4 ''bruh @p1' AND name IN ('tom', 'dick') 'harry'"
 		assert(t, tt)
 	})
 }
