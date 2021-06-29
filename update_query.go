@@ -20,14 +20,14 @@ type UpdateQuery struct {
 	Assignments Assignments
 	// WHERE
 	WherePredicate VariadicPredicate
-	// RETURNING
-	ReturningFields AliasFields
 	// ORDER BY
 	OrderByFields Fields
 	// LIMIT
 	RowLimit sql.NullInt64
 	// OFFSET
 	RowOffset sql.NullInt64
+	// RETURNING
+	ReturningFields AliasFields
 }
 
 var _ Query = UpdateQuery{}
