@@ -170,7 +170,6 @@ func Sprintf(dialect string, query string, args []interface{}) (string, error) {
 	for i, char := range query {
 		if mustWriteCharAt == i {
 			buf.WriteRune(char)
-			mustWriteCharAt = -1
 			continue
 		}
 		if insideStringOrIdentifier {

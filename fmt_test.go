@@ -385,7 +385,8 @@ func Test_Sprintf(t *testing.T) {
 		tt.dialect = DialectMySQL
 		tt.query = `SELECT ?` +
 			`, 'do not "rebind" ? ? ?'` + // string
-			", `do not 'rebind' ? ? ?`" + // identifier
+			", `do not \" 'rebind' ? ? ?`" + // identifier
+			", \"do not ``` 'rebind' ? ? ?\"" + // identifier
 			`, ?` +
 			`, ?`
 		tt.args = []interface{}{
@@ -395,7 +396,8 @@ func Test_Sprintf(t *testing.T) {
 		}
 		tt.wantString = `SELECT 'normal string'` +
 			`, 'do not "rebind" ? ? ?'` +
-			", `do not 'rebind' ? ? ?`" +
+			", `do not \" 'rebind' ? ? ?`" +
+			", \"do not ``` 'rebind' ? ? ?\"" +
 			`, 'string with ''quotes'' must be escaped'` +
 			`, 'string with already escaped ''quotes'' except for ''this'''`
 		assert(t, tt)
@@ -407,7 +409,8 @@ func Test_Sprintf(t *testing.T) {
 		tt.dialect = DialectSQLServer
 		tt.query = `SELECT ?` +
 			`, 'do not [[rebind] @p1 @p2 @name'` + // string
-			", [do not 'rebind' [[[[[@pp]] @p3 @p1]" + // identifier
+			", [do not \" 'rebind' [[[[[@pp]] @p3 @p1]" + // identifier
+			", \"do not [[[ 'rebind' [[[[[@pp]] @p3 @p1\"" + // identifier
 			`, ?` +
 			`, ?`
 		tt.args = []interface{}{
@@ -417,7 +420,8 @@ func Test_Sprintf(t *testing.T) {
 		}
 		tt.wantString = `SELECT 'normal string'` +
 			`, 'do not [[rebind] @p1 @p2 @name'` +
-			", [do not 'rebind' [[[[[@pp]] @p3 @p1]" + // identifier
+			", [do not \" 'rebind' [[[[[@pp]] @p3 @p1]" +
+			", \"do not [[[ 'rebind' [[[[[@pp]] @p3 @p1\"" +
 			`, 'string with ''quotes'' must be escaped'` +
 			`, 'string with already escaped ''quotes'' except for ''this'''`
 		assert(t, tt)
