@@ -211,7 +211,7 @@ func fetchExistsContext(ctx context.Context, db Queryer, q Query, skip int) (exi
 		logQueryStats = db.LogQueryStats
 	}
 	stats.Dialect = q.GetDialect()
-	q, err = q.SetFetchableFields([]Field{FieldLiteral("1")})
+	q, err = q.SetFetchableFields([]Field{Literal("1")})
 	if err != nil {
 		return false, err
 	}

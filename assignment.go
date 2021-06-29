@@ -56,15 +56,15 @@ func (as Assignments) AppendSQLExclude(dialect string, buf *bytes.Buffer, args *
 
 func AssignExcluded(field Field) Assignment {
 	name := field.GetName()
-	return Assign(FieldLiteral(name), FieldLiteral("EXCLUDED."+name))
+	return Assign(Literal(name), Literal("EXCLUDED."+name))
 }
 
 func AssignAlias(field Field, alias string) Assignment {
 	name := field.GetName()
-	return Assign(FieldLiteral(name), FieldLiteral(alias+"."+name))
+	return Assign(Literal(name), Literal(alias+"."+name))
 }
 
 func AssignSelf(field Field) Assignment {
 	name := field.GetName()
-	return Assign(FieldLiteral(name), FieldLiteral(name))
+	return Assign(Literal(name), Literal(name))
 }

@@ -30,7 +30,7 @@ func (d SQLiteDialect) Select(fields ...Field) SQLiteSelectQuery {
 func (d SQLiteDialect) SelectOne() SQLiteSelectQuery {
 	var q SQLiteSelectQuery
 	q.Dialect = DialectSQLite
-	q.SelectFields = AliasFields{FieldLiteral("1")}
+	q.SelectFields = AliasFields{Literal("1")}
 	return q
 }
 
@@ -53,7 +53,7 @@ func (q SQLiteSelectQuery) Select(fields ...Field) SQLiteSelectQuery {
 }
 
 func (q SQLiteSelectQuery) SelectOne() SQLiteSelectQuery {
-	q.SelectFields = AliasFields{FieldLiteral("1")}
+	q.SelectFields = AliasFields{Literal("1")}
 	return q
 }
 

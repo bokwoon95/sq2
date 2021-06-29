@@ -1242,8 +1242,8 @@ func (tbl DUMMY_TABLE) DDL(dialect string, t *T) {
 			sq.Fieldf("{} || {}", tbl.COLOR, " abcd"),
 			sq.Fieldf("({}->>{})::INT", tbl.DATA, "age"),
 		).Where("{} = {}", tbl.COLOR, "red")
-		t.NameIndex("dummy_table_id2_idx", sq.FieldLiteral(`id2 COLLATE "C"`))
-		t.NameIndex("dummy_table_color_idx", sq.FieldLiteral("color text_pattern_ops"))
+		t.NameIndex("dummy_table_id2_idx", sq.Literal(`id2 COLLATE "C"`))
+		t.NameIndex("dummy_table_color_idx", sq.Literal("color text_pattern_ops"))
 	case sq.DialectMySQL:
 		t.Column(tbl.COLOR).Type("VARCHAR(50)").Collate("latin1_swedish_ci")
 		t.NameIndex(indexName,
@@ -1402,3 +1402,5 @@ func (_ ACTOR_INFO) View(dialect string) (sq.Query, error) {
 	}
 	return q, nil
 }
+
+// TODO: define the rest of the views, then make it work in ddl

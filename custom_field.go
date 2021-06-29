@@ -81,18 +81,30 @@ func (f CustomField) Lt(v interface{}) Predicate { return Lt(f, v) }
 
 func (f CustomField) Le(v interface{}) Predicate { return Le(f, v) }
 
-type FieldLiteral string
+type FieldLiteral struct {
+	literal string
+	alias   string
+}
 
-var _ Field = FieldLiteral("")
+var _ Field = FieldLiteral{}
 
 func (f FieldLiteral) AppendSQLExclude(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int, excludedTableQualifiers []string) error {
-	buf.WriteString(string(f))
+	buf.WriteString(f.literal)
 	return nil
 }
 
-func (f FieldLiteral) GetAlias() string { return "" }
+func (f FieldLiteral) GetAlias() string { return f.alias }
 
-func (f FieldLiteral) GetName() string { return string(f) }
+func (f FieldLiteral) GetName() string { return f.literal }
+
+func Literal(literal string) FieldLiteral {
+	return FieldLiteral{literal: literal}
+}
+
+func (f FieldLiteral) As(alias string) FieldLiteral {
+	f.alias = alias
+	return f
+}
 
 type FieldValue struct {
 	value interface{}
@@ -153,7 +165,10 @@ func (fs AliasFields) AppendSQLExclude(dialect string, buf *bytes.Buffer, args *
 			buf.WriteString(", ")
 		}
 		if f == nil {
-			BufferPrintValue(dialect, buf, args, params, excludedTableQualifiers, nil, "")
+			err = BufferPrintValue(dialect, buf, args, params, excludedTableQualifiers, nil, "")
+			if err != nil {
+				return err
+			}
 		} else {
 			err = f.AppendSQLExclude(dialect, buf, args, params, excludedTableQualifiers)
 			if err != nil {

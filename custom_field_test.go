@@ -183,7 +183,7 @@ func Test_CustomField(t *testing.T) {
 	t.Run("FieldLiteral", func(t *testing.T) {
 		t.Parallel()
 		var tt TT
-		tt.item = FieldLiteral("lorem ipsum dolor sit amet COUNT(*)")
+		tt.item = Literal("lorem ipsum dolor sit amet COUNT(*)")
 		tt.wantQuery = "lorem ipsum dolor sit amet COUNT(*)"
 		tt.wantArgs = []interface{}{}
 		assert(t, tt)
