@@ -110,7 +110,8 @@ func TestVariadicPredicate(t *testing.T) {
 				Le(USERS.USER_ID, 6),
 			)),
 		)
-		tt.wantQuery = "(name IS NULL" +
+		tt.wantQuery = "(" +
+			"name IS NULL" +
 			" OR name IS NOT NULL" +
 			" OR NOT age = age" +
 			" OR NOT age = age" +
