@@ -1519,3 +1519,141 @@ func (_ FILM_LIST) View(dialect string) (sq.Query, error) {
 	}
 	return q, nil
 }
+
+type NICER_BUT_SLOWER_FILM_LIST struct {
+	sq.TableInfo
+	FID         sq.NumberField
+	TITLE       sq.StringField
+	DESCRIPTION sq.StringField
+	CATEGORY    sq.StringField
+	PRICE       sq.NumberField
+	LENGTH      sq.NumberField
+	RATING      sq.StringField
+	ACTORS      sq.JSONField
+}
+
+func (_ NICER_BUT_SLOWER_FILM_LIST) View(dialect string) (sq.Query, error) {
+	CATEGORY := NEW_CATEGORY(dialect, "")
+	FILM_CATEGORY := NEW_FILM_CATEGORY(dialect, "")
+	FILM := NEW_FILM(dialect, "")
+	FILM_ACTOR := NEW_FILM_ACTOR(dialect, "")
+	ACTOR := NEW_ACTOR(dialect, "")
+	var q sq.SelectQuery
+	q.Dialect = dialect
+	q.FromTable = CATEGORY
+	q.JoinTables = sq.JoinTables{
+		sq.LeftJoin(FILM_CATEGORY, FILM_CATEGORY.CATEGORY_ID.Eq(CATEGORY.CATEGORY_ID)),
+		sq.LeftJoin(FILM, FILM.FILM_ID.Eq(FILM_CATEGORY.FILM_ID)),
+		sq.Join(FILM_ACTOR, FILM_ACTOR.FILM_ID.Eq(FILM.FILM_ID)),
+		sq.Join(ACTOR, ACTOR.ACTOR_ID.Eq(FILM_ACTOR.ACTOR_ID)),
+	}
+	q.GroupByFields = sq.Fields{
+		FILM.FILM_ID,
+		FILM.TITLE,
+		FILM.DESCRIPTION,
+		CATEGORY.NAME,
+		FILM.RENTAL_RATE,
+		FILM.LENGTH,
+		FILM.RATING,
+	}
+	nameExpr := "UPPER(SUBSTRING({1}, 1, 1))" +
+		" || LOWER(SUBSTRING({1}, 2))" +
+		" || ' '" +
+		" || UPPER(SUBSTRING({2}, 1, 1))" +
+		" || LOWER(SUBSTRING({2}, 2))"
+	q.SelectFields = sq.AliasFields{
+		FILM.FILM_ID.As("fid"),
+		FILM.TITLE,
+		FILM.DESCRIPTION,
+		CATEGORY.NAME.As("category"),
+		FILM.RENTAL_RATE.As("price"),
+		FILM.LENGTH,
+		FILM.RATING,
+		json_array_agg(dialect, sq.Fieldf(nameExpr, ACTOR.FIRST_NAME, ACTOR.LAST_NAME)),
+	}
+	return q, nil
+}
+
+type SALES_BY_FILM_CATEGORY struct {
+	sq.TableInfo
+	CATEGORY    sq.StringField
+	TOTAL_SALES sq.NumberField
+}
+
+func (_ SALES_BY_FILM_CATEGORY) View(dialect string) (sq.Query, error) {
+	PAYMENT := NEW_PAYMENT(dialect, "p")
+	RENTAL := NEW_RENTAL(dialect, "r")
+	INVENTORY := NEW_INVENTORY(dialect, "i")
+	FILM := NEW_FILM(dialect, "f")
+	FILM_CATEGORY := NEW_FILM_CATEGORY(dialect, "fc")
+	CATEGORY := NEW_CATEGORY(dialect, "c")
+	var q sq.SelectQuery
+	q.FromTable = PAYMENT
+	q.JoinTables = sq.JoinTables{
+		sq.Join(RENTAL, RENTAL.RENTAL_ID.Eq(PAYMENT.RENTAL_ID)),
+		sq.Join(INVENTORY, INVENTORY.INVENTORY_ID.Eq(RENTAL.INVENTORY_ID)),
+		sq.Join(FILM, FILM.FILM_ID.Eq(INVENTORY.FILM_ID)),
+		sq.Join(FILM_CATEGORY, FILM_CATEGORY.FILM_ID.Eq(FILM.FILM_ID)),
+		sq.Join(CATEGORY, CATEGORY.CATEGORY_ID.Eq(FILM_CATEGORY.CATEGORY_ID)),
+	}
+	q.GroupByFields = sq.Fields{CATEGORY.NAME}
+	q.OrderByFields = sq.Fields{sq.Fieldf("SUM({})", PAYMENT.AMOUNT).Desc()}
+	q.SelectFields = sq.AliasFields{
+		CATEGORY.NAME.As("category"),
+		sq.Fieldf("SUM({})", PAYMENT.AMOUNT).As("total_sales"),
+	}
+	return q, nil
+}
+
+type SALES_BY_STORE struct {
+	sq.TableInfo
+	STORE       sq.StringField
+	MANAGER     sq.StringField
+	TOTAL_SALES sq.NumberField
+}
+
+func (_ SALES_BY_STORE) View(dialect string) (sq.Query, error) {
+	PAYMENT := NEW_PAYMENT(dialect, "p")
+	RENTAL := NEW_RENTAL(dialect, "r")
+	INVENTORY := NEW_INVENTORY(dialect, "i")
+	STORE := NEW_STORE(dialect, "s")
+	ADDRESS := NEW_ADDRESS(dialect, "a")
+	CITY := NEW_CITY(dialect, "ci")
+	COUNTRY := NEW_COUNTRY(dialect, "co")
+	STAFF := NEW_STAFF(dialect, "m")
+	var q sq.SelectQuery
+	q.Dialect = dialect
+	q.FromTable = PAYMENT
+	q.JoinTables = sq.JoinTables{
+		sq.Join(RENTAL, RENTAL.RENTAL_ID.Eq(PAYMENT.RENTAL_ID)),
+		sq.Join(INVENTORY, INVENTORY.INVENTORY_ID.Eq(RENTAL.INVENTORY_ID)),
+		sq.Join(STORE, STORE.STORE_ID.Eq(INVENTORY.STORE_ID)),
+		sq.Join(ADDRESS, ADDRESS.ADDRESS_ID.Eq(STORE.ADDRESS_ID)),
+		sq.Join(CITY, CITY.CITY_ID.Eq(ADDRESS.CITY_ID)),
+		sq.Join(COUNTRY, COUNTRY.COUNTRY_ID.Eq(CITY.COUNTRY_ID)),
+		sq.Join(STAFF, STAFF.STAFF_ID.Eq(STORE.MANAGER_STAFF_ID)),
+	}
+	q.GroupByFields = sq.Fields{
+		COUNTRY.COUNTRY,
+		CITY.CITY,
+		STORE.STORE_ID,
+		STAFF.FIRST_NAME,
+		STAFF.LAST_NAME,
+	}
+	q.OrderByFields = sq.Fields{
+		COUNTRY.COUNTRY,
+		CITY.CITY,
+	}
+	storeExpr := "{} || ',' || {}"
+	managerExpr := "{} || ' ' || {}"
+	if dialect == sq.DialectMySQL {
+		storeExpr = "CONCAT({}, ',', {})"
+		managerExpr = "CONCAT({}, ' ', {})"
+	}
+	q.SelectFields = sq.AliasFields{
+		sq.Fieldf(storeExpr, CITY.CITY, COUNTRY.COUNTRY).As("store"),
+		sq.Fieldf(managerExpr, STAFF.FIRST_NAME, STAFF.LAST_NAME).As("manager"),
+		sq.Fieldf("SUM({})", PAYMENT.AMOUNT).As("total sales"),
+	}
+	return q, nil
+}
