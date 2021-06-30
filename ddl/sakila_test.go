@@ -1348,11 +1348,9 @@ ALTER TABLE db.dummy_table_2 ADD CONSTRAINT dummy_table_2_id1_id2_fkey FOREIGN K
 
 // TODO: define the rest of the views, then make it work in ddl
 
-func object_agg(dialect string, name, value interface{}) sq.CustomField {
-	nameParam := sq.Param("name", name)
-	valueParam := sq.Param("value", value)
+func json_object_agg(dialect string, name, value interface{}) sq.CustomField {
 	if query, ok := value.(sq.Query); ok {
-		valueParam.Value = sq.Fieldf("({})", query)
+		value = sq.Fieldf("({})", query)
 	}
 	// TODO: if dialect not recognized, CustomField's StickyError should be set
 	// instead. This will be -incredibly- useful for people who want to define
@@ -1360,25 +1358,24 @@ func object_agg(dialect string, name, value interface{}) sq.CustomField {
 	// I want to expose this API to the user?
 	switch dialect {
 	case sq.DialectSQLite:
-		return sq.Fieldf("json_group_object({name}, {value})", nameParam, valueParam)
+		return sq.Fieldf("json_group_object({}, {})", name, value)
 	case sq.DialectPostgres:
-		return sq.Fieldf("jsonb_object_agg({name}, {value})", nameParam, valueParam)
+		return sq.Fieldf("jsonb_object_agg({}, {})", name, value)
 	case sq.DialectMySQL:
-		return sq.Fieldf("jsonb_object_agg({name}, {value})", nameParam, valueParam)
+		return sq.Fieldf("json_objectagg({}, {})", name, value)
 	default:
 		return sq.Fieldf("%!(unrecognized dialect=" + dialect + ")")
 	}
 }
 
-func array_agg(dialect string, value interface{}) sq.CustomField {
-	valueParam := sq.Param("value", value)
+func json_array_agg(dialect string, value interface{}) sq.CustomField {
 	switch dialect {
 	case sq.DialectSQLite:
-		return sq.Fieldf("json_group_array({value})", valueParam)
+		return sq.Fieldf("json_group_array({})", value)
 	case sq.DialectPostgres:
-		return sq.Fieldf("jsonb_agg({value})", valueParam)
+		return sq.Fieldf("jsonb_agg({})", value)
 	case sq.DialectMySQL:
-		return sq.Fieldf("jsonb_arrayagg({value})", valueParam)
+		return sq.Fieldf("jsonb_arrayagg({})", value)
 	default:
 		return sq.Fieldf("%!(unrecognized dialect=" + dialect + ")")
 	}
@@ -1411,8 +1408,8 @@ func (_ ACTOR_INFO) View(dialect string) (sq.Query, error) {
 		ACTOR.ACTOR_ID,
 		ACTOR.FIRST_NAME,
 		ACTOR.LAST_NAME,
-		object_agg(dialect, CATEGORY.NAME, sq.SQLite.
-			Select(array_agg(dialect, FILM.TITLE)).
+		json_object_agg(dialect, CATEGORY.NAME, sq.SQLite.
+			Select(json_array_agg(dialect, FILM.TITLE)).
 			From(FILM).
 			Join(FILM_CATEGORY, FILM_CATEGORY.FILM_ID.Eq(FILM.FILM_ID)).
 			Join(FILM_ACTOR, FILM_ACTOR.FILM_ID.Eq(FILM.FILM_ID)).
@@ -1427,6 +1424,7 @@ func (_ ACTOR_INFO) View(dialect string) (sq.Query, error) {
 }
 
 type CUSTOMER_LIST struct {
+	sq.TableInfo
 	ID       sq.NumberField
 	NAME     sq.StringField
 	ADDRESS  sq.StringField
@@ -1465,6 +1463,59 @@ func (_ CUSTOMER_LIST) View(dialect string) (sq.Query, error) {
 		COUNTRY.COUNTRY,
 		sq.CaseWhen(CUSTOMER.ACTIVE, "active").Else(""),
 		CUSTOMER.STORE_ID.As("sid"),
+	}
+	return q, nil
+}
+
+type FILM_LIST struct {
+	sq.TableInfo
+	FID         sq.NumberField
+	TITLE       sq.StringField
+	DESCRIPTION sq.StringField
+	CATEGORY    sq.StringField
+	PRICE       sq.NumberField
+	LENGTH      sq.NumberField
+	RATING      sq.StringField
+	ACTORS      sq.JSONField
+}
+
+func (_ FILM_LIST) View(dialect string) (sq.Query, error) {
+	CATEGORY := NEW_CATEGORY(dialect, "")
+	FILM_CATEGORY := NEW_FILM_CATEGORY(dialect, "")
+	FILM := NEW_FILM(dialect, "")
+	FILM_ACTOR := NEW_FILM_ACTOR(dialect, "")
+	ACTOR := NEW_ACTOR(dialect, "")
+	var q sq.SelectQuery
+	q.Dialect = dialect
+	q.FromTable = CATEGORY
+	q.JoinTables = sq.JoinTables{
+		sq.LeftJoin(FILM_CATEGORY, FILM_CATEGORY.CATEGORY_ID.Eq(CATEGORY.CATEGORY_ID)),
+		sq.LeftJoin(FILM, FILM.FILM_ID.Eq(FILM_CATEGORY.FILM_ID)),
+		sq.Join(FILM_ACTOR, FILM_ACTOR.FILM_ID.Eq(FILM.FILM_ID)),
+		sq.Join(ACTOR, ACTOR.ACTOR_ID.Eq(FILM_ACTOR.ACTOR_ID)),
+	}
+	q.GroupByFields = sq.Fields{
+		FILM.FILM_ID,
+		FILM.TITLE,
+		FILM.DESCRIPTION,
+		CATEGORY.NAME,
+		FILM.RENTAL_RATE,
+		FILM.LENGTH,
+		FILM.RATING,
+	}
+	nameExpr := "{} || ' ' || {}"
+	if dialect == sq.DialectMySQL {
+		nameExpr = "CONCAT({}, ' ', {})"
+	}
+	q.SelectFields = sq.AliasFields{
+		FILM.FILM_ID.As("fid"),
+		FILM.TITLE,
+		FILM.DESCRIPTION,
+		CATEGORY.NAME.As("category"),
+		FILM.RENTAL_RATE.As("price"),
+		FILM.LENGTH,
+		FILM.RATING,
+		json_array_agg(dialect, sq.Fieldf(nameExpr, ACTOR.FIRST_NAME, ACTOR.LAST_NAME)),
 	}
 	return q, nil
 }
