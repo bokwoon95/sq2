@@ -1463,7 +1463,7 @@ func (_ CUSTOMER_LIST) View(dialect string) (sq.Query, error) {
 		ADDRESS.PHONE,
 		CITY.CITY,
 		COUNTRY.COUNTRY,
-		nil, // TODO: Case, CaseWhen
+		sq.CaseWhen(CUSTOMER.ACTIVE, "active").Else(""),
 		CUSTOMER.STORE_ID.As("sid"),
 	}
 	return q, nil
