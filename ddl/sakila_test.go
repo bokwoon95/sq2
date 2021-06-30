@@ -1396,7 +1396,6 @@ func (_ ACTOR_INFO) View(dialect string) (sq.Query, error) {
 	FILM_CATEGORY := NEW_FILM_CATEGORY(dialect, "fc")
 	CATEGORY := NEW_CATEGORY(dialect, "c")
 	var q sq.SelectQuery
-	q.Dialect = dialect
 	q.FromTable = ACTOR
 	q.JoinTables = sq.JoinTables{
 		sq.LeftJoin(FILM_ACTOR, FILM_ACTOR.ACTOR_ID.Eq(ACTOR.ACTOR_ID)),
@@ -1442,7 +1441,6 @@ func (_ CUSTOMER_LIST) View(dialect string) (sq.Query, error) {
 	CITY := NEW_CITY(dialect, "")
 	COUNTRY := NEW_COUNTRY(dialect, "")
 	var q sq.SelectQuery
-	q.Dialect = dialect
 	q.FromTable = CUSTOMER
 	q.JoinTables = sq.JoinTables{
 		sq.Join(ADDRESS, ADDRESS.ADDRESS_ID.Eq(CUSTOMER.ADDRESS_ID)),
@@ -1486,7 +1484,6 @@ func (_ FILM_LIST) View(dialect string) (sq.Query, error) {
 	FILM_ACTOR := NEW_FILM_ACTOR(dialect, "")
 	ACTOR := NEW_ACTOR(dialect, "")
 	var q sq.SelectQuery
-	q.Dialect = dialect
 	q.FromTable = CATEGORY
 	q.JoinTables = sq.JoinTables{
 		sq.LeftJoin(FILM_CATEGORY, FILM_CATEGORY.CATEGORY_ID.Eq(CATEGORY.CATEGORY_ID)),
@@ -1539,7 +1536,6 @@ func (_ NICER_BUT_SLOWER_FILM_LIST) View(dialect string) (sq.Query, error) {
 	FILM_ACTOR := NEW_FILM_ACTOR(dialect, "")
 	ACTOR := NEW_ACTOR(dialect, "")
 	var q sq.SelectQuery
-	q.Dialect = dialect
 	q.FromTable = CATEGORY
 	q.JoinTables = sq.JoinTables{
 		sq.LeftJoin(FILM_CATEGORY, FILM_CATEGORY.CATEGORY_ID.Eq(CATEGORY.CATEGORY_ID)),
@@ -1622,7 +1618,6 @@ func (_ SALES_BY_STORE) View(dialect string) (sq.Query, error) {
 	COUNTRY := NEW_COUNTRY(dialect, "co")
 	STAFF := NEW_STAFF(dialect, "m")
 	var q sq.SelectQuery
-	q.Dialect = dialect
 	q.FromTable = PAYMENT
 	q.JoinTables = sq.JoinTables{
 		sq.Join(RENTAL, RENTAL.RENTAL_ID.Eq(PAYMENT.RENTAL_ID)),
@@ -1654,6 +1649,46 @@ func (_ SALES_BY_STORE) View(dialect string) (sq.Query, error) {
 		sq.Fieldf(storeExpr, CITY.CITY, COUNTRY.COUNTRY).As("store"),
 		sq.Fieldf(managerExpr, STAFF.FIRST_NAME, STAFF.LAST_NAME).As("manager"),
 		sq.Fieldf("SUM({})", PAYMENT.AMOUNT).As("total sales"),
+	}
+	return q, nil
+}
+
+type STAFF_LIST struct {
+	ID       sq.NumberField
+	NAME     sq.StringField
+	ADDRESS  sq.StringField
+	ZIP_CODE sq.StringField
+	PHONE    sq.StringField
+	CITY     sq.StringField
+	COUNTRY  sq.StringField
+	SID      sq.NumberField
+}
+
+func (_ STAFF_LIST) View(dialect string) (sq.Query, error) {
+	STAFF := NEW_STAFF(dialect, "s")
+	ADDRESS := NEW_ADDRESS(dialect, "a")
+	CITY := NEW_CITY(dialect, "ci")
+	COUNTRY := NEW_COUNTRY(dialect, "co")
+	var q sq.SelectQuery
+	q.FromTable = STAFF
+	q.JoinTables = sq.JoinTables{
+		sq.Join(ADDRESS, ADDRESS.ADDRESS_ID.Eq(STAFF.ADDRESS_ID)),
+		sq.Join(CITY, CITY.CITY_ID.Eq(ADDRESS.CITY_ID)),
+		sq.Join(COUNTRY, COUNTRY.COUNTRY_ID.Eq(CITY.COUNTRY_ID)),
+	}
+	nameExpr := "{} || ' ' || {}"
+	if dialect == sq.DialectMySQL {
+		nameExpr = "CONCAT({}, ' ', {})"
+	}
+	q.SelectFields = sq.AliasFields{
+		STAFF.STAFF_ID.As("id"),
+		sq.Fieldf(nameExpr, STAFF.FIRST_NAME, STAFF.LAST_NAME).As("name"),
+		ADDRESS.ADDRESS,
+		ADDRESS.POSTAL_CODE.As("zip_code"),
+		ADDRESS.PHONE,
+		CITY.CITY,
+		COUNTRY.COUNTRY,
+		STAFF.STORE_ID.As("sid"),
 	}
 	return q, nil
 }
