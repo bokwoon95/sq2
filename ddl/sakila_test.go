@@ -1346,8 +1346,6 @@ const DUMMY_TABLE_2_MySQL = `CREATE TABLE db.dummy_table_2 (
 );
 ALTER TABLE db.dummy_table_2 ADD CONSTRAINT dummy_table_2_id1_id2_fkey FOREIGN KEY (id1, id2) REFERENCES dummy_table (id1, id2) ON UPDATE CASCADE ON DELETE RESTRICT;`
 
-// TODO: define the rest of the views, then make it work in ddl
-
 func json_object_agg(dialect string, name, value interface{}) sq.CustomField {
 	if query, ok := value.(sq.Query); ok {
 		value = sq.Fieldf("({})", query)
@@ -1356,6 +1354,9 @@ func json_object_agg(dialect string, name, value interface{}) sq.CustomField {
 	// instead. This will be -incredibly- useful for people who want to define
 	// their own SQL functions but need some way to signal an error. But how do
 	// I want to expose this API to the user?
+	// NOTE: what if we just defined a default fallback here, and let the SQL
+	// database point out the error? Then CustomField no longer needs a
+	// StickyError.
 	switch dialect {
 	case sq.DialectSQLite:
 		return sq.Fieldf("json_group_object({}, {})", name, value)
