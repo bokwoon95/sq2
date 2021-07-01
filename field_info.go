@@ -44,9 +44,9 @@ func (f FieldInfo) AppendSQLExclude(dialect string, buf *bytes.Buffer, args *[]i
 			return err
 		}
 	} else {
-		tableQualifier := f.TableName
-		if f.TableAlias != "" {
-			tableQualifier = f.TableAlias
+		tableQualifier := f.TableAlias
+		if tableQualifier == "" {
+			tableQualifier = f.TableName
 		}
 		if tableQualifier != "" {
 			i := sort.SearchStrings(excludedTableQualifiers, tableQualifier)
