@@ -132,28 +132,39 @@ func BufferPrintValue(dialect string, buf *bytes.Buffer, args *[]interface{}, pa
 	if isExplodableSlice(value) {
 		return explodeSlice(dialect, buf, args, params, excludedTableQualifiers, value)
 	}
+	var paramIndices []int
+	if paramName != "" {
+		paramIndices = params[paramName]
+	}
+	paramIndex := -1
+	if len(paramIndices) > 0 {
+		paramIndex = paramIndices[0]
+	}
 	switch dialect {
 	case DialectPostgres, DialectSQLite:
-		if paramName != "" && len(params[paramName]) > 0 {
-			buf.WriteString("$" + strconv.Itoa(params[paramName][0]+1))
-			return nil
+		if paramIndex >= 0 {
+			buf.WriteString("$" + strconv.Itoa(paramIndex+1))
 		} else {
 			buf.WriteString("$" + strconv.Itoa(len(*args)+1))
+			*args = append(*args, value)
+			if paramName != "" {
+				params[paramName] = []int{len(*args) - 1}
+			}
 		}
 	case DialectSQLServer:
-		if paramName != "" && len(params[paramName]) > 0 {
-			buf.WriteString("@p" + strconv.Itoa(params[paramName][0]+1))
-			return nil
+		if paramIndex >= 0 {
+			buf.WriteString("@p" + strconv.Itoa(paramIndex+1))
 		} else {
 			buf.WriteString("@p" + strconv.Itoa(len(*args)+1))
+			*args = append(*args, value)
+			if paramName != "" {
+				params[paramName] = []int{len(*args) - 1}
+			}
 		}
 	default:
 		buf.WriteString("?")
+		*args = append(*args, value)
 	}
-	if paramName != "" {
-		params[paramName] = []int{len(*args)}
-	}
-	*args = append(*args, value)
 	return nil
 }
 
