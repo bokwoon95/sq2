@@ -132,9 +132,8 @@ func BufferPrintValue(dialect string, buf *bytes.Buffer, args *[]interface{}, pa
 	if isExplodableSlice(value) {
 		return explodeSlice(dialect, buf, args, params, excludedTableQualifiers, value)
 	}
-	paramIndices := params[paramName]
 	paramIndex := -1
-	if len(paramIndices) > 0 {
+	if paramIndices, ok := params[paramName]; ok && len(paramIndices) > 0 {
 		paramIndex = paramIndices[0]
 	}
 	switch dialect {
