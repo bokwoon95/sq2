@@ -1,7 +1,6 @@
 package ddl
 
 import (
-	"bytes"
 	"fmt"
 	"runtime"
 	"strconv"
@@ -93,26 +92,18 @@ func sprintf(dialect, tableName string, format string, values []interface{}) (st
 }
 
 func appendSQLExclude(dialect, tableName string, v sq.SQLExcludeAppender) (string, error) {
-	buf := bufpool.Get().(*bytes.Buffer)
-	args := argspool.Get().([]interface{})
-	defer func() {
-		buf.Reset()
-		args = args[:0]
-		bufpool.Put(buf)
-		argspool.Put(args)
-	}()
-	err := v.AppendSQLExclude(dialect, buf, &args, make(map[string][]int), []string{tableName})
+	query, args, _, err := sq.ToSQLExclude(dialect, v, []string{tableName})
 	if err != nil {
 		return "", err
 	}
 	if len(args) == 0 {
-		return buf.String(), nil
+		return query, nil
 	}
-	str, err := sq.Sprintf(dialect, buf.String(), args)
+	query, err = sq.Sprintf(dialect, query, args)
 	if err != nil {
 		return "", err
 	}
-	return str, nil
+	return query, nil
 }
 
 func (t *T) Sprintf(format string, values ...interface{}) string {
