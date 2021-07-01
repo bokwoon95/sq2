@@ -20,6 +20,8 @@ func BufferPrintf(dialect string, buf *bytes.Buffer, args *[]interface{}, params
 	}
 	buf.Grow(len(format))
 	runningValuesIndex := 0
+	// valuesLookup is a map of the named parameters that are available for
+	// reference in the args slice
 	valuesLookup := make(map[string]int)
 	for i, value := range values {
 		switch value := value.(type) {
@@ -29,9 +31,21 @@ func BufferPrintf(dialect string, buf *bytes.Buffer, args *[]interface{}, params
 			valuesLookup[value.Name] = i
 		}
 	}
+	// ordinalNames track which ordinals are in use in the format string e.g.
+	// {1}, {2}. The reason is because we are -temporarily- adding those into
+	// the params map in order to track ordinal param status accross
+	// BufferPrintValue calls. The reason we are tracking ordinal param status
+	// across BufferPrintValue calls is because if the value for {1} has
+	// already been appended into args, BufferPrintValue should not append the
+	// value into args. But because ordinal param state is only tracked across
+	// BufferPrintValue calls, not BufferPrintf calls, once BufferPrintf exits
+	// all the ordinalNames added to the params map must be cleaned up.
 	var ordinalNames []string
+	// instead of looping over each rune in the format string, we jump straight
+	// to each occurrence of '{'.
 	for i := strings.IndexByte(format, '{'); i >= 0; i = strings.IndexByte(format, '{') {
 		if i+2 <= len(format) && format[i:i+2] == "{{" {
+			// '{{' is the escape sequence for '{'
 			buf.WriteString(format[:i])
 			buf.WriteByte('{')
 			format = format[i+2:]
@@ -43,7 +57,7 @@ func BufferPrintf(dialect string, buf *bytes.Buffer, args *[]interface{}, params
 		if j < 0 {
 			break
 		}
-		paramName := format[1:j]
+		paramName := format[1:j] // if {1}, paramName=1. if {foobar}, paramName=foobar
 		format = format[j+1:]
 		var value interface{}
 		if paramName == "" {
@@ -85,7 +99,7 @@ func BufferPrintf(dialect string, buf *bytes.Buffer, args *[]interface{}, params
 	return nil
 }
 
-func BufferPrintValue(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int, excludedTableQualifiers []string, value interface{}, name string) error {
+func BufferPrintValue(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int, excludedTableQualifiers []string, value interface{}, paramName string) error {
 	if v, ok := value.(sql.NamedArg); ok {
 		if dialect == DialectPostgres || dialect == DialectMySQL {
 			return fmt.Errorf("%s does not support named parameters, please do not use sql.NamedArg", dialect)
@@ -120,15 +134,15 @@ func BufferPrintValue(dialect string, buf *bytes.Buffer, args *[]interface{}, pa
 	}
 	switch dialect {
 	case DialectPostgres, DialectSQLite:
-		if name != "" && len(params[name]) > 0 {
-			buf.WriteString("$" + strconv.Itoa(params[name][0]+1))
+		if paramName != "" && len(params[paramName]) > 0 {
+			buf.WriteString("$" + strconv.Itoa(params[paramName][0]+1))
 			return nil
 		} else {
 			buf.WriteString("$" + strconv.Itoa(len(*args)+1))
 		}
 	case DialectSQLServer:
-		if name != "" && len(params[name]) > 0 {
-			buf.WriteString("@p" + strconv.Itoa(params[name][0]+1))
+		if paramName != "" && len(params[paramName]) > 0 {
+			buf.WriteString("@p" + strconv.Itoa(params[paramName][0]+1))
 			return nil
 		} else {
 			buf.WriteString("@p" + strconv.Itoa(len(*args)+1))
@@ -136,8 +150,8 @@ func BufferPrintValue(dialect string, buf *bytes.Buffer, args *[]interface{}, pa
 	default:
 		buf.WriteString("?")
 	}
-	if name != "" {
-		params[name] = []int{len(*args)}
+	if paramName != "" {
+		params[paramName] = []int{len(*args)}
 	}
 	*args = append(*args, value)
 	return nil
