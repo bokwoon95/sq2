@@ -13,7 +13,7 @@ type InsertQuery struct {
 	CTEs CTEs
 	// INSERT INTO
 	InsertIgnore  bool
-	IntoTable     BaseTable
+	IntoTable     SchemaTable
 	InsertColumns Fields
 	// VALUES
 	RowValues     RowValues

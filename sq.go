@@ -67,7 +67,7 @@ type Table interface {
 	GetName() string // Table name must exclude the schema (if any)
 }
 
-type BaseTable interface {
+type SchemaTable interface {
 	Table
 	GetSchema() string
 }

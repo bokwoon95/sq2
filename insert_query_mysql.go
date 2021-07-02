@@ -6,14 +6,14 @@ type MySQLInsertQuery struct {
 
 var _ Query = MySQLInsertQuery{}
 
-func (d MySQLDialect) InsertInto(table BaseTable) MySQLInsertQuery {
+func (d MySQLDialect) InsertInto(table SchemaTable) MySQLInsertQuery {
 	var q MySQLInsertQuery
 	q.Dialect = DialectMySQL
 	q.IntoTable = table
 	return q
 }
 
-func (d MySQLDialect) InsertIgnoreInto(table BaseTable) MySQLInsertQuery {
+func (d MySQLDialect) InsertIgnoreInto(table SchemaTable) MySQLInsertQuery {
 	var q MySQLInsertQuery
 	q.Dialect = DialectMySQL
 	q.InsertIgnore = true

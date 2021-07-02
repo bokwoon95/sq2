@@ -12,7 +12,7 @@ type UpdateQuery struct {
 	// WITH
 	CTEs CTEs
 	// UPDATE
-	UpdateTable BaseTable
+	UpdateTable SchemaTable
 	// FROM
 	FromTable  Table
 	JoinTables JoinTables

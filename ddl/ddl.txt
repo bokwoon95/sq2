@@ -86,3 +86,5 @@ for _, stmt := range stmts {
 }
 ddl.AutoMigrate(queryer, []Table, Config{
 })
+
+There's a bunch of place where we should be quoting identifiers, but is nt being done because I fear for the performance of looping over ecery character. Need to investigate if this should be remedied, or if users should be told to just use proper identifier names.
