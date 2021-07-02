@@ -664,6 +664,12 @@ func Diff(dialect string, gotMetadata, wantMetadata Metadata, config Config) ([]
 	// example he may know that all functions can be created after views,
 	// except for one function which a view requires and so he can move that
 	// CREATE FUNCTION statement up the hierarchy.
+	// type Stmts { []TableStmts; []ForeignKeyStmts; []ViewStmts; []FunctionStmts; []TriggerStmts }
+	// type TableStmts { TableSchema, TableName string; Stmts []string }
+	// type ForeignKeyStmts { TableSchema, ConstraintName string; Stmts []string }
+	// type ViewStmts { ViewSchema, ViewName string; Stmts []string }
+	// type FunctionStmts { FunctionSchema, FunctionName string, Stmts []string }
+	// type TriggerStmts { TableSchema, TableName, TriggerName string; Stmts []string }
 	stmts = append(stmts, fkeyStmts...)
 	stmts = append(stmts, functionStmts...)
 	stmts = append(stmts, viewStmts...)
