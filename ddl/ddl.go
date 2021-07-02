@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"database/sql"
+	"fmt"
 	"io"
 	"strings"
 	"sync"
@@ -17,6 +18,7 @@ type DB interface {
 }
 
 type DDLer interface {
+	sq.Table
 	DDL(dialect string, t *T)
 }
 
@@ -391,9 +393,9 @@ type View interface {
 }
 
 type Config struct {
-	DiffColumn      func() ([]string, error)
-	DiffConstraint  func() ([]string, error)
-	DiffIndex       func() ([]string, error)
+	DiffColumn      func(dialect string, gotColumn, wantColumn Column) ([]string, error)
+	DiffConstraint  func(dialect string, gotConstraint, wantConstraint Constraint) ([]string, error)
+	DiffIndex       func(dialect string, gotIndex, wantIndex Index) ([]string, error)
 	CreateFunctions []Function
 	CreateViews     []View
 }
@@ -412,6 +414,36 @@ func Diff(gotMetadata, wantMetadata Metadata, config Config) ([]string, error) {
 	return nil, nil
 }
 
-func AutoMigrate(db sq.Queryer, tables []sq.Table, config Config) error {
+func DiffColumn(dialect string, gotColumn, wantColumn Column) ([]string, error) {
+	return nil, nil
+}
+
+func DiffConstraint(dialect string, gotConstraint, wantConstraint Constraint) ([]string, error) {
+	return nil, nil
+}
+
+func DiffIndex(dialect string, gotIndex, wantIndex Index) ([]string, error) {
+	return nil, nil
+}
+
+func AutoMigrateContext(ctx context.Context, dialect string, db sq.Queryer, tables []sq.Table, config Config) error {
+	gotMetadata, err := NewMetadataFromDB(dialect, db)
+	if err != nil {
+		return fmt.Errorf("error obtaining metadata from DB: %w", err)
+	}
+	wantMetadata, err := NewMetadataFromTables(dialect, tables)
+	if err != nil {
+		return fmt.Errorf("error obtaining metadata from tables: %w", err)
+	}
+	stmts, err := Diff(gotMetadata, wantMetadata, config)
+	if err != nil {
+		return fmt.Errorf("error when diffing the metadata: %w", err)
+	}
+	for _, stmt := range stmts {
+		_, err = db.ExecContext(ctx, stmt)
+		if err != nil {
+			return fmt.Errorf("%s: %w", stmt, err)
+		}
+	}
 	return nil
 }
