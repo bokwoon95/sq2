@@ -9,6 +9,7 @@ import (
 	"github.com/bokwoon95/sq"
 )
 
+// TODO: convert all the Load(Item) into Load(Items)
 func (m *Metadata) LoadTable(table sq.Table) (err error) {
 	defer func() {
 		if r := recover(); r != nil {

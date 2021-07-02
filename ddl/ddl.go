@@ -132,8 +132,15 @@ func NewMetadata(dialect string) Metadata {
 }
 
 func (m *Metadata) CachedSchemaIndex(schemaName string) (schemaIndex int) {
+	if m == nil {
+		return -1
+	}
 	schemaIndex, ok := m.schemasCache[schemaName]
 	if !ok || schemaIndex < 0 || schemaIndex >= len(m.Schemas) {
+		delete(m.schemasCache, schemaName)
+		return -1
+	}
+	if m.Schemas[schemaIndex].SchemaName != schemaName {
 		delete(m.schemasCache, schemaName)
 		return -1
 	}
@@ -141,6 +148,9 @@ func (m *Metadata) CachedSchemaIndex(schemaName string) (schemaIndex int) {
 }
 
 func (m *Metadata) AppendSchema(schema Schema) (schemaIndex int) {
+	if m == nil {
+		return -1
+	}
 	m.Schemas = append(m.Schemas, schema)
 	if m.schemasCache == nil {
 		m.schemasCache = make(map[string]int)
@@ -151,10 +161,13 @@ func (m *Metadata) AppendSchema(schema Schema) (schemaIndex int) {
 }
 
 func (m *Metadata) RefreshSchemaCache() {
-	if m.schemasCache == nil {
-		m.schemasCache = make(map[string]int)
+	if m == nil {
+		return
 	}
 	for i, schema := range m.Schemas {
+		if m.schemasCache == nil {
+			m.schemasCache = make(map[string]int)
+		}
 		m.schemasCache[schema.SchemaName] = i
 	}
 }
@@ -174,6 +187,9 @@ func NewSchema(schemaName string) Schema {
 }
 
 func (s *Schema) CachedTableIndex(tableName string) (tableIndex int) {
+	if s == nil {
+		return -1
+	}
 	if tableName == "" {
 		delete(s.tablesCache, tableName)
 		return -1
@@ -187,6 +203,9 @@ func (s *Schema) CachedTableIndex(tableName string) (tableIndex int) {
 }
 
 func (s *Schema) AppendTable(table Table) (tableIndex int) {
+	if s == nil {
+		return -1
+	}
 	s.Tables = append(s.Tables, table)
 	if s.tablesCache == nil {
 		s.tablesCache = make(map[string]int)
@@ -197,10 +216,13 @@ func (s *Schema) AppendTable(table Table) (tableIndex int) {
 }
 
 func (s *Schema) RefreshTableCache() {
-	if s.tablesCache == nil {
-		s.tablesCache = make(map[string]int)
+	if s == nil {
+		return
 	}
 	for i, table := range s.Tables {
+		if s.tablesCache == nil {
+			s.tablesCache = make(map[string]int)
+		}
 		s.tablesCache[table.TableName] = i
 	}
 }
@@ -225,6 +247,9 @@ func NewTable(tableSchema, tableName string) Table {
 }
 
 func (tbl *Table) CachedColumnIndex(columnName string) (columnIndex int) {
+	if tbl == nil {
+		return -1
+	}
 	if columnName == "" {
 		delete(tbl.columnsCache, columnName)
 		return -1
@@ -238,6 +263,9 @@ func (tbl *Table) CachedColumnIndex(columnName string) (columnIndex int) {
 }
 
 func (tbl *Table) AppendColumn(column Column) (columnIndex int) {
+	if tbl == nil {
+		return -1
+	}
 	tbl.Columns = append(tbl.Columns, column)
 	if tbl.columnsCache == nil {
 		tbl.columnsCache = make(map[string]int)
@@ -248,15 +276,21 @@ func (tbl *Table) AppendColumn(column Column) (columnIndex int) {
 }
 
 func (tbl *Table) RefreshColumnCache() {
-	if tbl.columnsCache == nil {
-		tbl.columnsCache = make(map[string]int)
+	if tbl == nil {
+		return
 	}
 	for i, column := range tbl.Columns {
+		if tbl.columnsCache == nil {
+			tbl.columnsCache = make(map[string]int)
+		}
 		tbl.columnsCache[column.ColumnName] = i
 	}
 }
 
 func (tbl *Table) CachedConstraintIndex(constraintName string) (constraintIndex int) {
+	if tbl == nil {
+		return -1
+	}
 	if constraintName == "" {
 		delete(tbl.constraintsCache, constraintName)
 		return -1
@@ -270,6 +304,9 @@ func (tbl *Table) CachedConstraintIndex(constraintName string) (constraintIndex 
 }
 
 func (tbl *Table) AppendConstraint(constraint Constraint) (constraintIndex int) {
+	if tbl == nil {
+		return -1
+	}
 	tbl.Constraints = append(tbl.Constraints, constraint)
 	if tbl.constraintsCache == nil {
 		tbl.constraintsCache = make(map[string]int)
@@ -280,15 +317,21 @@ func (tbl *Table) AppendConstraint(constraint Constraint) (constraintIndex int) 
 }
 
 func (tbl *Table) RefreshConstraintCache() {
-	if tbl.constraintsCache == nil {
-		tbl.constraintsCache = make(map[string]int)
+	if tbl == nil {
+		return
 	}
 	for i, constraint := range tbl.Constraints {
+		if tbl.constraintsCache == nil {
+			tbl.constraintsCache = make(map[string]int)
+		}
 		tbl.constraintsCache[constraint.ConstraintName] = i
 	}
 }
 
 func (tbl *Table) CachedIndexIndex(indexName string) (indexIndex int) {
+	if tbl == nil {
+		return -1
+	}
 	if indexName == "" {
 		delete(tbl.indicesCache, indexName)
 		return -1
@@ -302,6 +345,9 @@ func (tbl *Table) CachedIndexIndex(indexName string) (indexIndex int) {
 }
 
 func (tbl *Table) AppendIndex(index Index) (indexIndex int) {
+	if tbl == nil {
+		return -1
+	}
 	tbl.Indices = append(tbl.Indices, index)
 	if tbl.indicesCache == nil {
 		tbl.indicesCache = make(map[string]int)
@@ -312,11 +358,42 @@ func (tbl *Table) AppendIndex(index Index) (indexIndex int) {
 }
 
 func (tbl *Table) RefreshIndexCache() {
-	if tbl.indicesCache == nil {
-		tbl.indicesCache = make(map[string]int)
+	if tbl == nil {
+		return
 	}
 	for i, index := range tbl.Indices {
+		if tbl.indicesCache == nil {
+			tbl.indicesCache = make(map[string]int)
+		}
 		tbl.indicesCache[index.IndexName] = i
+	}
+}
+
+func (tbl *Table) CachedTriggerIndex(triggerName string) (triggerIndex int) {
+	if tbl == nil {
+		return -1
+	}
+	if triggerName == "" {
+		delete(tbl.triggersCache, triggerName)
+		return -1
+	}
+	triggerIndex, ok := tbl.triggersCache[triggerName]
+	if !ok || triggerIndex < 0 || triggerIndex >= len(tbl.Triggers) || tbl.Triggers[triggerIndex].Name != triggerName {
+		delete(tbl.triggersCache, triggerName)
+		return -1
+	}
+	return triggerIndex
+}
+
+func (tbl *Table) RefreshTriggerCache() {
+	if tbl == nil {
+		return
+	}
+	for i, trigger := range tbl.Triggers {
+		if tbl.triggersCache == nil {
+			tbl.triggersCache = make(map[string]int)
+		}
+		tbl.triggersCache[trigger.Name] = i
 	}
 }
 
@@ -393,11 +470,11 @@ type View interface {
 }
 
 type Config struct {
-	DiffColumn      func(dialect string, gotColumn, wantColumn Column) ([]string, error)
-	DiffConstraint  func(dialect string, gotConstraint, wantConstraint Constraint) ([]string, error)
-	DiffIndex       func(dialect string, gotIndex, wantIndex Index) ([]string, error)
-	CreateFunctions []Function
-	CreateViews     []View
+	DiffColumn     func(dialect string, gotColumn, wantColumn Column) ([]string, error)
+	DiffConstraint func(dialect string, gotConstraint, wantConstraint Constraint) ([]string, error)
+	DiffIndex      func(dialect string, gotIndex, wantIndex Index) ([]string, error)
+	WantFunctions  []Function
+	WantViews      []View
 }
 
 func NewMetadataFromDB(dialect string, db sq.Queryer) (Metadata, error) {
@@ -421,80 +498,181 @@ func NewMetadataFromTables(dialect string, tables []sq.SchemaTable) (Metadata, e
 	return m, nil
 }
 
-func Diff(gotMetadata, wantMetadata Metadata, config Config) ([]string, error) {
-	if gotMetadata.Dialect != wantMetadata.Dialect {
-		return nil, fmt.Errorf("gotMetadata dialect=%s does not match with wantMetadata dialect=%s", gotMetadata.Dialect, wantMetadata.Dialect)
+func Diff(dialect string, gotMetadata, wantMetadata Metadata, config Config) ([]string, error) {
+	gotMetadata.RefreshSchemaCache()
+	diffColumn := config.DiffColumn
+	if diffColumn == nil {
+		diffColumn = DiffColumn
 	}
-	if !gotMetadata.GeneratedFromDB {
-		return nil, fmt.Errorf("gotMetadata.GeneratedFromDB is not true, did you mix up gotMetadata and wantMetadata?")
+	diffConstraint := config.DiffConstraint
+	if diffConstraint == nil {
+		diffConstraint = DiffConstraint
 	}
-	dialect := wantMetadata.Dialect
-	var err error
+	diffIndex := config.DiffIndex
+	if diffIndex == nil {
+		diffIndex = DiffIndex
+	}
 	var stmts []string
-	for i, view := range config.CreateViews {
+	schemaViews := make(map[string][]View)
+	for i, view := range config.WantViews {
 		if view == nil {
 			return nil, fmt.Errorf("config: view #%d is nil", i+1)
 		}
-		viewName := view.GetName()
-		if viewName == "" {
-			return nil, fmt.Errorf("config: view #%d has no name", i+1)
-		}
-		schemaName := view.GetSchema()
-		qualifiedViewName := schemaName + "." + viewName
-		if schemaName == "" {
-			qualifiedViewName = qualifiedViewName[1:]
-		}
-		schemaIndex := wantMetadata.CachedSchemaIndex(schemaName)
-		if schemaIndex < 0 {
-			return nil, fmt.Errorf("config: view %s: schema '%s' doesn't exist in wantMetadata", qualifiedViewName, schemaName)
-		}
-		schema := wantMetadata.Schemas[schemaIndex]
-		err = schema.LoadView(dialect, view)
-		if err != nil {
-			return nil, fmt.Errorf("config: view %s: %w", qualifiedViewName, err)
-		}
+		viewSchema := view.GetSchema()
+		schemaViews[viewSchema] = append(schemaViews[viewSchema], view)
 	}
-	for i, function := range config.CreateFunctions {
-		if len(function.SQL) == 0 {
-			return nil, fmt.Errorf("config: function #%d has no sql source", i+1)
-		}
-		if function.FunctionName == "" {
-			return nil, fmt.Errorf("config: function #%d has no name", i+1)
-		}
-		qualifiedFunctionName := function.FunctionSchema + "." + function.FunctionName
-		if function.FunctionSchema == "" {
-			qualifiedFunctionName = qualifiedFunctionName[1:]
-		}
-		schemaIndex := wantMetadata.CachedSchemaIndex(function.FunctionSchema)
-		if schemaIndex < 0 {
-			return nil, fmt.Errorf("config: function %s: schema '%s' doesn't exist in wantMetadata", qualifiedFunctionName, function.FunctionSchema)
-		}
-		schema := wantMetadata.Schemas[schemaIndex]
-		err = schema.LoadFunction(dialect, function)
-		if err != nil {
-			return nil, fmt.Errorf("config: function %s: %w", qualifiedFunctionName, err)
-		}
+	schemaFunctions := make(map[string][]Function)
+	for _, function := range config.WantFunctions {
+		schemaFunctions[function.FunctionSchema] = append(schemaFunctions[function.FunctionSchema], function)
 	}
-	gotMetadata.RefreshSchemaCache()
-	wantMetadata.RefreshSchemaCache()
-	// createSchemas, createTables, createColumns, diffColumns, createConstraints, diffConstraints, createIndices, diffIndices, createFunctions, createTriggers
+	var fkeyStmts []string
+	var functionStmts []string
+	var viewStmts []string
+	var triggerStmts []string
 	for _, wantSchema := range wantMetadata.Schemas {
+		var gotSchema Schema
 		gotSchemaIndex := gotMetadata.CachedSchemaIndex(wantSchema.SchemaName)
 		if gotSchemaIndex < 0 {
 			if dialect == sq.DialectSQLite {
 				return nil, fmt.Errorf("cannot create missing schema '%s' for database because sqlite does not support CREATE SCHEMA", wantSchema.SchemaName)
 			}
 			stmts = append(stmts, "CREATE SCHEMA "+wantSchema.SchemaName+";")
-			// if schema doesn't exist, we basically construct the entire schema from scratch here and continue
+			gotSchema.SchemaName = wantSchema.SchemaName
+		} else if wantSchema.SchemaName != "" {
+			gotSchema = gotMetadata.Schemas[gotSchemaIndex]
+			gotSchema.RefreshTableCache()
 		}
-		gotSchema := gotMetadata.Schemas[gotSchemaIndex]
-		gotSchema.RefreshTableCache()
+		schemaConfig := config
+		schemaConfig.WantViews = schemaViews[wantSchema.SchemaName]
+		schemaConfig.WantFunctions = schemaFunctions[wantSchema.SchemaName]
 		for _, wantTable := range wantSchema.Tables {
+			var gotTable Table
 			gotTableIndex := gotSchema.CachedTableIndex(wantTable.TableName)
 			if gotTableIndex < 0 {
+				s, err := CreateTable(dialect, wantTable)
+				if err != nil {
+					return nil, fmt.Errorf("table %s: %w", wantTable.TableName, err)
+				}
+				stmts = append(stmts, s)
+				gotTable.TableName = wantTable.TableName
+			} else {
+				gotTable = gotSchema.Tables[gotTableIndex]
+				gotTable.RefreshColumnCache()
+				for _, wantColumn := range wantTable.Columns {
+					gotColumnIndex := gotTable.CachedColumnIndex(wantColumn.ColumnName)
+					if gotColumnIndex < 0 {
+						s, err := CreateColumn(dialect, wantColumn)
+						if err != nil {
+							return nil, fmt.Errorf("table %s column %s: %w", wantTable.TableName, wantColumn.ColumnName, err)
+						}
+						stmts = append(stmts, s)
+					} else {
+						gotColumn := gotTable.Columns[gotColumnIndex]
+						ss, err := diffColumn(dialect, gotColumn, wantColumn)
+						if err != nil {
+							return nil, fmt.Errorf("table %s column %s: %w", wantTable.TableName, wantColumn.ColumnName, err)
+						}
+						stmts = append(stmts, ss...)
+					}
+				}
+				for _, wantConstraint := range wantTable.Constraints {
+					if wantConstraint.ConstraintType == FOREIGN_KEY {
+						continue
+					}
+					gotConstraintIndex := gotTable.CachedConstraintIndex(wantConstraint.ConstraintName)
+					if gotConstraintIndex < 0 {
+						s, err := CreateConstraint(dialect, wantConstraint)
+						if err != nil {
+							return nil, fmt.Errorf("table %s constraint %s: %w", wantTable.TableName, wantConstraint.ConstraintName, err)
+						}
+						stmts = append(stmts, s)
+					} else {
+						gotConstraint := gotTable.Constraints[gotConstraintIndex]
+						ss, err := diffConstraint(dialect, gotConstraint, wantConstraint)
+						if err != nil {
+							return nil, fmt.Errorf("table %s constraint %s: %w", wantTable.TableName, wantConstraint.ConstraintName, err)
+						}
+						stmts = append(stmts, ss...)
+					}
+				}
+			}
+			for _, wantConstraint := range wantTable.Constraints {
+				if wantConstraint.ConstraintType != FOREIGN_KEY {
+					continue
+				}
+				gotConstraintIndex := gotTable.CachedConstraintIndex(wantConstraint.ConstraintName)
+				if gotConstraintIndex < 0 {
+					s, err := CreateConstraint(dialect, wantConstraint)
+					if err != nil {
+						return nil, fmt.Errorf("table %s constraint %s: %w", wantTable.TableName, wantConstraint.ConstraintName, err)
+					}
+					fkeyStmts = append(fkeyStmts, s)
+				} else {
+					gotConstraint := gotTable.Constraints[gotConstraintIndex]
+					ss, err := diffConstraint(dialect, gotConstraint, wantConstraint)
+					if err != nil {
+						return nil, fmt.Errorf("table %s constraint %s: %w", wantTable.TableName, wantConstraint.ConstraintName, err)
+					}
+					fkeyStmts = append(fkeyStmts, ss...)
+				}
+			}
+			for _, wantIndex := range wantTable.Indices {
+				gotIndexIndex := gotTable.CachedIndexIndex(wantIndex.IndexName)
+				if gotIndexIndex < 0 {
+					s, err := CreateIndex(dialect, wantIndex)
+					if err != nil {
+						return nil, fmt.Errorf("table %s index %s: %w", wantTable.TableName, wantIndex.IndexName, err)
+					}
+					stmts = append(stmts, s)
+				} else {
+					gotIndex := gotTable.Indices[gotIndexIndex]
+					ss, err := diffIndex(dialect, gotIndex, wantIndex)
+					if err != nil {
+						return nil, fmt.Errorf("table %s index %s: %w", wantTable.TableName, wantIndex.IndexName, err)
+					}
+					stmts = append(stmts, ss...)
+				}
+			}
+			for _, wantTrigger := range wantTable.Triggers {
+				gotTriggerIndex := gotTable.CachedTriggerIndex(wantTrigger.Name)
+				if gotTriggerIndex < 0 {
+					if len(wantTrigger.SQL) == 0 {
+						return nil, fmt.Errorf("table %s trigger %s has no SQL", wantTable.TableName, wantTrigger.Name)
+					}
+					triggerStmts = append(triggerStmts, wantTrigger.SQL[0])
+				}
 			}
 		}
 	}
+	// TODO: the depedency between functions and views can be circular. The only way to be sure is to pass these things to the user to handle themselves.
+	// There are 5 classes of stmts []string
+	// Class 1)
+	// CREATE TABLE
+	// -or-
+	// ALTER TABLE ADD COLUMN | ALTER TABLE ALTER COLUMN | ALTER TABLE ADD CONSTRAINT | ALTER TABLE ALTER CONSTRAINT | CREATE INDEX | ALTER INDEX
+	// Class 2)
+	// ALTER TABLE ADD CONSTRAINT (fkeys)
+	// Class 3)
+	// CREATE VIEW
+	// Class 4)
+	// CREATE FUNCTION
+	// Class 5)
+	// CREATE TRIGGER
+	// by default all Class 1s are executed first, followed by Class 2s, Class 3s, Class 4s and then Class 5s.
+	// but the important thing is that Diff will return all these Classes as
+	// distinct items so that the user can reorder them as he wishes. For
+	// example he may know that all functions can be created after views,
+	// except for one function which a view requires and so he can move that
+	// CREATE FUNCTION statement up the hierarchy.
+	stmts = append(stmts, fkeyStmts...)
+	stmts = append(stmts, functionStmts...)
+	stmts = append(stmts, viewStmts...)
+	stmts = append(stmts, triggerStmts...)
+	return stmts, nil
+}
+
+func MigrateTables(dialect string, gotSchema, wantSchema Schema, config Config) ([]string, error) {
+	var stmts []string
 	return stmts, nil
 }
 
@@ -519,7 +697,7 @@ func AutoMigrateContext(ctx context.Context, dialect string, db sq.Queryer, tabl
 	if err != nil {
 		return fmt.Errorf("error obtaining metadata from tables: %w", err)
 	}
-	stmts, err := Diff(gotMetadata, wantMetadata, config)
+	stmts, err := Diff(dialect, gotMetadata, wantMetadata, config)
 	if err != nil {
 		return fmt.Errorf("error when diffing the metadata: %w", err)
 	}
