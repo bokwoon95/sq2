@@ -72,10 +72,12 @@ if err != nil {
 m2, err := NewMetadataFromTables(dialect, tables)
 if err != nil {
 }
-stmts, err := ddl.CreateIfNotExists(dialect, m1, m2, ddl.Config{
-    DiffColumn: func() etc...,
-    Functions: ..., // map[string]io.Reader? type FunctionSrc struct { FunctionSchema, FunctionName string; Src io.Reader }?
-    Views: ..., // type ViewSrc struct { ViewSchema, ViewName string; Src sq.TableView }
+stmts, err := ddl.Diff(m1, m2, ddl.Config{ // note: dialect can be extracted from the *Metadata
+    DiffColumn: func() ...,
+    DiffConstraint: func() ...,
+    DiffIndex: func() ...,
+    CreateFunctions: ..., // []Function
+    CreateViews: ..., // []ViewTable
 })
 for _, stmt := range stmts {
     err := queryer.Exec(stmt)
