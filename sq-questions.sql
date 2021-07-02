@@ -154,3 +154,9 @@ GROUP BY
     ,is_unique
     ,is_partial
 ;
+
+-- Get Views
+SELECT name, sql FROM sqlite_schema WHERE "type" = 'view';
+
+-- Get Triggers
+SELECT name, sql FROM sqlite_schema WHERE "type" = 'trigger';

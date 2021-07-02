@@ -268,8 +268,8 @@ func CreateIndex(dialect string, index Index) (string, error) {
 	if len(index.Include) > 0 && dialect == sq.DialectPostgres {
 		buf.WriteString(" INCLUDE (" + strings.Join(index.Include, ", ") + ")")
 	}
-	if index.Predicate != "" && (dialect == sq.DialectPostgres || dialect == sq.DialectSQLite) {
-		buf.WriteString(" WHERE " + index.Predicate)
+	if index.Where != "" && (dialect == sq.DialectPostgres || dialect == sq.DialectSQLite) {
+		buf.WriteString(" WHERE " + index.Where)
 	}
 	buf.WriteString(";")
 	return buf.String(), nil

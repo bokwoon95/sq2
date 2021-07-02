@@ -553,7 +553,7 @@ func (t *TIndex) Where(format string, values ...interface{}) *TIndex {
 	if err != nil {
 		panicf(err.Error())
 	}
-	t.tbl.Indices[t.indexIndex].Predicate = expr
+	t.tbl.Indices[t.indexIndex].Where = expr
 	return t
 }
 

@@ -1,3 +1,86 @@
 DDLer should take in a context.Context
 
 Think about sanitizing and escaping the table stuff. Actually if I assume the config comes from trusted sources, I can forego this requirement.
+
+AutoMigrate
+
+got - *Metadata, file, or db connection
+want - *Metadata, file, or list of types+procs+(tables+constraints+indices+triggers)
+allowedOperations
+
+instead of finding individual functions, I could just use scripts instead
+
+scripts are used:
+- at the start, to ensure stuff like types and table-agnostic procedures are defined.
+- after an automigrate
+    - for example, if you refactor out a column into its own table with a foreign key reference. automigrate will create the new table for you, but you must populate (backfill) it yourself. Also new writes must also write into the new table as well as the old column.
+
+in a single node application server
+in a multi node application server
+in an offline standalone binary
+
+maybe all ddl should be responsible for is:
+- creating new tables
+- creating new columns
+- changing existing columns
+- creating constraints
+- creating indices
+- creating views (how to change?)
+- creating triggers (how to change?)
+the things that you can change on a column are:
+- column type (type, precision, scale, etc)
+- IDENTITY | AUTOINCREMENT | GENERATED AS
+- NOT NULL (on/off)
+- ON UPDATE CURRENT_TIMESTAMP (on/off)
+- COLLATE
+- DEFAULT
+
+package ddl
+type Config struct{
+    Got *Metadata
+    Want *Metadata
+    AllowedOps int64
+}
+Automigrate will no longer take in a live DB connection: instead it only takes in (got, want *Metadata). You need separate functions for converting a live DB connection into *Metadata, or a list of sq.Tables into *Metadata.
+ddl can optionally convert go files into metadata using go/token and go/parser (used for the cli tool), but it will not be able to pick up on any table definitions defined inside DDL() methods because it can't execute Go code.
+
+if you need a TYPE, DOMAIN OR FUNCTION defined before you can create a column or trigger? You have to ensure it gets into the database yourself.
+- is it possible to handle this for the user?
+- do i want to handle this for the user? the only reason I'm putting it outside is because the definition flow is not obvious: do I define types, domains, functions before or after or in between an automigrate? There are valid use cases for all those scenarios.
+
+versions are managed externally of AutoMigrate
+This is because version resolution means dropping the current object and recreating it. AutoMigrate will never drop anything.
+
+tables
+constraints
+indices
+views
+functions (NAME is IDENTITY: I don't care how many overloaded functions you have, as long as the name exists I'll assume they all exist)
+triggers
+
+I'll pull their information out, but you have to manage their lifecycle yourself (e.g. using a version table to check the current version in the database, etc)
+views?
+triggers?
+functions?
+types?
+domains?
+sequences?
+
+m1, err := NewMetadataFromDB(dialect, queryer)
+if err != nil {
+}
+m2, err := NewMetadataFromTables(dialect, tables)
+if err != nil {
+}
+stmts, err := ddl.CreateIfNotExists(dialect, m1, m2, ddl.Config{
+    DiffColumn: func() etc...,
+    Functions: ..., // map[string]io.Reader? type FunctionSrc struct { FunctionSchema, FunctionName string; Src io.Reader }?
+    Views: ..., // type ViewSrc struct { ViewSchema, ViewName string; Src sq.TableView }
+})
+for _, stmt := range stmts {
+    err := queryer.Exec(stmt)
+    if err != nil {
+    }
+}
+ddl.AutoMigrate(queryer, []Table, Config{
+})
