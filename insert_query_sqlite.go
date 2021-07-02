@@ -13,7 +13,7 @@ func (d SQLiteDialect) InsertWith(ctes ...CTE) SQLiteInsertQuery {
 	return q
 }
 
-func (d SQLiteDialect) InsertInto(table BaseTable) SQLiteInsertQuery {
+func (d SQLiteDialect) InsertInto(table SchemaTable) SQLiteInsertQuery {
 	var q SQLiteInsertQuery
 	q.Dialect = DialectSQLite
 	q.IntoTable = table
@@ -25,7 +25,7 @@ func (q SQLiteInsertQuery) With(ctes ...CTE) SQLiteInsertQuery {
 	return q
 }
 
-func (q SQLiteInsertQuery) InsertInto(table BaseTable) SQLiteInsertQuery {
+func (q SQLiteInsertQuery) InsertInto(table SchemaTable) SQLiteInsertQuery {
 	q.IntoTable = table
 	return q
 }

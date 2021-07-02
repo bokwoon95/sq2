@@ -13,7 +13,7 @@ func (d MySQLDialect) UpdateWith(ctes ...CTE) MySQLUpdateQuery {
 	return q
 }
 
-func (d MySQLDialect) Update(table BaseTable) MySQLUpdateQuery {
+func (d MySQLDialect) Update(table SchemaTable) MySQLUpdateQuery {
 	var q MySQLUpdateQuery
 	q.Dialect = DialectMySQL
 	q.UpdateTable = table
@@ -25,7 +25,7 @@ func (q MySQLUpdateQuery) With(ctes ...CTE) MySQLUpdateQuery {
 	return q
 }
 
-func (q MySQLUpdateQuery) Update(table BaseTable) MySQLUpdateQuery {
+func (q MySQLUpdateQuery) Update(table SchemaTable) MySQLUpdateQuery {
 	q.UpdateTable = table
 	return q
 }

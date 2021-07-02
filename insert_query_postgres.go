@@ -13,7 +13,7 @@ func (d PostgresDialect) InsertWith(ctes ...CTE) PostgresInsertQuery {
 	return q
 }
 
-func (d PostgresDialect) InsertInto(table BaseTable) PostgresInsertQuery {
+func (d PostgresDialect) InsertInto(table SchemaTable) PostgresInsertQuery {
 	var q PostgresInsertQuery
 	q.Dialect = DialectPostgres
 	q.IntoTable = table
@@ -25,7 +25,7 @@ func (q PostgresInsertQuery) With(ctes ...CTE) PostgresInsertQuery {
 	return q
 }
 
-func (q PostgresInsertQuery) InsertInto(table BaseTable) PostgresInsertQuery {
+func (q PostgresInsertQuery) InsertInto(table SchemaTable) PostgresInsertQuery {
 	q.IntoTable = table
 	return q
 }

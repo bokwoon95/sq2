@@ -92,10 +92,10 @@ var ErrFaultySQL error = FaultySQLError{}
 type FaultySQL struct{}
 
 var (
-	_ Query     = FaultySQL{}
-	_ BaseTable = FaultySQL{}
-	_ Field     = FaultySQL{}
-	_ Predicate = FaultySQL{}
+	_ Query       = FaultySQL{}
+	_ SchemaTable = FaultySQL{}
+	_ Field       = FaultySQL{}
+	_ Predicate   = FaultySQL{}
 )
 
 func (q FaultySQL) AppendSQL(string, *bytes.Buffer, *[]interface{}, map[string][]int) error {

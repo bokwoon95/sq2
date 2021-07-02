@@ -386,7 +386,7 @@ type Function struct {
 }
 
 type View interface {
-	sq.Table
+	sq.SchemaTable
 	// TODO: extra argument that can be used to register certain view
 	// porperties like MATERIALIZED or RECURSIVE.
 	View(dialect string) sq.Query
@@ -405,13 +405,97 @@ func NewMetadataFromDB(dialect string, db sq.Queryer) (Metadata, error) {
 	return m, nil
 }
 
-func NewMetadataFromTables(dialect string, tables []sq.Table) (Metadata, error) {
+func NewMetadataFromTables(dialect string, tables []sq.SchemaTable) (Metadata, error) {
 	m := NewMetadata(dialect)
+	var err error
+	for _, table := range tables {
+		err = m.LoadTable(table)
+		if err != nil {
+			qualifiedTableName := table.GetSchema() + "." + table.GetName()
+			if qualifiedTableName[0] == '.' {
+				qualifiedTableName = qualifiedTableName[1:]
+			}
+			return m, fmt.Errorf("table %s: %w", qualifiedTableName, err)
+		}
+	}
 	return m, nil
 }
 
 func Diff(gotMetadata, wantMetadata Metadata, config Config) ([]string, error) {
-	return nil, nil
+	if gotMetadata.Dialect != wantMetadata.Dialect {
+		return nil, fmt.Errorf("gotMetadata dialect=%s does not match with wantMetadata dialect=%s", gotMetadata.Dialect, wantMetadata.Dialect)
+	}
+	if !gotMetadata.GeneratedFromDB {
+		return nil, fmt.Errorf("gotMetadata.GeneratedFromDB is not true, did you mix up gotMetadata and wantMetadata?")
+	}
+	dialect := wantMetadata.Dialect
+	var err error
+	var stmts []string
+	for i, view := range config.CreateViews {
+		if view == nil {
+			return nil, fmt.Errorf("config: view #%d is nil", i+1)
+		}
+		viewName := view.GetName()
+		if viewName == "" {
+			return nil, fmt.Errorf("config: view #%d has no name", i+1)
+		}
+		schemaName := view.GetSchema()
+		qualifiedViewName := schemaName + "." + viewName
+		if schemaName == "" {
+			qualifiedViewName = qualifiedViewName[1:]
+		}
+		schemaIndex := wantMetadata.CachedSchemaIndex(schemaName)
+		if schemaIndex < 0 {
+			return nil, fmt.Errorf("config: view %s: schema '%s' doesn't exist in wantMetadata", qualifiedViewName, schemaName)
+		}
+		schema := wantMetadata.Schemas[schemaIndex]
+		err = schema.LoadView(dialect, view)
+		if err != nil {
+			return nil, fmt.Errorf("config: view %s: %w", qualifiedViewName, err)
+		}
+	}
+	for i, function := range config.CreateFunctions {
+		if len(function.SQL) == 0 {
+			return nil, fmt.Errorf("config: function #%d has no sql source", i+1)
+		}
+		if function.FunctionName == "" {
+			return nil, fmt.Errorf("config: function #%d has no name", i+1)
+		}
+		qualifiedFunctionName := function.FunctionSchema + "." + function.FunctionName
+		if function.FunctionSchema == "" {
+			qualifiedFunctionName = qualifiedFunctionName[1:]
+		}
+		schemaIndex := wantMetadata.CachedSchemaIndex(function.FunctionSchema)
+		if schemaIndex < 0 {
+			return nil, fmt.Errorf("config: function %s: schema '%s' doesn't exist in wantMetadata", qualifiedFunctionName, function.FunctionSchema)
+		}
+		schema := wantMetadata.Schemas[schemaIndex]
+		err = schema.LoadFunction(dialect, function)
+		if err != nil {
+			return nil, fmt.Errorf("config: function %s: %w", qualifiedFunctionName, err)
+		}
+	}
+	gotMetadata.RefreshSchemaCache()
+	wantMetadata.RefreshSchemaCache()
+	// createSchemas, createTables, createColumns, diffColumns, createConstraints, diffConstraints, createIndices, diffIndices, createFunctions, createTriggers
+	for _, wantSchema := range wantMetadata.Schemas {
+		gotSchemaIndex := gotMetadata.CachedSchemaIndex(wantSchema.SchemaName)
+		if gotSchemaIndex < 0 {
+			if dialect == sq.DialectSQLite {
+				return nil, fmt.Errorf("cannot create missing schema '%s' for database because sqlite does not support CREATE SCHEMA", wantSchema.SchemaName)
+			}
+			stmts = append(stmts, "CREATE SCHEMA "+wantSchema.SchemaName+";")
+			// if schema doesn't exist, we basically construct the entire schema from scratch here and continue
+		}
+		gotSchema := gotMetadata.Schemas[gotSchemaIndex]
+		gotSchema.RefreshTableCache()
+		for _, wantTable := range wantSchema.Tables {
+			gotTableIndex := gotSchema.CachedTableIndex(wantTable.TableName)
+			if gotTableIndex < 0 {
+			}
+		}
+	}
+	return stmts, nil
 }
 
 func DiffColumn(dialect string, gotColumn, wantColumn Column) ([]string, error) {
@@ -426,7 +510,7 @@ func DiffIndex(dialect string, gotIndex, wantIndex Index) ([]string, error) {
 	return nil, nil
 }
 
-func AutoMigrateContext(ctx context.Context, dialect string, db sq.Queryer, tables []sq.Table, config Config) error {
+func AutoMigrateContext(ctx context.Context, dialect string, db sq.Queryer, tables []sq.SchemaTable, config Config) error {
 	gotMetadata, err := NewMetadataFromDB(dialect, db)
 	if err != nil {
 		return fmt.Errorf("error obtaining metadata from DB: %w", err)

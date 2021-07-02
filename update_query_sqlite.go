@@ -13,7 +13,7 @@ func (d SQLiteDialect) UpdateWith(ctes ...CTE) SQLiteUpdateQuery {
 	return q
 }
 
-func (d SQLiteDialect) Update(table BaseTable) SQLiteUpdateQuery {
+func (d SQLiteDialect) Update(table SchemaTable) SQLiteUpdateQuery {
 	var q SQLiteUpdateQuery
 	q.Dialect = DialectSQLite
 	q.UpdateTable = table
@@ -25,7 +25,7 @@ func (q SQLiteUpdateQuery) With(ctes ...CTE) SQLiteUpdateQuery {
 	return q
 }
 
-func (q SQLiteUpdateQuery) Update(table BaseTable) SQLiteUpdateQuery {
+func (q SQLiteUpdateQuery) Update(table SchemaTable) SQLiteUpdateQuery {
 	q.UpdateTable = table
 	return q
 }

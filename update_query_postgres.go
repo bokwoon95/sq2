@@ -13,7 +13,7 @@ func (d PostgresDialect) UpdateWith(ctes ...CTE) PostgresUpdateQuery {
 	return q
 }
 
-func (d PostgresDialect) Update(table BaseTable) PostgresUpdateQuery {
+func (d PostgresDialect) Update(table SchemaTable) PostgresUpdateQuery {
 	var q PostgresUpdateQuery
 	q.Dialect = DialectPostgres
 	q.UpdateTable = table
@@ -25,7 +25,7 @@ func (q PostgresUpdateQuery) With(ctes ...CTE) PostgresUpdateQuery {
 	return q
 }
 
-func (q PostgresUpdateQuery) Update(table BaseTable) PostgresUpdateQuery {
+func (q PostgresUpdateQuery) Update(table SchemaTable) PostgresUpdateQuery {
 	q.UpdateTable = table
 	return q
 }
