@@ -150,6 +150,14 @@ func (m *Metadata) LoadTable(table sq.Table) (err error) {
 	return nil
 }
 
+func (s *Schema) LoadView(dialect string, view View) error {
+	return nil
+}
+
+func (s *Schema) LoadFunction(dialect string, function Function) error { // NOTE: is dialect needed here?
+	return nil
+}
+
 func (tbl *Table) LoadColumn(dialect, columnName, columnType, config string) error {
 	qualifiedColumn := tbl.TableSchema + "." + tbl.TableName + "." + columnName
 	if tbl.TableSchema == "" {

@@ -383,15 +383,35 @@ type Function struct {
 	SQL            []io.Reader
 }
 
-type View struct {
-	sq.Query
-	Materialized bool
+type View interface {
+	sq.Table
+	// TODO: extra argument that can be used to register certain view
+	// porperties like MATERIALIZED or RECURSIVE.
+	View(dialect string) sq.Query
 }
 
-// NOTE: alternatively the View() method can take in an stateful struct (TODO)
-// to register certain properties, like MATERIALIZED or RECURSIVE. That way I
-// no longer need a View struct to hold these properties.
-type ViewTable interface {
-	sq.Table
-	View(dialect string) sq.Query
+type Config struct {
+	DiffColumn      func() ([]string, error)
+	DiffConstraint  func() ([]string, error)
+	DiffIndex       func() ([]string, error)
+	CreateFunctions []Function
+	CreateViews     []View
+}
+
+func NewMetadataFromDB(dialect string, db sq.Queryer) (Metadata, error) {
+	m := NewMetadata(dialect)
+	return m, nil
+}
+
+func NewMetadataFromTables(dialect string, tables []sq.Table) (Metadata, error) {
+	m := NewMetadata(dialect)
+	return m, nil
+}
+
+func Diff(gotMetadata, wantMetadata Metadata, config Config) ([]string, error) {
+	return nil, nil
+}
+
+func AutoMigrate(db sq.Queryer, tables []sq.Table, config Config) error {
+	return nil
 }
