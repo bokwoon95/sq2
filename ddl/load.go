@@ -386,7 +386,7 @@ func (tbl *Table) LoadIndex(tableSchema, tableName string, columns []string, con
 		case "using":
 			index.IndexType = strings.ToUpper(modifier[1])
 		case "where":
-			index.Predicate = modifier[1]
+			index.Where = modifier[1]
 		case "include":
 			index.Include = strings.Split(modifier[1], ",")
 		default:

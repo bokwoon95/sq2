@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"database/sql"
+	"io"
 	"strings"
 	"sync"
 
@@ -112,11 +113,12 @@ func defaultColumnType(dialect string, field sq.Field) (columnType string) {
 // the list (using goja), but ES5 doesn't support multiline strings which make
 // editing the views and triggers very difficult.
 type Metadata struct {
-	Dialect       string
-	VersionString string
-	VersionNum    [2]int // MAJOR.MINOR (are PATCH versions ever significant in the case of databases?)
-	Schemas       []Schema
-	schemasCache  map[string]int
+	Dialect         string
+	VersionString   string
+	VersionNum      [2]int // MAJOR.MINOR (are PATCH versions ever significant in the case of databases?)
+	GeneratedFromDB bool
+	Schemas         []Schema
+	schemasCache    map[string]int
 }
 
 // func (m *Metadata) LoadMetadata(db DB, opts ...LoatMetadataOptions)
@@ -156,11 +158,13 @@ func (m *Metadata) RefreshSchemaCache() {
 }
 
 type Schema struct {
-	SchemaName  string
-	Tables      []Table
-	Views       []View
-	tablesCache map[string]int
-	viewsCache  map[string]int
+	SchemaName     string
+	Tables         []Table
+	Views          []Object
+	Functions      []Object
+	tablesCache    map[string]int
+	viewsCache     map[string]int
+	functionsCache map[string]int
 }
 
 func NewSchema(schemaName string) Schema {
@@ -205,11 +209,13 @@ type Table struct {
 	Columns          []Column
 	Constraints      []Constraint
 	Indices          []Index
+	Triggers         []Object
 	VirtualTable     string
 	VirtualTableArgs []string
 	columnsCache     map[string]int
 	constraintsCache map[string]int
 	indicesCache     map[string]int
+	triggersCache    map[string]int
 }
 
 func NewTable(tableSchema, tableName string) Table {
@@ -361,8 +367,31 @@ type Index struct {
 	Columns     []string
 	Exprs       []string
 	Include     []string
-	Predicate   string
+	Where       string
+}
+
+type Object struct {
+	Type   string // VIEW | FUNCTION | TRIGGER
+	Schema string
+	Name   string
+	SQL    []string
+}
+
+type Function struct {
+	FunctionSchema string
+	FunctionName   string
+	SQL            []io.Reader
 }
 
 type View struct {
+	sq.Query
+	Materialized bool
+}
+
+// NOTE: alternatively the View() method can take in an stateful struct (TODO)
+// to register certain properties, like MATERIALIZED or RECURSIVE. That way I
+// no longer need a View struct to hold these properties.
+type ViewTable interface {
+	sq.Table
+	View(dialect string) sq.Query
 }
