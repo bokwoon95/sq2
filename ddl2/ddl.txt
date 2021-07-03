@@ -11,6 +11,40 @@ type Stmts struct {
     []TriggerStmts // CREATE TRIGGER
 }
 
+what table schema? what table name? what (column|constraint|index|view|function|trigger)name?
+what operation?
+CREATE SCHEMA
+CREATE TABLE
+ALTER TABLE DROP COLUMN
+    NOTE: don't implement DROP COLUMN because columns can contain data. if alter column is not enough (e.g. adding a generated expression), simply return a warning informing the user that generated expressions cannot be retrofitted on columns that already exist.
+ALTER TABLE ADD COLUMN
+ALTER TABLE ALTER COLUMN
+    TYPE
+    SET DEFAULT
+    DROP DEFAULT
+    SET NOT NULL
+    DROP NOT NULL
+    DROP EXPRESSION
+    ADD GENERATED ... IDENTITY
+    DROP IDENTITY
+DROP INDEX
+CREATE INDEX
+DROP CONSTRAINT
+ALTER TABLE DROP CONSTRAINT
+ALTER TABLE ADD CONSTRAINT
+DROP VIEW
+CREATE VIEW
+
+TODO: rename Metadata to Catalog. Include the CatalogName.
+
+Custom SQL-level filtering when retrieving the catalog is possible! Simply ask the user to provide an sq.Predicate which will get appended to the overall query. Fucking genuis really.
+
+DiffMetadata returns a struct containing ddl.Commands
+    The ddl.Commands are organized in a way that matches the hierarchy of a Catalog.
+    This makes it easy for the user to search for a particular piece of ddl command, e.g they are looking for all CREATE INDEX commands so that they can convert it to CREATE INDEX ... CONCURRENTLY.
+
+This is genuinely exciting. The concept of DML query builders already exist. But the concept of DDL query builders is unheard of. Every ORM-based migration tool (Rails, Django, Alembic) generates opaque DDL strings and cannot leverage dialect-specific features without asking the developer to write the raw sql themselves.
+
 unlike columns, constraints may not be harmless if ignored. Old constraints
 that are not dropped may actively hinder adding new columns or altering
 existing columns. but I have already committed to -NOT- handling the dropping
