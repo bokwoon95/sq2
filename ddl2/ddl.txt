@@ -11,6 +11,11 @@ type Stmts struct {
     []TriggerStmts // CREATE TRIGGER
 }
 
+unlike columns, constraints may not be harmless if ignored. Old constraints
+that are not dropped may actively hinder adding new columns or altering
+existing columns. but I have already committed to -NOT- handling the dropping
+of constraints or indices in automigrate. How to reconcile?
+
 stmts := ddl.Stmts{}
 stmts.AddSchema()
 stmts.AddTable()
