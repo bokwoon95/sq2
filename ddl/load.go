@@ -32,7 +32,7 @@ func (m *Metadata) LoadTable(table sq.Table) (err error) {
 	if tableValue.NumField() == 0 {
 		return fmt.Errorf("table is empty struct")
 	}
-	genericTable, ok := tableValue.Field(0).Interface().(sq.TableInfo)
+	tableinfo, ok := tableValue.Field(0).Interface().(sq.TableInfo)
 	if !ok {
 		return fmt.Errorf("first field of table struct is not an embedded sq.TableInfo")
 	}
@@ -40,22 +40,22 @@ func (m *Metadata) LoadTable(table sq.Table) (err error) {
 		return fmt.Errorf("first field of table struct is not an embedded sq.TableInfo")
 	}
 	var schema Schema
-	if i := m.CachedSchemaIndex(genericTable.TableSchema); i >= 0 {
+	if i := m.CachedSchemaIndex(tableinfo.TableSchema); i >= 0 {
 		schema = m.Schemas[i]
 		defer func(i int) { m.Schemas[i] = schema }(i)
 	} else {
-		schema = NewSchema(genericTable.TableSchema)
+		schema = NewSchema(tableinfo.TableSchema)
 		defer func() { m.AppendSchema(schema) }()
 	}
 	var tbl Table
-	if genericTable.TableName == "" {
+	if tableinfo.TableName == "" {
 		return fmt.Errorf("table name is empty")
 	}
-	if i := schema.CachedTableIndex(genericTable.TableName); i >= 0 {
+	if i := schema.CachedTableIndex(tableinfo.TableName); i >= 0 {
 		tbl = schema.Tables[i]
 		defer func(i int) { schema.Tables[i] = tbl }(i)
 	} else {
-		tbl = NewTable(schema.SchemaName, genericTable.TableName)
+		tbl = NewTable(schema.SchemaName, tableinfo.TableName)
 		defer func() { schema.AppendTable(tbl) }()
 	}
 	qualifiedTable := tbl.TableSchema + "." + tbl.TableName
@@ -118,7 +118,7 @@ func (m *Metadata) LoadTable(table sq.Table) (err error) {
 		}
 		columnName := field.GetName()
 		if columnName == "" {
-			return fmt.Errorf("table %s field #%d has no name", genericTable.TableName, i)
+			return fmt.Errorf("table %s field #%d has no name", tableinfo.TableName, i)
 		}
 		columnType := defaultColumnType(m.Dialect, field)
 		config := tableType.Field(i).Tag.Get("ddl")
