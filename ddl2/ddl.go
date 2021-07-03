@@ -52,6 +52,11 @@ type Function struct {
 	SQL            []io.Reader
 }
 
+type DDLer interface {
+	sq.SchemaTable
+	DDL(dialect string, t *T)
+}
+
 type View interface {
 	sq.SchemaTable
 	// TODO: extra argument that can be used to register certain view
