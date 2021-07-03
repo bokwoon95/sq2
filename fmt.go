@@ -32,20 +32,21 @@ func BufferPrintf(dialect string, buf *bytes.Buffer, args *[]interface{}, params
 		}
 	}
 	// ordinalNames track which ordinals are in use in the format string e.g.
-	// {1}, {2}. The reason is because we are -temporarily- adding those into
+	// {1}, {2}. The reason is because we are *temporarily* adding those into
 	// the params map in order to track ordinal param status accross
 	// BufferPrintValue calls. The reason we are tracking ordinal param status
 	// across BufferPrintValue calls is because if the value for {1} has
 	// already been appended into args, BufferPrintValue should not append the
 	// value into args. But because ordinal param state is only tracked across
-	// BufferPrintValue calls, not BufferPrintf calls, once BufferPrintf exits
-	// all the ordinalNames added to the params map must be cleaned up.
+	// *BufferPrintValue* calls, not *BufferPrintf* calls, once BufferPrintf
+	// exits all the ordinalNames added to the params map must be cleaned up.
 	var ordinalNames []string
 	// instead of looping over each rune in the format string, we jump straight
 	// to each occurrence of '{'.
 	for i := strings.IndexByte(format, '{'); i >= 0; i = strings.IndexByte(format, '{') {
 		if i+2 <= len(format) && format[i:i+2] == "{{" {
-			// '{{' is the escape sequence for '{'
+			// To use a literal '{' in the format string, escape it by adding a
+			// second curly brace after it i.e. '{{'. We treat all '{{' as '{'.
 			buf.WriteString(format[:i])
 			buf.WriteByte('{')
 			format = format[i+2:]
