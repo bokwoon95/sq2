@@ -1,2 +1,32 @@
 column.DDL(dialect)
 column.DDLFrom(dialect, column2)
+
+type Stmts struct {
+    []TableStmts // CREATE TABLE
+    []ColumnStmts // ALTER TABLE ADD COLUMN | ALTER TABLE ALTER COLUMN
+    []ConstraintStmts // ALTER TABLE ADD CONSTRAINT | ALTER TABLE ALTER CONSTRAINT
+    []IndexStmts // CREATE INDEX
+    []ViewStmts // CREATE VIEW
+    []FunctionStmts // CREATE FUNCTION
+    []TriggerStmts // CREATE TRIGGER
+}
+
+stmts := ddl.Stmts{}
+stmts.AddSchema()
+stmts.AddTable()
+stmts.AddColumn()
+stmts.AddConstraint()
+stmts.AddIndex()
+stmts.DiffColumn()
+stmts.DiffConstraint()
+stmts.DiffIndex()
+
+m1, m2 := ddl.NewMetadata(dialect), ddl.NewMetadata(dialect)
+err := m1.LoadDB(queryer)
+if err != nil {
+}
+err = m2.LoadTables(tables)
+if err != nil {
+}
+stmts := ddl.Stmts{}
+stmts.DiffMetadata()

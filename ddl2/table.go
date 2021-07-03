@@ -23,7 +23,7 @@ type Table struct {
 	triggersCache    map[string]int
 }
 
-func (tbl *Table) LoadColumn(dialect, columnName, columnType, config string) error {
+func (tbl *Table) LoadColumnConfig(dialect, columnName, columnType, config string) error {
 	qualifiedColumn := tbl.TableSchema + "." + tbl.TableName + "." + columnName
 	if tbl.TableSchema == "" {
 		qualifiedColumn = qualifiedColumn[1:]
@@ -88,27 +88,27 @@ func (tbl *Table) LoadColumn(dialect, columnName, columnType, config string) err
 		case "ignore":
 			col.Ignore = true
 		case "primarykey":
-			err = tbl.LoadConstraint(PRIMARY_KEY, col.TableSchema, col.TableName, []string{col.ColumnName}, modifier[1])
+			err = tbl.LoadConstraintConfig(PRIMARY_KEY, col.TableSchema, col.TableName, []string{col.ColumnName}, modifier[1])
 			if err != nil {
 				return fmt.Errorf("%s: %s", qualifiedColumn, err.Error())
 			}
 		case "references":
-			err = tbl.LoadConstraint(FOREIGN_KEY, col.TableSchema, col.TableName, []string{col.ColumnName}, modifier[1])
+			err = tbl.LoadConstraintConfig(FOREIGN_KEY, col.TableSchema, col.TableName, []string{col.ColumnName}, modifier[1])
 			if err != nil {
 				return fmt.Errorf("%s: %s", qualifiedColumn, err.Error())
 			}
 		case "unique":
-			err = tbl.LoadConstraint(UNIQUE, col.TableSchema, col.TableName, []string{col.ColumnName}, modifier[1])
+			err = tbl.LoadConstraintConfig(UNIQUE, col.TableSchema, col.TableName, []string{col.ColumnName}, modifier[1])
 			if err != nil {
 				return fmt.Errorf("%s: %s", qualifiedColumn, err.Error())
 			}
 		case "check":
-			err = tbl.LoadConstraint(CHECK, col.TableSchema, col.TableName, []string{col.ColumnName}, modifier[1])
+			err = tbl.LoadConstraintConfig(CHECK, col.TableSchema, col.TableName, []string{col.ColumnName}, modifier[1])
 			if err != nil {
 				return fmt.Errorf("%s: %s", qualifiedColumn, err.Error())
 			}
 		case "index":
-			err = tbl.LoadIndex(col.TableSchema, col.TableName, []string{col.ColumnName}, modifier[1])
+			err = tbl.LoadIndexConfig(col.TableSchema, col.TableName, []string{col.ColumnName}, modifier[1])
 			if err != nil {
 				return fmt.Errorf("%s: %s", qualifiedColumn, err.Error())
 			}
@@ -119,7 +119,7 @@ func (tbl *Table) LoadColumn(dialect, columnName, columnType, config string) err
 	return nil
 }
 
-func (tbl *Table) LoadConstraint(constraintType, tableSchema, tableName string, columns []string, config string) error {
+func (tbl *Table) LoadConstraintConfig(constraintType, tableSchema, tableName string, columns []string, config string) error {
 	value, modifiers, modifierIndex, err := lexValue(config)
 	if err != nil {
 		return err
@@ -220,7 +220,7 @@ func (tbl *Table) LoadConstraint(constraintType, tableSchema, tableName string, 
 	return nil
 }
 
-func (tbl *Table) LoadIndex(tableSchema, tableName string, columns []string, config string) error {
+func (tbl *Table) LoadIndexConfig(tableSchema, tableName string, columns []string, config string) error {
 	indexName, modifiers, modifierIndex, err := lexValue(config)
 	if err != nil {
 		return err

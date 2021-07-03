@@ -84,6 +84,7 @@ func sprintf(dialect, tableName string, format string, values []interface{}) (st
 	if len(values) == 0 {
 		return format, nil
 	}
+	// TODO: should I use sq.BufferPrintf here directly instead?
 	str, err := appendSQLExclude(dialect, tableName, sq.Fieldf(format, values...))
 	if err != nil {
 		return "", err
@@ -162,15 +163,6 @@ func (t *TColumn) Default(format string, values ...interface{}) *TColumn {
 	return t
 }
 
-func (t *TColumn) DefaultLiteral(value interface{}) *TColumn {
-	literal, err := sq.Sprint(value)
-	if err != nil {
-		panicf(err.Error())
-	}
-	t.tbl.Columns[t.columnIndex].ColumnDefault = literal
-	return t
-}
-
 func (t *TColumn) Autoincrement() *TColumn {
 	t.tbl.Columns[t.columnIndex].Autoincrement = true
 	return t
@@ -202,7 +194,6 @@ func (t *TColumn) PrimaryKey() *TColumn {
 	if err != nil {
 		panicf(err.Error())
 	}
-	t.tbl.Columns[t.columnIndex].IsPrimaryKey = true
 	return t
 }
 
@@ -212,7 +203,6 @@ func (t *TColumn) Unique() *TColumn {
 	if err != nil {
 		panicf(err.Error())
 	}
-	t.tbl.Columns[t.columnIndex].IsUnique = true
 	return t
 }
 

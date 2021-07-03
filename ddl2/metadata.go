@@ -24,7 +24,22 @@ func (m *Metadata) LoadDB() error {
 	return nil
 }
 
-func (m *Metadata) LoadTable(table sq.Table) (err error) {
+func (m *Metadata) LoadTables(tables ...sq.SchemaTable) error {
+	var err error
+	for i, table := range tables {
+		err = m.LoadTable(table)
+		if err != nil {
+			qualifiedTableName := table.GetSchema() + "." + table.GetName()
+			if qualifiedTableName[0] == '.' {
+				qualifiedTableName = qualifiedTableName[1:]
+			}
+			return fmt.Errorf("table #%d %s: %w", i+1, qualifiedTableName, err)
+		}
+	}
+	return nil
+}
+
+func (m *Metadata) LoadTable(table sq.SchemaTable) (err error) {
 	defer func() {
 		if r := recover(); r != nil {
 			switch r := r.(type) {
@@ -97,27 +112,27 @@ func (m *Metadata) LoadTable(table sq.Table) (err error) {
 				tbl.VirtualTableArgs = append(tbl.VirtualTableArgs, virtualTableArg)
 			}
 		case "primarykey":
-			err = tbl.LoadConstraint(PRIMARY_KEY, tbl.TableSchema, tbl.TableName, nil, modifier[1])
+			err = tbl.LoadConstraintConfig(PRIMARY_KEY, tbl.TableSchema, tbl.TableName, nil, modifier[1])
 			if err != nil {
 				return fmt.Errorf("%s: %s", qualifiedTable, err.Error())
 			}
 		case "references":
-			err = tbl.LoadConstraint(FOREIGN_KEY, tbl.TableSchema, tbl.TableName, nil, modifier[1])
+			err = tbl.LoadConstraintConfig(FOREIGN_KEY, tbl.TableSchema, tbl.TableName, nil, modifier[1])
 			if err != nil {
 				return fmt.Errorf("%s: %s", qualifiedTable, err.Error())
 			}
 		case "unique":
-			err = tbl.LoadConstraint(UNIQUE, tbl.TableSchema, tbl.TableName, nil, modifier[1])
+			err = tbl.LoadConstraintConfig(UNIQUE, tbl.TableSchema, tbl.TableName, nil, modifier[1])
 			if err != nil {
 				return fmt.Errorf("%s: %s", qualifiedTable, err.Error())
 			}
 		case "check":
-			err = tbl.LoadConstraint(CHECK, tbl.TableSchema, tbl.TableName, nil, modifier[1])
+			err = tbl.LoadConstraintConfig(CHECK, tbl.TableSchema, tbl.TableName, nil, modifier[1])
 			if err != nil {
 				return fmt.Errorf("%s: %s", qualifiedTable, err.Error())
 			}
 		case "index":
-			err = tbl.LoadIndex(tbl.TableSchema, tbl.TableName, nil, modifier[1])
+			err = tbl.LoadIndexConfig(tbl.TableSchema, tbl.TableName, nil, modifier[1])
 			if err != nil {
 				return fmt.Errorf("%s: %s", qualifiedTable, err.Error())
 			}
@@ -136,32 +151,34 @@ func (m *Metadata) LoadTable(table sq.Table) (err error) {
 		}
 		columnType := defaultColumnType(m.Dialect, field)
 		config := tableType.Field(i).Tag.Get("ddl")
-		err := tbl.LoadColumn(m.Dialect, columnName, columnType, config)
+		err := tbl.LoadColumnConfig(m.Dialect, columnName, columnType, config)
 		if err != nil {
 			return err
 		}
 	}
 	ddlTable, ok := table.(DDLer)
+	defer func() {
+		for _, constraint := range tbl.Constraints {
+			if len(constraint.Columns) != 1 {
+				continue
+			}
+			columnIndex := tbl.CachedColumnIndex(constraint.Columns[0])
+			if columnIndex < 0 {
+				continue
+			}
+			switch constraint.ConstraintType {
+			case PRIMARY_KEY:
+				tbl.Columns[columnIndex].IsPrimaryKey = true
+			case UNIQUE:
+				tbl.Columns[columnIndex].IsUnique = true
+			}
+		}
+	}()
 	if !ok {
 		return nil
 	}
 	t := &T{dialect: m.Dialect, tbl: &tbl}
 	ddlTable.DDL(m.Dialect, t)
-	for _, constraint := range tbl.Constraints {
-		if len(constraint.Columns) != 1 {
-			continue
-		}
-		columnIndex := tbl.CachedColumnIndex(constraint.Columns[0])
-		if columnIndex < 0 {
-			continue
-		}
-		switch constraint.ConstraintType {
-		case PRIMARY_KEY:
-			tbl.Columns[columnIndex].IsPrimaryKey = true
-		case UNIQUE:
-			tbl.Columns[columnIndex].IsUnique = true
-		}
-	}
 	return nil
 }
 
