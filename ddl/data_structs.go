@@ -117,6 +117,32 @@ func (s *Schema) CachedViewIndex(viewName string) (viewIndex int) {
 	return viewIndex
 }
 
+func (s *Schema) AppendView(view Object) (viewIndex int) {
+	if s == nil {
+		return -1
+	}
+	s.Views = append(s.Views, view)
+	if s.viewsCache == nil {
+		s.viewsCache = make(map[string]int)
+	}
+	viewIndex = len(s.Views) - 1
+	s.viewsCache[view.Name] = viewIndex
+	return viewIndex
+}
+
+func (s *Schema) RefreshViewCache() {
+	if s == nil {
+		return
+	}
+	for i, view := range s.Views {
+		if s.viewsCache == nil {
+			s.viewsCache = make(map[string]int)
+		}
+		s.viewsCache[view.Name] = i
+	}
+	return
+}
+
 type Table struct {
 	TableSchema      string
 	TableName        string
