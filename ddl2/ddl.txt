@@ -1,0 +1,2 @@
+column.DDL(dialect)
+column.DDLFrom(dialect, column2)
