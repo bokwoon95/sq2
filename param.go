@@ -20,9 +20,19 @@ func Param(name string, value interface{}) NamedParam {
 	return NamedParam{Name: name, Value: value}
 }
 
-func (param NamedParam) GetAlias() string { return "" }
+func (param NamedParam) GetAlias() string {
+	if v, ok := param.Value.(interface{ GetAlias() string }); ok {
+		return v.GetAlias()
+	}
+	return ""
+}
 
-func (param NamedParam) GetName() string { return "" }
+func (param NamedParam) GetName() string {
+	if v, ok := param.Value.(interface{ GetName() string }); ok {
+		return v.GetName()
+	}
+	return ""
+}
 
 func (param NamedParam) AppendSQLExclude(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int, excludedTableQualifiers []string) error {
 	if param.Name == "" {
