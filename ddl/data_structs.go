@@ -143,6 +143,47 @@ func (s *Schema) RefreshViewCache() {
 	return
 }
 
+func (s *Schema) CachedFunctionIndex(functionName string) (functionIndex int) {
+	if s == nil {
+		return -1
+	}
+	if functionName == "" {
+		delete(s.functionsCache, functionName)
+		return -1
+	}
+	functionIndex, ok := s.functionsCache[functionName]
+	if !ok || functionIndex < 0 || functionIndex >= len(s.Functions) || s.Functions[functionIndex].Name != functionName {
+		delete(s.functionsCache, functionName)
+		return -1
+	}
+	return functionIndex
+}
+
+func (s *Schema) AppendFunction(function Object) (functionIndex int) {
+	if s == nil {
+		return -1
+	}
+	s.Functions = append(s.Functions, function)
+	if s.functionsCache == nil {
+		s.functionsCache = make(map[string]int)
+	}
+	functionIndex = len(s.Functions) - 1
+	s.functionsCache[function.Name] = functionIndex
+	return functionIndex
+}
+
+func (s *Schema) RefreshFunctionCache() {
+	if s == nil {
+		return
+	}
+	for i, function := range s.Functions {
+		if s.functionsCache == nil {
+			s.functionsCache = make(map[string]int)
+		}
+		s.functionsCache[function.Name] = i
+	}
+}
+
 type Table struct {
 	TableSchema      string
 	TableName        string
