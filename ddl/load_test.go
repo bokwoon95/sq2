@@ -13,7 +13,7 @@ func makeDDL(t *testing.T, dialect string, table sq.Table) (ddl string) {
 		buf.Reset()
 		bufpool.Put(buf)
 	}()
-	m := NewMetadata(dialect)
+	m := Metadata{Dialect: dialect}
 	err := m.LoadTable(table)
 	if err != nil {
 		t.Fatal(testcallers(), err)

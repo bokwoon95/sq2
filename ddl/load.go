@@ -44,7 +44,7 @@ func (m *Metadata) LoadTable(table sq.Table) (err error) {
 		schema = m.Schemas[i]
 		defer func(i int) { m.Schemas[i] = schema }(i)
 	} else {
-		schema = NewSchema(tableinfo.TableSchema)
+		schema = Schema{SchemaName: tableinfo.TableSchema}
 		defer func() { m.AppendSchema(schema) }()
 	}
 	var tbl Table
@@ -55,7 +55,7 @@ func (m *Metadata) LoadTable(table sq.Table) (err error) {
 		tbl = schema.Tables[i]
 		defer func(i int) { schema.Tables[i] = tbl }(i)
 	} else {
-		tbl = NewTable(schema.SchemaName, tableinfo.TableName)
+		tbl = Table{TableSchema: tableinfo.TableSchema, TableName: tableinfo.TableName}
 		defer func() { schema.AppendTable(tbl) }()
 	}
 	qualifiedTable := tbl.TableSchema + "." + tbl.TableName
