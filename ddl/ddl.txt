@@ -96,3 +96,17 @@ ddl.CreateOrDiffSchemas(m1, m2, ddl.Config{
     WantFunctions: ...,
     WantViews: ...,
 })
+
+m1, m2 := ddl.NewMetadata(dialect), ddl.NewMetadata(dialect)
+err := m1.LoadDB(queryer)
+if err != nil {
+}
+err = m2.LoadTables(tables)
+if err != nil {
+}
+m1.DDL()
+m1.MigrateTo(m2)
+
+m.Bootstrap()
+
+m.BootstrapTo()

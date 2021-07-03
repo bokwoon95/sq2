@@ -387,11 +387,6 @@ func Diff(dialect string, gotMetadata, wantMetadata Metadata, config Config) ([]
 	return stmts, nil
 }
 
-func MigrateTables(dialect string, gotSchema, wantSchema Schema, config Config) ([]string, error) {
-	var stmts []string
-	return stmts, nil
-}
-
 func DiffColumn(dialect string, gotColumn, wantColumn Column) ([]string, error) {
 	return nil, nil
 }
