@@ -69,7 +69,7 @@ func (s *Schema) CachedTableIndex(tableName string) (tableIndex int) {
 		return -1
 	}
 	tableIndex, ok := s.tablesCache[tableName]
-	if !ok || tableIndex < 0 || tableIndex >= len(s.Tables) {
+	if !ok || tableIndex < 0 || tableIndex >= len(s.Tables) || s.Tables[tableIndex].TableName != tableName {
 		delete(s.tablesCache, tableName)
 		return -1
 	}
@@ -99,6 +99,22 @@ func (s *Schema) RefreshTableCache() {
 		}
 		s.tablesCache[table.TableName] = i
 	}
+}
+
+func (s *Schema) CachedViewIndex(viewName string) (viewIndex int) {
+	if s == nil {
+		return -1
+	}
+	if viewName == "" {
+		delete(s.viewsCache, viewName)
+		return -1
+	}
+	viewIndex, ok := s.viewsCache[viewName]
+	if !ok || viewIndex < 0 || viewIndex >= len(s.Views) || s.Views[viewIndex].Name != viewName {
+		delete(s.viewsCache, viewName)
+		return -1
+	}
+	return viewIndex
 }
 
 type Table struct {
@@ -252,6 +268,19 @@ func (tbl *Table) CachedTriggerIndex(triggerName string) (triggerIndex int) {
 		delete(tbl.triggersCache, triggerName)
 		return -1
 	}
+	return triggerIndex
+}
+
+func (tbl *Table) AppendTrigger(trigger Object) (triggerIndex int) {
+	if tbl == nil {
+		return -1
+	}
+	tbl.Triggers = append(tbl.Triggers, trigger)
+	if tbl.triggersCache == nil {
+		tbl.triggersCache = make(map[string]int)
+	}
+	triggerIndex = len(tbl.Triggers) - 1
+	tbl.triggersCache[trigger.Name] = triggerIndex
 	return triggerIndex
 }
 
