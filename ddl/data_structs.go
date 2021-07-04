@@ -196,15 +196,14 @@ type Table struct {
 }
 
 func (tbl *Table) CachedColumnIndex(columnName string) (columnIndex int) {
-	if tbl == nil {
-		return -1
-	}
-	if columnName == "" {
-		delete(tbl.columnsCache, columnName)
+	if tbl == nil || columnName == "" {
 		return -1
 	}
 	columnIndex, ok := tbl.columnsCache[columnName]
-	if !ok || columnIndex < 0 && columnIndex >= len(tbl.Columns) || tbl.Columns[columnIndex].ColumnName != columnName {
+	if !ok {
+		return -1
+	}
+	if columnIndex < 0 && columnIndex >= len(tbl.Columns) || tbl.Columns[columnIndex].ColumnName != columnName {
 		delete(tbl.columnsCache, columnName)
 		return -1
 	}
@@ -237,15 +236,14 @@ func (tbl *Table) RefreshColumnCache() {
 }
 
 func (tbl *Table) CachedConstraintIndex(constraintName string) (constraintIndex int) {
-	if tbl == nil {
-		return -1
-	}
-	if constraintName == "" {
-		delete(tbl.constraintsCache, constraintName)
+	if tbl == nil || constraintName == "" {
 		return -1
 	}
 	constraintIndex, ok := tbl.constraintsCache[constraintName]
-	if !ok || constraintIndex < 0 || constraintIndex >= len(tbl.Constraints) || tbl.Constraints[constraintIndex].ConstraintName != constraintName {
+	if !ok {
+		return -1
+	}
+	if constraintIndex < 0 || constraintIndex >= len(tbl.Constraints) || tbl.Constraints[constraintIndex].ConstraintName != constraintName {
 		delete(tbl.constraintsCache, constraintName)
 		return -1
 	}
