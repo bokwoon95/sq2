@@ -44,15 +44,15 @@ func (tbl *Table) tcol(dialect, columnName string) *TColumn {
 
 func (t *T) Column(field sq.Field) *TColumn {
 	if field == nil {
-		panicf("field is nil")
+		panicf("Column: field is nil")
 	}
 	columnName := field.GetName()
 	if columnName == "" {
-		panicf("field has no name")
+		panicf("Column: field has no name")
 	}
 	columnIndex := t.tbl.CachedColumnIndex(columnName)
 	if columnIndex < 0 {
-		panicf("table has no such column %s", columnName)
+		panicf("Column(%[1]s): table %[2]s has no such column %[1]s", columnName, t.tbl.TableName)
 	}
 	return &TColumn{
 		dialect:     t.dialect,
@@ -109,7 +109,7 @@ func appendSQLExclude(dialect, tableName string, v sq.SQLExcludeAppender) (strin
 func (t *T) Sprintf(format string, values ...interface{}) string {
 	expr, err := sprintf(t.dialect, t.tbl.TableName, format, values)
 	if err != nil {
-		panicf(err.Error())
+		panicf("Sprintf(%s): %s", format, err.Error())
 	}
 	return expr
 }
@@ -117,7 +117,7 @@ func (t *T) Sprintf(format string, values ...interface{}) string {
 func (t *TColumn) Generated(format string, values ...interface{}) *TColumn {
 	expr, err := sprintf(t.dialect, t.tbl.TableName, format, values)
 	if err != nil {
-		panicf(err.Error())
+		panicf("Sprintf(%s): %s", format, err.Error())
 	}
 	t.tbl.Columns[t.columnIndex].GeneratedExpr = expr
 	return t
@@ -153,21 +153,12 @@ func (t *TColumn) Default(format string, values ...interface{}) *TColumn {
 	}
 	expr, err := sprintf(t.dialect, t.tbl.TableName, format, values)
 	if err != nil {
-		panicf(err.Error())
+		panicf("Default(%s): %s", format, err.Error())
 	}
 	if t.dialect != sq.DialectPostgres {
 		expr = "(" + expr + ")"
 	}
 	t.tbl.Columns[t.columnIndex].ColumnDefault = expr
-	return t
-}
-
-func (t *TColumn) DefaultLiteral(value interface{}) *TColumn {
-	literal, err := sq.Sprint(value)
-	if err != nil {
-		panicf(err.Error())
-	}
-	t.tbl.Columns[t.columnIndex].ColumnDefault = literal
 	return t
 }
 
@@ -200,7 +191,7 @@ func (t *TColumn) PrimaryKey() *TColumn {
 	constraintName := generateName(PRIMARY_KEY, t.tbl.TableName, t.columnName)
 	_, err := createOrUpdateConstraint(t.tbl, PRIMARY_KEY, constraintName, []string{t.columnName}, "")
 	if err != nil {
-		panicf(err.Error())
+		panicf("PrimaryKey: %s", err.Error())
 	}
 	t.tbl.Columns[t.columnIndex].IsPrimaryKey = true
 	return t
@@ -210,7 +201,7 @@ func (t *TColumn) Unique() *TColumn {
 	constraintName := generateName(UNIQUE, t.tbl.TableName, t.columnName)
 	_, err := createOrUpdateConstraint(t.tbl, UNIQUE, constraintName, []string{t.columnName}, "")
 	if err != nil {
-		panicf(err.Error())
+		panicf("Unique: %s", err.Error())
 	}
 	t.tbl.Columns[t.columnIndex].IsUnique = true
 	return t
@@ -271,7 +262,7 @@ func createOrUpdateConstraint(tbl *Table, constraintType, constraintName string,
 func (t *T) Check(constraintName string, format string, values ...interface{}) *TConstraint {
 	expr, err := sprintf(t.dialect, t.tbl.TableName, format, values)
 	if err != nil {
-		panicf(err.Error())
+		panicf("Check(%s, %s): %s", constraintName, format, err.Error())
 	}
 	tConstraint := &TConstraint{
 		dialect:        t.dialect,
@@ -280,7 +271,7 @@ func (t *T) Check(constraintName string, format string, values ...interface{}) *
 	}
 	tConstraint.constraintIndex, err = createOrUpdateConstraint(t.tbl, CHECK, constraintName, nil, expr)
 	if err != nil {
-		panicf(err.Error())
+		panicf("Check(%s, %s): %s", constraintName, format, err.Error())
 	}
 	return tConstraint
 }
@@ -288,7 +279,7 @@ func (t *T) Check(constraintName string, format string, values ...interface{}) *
 func (t *T) Unique(fields ...sq.Field) *TConstraint {
 	columnNames, err := getColumnNames(fields)
 	if err != nil {
-		panicf(err.Error())
+		panicf("Unique(%+v): %s", columnNames, err.Error())
 	}
 	constraintName := generateName(UNIQUE, t.tbl.TableName, columnNames...)
 	tConstraint := &TConstraint{
@@ -298,7 +289,7 @@ func (t *T) Unique(fields ...sq.Field) *TConstraint {
 	}
 	tConstraint.constraintIndex, err = createOrUpdateConstraint(t.tbl, UNIQUE, constraintName, columnNames, "")
 	if err != nil {
-		panicf(err.Error())
+		panicf("Unique(%+v): %s", columnNames, err.Error())
 	}
 	return tConstraint
 }
@@ -306,7 +297,7 @@ func (t *T) Unique(fields ...sq.Field) *TConstraint {
 func (t *T) PrimaryKey(fields ...sq.Field) *TConstraint {
 	columnNames, err := getColumnNames(fields)
 	if err != nil {
-		panicf(err.Error())
+		panicf("PrimaryKey(%+v): %s", columnNames, err.Error())
 	}
 	constraintName := generateName(PRIMARY_KEY, t.tbl.TableName, columnNames...)
 	tConstraint := &TConstraint{
@@ -316,7 +307,7 @@ func (t *T) PrimaryKey(fields ...sq.Field) *TConstraint {
 	}
 	tConstraint.constraintIndex, err = createOrUpdateConstraint(t.tbl, PRIMARY_KEY, constraintName, columnNames, "")
 	if err != nil {
-		panicf(err.Error())
+		panicf("PrimaryKey(%+v): %s", columnNames, err.Error())
 	}
 	return tConstraint
 }
@@ -324,7 +315,7 @@ func (t *T) PrimaryKey(fields ...sq.Field) *TConstraint {
 func (t *T) ForeignKey(fields ...sq.Field) *TConstraint {
 	columnNames, err := getColumnNames(fields)
 	if err != nil {
-		panicf(err.Error())
+		panicf("ForeignKey(%+v): %s", columnNames, err.Error())
 	}
 	constraintName := generateName(FOREIGN_KEY, t.tbl.TableName, columnNames...)
 	tConstraint := &TConstraint{
@@ -334,7 +325,7 @@ func (t *T) ForeignKey(fields ...sq.Field) *TConstraint {
 	}
 	tConstraint.constraintIndex, err = createOrUpdateConstraint(t.tbl, FOREIGN_KEY, constraintName, columnNames, "")
 	if err != nil {
-		panicf(err.Error())
+		panicf("ForeignKey(%+v): %s", columnNames, err.Error())
 	}
 	return tConstraint
 }
@@ -342,7 +333,7 @@ func (t *T) ForeignKey(fields ...sq.Field) *TConstraint {
 func (t *T) NameUnique(constraintName string, fields ...sq.Field) *TConstraint {
 	columnNames, err := getColumnNames(fields)
 	if err != nil {
-		panicf(err.Error())
+		panicf("NameUnique(%s, %+v): %s", constraintName, columnNames, err.Error())
 	}
 	tConstraint := &TConstraint{
 		dialect:        t.dialect,
@@ -351,7 +342,7 @@ func (t *T) NameUnique(constraintName string, fields ...sq.Field) *TConstraint {
 	}
 	tConstraint.constraintIndex, err = createOrUpdateConstraint(t.tbl, UNIQUE, constraintName, columnNames, "")
 	if err != nil {
-		panicf(err.Error())
+		panicf("NameUnique(%s, %+v): %s", constraintName, columnNames, err.Error())
 	}
 	return tConstraint
 }
@@ -359,7 +350,7 @@ func (t *T) NameUnique(constraintName string, fields ...sq.Field) *TConstraint {
 func (t *T) NamePrimaryKey(constraintName string, fields ...sq.Field) *TConstraint {
 	columnNames, err := getColumnNames(fields)
 	if err != nil {
-		panicf(err.Error())
+		panicf("NamePrimaryKey(%s, %+v): %s", constraintName, columnNames, err.Error())
 	}
 	tConstraint := &TConstraint{
 		dialect:        t.dialect,
@@ -368,7 +359,7 @@ func (t *T) NamePrimaryKey(constraintName string, fields ...sq.Field) *TConstrai
 	}
 	tConstraint.constraintIndex, err = createOrUpdateConstraint(t.tbl, PRIMARY_KEY, constraintName, columnNames, "")
 	if err != nil {
-		panicf(err.Error())
+		panicf("NamePrimaryKey(%s, %+v): %s", constraintName, columnNames, err.Error())
 	}
 	return tConstraint
 }
@@ -376,7 +367,7 @@ func (t *T) NamePrimaryKey(constraintName string, fields ...sq.Field) *TConstrai
 func (t *T) NameForeignKey(constraintName string, fields ...sq.Field) *TConstraint {
 	columnNames, err := getColumnNames(fields)
 	if err != nil {
-		panicf(err.Error())
+		panicf("NameForeignKey(%s, %+v): %s", constraintName, columnNames, err.Error())
 	}
 	tConstraint := &TConstraint{
 		dialect:        t.dialect,
@@ -385,7 +376,7 @@ func (t *T) NameForeignKey(constraintName string, fields ...sq.Field) *TConstrai
 	}
 	tConstraint.constraintIndex, err = createOrUpdateConstraint(t.tbl, FOREIGN_KEY, constraintName, columnNames, "")
 	if err != nil {
-		panicf(err.Error())
+		panicf("NameForeignKey(%s, %+v): %s", constraintName, columnNames, err.Error())
 	}
 	return tConstraint
 }
@@ -401,15 +392,15 @@ func (t *TConstraint) Config(config func(constraint *Constraint)) {
 
 func (t *TConstraint) References(table sq.Table, fields ...sq.Field) *TConstraint {
 	if table == nil {
-		panicf("referenced table is nil")
+		panicf("References: referenced table is nil")
 	}
 	referencesTable := table.GetName()
 	if referencesTable == "" {
-		panicf("referenced table has no name")
+		panicf("References: referenced table has no name")
 	}
 	referencesColumns, err := getColumnNames(fields)
 	if err != nil {
-		panicf("referenced " + err.Error())
+		panicf("References(%s): %s", referencesTable, err.Error())
 	}
 	constraint := t.tbl.Constraints[t.constraintIndex]
 	constraint.ReferencesTable = referencesTable
@@ -506,7 +497,7 @@ func createOrUpdateIndex(tbl *Table, indexName string, columns []string, exprs [
 func (t *T) Index(fields ...sq.Field) *TIndex {
 	columnNames, exprs, err := getColumnNamesAndExprs(t.dialect, t.tbl.TableName, fields)
 	if err != nil {
-		panicf(err.Error())
+		panicf("Index(%+v): %s", columnNames, err.Error())
 	}
 	indexName := generateName(INDEX, t.tbl.TableName, columnNames...)
 	tIndex := &TIndex{
@@ -516,7 +507,7 @@ func (t *T) Index(fields ...sq.Field) *TIndex {
 	}
 	tIndex.indexIndex, err = createOrUpdateIndex(t.tbl, indexName, columnNames, exprs)
 	if err != nil {
-		panicf(err.Error())
+		panicf("Index(%+v): %s", columnNames, err.Error())
 	}
 	return tIndex
 }
@@ -524,7 +515,7 @@ func (t *T) Index(fields ...sq.Field) *TIndex {
 func (t *T) NameIndex(indexName string, fields ...sq.Field) *TIndex {
 	columnNames, exprs, err := getColumnNamesAndExprs(t.dialect, t.tbl.TableName, fields)
 	if err != nil {
-		panicf(err.Error())
+		panicf("NameIndex(%s, %+v): %s", indexName, columnNames, err.Error())
 	}
 	tIndex := &TIndex{
 		dialect:   t.dialect,
@@ -533,7 +524,7 @@ func (t *T) NameIndex(indexName string, fields ...sq.Field) *TIndex {
 	}
 	tIndex.indexIndex, err = createOrUpdateIndex(t.tbl, indexName, columnNames, exprs)
 	if err != nil {
-		panicf(err.Error())
+		panicf("NameIndex(%s, %+v): %s", indexName, columnNames, err.Error())
 	}
 	return tIndex
 }
@@ -551,7 +542,7 @@ func (t *TIndex) Using(indexType string) *TIndex {
 func (t *TIndex) Where(format string, values ...interface{}) *TIndex {
 	expr, err := sprintf(t.dialect, t.tbl.TableName, format, values)
 	if err != nil {
-		panicf(err.Error())
+		panicf("Where(%s): %s", format, err.Error())
 	}
 	t.tbl.Indices[t.indexIndex].Where = expr
 	return t
@@ -560,7 +551,7 @@ func (t *TIndex) Where(format string, values ...interface{}) *TIndex {
 func (t *TIndex) Include(fields ...sq.Field) *TIndex {
 	columnNames, err := getColumnNames(fields)
 	if err != nil {
-		panicf(err.Error())
+		panicf("Include(%+v): %s", columnNames, err.Error())
 	}
 	t.tbl.Indices[t.indexIndex].Include = columnNames
 	return t
