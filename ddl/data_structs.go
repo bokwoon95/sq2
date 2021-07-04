@@ -14,11 +14,10 @@ func (m *Metadata) CachedSchemaIndex(schemaName string) (schemaIndex int) {
 		return -1
 	}
 	schemaIndex, ok := m.schemasCache[schemaName]
-	if !ok || schemaIndex < 0 || schemaIndex >= len(m.Schemas) {
-		delete(m.schemasCache, schemaName)
+	if !ok {
 		return -1
 	}
-	if m.Schemas[schemaIndex].SchemaName != schemaName {
+	if schemaIndex < 0 || schemaIndex >= len(m.Schemas) || m.Schemas[schemaIndex].SchemaName != schemaName {
 		delete(m.schemasCache, schemaName)
 		return -1
 	}
@@ -61,15 +60,14 @@ type Schema struct {
 }
 
 func (s *Schema) CachedTableIndex(tableName string) (tableIndex int) {
-	if s == nil {
-		return -1
-	}
-	if tableName == "" {
-		delete(s.tablesCache, tableName)
+	if s == nil || tableName == "" {
 		return -1
 	}
 	tableIndex, ok := s.tablesCache[tableName]
-	if !ok || tableIndex < 0 || tableIndex >= len(s.Tables) || s.Tables[tableIndex].TableName != tableName {
+	if !ok {
+		return -1
+	}
+	if tableIndex < 0 || tableIndex >= len(s.Tables) || s.Tables[tableIndex].TableName != tableName {
 		delete(s.tablesCache, tableName)
 		return -1
 	}
@@ -102,15 +100,14 @@ func (s *Schema) RefreshTableCache() {
 }
 
 func (s *Schema) CachedViewIndex(viewName string) (viewIndex int) {
-	if s == nil {
-		return -1
-	}
-	if viewName == "" {
-		delete(s.viewsCache, viewName)
+	if s == nil || viewName == "" {
 		return -1
 	}
 	viewIndex, ok := s.viewsCache[viewName]
-	if !ok || viewIndex < 0 || viewIndex >= len(s.Views) || s.Views[viewIndex].Name != viewName {
+	if !ok {
+		return -1
+	}
+	if viewIndex < 0 || viewIndex >= len(s.Views) || s.Views[viewIndex].Name != viewName {
 		delete(s.viewsCache, viewName)
 		return -1
 	}
@@ -144,15 +141,14 @@ func (s *Schema) RefreshViewCache() {
 }
 
 func (s *Schema) CachedFunctionIndex(functionName string) (functionIndex int) {
-	if s == nil {
-		return -1
-	}
-	if functionName == "" {
-		delete(s.functionsCache, functionName)
+	if s == nil || functionName == "" {
 		return -1
 	}
 	functionIndex, ok := s.functionsCache[functionName]
-	if !ok || functionIndex < 0 || functionIndex >= len(s.Functions) || s.Functions[functionIndex].Name != functionName {
+	if !ok {
+		return -1
+	}
+	if functionIndex < 0 || functionIndex >= len(s.Functions) || s.Functions[functionIndex].Name != functionName {
 		delete(s.functionsCache, functionName)
 		return -1
 	}
@@ -282,15 +278,14 @@ func (tbl *Table) RefreshConstraintCache() {
 }
 
 func (tbl *Table) CachedIndexIndex(indexName string) (indexIndex int) {
-	if tbl == nil {
-		return -1
-	}
-	if indexName == "" {
-		delete(tbl.indicesCache, indexName)
+	if tbl == nil || indexName == "" {
 		return -1
 	}
 	indexIndex, ok := tbl.indicesCache[indexName]
-	if !ok || indexIndex < 0 || indexIndex >= len(tbl.Indices) || tbl.Indices[indexIndex].IndexName != indexName {
+	if !ok {
+		return -1
+	}
+	if indexIndex < 0 || indexIndex >= len(tbl.Indices) || tbl.Indices[indexIndex].IndexName != indexName {
 		delete(tbl.indicesCache, indexName)
 		return -1
 	}
@@ -323,15 +318,14 @@ func (tbl *Table) RefreshIndexCache() {
 }
 
 func (tbl *Table) CachedTriggerIndex(triggerName string) (triggerIndex int) {
-	if tbl == nil {
-		return -1
-	}
-	if triggerName == "" {
-		delete(tbl.triggersCache, triggerName)
+	if tbl == nil || triggerName == "" {
 		return -1
 	}
 	triggerIndex, ok := tbl.triggersCache[triggerName]
-	if !ok || triggerIndex < 0 || triggerIndex >= len(tbl.Triggers) || tbl.Triggers[triggerIndex].Name != triggerName {
+	if !ok {
+		return -1
+	}
+	if triggerIndex < 0 || triggerIndex >= len(tbl.Triggers) || tbl.Triggers[triggerIndex].Name != triggerName {
 		delete(tbl.triggersCache, triggerName)
 		return -1
 	}
