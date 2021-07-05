@@ -32,3 +32,5 @@ TODO: need to implement RENAME operations as well
 
 TODO: implement Pop(positions ...int) methods that can pop a Schema/Table/Column/Constraint/Index out
 This could actually be a generic function lol. Prime use for generics. No need for adding a method on struct that needs Pop.
+
+FUG man functions are giving me so much grief. Have to design something that can potentially be used as a table-valued function (i.e. a struct) but also a function that is defined inside an sql file and the contents are entirely opaque to ddl but somehow must still track overloaded function separately. to handle function diffing properly. And whatever comes out from the database must be representable by this struct.
