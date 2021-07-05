@@ -2,7 +2,6 @@ package ddl3
 
 import (
 	"bytes"
-	"io"
 	"strings"
 	"sync"
 
@@ -37,7 +36,7 @@ type Column struct {
 	TableName                string
 	ColumnName               string
 	ColumnType               string
-	NormalizedColumnType     string
+	NormalizedColumnType     string // Not needed if we have a IsEquivalentType(dialect, typeA, typeB string) bool
 	Precision                int
 	Scale                    int
 	Identity                 string
@@ -91,26 +90,6 @@ type Object struct {
 	ObjectSchema string
 	ObjectName   string
 	SQL          []string
-}
-
-type _Function interface {
-}
-
-type TableValuedFunction interface {
-	_Function
-}
-
-type Function struct {
-	FunctionSchema string
-	FunctionName   string
-	SQL            []io.Reader
-}
-
-type View interface {
-	sq.SchemaTable
-	// TODO: extra argument that can be used to register certain view
-	// porperties like MATERIALIZED or RECURSIVE.
-	View(dialect string) sq.Query
 }
 
 const (
