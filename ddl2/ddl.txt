@@ -38,13 +38,11 @@ CREATE OR REPLACE FUNCTION
 
 TODO: rename Metadata to Catalog. Include the CatalogName.
 
-Custom SQL-level filtering when retrieving the catalog is possible! Simply ask the user to provide an sq.Predicate which will get appended to the overall query. Fucking genuis really.
+Custom SQL-level filtering when retrieving the catalog is possible! Simply ask the user to provide an sq.Predicate which will get appended to the overall query.
 
 DiffMetadata returns a struct containing ddl.Commands
     The ddl.Commands are organized in a way that matches the hierarchy of a Catalog.
     This makes it easy for the user to search for a particular piece of ddl command, e.g they are looking for all CREATE INDEX commands so that they can convert it to CREATE INDEX ... CONCURRENTLY.
-
-This is genuinely exciting. The concept of DML query builders already exist. But the concept of DDL query builders is unheard of. Every ORM-based migration tool (Rails, Django, Alembic) generates opaque DDL strings and cannot leverage dialect-specific features without asking the developer to write the raw sql themselves.
 
 unlike columns, constraints may not be harmless if ignored. Old constraints
 that are not dropped may actively hinder adding new columns or altering
