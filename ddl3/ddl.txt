@@ -34,3 +34,26 @@ TODO: implement Pop(positions ...int) methods that can pop a Schema/Table/Column
 This could actually be a generic function lol. Prime use for generics. No need for adding a method on struct that needs Pop.
 
 FUG man functions are giving me so much grief. Have to design something that can potentially be used as a table-valued function (i.e. a struct) but also a function that is defined inside an sql file and the contents are entirely opaque to ddl but somehow must still track overloaded function separately. to handle function diffing properly. And whatever comes out from the database must be representable by this struct.
+
+type SomeFunction struct {
+    sq.TableInfo
+    OUT_NUM sq.NumberField
+    OUT_STR sq.StringField
+    args []interface{}
+}
+
+func NewSomeFunction(inNum int, inStr string) SomeFunction {
+    var fn SomeFunction
+    fn.args = append(fn.args, inNum, inStr)
+    _ = sq.ReflectTable(&fn)
+    return SomeFunction
+}
+
+some_function := sq.New[SomeFunction]("", a, b, c, d) // variadic ...interface{} bad form?
+
+func (fn SomeFunction) AppendSQLExclude(dialect, buf, args, params, excludedTableQualifiers) error {
+    return BufferPrintf(dialect, buf, args, params, excludedTableQualifiers, "some_function({}, {}, {}, {})", args)
+}
+
+func (fn SomeFunction) Function() {
+}
