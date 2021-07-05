@@ -35,25 +35,6 @@ This could actually be a generic function lol. Prime use for generics. No need f
 
 FUG man functions are giving me so much grief. Have to design something that can potentially be used as a table-valued function (i.e. a struct) but also a function that is defined inside an sql file and the contents are entirely opaque to ddl but somehow must still track overloaded function separately. to handle function diffing properly. And whatever comes out from the database must be representable by this struct.
 
-type SomeFunction struct {
-    sq.TableInfo
-    OUT_NUM sq.NumberField
-    OUT_STR sq.StringField
-    args []interface{}
-}
+for SQLite's COPY NEW TABLE -> COPY DATA -> DROP OLD TABLE -> RENAME NEW TABLE flow, we will likely need an extra field in Changeset struct to accomodate DML data copying. The fields will not be from the table themselves, rather (TODO:) ddl.Column should implement sq.Field interface so that they can be used with the query builders instead. This way, given a current table and desired table, we can programatically generate the UPDATE new_table INSERT (from new table) query, by using the Column as sq.Fields directly.
 
-func NewSomeFunction(inNum int, inStr string) SomeFunction {
-    var fn SomeFunction
-    fn.args = append(fn.args, inNum, inStr)
-    _ = sq.ReflectTable(&fn)
-    return SomeFunction
-}
-
-some_function := sq.New[SomeFunction]("", a, b, c, d) // variadic ...interface{} bad form?
-
-func (fn SomeFunction) AppendSQLExclude(dialect, buf, args, params, excludedTableQualifiers) error {
-    return BufferPrintf(dialect, buf, args, params, excludedTableQualifiers, "some_function({}, {}, {}, {})", args)
-}
-
-func (fn SomeFunction) Function() {
-}
+Also, rename operations. Rename table, rename column (rename constraint? rename index?).
