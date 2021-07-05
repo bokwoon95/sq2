@@ -118,6 +118,8 @@ type Predicate interface {
 }
 
 type Queryer interface {
+	// TODO: If we are no longer expecting the user to use sq.Queryer directly in their server struct, we can remove the extraneous utility methods and only leave 'QueryContext' and 'ExecContext'.
+	// TODO: if we are no longer creating an actual DB struct, we can call this interface 'DB' instead or the awkward 'Queryer'
 	Query(query string, args ...interface{}) (*sql.Rows, error)
 	QueryContext(ctx context.Context, query string, args ...interface{}) (*sql.Rows, error)
 	QueryRow(query string, args ...interface{}) *sql.Row
@@ -126,6 +128,7 @@ type Queryer interface {
 	ExecContext(ctx context.Context, query string, args ...interface{}) (sql.Result, error)
 }
 
+// TODO: if we are no longer implementing any tx utility functions, we can remove this interface.
 type Transactor interface {
 	Begin() (*sql.Tx, error)
 	BeginTx(ctx context.Context, opts *sql.TxOptions) (*sql.Tx, error)
