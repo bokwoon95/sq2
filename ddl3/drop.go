@@ -1,7 +1,6 @@
 package ddl3
 
 type DropSchemaCommand struct {
-	// NOTE: sqlite does not support DROP SCHEMA
 	Dialect     string
 	DoIfExists  bool
 	SchemaNames []string

@@ -5,7 +5,7 @@ table.go
 t.go
 catalog.go
 
-Custom SQL-level filtering when retrieving the catalog is possible! Simply ask the user to provide an sq.Predicate which will get appended to the overall query. Fucking genius really.
+Custom SQL-level filtering when retrieving the catalog is possible! Simply ask the user to provide an sq.Predicate which will get appended to the overall query.
 
 NOTE: if the incoming table's schema is empty, set it to whatever the current default schema is. For postgres this can be found with SELECT current_schema, with mysql this can be found with SELECT database(). For sqlite the default schema is just an empty string.
     This step is important when it comes to diffing the catalogs, because the catalog loaded from the database will contain the schema name while the catalog loaded from the user-provided tables may omit the schema name.
