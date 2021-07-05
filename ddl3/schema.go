@@ -52,7 +52,7 @@ func (s *Schema) CachedViewIndex(viewName string) (viewIndex int) {
 	if !ok {
 		return -1
 	}
-	if viewIndex < 0 || viewIndex >= len(s.Views) || s.Views[viewIndex].Name != viewName {
+	if viewIndex < 0 || viewIndex >= len(s.Views) || s.Views[viewIndex].ObjectName != viewName {
 		delete(s.viewsCache, viewName)
 		return -1
 	}
@@ -65,7 +65,7 @@ func (s *Schema) AppendView(view Object) (viewIndex int) {
 		s.viewsCache = make(map[string]int)
 	}
 	viewIndex = len(s.Views) - 1
-	s.viewsCache[view.Name] = viewIndex
+	s.viewsCache[view.ObjectName] = viewIndex
 	return viewIndex
 }
 
@@ -74,7 +74,7 @@ func (s *Schema) RefreshViewCache() {
 		if s.viewsCache == nil {
 			s.viewsCache = make(map[string]int)
 		}
-		s.viewsCache[view.Name] = i
+		s.viewsCache[view.ObjectName] = i
 	}
 	return
 }
@@ -87,7 +87,7 @@ func (s *Schema) CachedFunctionIndex(functionName string) (functionIndex int) {
 	if !ok {
 		return -1
 	}
-	if functionIndex < 0 || functionIndex >= len(s.Functions) || s.Functions[functionIndex].Name != functionName {
+	if functionIndex < 0 || functionIndex >= len(s.Functions) || s.Functions[functionIndex].ObjectName != functionName {
 		delete(s.functionsCache, functionName)
 		return -1
 	}
@@ -100,7 +100,7 @@ func (s *Schema) AppendFunction(function Object) (functionIndex int) {
 		s.functionsCache = make(map[string]int)
 	}
 	functionIndex = len(s.Functions) - 1
-	s.functionsCache[function.Name] = functionIndex
+	s.functionsCache[function.ObjectName] = functionIndex
 	return functionIndex
 }
 
@@ -109,6 +109,6 @@ func (s *Schema) RefreshFunctionCache() {
 		if s.functionsCache == nil {
 			s.functionsCache = make(map[string]int)
 		}
-		s.functionsCache[function.Name] = i
+		s.functionsCache[function.ObjectName] = i
 	}
 }

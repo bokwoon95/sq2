@@ -16,12 +16,19 @@ func (catalog *Catalog) LoadDB(db sq.Queryer) error
 func (catalog *Catalog) LoadTables(tables ...sq.SchemaTable) error
 func (catalog *Catalog) LoadViews(views ...View) error
 func (catalog *Catalog) LoadFunctions(functions ...Function) error
-func DiffCatalog(gotCatalog, wantCatalog Catalog) (ChangeSet, error)
+func DiffCatalog(gotCatalog, wantCatalog Catalog) (Changeset, error)
 // DDL, Diff, DiffCommands, which to choose? DDL is bad because it takes up the `ddl` variable name, which is already used for the package.
-func (set ChangeSet) Commands() Commands
+func (set Changeset) Commands() Commands
 func (cmds Commands) WriteOut(w io.Writer) error
 func (cmds Commands) ExecDB(db sq.Queryer) error
 func AutoMigrate(db sq.Queryer, tables sq.Tables, items ...interface{}) error
 type AutoMigrateItems struct{
 }
 // have to decide between materializing all the params, accepting a AutoMigrateItems struct or simply ...interface{} my way out.
+
+Changeset should somehow accomodate SQLite's migration strategy of constructing a new table, copying the data, dropping the old table and renaming the new table to the old table.
+
+TODO: need to implement RENAME operations as well
+
+TODO: implement Pop(positions ...int) methods that can pop a Schema/Table/Column/Constraint/Index out
+This could actually be a generic function lol. Prime use for generics. No need for adding a method on struct that needs Pop.
