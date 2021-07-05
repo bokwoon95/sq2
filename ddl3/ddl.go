@@ -85,10 +85,12 @@ type Index struct {
 }
 
 type Object struct {
-	Type   string // VIEW | FUNCTION | TRIGGER
-	Schema string
-	Name   string
-	SQL    []string
+	Type         string // VIEW | FUNCTION | TRIGGER
+	TableSchema  string
+	TableName    string
+	ObjectSchema string
+	ObjectName   string
+	SQL          []string
 }
 
 type _Function interface {

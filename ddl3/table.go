@@ -133,7 +133,7 @@ func (tbl *Table) CachedTriggerIndex(triggerName string) (triggerIndex int) {
 	if !ok {
 		return -1
 	}
-	if triggerIndex < 0 || triggerIndex >= len(tbl.Triggers) || tbl.Triggers[triggerIndex].Name != triggerName {
+	if triggerIndex < 0 || triggerIndex >= len(tbl.Triggers) || tbl.Triggers[triggerIndex].ObjectName != triggerName {
 		delete(tbl.triggersCache, triggerName)
 		return -1
 	}
@@ -146,7 +146,7 @@ func (tbl *Table) AppendTrigger(trigger Object) (triggerIndex int) {
 		tbl.triggersCache = make(map[string]int)
 	}
 	triggerIndex = len(tbl.Triggers) - 1
-	tbl.triggersCache[trigger.Name] = triggerIndex
+	tbl.triggersCache[trigger.ObjectName] = triggerIndex
 	return triggerIndex
 }
 
@@ -155,7 +155,7 @@ func (tbl *Table) RefreshTriggerCache() {
 		if tbl.triggersCache == nil {
 			tbl.triggersCache = make(map[string]int)
 		}
-		tbl.triggersCache[trigger.Name] = i
+		tbl.triggersCache[trigger.ObjectName] = i
 	}
 }
 
