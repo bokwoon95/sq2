@@ -111,13 +111,6 @@ type View interface {
 	View(dialect string) sq.Query
 }
 
-type Command interface {
-	sq.SQLAppender
-	GetType() string
-}
-
-type Commands []Command
-
 const (
 	DROP_SCHEMA     = "DROP SCHEMA"
 	DROP_TABLE      = "DROP TABLE"
