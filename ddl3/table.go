@@ -238,12 +238,11 @@ func (tbl *Table) LoadConstraintConfig(constraintType, tableSchema, tableName st
 		defer func(i int) { tbl.Constraints[i] = constraint }(i)
 	} else {
 		constraint = Constraint{
-			ConstraintSchema: tableSchema,
-			ConstraintName:   constraintName,
-			ConstraintType:   constraintType,
-			TableSchema:      tableSchema,
-			TableName:        tableName,
-			Columns:          columns,
+			TableSchema:    tableSchema,
+			TableName:      tableName,
+			ConstraintName: constraintName,
+			ConstraintType: constraintType,
+			Columns:        columns,
 		}
 		defer func() { tbl.AppendConstraint(constraint) }()
 	}
@@ -262,8 +261,6 @@ func (tbl *Table) LoadConstraintConfig(constraintType, tableSchema, tableName st
 	}
 	for _, modifier := range modifiers {
 		switch modifier[0] {
-		case "schema":
-			constraint.ConstraintSchema = modifier[1]
 		case "name", "cols":
 			continue
 		case "onupdate":

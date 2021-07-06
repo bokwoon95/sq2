@@ -65,11 +65,10 @@ type DropFunctionCommand struct {
 }
 
 type DropTriggerCommand struct {
-	Dialect       string
-	DoIfExists    bool
-	TableSchema   string
-	TableName     string
-	TriggerSchema string
-	TriggerName   string
-	DoCascade     bool
+	Dialect     string
+	DoIfExists  bool
+	TableSchema string
+	TableName   string
+	TriggerName string
+	DoCascade   bool
 }
