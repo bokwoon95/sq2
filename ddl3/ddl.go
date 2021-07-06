@@ -70,12 +70,11 @@ type Constraint struct {
 }
 
 type Index struct {
-	IndexSchema string
+	TableSchema string
+	TableName   string
 	IndexName   string
 	IndexType   string
 	IsUnique    bool
-	TableSchema string
-	TableName   string
 	Columns     []string
 	Exprs       []string
 	Include     []string
