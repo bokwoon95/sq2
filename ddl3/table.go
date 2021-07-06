@@ -47,7 +47,7 @@ func (tbl *Table) CachedColumnPositions(columnName string) (columnPosition int) 
 	if !ok {
 		return -1
 	}
-	if columnPosition < 0 && columnPosition >= len(tbl.Columns) || tbl.Columns[columnPosition].ColumnName != columnName {
+	if columnPosition < 0 || columnPosition >= len(tbl.Columns) || tbl.Columns[columnPosition].ColumnName != columnName {
 		delete(tbl.columnsCache, columnName)
 		return -1
 	}
