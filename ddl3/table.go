@@ -23,29 +23,29 @@ type Table struct {
 	triggersCache    map[string]int
 }
 
-func (tbl *Table) CachedColumnIndex(columnName string) (columnIndex int) {
+func (tbl *Table) CachedColumnPositions(columnName string) (columnPosition int) {
 	if columnName == "" {
 		return -1
 	}
-	columnIndex, ok := tbl.columnsCache[columnName]
+	columnPosition, ok := tbl.columnsCache[columnName]
 	if !ok {
 		return -1
 	}
-	if columnIndex < 0 && columnIndex >= len(tbl.Columns) || tbl.Columns[columnIndex].ColumnName != columnName {
+	if columnPosition < 0 && columnPosition >= len(tbl.Columns) || tbl.Columns[columnPosition].ColumnName != columnName {
 		delete(tbl.columnsCache, columnName)
 		return -1
 	}
-	return columnIndex
+	return columnPosition
 }
 
-func (tbl *Table) AppendColumn(column Column) (columnIndex int) {
+func (tbl *Table) AppendColumn(column Column) (columnPosition int) {
 	tbl.Columns = append(tbl.Columns, column)
 	if tbl.columnsCache == nil {
 		tbl.columnsCache = make(map[string]int)
 	}
-	columnIndex = len(tbl.Columns) - 1
-	tbl.columnsCache[column.ColumnName] = columnIndex
-	return columnIndex
+	columnPosition = len(tbl.Columns) - 1
+	tbl.columnsCache[column.ColumnName] = columnPosition
+	return columnPosition
 }
 
 func (tbl *Table) RefreshColumnsCache() {
@@ -57,32 +57,32 @@ func (tbl *Table) RefreshColumnsCache() {
 	}
 }
 
-func (tbl *Table) CachedConstraintIndex(constraintName string) (constraintIndex int) {
+func (tbl *Table) CachedConstraintPosition(constraintName string) (constraintPosition int) {
 	if constraintName == "" {
 		return -1
 	}
-	constraintIndex, ok := tbl.constraintsCache[constraintName]
+	constraintPosition, ok := tbl.constraintsCache[constraintName]
 	if !ok {
 		return -1
 	}
-	if constraintIndex < 0 || constraintIndex >= len(tbl.Constraints) || tbl.Constraints[constraintIndex].ConstraintName != constraintName {
+	if constraintPosition < 0 || constraintPosition >= len(tbl.Constraints) || tbl.Constraints[constraintPosition].ConstraintName != constraintName {
 		delete(tbl.constraintsCache, constraintName)
 		return -1
 	}
-	return constraintIndex
+	return constraintPosition
 }
 
-func (tbl *Table) AppendConstraint(constraint Constraint) (constraintIndex int) {
+func (tbl *Table) AppendConstraint(constraint Constraint) (constraintPosition int) {
 	tbl.Constraints = append(tbl.Constraints, constraint)
 	if tbl.constraintsCache == nil {
 		tbl.constraintsCache = make(map[string]int)
 	}
-	constraintIndex = len(tbl.Constraints) - 1
-	tbl.constraintsCache[constraint.ConstraintName] = constraintIndex
-	return constraintIndex
+	constraintPosition = len(tbl.Constraints) - 1
+	tbl.constraintsCache[constraint.ConstraintName] = constraintPosition
+	return constraintPosition
 }
 
-func (tbl *Table) RefreshConstraintCache() {
+func (tbl *Table) RefreshConstraintsCache() {
 	for i, constraint := range tbl.Constraints {
 		if tbl.constraintsCache == nil {
 			tbl.constraintsCache = make(map[string]int)
@@ -91,32 +91,32 @@ func (tbl *Table) RefreshConstraintCache() {
 	}
 }
 
-func (tbl *Table) CachedIndexIndex(indexName string) (indexIndex int) {
+func (tbl *Table) CachedIndexPosition(indexName string) (indexPosition int) {
 	if indexName == "" {
 		return -1
 	}
-	indexIndex, ok := tbl.indexesCache[indexName]
+	indexPosition, ok := tbl.indexesCache[indexName]
 	if !ok {
 		return -1
 	}
-	if indexIndex < 0 || indexIndex >= len(tbl.Indexes) || tbl.Indexes[indexIndex].IndexName != indexName {
+	if indexPosition < 0 || indexPosition >= len(tbl.Indexes) || tbl.Indexes[indexPosition].IndexName != indexName {
 		delete(tbl.indexesCache, indexName)
 		return -1
 	}
-	return indexIndex
+	return indexPosition
 }
 
-func (tbl *Table) AppendIndex(index Index) (indexIndex int) {
+func (tbl *Table) AppendIndex(index Index) (indexPosition int) {
 	tbl.Indexes = append(tbl.Indexes, index)
 	if tbl.indexesCache == nil {
 		tbl.indexesCache = make(map[string]int)
 	}
-	indexIndex = len(tbl.Indexes) - 1
-	tbl.indexesCache[index.IndexName] = indexIndex
-	return indexIndex
+	indexPosition = len(tbl.Indexes) - 1
+	tbl.indexesCache[index.IndexName] = indexPosition
+	return indexPosition
 }
 
-func (tbl *Table) RefreshIndexCache() {
+func (tbl *Table) RefreshIndexesCache() {
 	for i, index := range tbl.Indexes {
 		if tbl.indexesCache == nil {
 			tbl.indexesCache = make(map[string]int)
@@ -125,32 +125,32 @@ func (tbl *Table) RefreshIndexCache() {
 	}
 }
 
-func (tbl *Table) CachedTriggerIndex(triggerName string) (triggerIndex int) {
+func (tbl *Table) CachedTriggerPosition(triggerName string) (triggerPosition int) {
 	if triggerName == "" {
 		return -1
 	}
-	triggerIndex, ok := tbl.triggersCache[triggerName]
+	triggerPosition, ok := tbl.triggersCache[triggerName]
 	if !ok {
 		return -1
 	}
-	if triggerIndex < 0 || triggerIndex >= len(tbl.Triggers) || tbl.Triggers[triggerIndex].TriggerName != triggerName {
+	if triggerPosition < 0 || triggerPosition >= len(tbl.Triggers) || tbl.Triggers[triggerPosition].TriggerName != triggerName {
 		delete(tbl.triggersCache, triggerName)
 		return -1
 	}
-	return triggerIndex
+	return triggerPosition
 }
 
-func (tbl *Table) AppendTrigger(trigger Trigger) (triggerIndex int) {
+func (tbl *Table) AppendTrigger(trigger Trigger) (triggerPosition int) {
 	tbl.Triggers = append(tbl.Triggers, trigger)
 	if tbl.triggersCache == nil {
 		tbl.triggersCache = make(map[string]int)
 	}
-	triggerIndex = len(tbl.Triggers) - 1
-	tbl.triggersCache[trigger.TriggerName] = triggerIndex
-	return triggerIndex
+	triggerPosition = len(tbl.Triggers) - 1
+	tbl.triggersCache[trigger.TriggerName] = triggerPosition
+	return triggerPosition
 }
 
-func (tbl *Table) RefreshTriggerCache() {
+func (tbl *Table) RefreshTriggersCache() {
 	for i, trigger := range tbl.Triggers {
 		if tbl.triggersCache == nil {
 			tbl.triggersCache = make(map[string]int)
@@ -174,7 +174,7 @@ func (tbl *Table) LoadIndexConfig(tableSchema, tableName string, columns []strin
 		indexName = generateName(INDEX, tableName, columns...)
 	}
 	var index Index
-	if i := tbl.CachedIndexIndex(indexName); i >= 0 {
+	if i := tbl.CachedIndexPosition(indexName); i >= 0 {
 		index = tbl.Indexes[i]
 		defer func(i int) { tbl.Indexes[i] = index }(i)
 	} else {
@@ -229,7 +229,7 @@ func (tbl *Table) LoadConstraintConfig(constraintType, tableSchema, tableName st
 		constraintName = generateName(constraintType, tableName, columns...)
 	}
 	var constraint Constraint
-	if i := tbl.CachedConstraintIndex(constraintName); i >= 0 {
+	if i := tbl.CachedConstraintPosition(constraintName); i >= 0 {
 		constraint = tbl.Constraints[i]
 		constraint.ConstraintType = constraintType
 		defer func(i int) { tbl.Constraints[i] = constraint }(i)
@@ -313,7 +313,7 @@ func (tbl *Table) LoadColumnConfig(dialect, columnName, columnType, config strin
 		return fmt.Errorf("%s: %s", qualifiedColumn, err.Error())
 	}
 	var col Column
-	if i := tbl.CachedColumnIndex(columnName); i >= 0 {
+	if i := tbl.CachedColumnPositions(columnName); i >= 0 {
 		col = tbl.Columns[i]
 		defer func(i int) { tbl.Columns[i] = col }(i)
 	} else {
