@@ -236,10 +236,17 @@ func (c *Catalog) loadDDLView(ddlView DDLView) error {
 	return nil
 }
 
-func (c *Catalog) LoadFunctions() error {
+func (c *Catalog) LoadFunctions(functions ...Function) error {
+	var err error
+	for i, function := range functions {
+		err = c.loadFunction(function)
+		if err != nil {
+			return fmt.Errorf("function #%d: %w", i+1, err)
+		}
+	}
 	return nil
 }
 
-func (c *Catalog) loadFunction() error {
+func (c *Catalog) loadFunction(function Function) error {
 	return nil
 }

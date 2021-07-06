@@ -15,7 +15,7 @@ const (
 var last_update_trg = Function{
 	FunctionSchema: "public",
 	FunctionName:   "last_update_trg",
-	Contents: "CREATE OR REPLACE FUNCTION last_update_trg() RETURNS trigger AS $$ BEGIN" +
+	SQL: "CREATE OR REPLACE FUNCTION last_update_trg() RETURNS trigger AS $$ BEGIN" +
 		" NEW.last_update = NOW();" +
 		" RETURN NEW;" +
 		" END; $$ LANGUAGE plpgsql;",

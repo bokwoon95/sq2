@@ -590,7 +590,7 @@ func (t *T) Trigger(triggerName string) *TTrigger {
 
 func (t *TTrigger) Sprintf(format string, values ...interface{}) *TTrigger {
 	if len(values) == 0 {
-		t.tbl.Triggers[t.triggerPosition].Contents = format
+		t.tbl.Triggers[t.triggerPosition].SQL = format
 		return t
 	}
 	buf := bufpool.Get().(*bytes.Buffer)
@@ -606,14 +606,14 @@ func (t *TTrigger) Sprintf(format string, values ...interface{}) *TTrigger {
 		panicErr(fmt.Errorf("Sprintf: %w", err))
 	}
 	if len(args) == 0 {
-		t.tbl.Triggers[t.triggerPosition].Contents = buf.String()
+		t.tbl.Triggers[t.triggerPosition].SQL = buf.String()
 		return t
 	}
 	sql, err := sq.Sprintf(t.dialect, buf.String(), args)
 	if err != nil {
 		panicErr(fmt.Errorf("Sprintf: %w", err))
 	}
-	t.tbl.Triggers[t.triggerPosition].Contents = sql
+	t.tbl.Triggers[t.triggerPosition].SQL = sql
 	return t
 }
 
@@ -624,7 +624,7 @@ func (t *TTrigger) Filef(fsys fs.FS, fileName string, values ...interface{}) *TT
 	}
 	sql := string(b)
 	if len(values) == 0 {
-		t.tbl.Triggers[t.triggerPosition].Contents = sql
+		t.tbl.Triggers[t.triggerPosition].SQL = sql
 		return t
 	}
 	buf := bufpool.Get().(*bytes.Buffer)
@@ -640,13 +640,13 @@ func (t *TTrigger) Filef(fsys fs.FS, fileName string, values ...interface{}) *TT
 		panicErr(fmt.Errorf("Filef: %w", err))
 	}
 	if len(args) == 0 {
-		t.tbl.Triggers[t.triggerPosition].Contents = buf.String()
+		t.tbl.Triggers[t.triggerPosition].SQL = buf.String()
 		return t
 	}
 	sql, err = sq.Sprintf(t.dialect, sql, args)
 	if err != nil {
 		panicErr(fmt.Errorf("Filef: %w", err))
 	}
-	t.tbl.Triggers[t.triggerPosition].Contents = sql
+	t.tbl.Triggers[t.triggerPosition].SQL = sql
 	return t
 }
