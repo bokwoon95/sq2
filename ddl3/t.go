@@ -622,8 +622,8 @@ func (t *TTrigger) Sprintf(format string, values ...interface{}) *TTrigger {
 	return t
 }
 
-func (t *TTrigger) Filef(fsys fs.FS, name string, values ...interface{}) *TTrigger {
-	b, err := fs.ReadFile(fsys, name)
+func (t *TTrigger) Filef(fsys fs.FS, fileName string, values ...interface{}) *TTrigger {
+	b, err := fs.ReadFile(fsys, fileName)
 	if err != nil {
 		panicErr(fmt.Errorf("Filef: %w", err))
 	}
