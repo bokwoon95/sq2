@@ -478,12 +478,12 @@ func createOrUpdateIndex(tbl *Table, indexName string, columns []string, exprs [
 		return -1, fmt.Errorf("indexName cannot be empty")
 	}
 	if indexIndex = tbl.CachedIndexIndex(indexName); indexIndex >= 0 {
-		index := tbl.Indices[indexIndex]
+		index := tbl.Indexes[indexIndex]
 		index.TableSchema = tbl.TableSchema
 		index.TableName = tbl.TableName
 		index.Columns = columns
 		index.Exprs = exprs
-		tbl.Indices[indexIndex] = index
+		tbl.Indexes[indexIndex] = index
 	} else {
 		indexIndex = tbl.AppendIndex(Index{
 			TableSchema: tbl.TableSchema,
@@ -533,12 +533,12 @@ func (t *T) NameIndex(indexName string, fields ...sq.Field) *TIndex {
 }
 
 func (t *TIndex) Unique() *TIndex {
-	t.tbl.Indices[t.indexIndex].IsUnique = true
+	t.tbl.Indexes[t.indexIndex].IsUnique = true
 	return t
 }
 
 func (t *TIndex) Using(indexType string) *TIndex {
-	t.tbl.Indices[t.indexIndex].IndexType = strings.ToUpper(indexType)
+	t.tbl.Indexes[t.indexIndex].IndexType = strings.ToUpper(indexType)
 	return t
 }
 
@@ -547,7 +547,7 @@ func (t *TIndex) Where(format string, values ...interface{}) *TIndex {
 	if err != nil {
 		panicf(err.Error())
 	}
-	t.tbl.Indices[t.indexIndex].Where = expr
+	t.tbl.Indexes[t.indexIndex].Where = expr
 	return t
 }
 
@@ -556,15 +556,15 @@ func (t *TIndex) Include(fields ...sq.Field) *TIndex {
 	if err != nil {
 		panicf(err.Error())
 	}
-	t.tbl.Indices[t.indexIndex].Include = columnNames
+	t.tbl.Indexes[t.indexIndex].Include = columnNames
 	return t
 }
 
 func (t *TIndex) Config(config func(index *Index)) {
-	index := t.tbl.Indices[t.indexIndex]
+	index := t.tbl.Indexes[t.indexIndex]
 	config(&index)
 	index.TableSchema = t.tbl.TableSchema
 	index.TableName = t.tbl.TableName
 	index.IndexName = t.indexName
-	t.tbl.Indices[t.indexIndex] = index
+	t.tbl.Indexes[t.indexIndex] = index
 }

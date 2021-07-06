@@ -13,13 +13,13 @@ type Table struct {
 	TableName        string
 	Columns          []Column
 	Constraints      []Constraint
-	Indices          []Index
+	Indexes          []Index
 	Triggers         []Trigger
 	VirtualTable     string
 	VirtualTableArgs []string
 	columnsCache     map[string]int
 	constraintsCache map[string]int
-	indicesCache     map[string]int
+	indexesCache     map[string]int
 	triggersCache    map[string]int
 }
 
@@ -95,33 +95,33 @@ func (tbl *Table) CachedIndexIndex(indexName string) (indexIndex int) {
 	if indexName == "" {
 		return -1
 	}
-	indexIndex, ok := tbl.indicesCache[indexName]
+	indexIndex, ok := tbl.indexesCache[indexName]
 	if !ok {
 		return -1
 	}
-	if indexIndex < 0 || indexIndex >= len(tbl.Indices) || tbl.Indices[indexIndex].IndexName != indexName {
-		delete(tbl.indicesCache, indexName)
+	if indexIndex < 0 || indexIndex >= len(tbl.Indexes) || tbl.Indexes[indexIndex].IndexName != indexName {
+		delete(tbl.indexesCache, indexName)
 		return -1
 	}
 	return indexIndex
 }
 
 func (tbl *Table) AppendIndex(index Index) (indexIndex int) {
-	tbl.Indices = append(tbl.Indices, index)
-	if tbl.indicesCache == nil {
-		tbl.indicesCache = make(map[string]int)
+	tbl.Indexes = append(tbl.Indexes, index)
+	if tbl.indexesCache == nil {
+		tbl.indexesCache = make(map[string]int)
 	}
-	indexIndex = len(tbl.Indices) - 1
-	tbl.indicesCache[index.IndexName] = indexIndex
+	indexIndex = len(tbl.Indexes) - 1
+	tbl.indexesCache[index.IndexName] = indexIndex
 	return indexIndex
 }
 
 func (tbl *Table) RefreshIndexCache() {
-	for i, index := range tbl.Indices {
-		if tbl.indicesCache == nil {
-			tbl.indicesCache = make(map[string]int)
+	for i, index := range tbl.Indexes {
+		if tbl.indexesCache == nil {
+			tbl.indexesCache = make(map[string]int)
 		}
-		tbl.indicesCache[index.IndexName] = i
+		tbl.indexesCache[index.IndexName] = i
 	}
 }
 
@@ -175,8 +175,8 @@ func (tbl *Table) LoadIndexConfig(tableSchema, tableName string, columns []strin
 	}
 	var index Index
 	if i := tbl.CachedIndexIndex(indexName); i >= 0 {
-		index = tbl.Indices[i]
-		defer func(i int) { tbl.Indices[i] = index }(i)
+		index = tbl.Indexes[i]
+		defer func(i int) { tbl.Indexes[i] = index }(i)
 	} else {
 		index = Index{
 			TableSchema: tbl.TableSchema,
