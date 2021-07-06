@@ -17,7 +17,7 @@ catalog.LoadFunction(Function{
 type Function struct {
 	FunctionSchema string
 	FunctionName   string
-	Contents       string
+	SQL            string
 }
 
 // all IFunctions can be converted into Functions. An IFunction is simply a

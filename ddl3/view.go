@@ -5,7 +5,7 @@ import "github.com/bokwoon95/sq"
 type View struct {
 	ViewSchema string
 	ViewName   string
-	Contents   string
+	SQL        string
 }
 
 type DDLView interface {
