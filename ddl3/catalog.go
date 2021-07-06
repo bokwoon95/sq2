@@ -49,18 +49,11 @@ func (c *Catalog) RefreshSchemasCache() {
 	}
 }
 
-type CatalogConfig struct {
-	DB        sq.Queryer
-	Tables    []sq.SchemaTable
-	DDLViews  []DDLView
-	Functions []Function
-}
-
 // The prime motivation for streamlining the LoadDB and
 // LoadTables+LoadDDLViews+LoadFunctions workflow is to encourage people to
 // roll their own AutoMigrate, because that's where any sort of real
 // configuration power takes place. Don't make loading from db and loading from
-// tables so painful that people avoid it because of the error checking
+// tables/etc so painful that people avoid it because of the error checking
 // boilerplate.
 
 func NewCatalogFromDB() {
@@ -70,7 +63,33 @@ func NewCatalogFromDB() {
 func NewCatalogFromTables(dialect string, tables []sq.SchemaTable, opts ...interface{}) {
 }
 
-func NewCatalog(dialect string) Catalog {
+type CatalogOption func(*Catalog) error
+
+func WithDB(db sq.Queryer) CatalogOption {
+	return func(c *Catalog) error {
+		return nil
+	}
+}
+
+func WithTables(tables ...sq.SchemaTable) CatalogOption {
+	return func(c *Catalog) error {
+		return nil
+	}
+}
+
+func WithDDLViews(ddlViews ...DDLView) CatalogOption {
+	return func(c *Catalog) error {
+		return nil
+	}
+}
+
+func WithFunctions(functions ...Function) CatalogOption {
+	return func(c *Catalog) error {
+		return nil
+	}
+}
+
+func NewCatalog(dialect string, opts ...CatalogOption) Catalog {
 	return Catalog{Dialect: dialect}
 }
 
