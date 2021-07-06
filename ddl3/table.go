@@ -179,18 +179,15 @@ func (tbl *Table) LoadIndexConfig(tableSchema, tableName string, columns []strin
 		defer func(i int) { tbl.Indices[i] = index }(i)
 	} else {
 		index = Index{
-			IndexSchema: tableSchema,
-			IndexName:   indexName,
 			TableSchema: tbl.TableSchema,
 			TableName:   tbl.TableName,
+			IndexName:   indexName,
 			Columns:     columns,
 		}
 		defer func() { tbl.AppendIndex(index) }()
 	}
 	for _, modifier := range modifiers {
 		switch modifier[0] {
-		case "schema":
-			index.IndexSchema = modifier[1]
 		case "cols":
 			continue
 		case "unique":

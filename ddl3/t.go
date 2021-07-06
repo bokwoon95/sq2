@@ -486,11 +486,10 @@ func createOrUpdateIndex(tbl *Table, indexName string, columns []string, exprs [
 		tbl.Indices[indexIndex] = index
 	} else {
 		indexIndex = tbl.AppendIndex(Index{
-			IndexSchema: tbl.TableSchema,
-			IndexName:   indexName,
-			IndexType:   "BTREE",
 			TableSchema: tbl.TableSchema,
 			TableName:   tbl.TableName,
+			IndexName:   indexName,
+			IndexType:   "BTREE",
 			Columns:     columns,
 			Exprs:       exprs,
 		})
