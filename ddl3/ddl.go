@@ -53,11 +53,10 @@ type Column struct {
 }
 
 type Constraint struct {
-	ConstraintSchema    string
-	ConstraintName      string
-	ConstraintType      string
 	TableSchema         string
 	TableName           string
+	ConstraintName      string
+	ConstraintType      string
 	Columns             []string
 	ReferencesSchema    string
 	ReferencesTable     string

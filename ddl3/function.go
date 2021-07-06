@@ -1,11 +1,5 @@
 package ddl3
 
-import (
-	"io"
-
-	"github.com/bokwoon95/sq"
-)
-
 /*
 I no longer care about one Function object being able to contain every
 overloaded function. If the user has multiple overloaded functions, there will
@@ -21,7 +15,9 @@ catalog.LoadFunction(Function{
 */
 
 type Function struct {
-	sq.SchemaTable
+	FunctionSchema string
+	FunctionName   string
+	Contents       string
 }
 
 // all IFunctions can be converted into Functions. An IFunction is simply a
@@ -33,12 +29,13 @@ type Function struct {
 // inside table valued functions. This means that it Select queries must
 // additionally support the INTO clause.
 // alternatively, the user can just call fn.FromFS(fsys fs.FS, filename string)
-type IFunction interface {
-	GetSchema() string
-	GetName() string
-	GetArgs() (argModes, argNames, argtypes []string)
-	GetSource() io.Reader
-}
+// type IFunction interface {
+// 	GetSchema() string
+// 	GetName() string
+// 	GetArgs() (argModes, argNames, argtypes []string)
+// 	GetSource() io.Reader
+// }
+
 // NOT: To play it safe, do not implement IFunction first. Users can only define
 // functions view catalog.LoadFunctionFromFS or catalog.LoadFunction. I
 // honestly don't like the current solution for table valued functions.

@@ -244,20 +244,20 @@ func createOrUpdateConstraint(tbl *Table, constraintType, constraintName string,
 	}
 	if constraintIndex = tbl.CachedConstraintIndex(constraintName); constraintIndex >= 0 {
 		constraint := tbl.Constraints[constraintIndex]
-		constraint.ConstraintType = constraintType
+		constraint.TableSchema = tbl.TableSchema
 		constraint.TableName = tbl.TableName
+		constraint.ConstraintType = constraintType
 		constraint.Columns = columns
 		constraint.CheckExpr = checkExpr
 		tbl.Constraints[constraintIndex] = constraint
 	} else {
 		constraintIndex = tbl.AppendConstraint(Constraint{
-			ConstraintSchema: tbl.TableSchema,
-			ConstraintName:   constraintName,
-			ConstraintType:   constraintType,
-			TableSchema:      tbl.TableSchema,
-			TableName:        tbl.TableName,
-			Columns:          columns,
-			CheckExpr:        checkExpr,
+			TableSchema:    tbl.TableSchema,
+			TableName:      tbl.TableName,
+			ConstraintName: constraintName,
+			ConstraintType: constraintType,
+			Columns:        columns,
+			CheckExpr:      checkExpr,
 		})
 	}
 	return constraintIndex, nil
