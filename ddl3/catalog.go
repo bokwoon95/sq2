@@ -97,6 +97,10 @@ func WithDDLViews(ddlViews ...DDLView) CatalogOption {
 // CREATE TRIGGER or CREATE FUNCTION command for the schema name and the
 // trigger/function name, I can dispense with repeating the trigger or function
 // name in application code.
+// NOTE: Do I still want Functionf/FunctionFilef? Unlike triggers, functions
+// that require extensive templating can be very big, and the args list passed
+// to Functionf could be very big and clunky. Not sure if that's what I want
+// users to do.
 func WithFunctionFile(functionSchema, functionName string, fsys fs.FS, filename string) CatalogOption {
 	return func(c *Catalog) error {
 		return nil
