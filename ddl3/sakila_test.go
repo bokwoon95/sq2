@@ -12,6 +12,15 @@ const (
 		" FOR EACH ROW EXECUTE PROCEDURE last_update_trg();"
 )
 
+var last_update_trg = Function{
+	FunctionSchema: "public",
+	FunctionName:   "last_update_trg",
+	Contents: "CREATE OR REPLACE FUNCTION last_update_trg() RETURNS trigger AS $$ BEGIN" +
+		" NEW.last_update = NOW();" +
+		" RETURN NEW;" +
+		" END; $$ LANGUAGE plpgsql;",
+}
+
 func NEW_ACTOR(dialect, alias string) ACTOR {
 	var tbl ACTOR
 	tbl.TableInfo = sq.TableInfo{TableName: "actor", TableAlias: alias}
@@ -1628,7 +1637,7 @@ type ACTOR_INFO struct {
 	FILM_INFO  sq.JSONField
 }
 
-func (_ ACTOR_INFO) View(dialect string) (sq.Query, error) {
+func (_ ACTOR_INFO) DDL(dialect string, v *V) sq.Query {
 	ACTOR := NEW_ACTOR(dialect, "a")
 	FILM := NEW_FILM(dialect, "f")
 	FILM_ACTOR := NEW_FILM_ACTOR(dialect, "fa")
@@ -1658,7 +1667,7 @@ func (_ ACTOR_INFO) View(dialect string) (sq.Query, error) {
 			GroupBy(FILM_ACTOR.ACTOR_ID),
 		).As("film_info"),
 	}
-	return q, nil
+	return q
 }
 
 type CUSTOMER_LIST struct {
@@ -1674,7 +1683,7 @@ type CUSTOMER_LIST struct {
 	SID      sq.NumberField
 }
 
-func (_ CUSTOMER_LIST) View(dialect string) (sq.Query, error) {
+func (_ CUSTOMER_LIST) DDL(dialect string, v *V) sq.Query {
 	CUSTOMER := NEW_CUSTOMER(dialect, "cu")
 	ADDRESS := NEW_ADDRESS(dialect, "a")
 	CITY := NEW_CITY(dialect, "")
@@ -1701,7 +1710,7 @@ func (_ CUSTOMER_LIST) View(dialect string) (sq.Query, error) {
 		sq.CaseWhen(CUSTOMER.ACTIVE, "active").Else(""),
 		CUSTOMER.STORE_ID.As("sid"),
 	}
-	return q, nil
+	return q
 }
 
 type FILM_LIST struct {
@@ -1716,7 +1725,7 @@ type FILM_LIST struct {
 	ACTORS      sq.JSONField
 }
 
-func (_ FILM_LIST) View(dialect string) (sq.Query, error) {
+func (_ FILM_LIST) DDL(dialect string, v *V) sq.Query {
 	CATEGORY := NEW_CATEGORY(dialect, "")
 	FILM_CATEGORY := NEW_FILM_CATEGORY(dialect, "")
 	FILM := NEW_FILM(dialect, "")
@@ -1753,7 +1762,7 @@ func (_ FILM_LIST) View(dialect string) (sq.Query, error) {
 		FILM.RATING,
 		json_array_agg(dialect, sq.Fieldf(nameExpr, ACTOR.FIRST_NAME, ACTOR.LAST_NAME)),
 	}
-	return q, nil
+	return q
 }
 
 type NICER_BUT_SLOWER_FILM_LIST struct {
@@ -1768,7 +1777,7 @@ type NICER_BUT_SLOWER_FILM_LIST struct {
 	ACTORS      sq.JSONField
 }
 
-func (_ NICER_BUT_SLOWER_FILM_LIST) View(dialect string) (sq.Query, error) {
+func (_ NICER_BUT_SLOWER_FILM_LIST) DDL(dialect string, v *V) sq.Query {
 	CATEGORY := NEW_CATEGORY(dialect, "")
 	FILM_CATEGORY := NEW_FILM_CATEGORY(dialect, "")
 	FILM := NEW_FILM(dialect, "")
@@ -1806,7 +1815,7 @@ func (_ NICER_BUT_SLOWER_FILM_LIST) View(dialect string) (sq.Query, error) {
 		FILM.RATING,
 		json_array_agg(dialect, sq.Fieldf(nameExpr, ACTOR.FIRST_NAME, ACTOR.LAST_NAME)),
 	}
-	return q, nil
+	return q
 }
 
 type SALES_BY_FILM_CATEGORY struct {
@@ -1815,7 +1824,7 @@ type SALES_BY_FILM_CATEGORY struct {
 	TOTAL_SALES sq.NumberField
 }
 
-func (_ SALES_BY_FILM_CATEGORY) View(dialect string) (sq.Query, error) {
+func (_ SALES_BY_FILM_CATEGORY) DDL(dialect string, v *V) sq.Query {
 	PAYMENT := NEW_PAYMENT(dialect, "p")
 	RENTAL := NEW_RENTAL(dialect, "r")
 	INVENTORY := NEW_INVENTORY(dialect, "i")
@@ -1837,7 +1846,7 @@ func (_ SALES_BY_FILM_CATEGORY) View(dialect string) (sq.Query, error) {
 		CATEGORY.NAME.As("category"),
 		sq.Fieldf("SUM({})", PAYMENT.AMOUNT).As("total_sales"),
 	}
-	return q, nil
+	return q
 }
 
 type SALES_BY_STORE struct {
@@ -1847,7 +1856,7 @@ type SALES_BY_STORE struct {
 	TOTAL_SALES sq.NumberField
 }
 
-func (_ SALES_BY_STORE) View(dialect string) (sq.Query, error) {
+func (_ SALES_BY_STORE) DDL(dialect string, v *V) sq.Query {
 	PAYMENT := NEW_PAYMENT(dialect, "p")
 	RENTAL := NEW_RENTAL(dialect, "r")
 	INVENTORY := NEW_INVENTORY(dialect, "i")
@@ -1889,7 +1898,7 @@ func (_ SALES_BY_STORE) View(dialect string) (sq.Query, error) {
 		sq.Fieldf(managerExpr, STAFF.FIRST_NAME, STAFF.LAST_NAME).As("manager"),
 		sq.Fieldf("SUM({})", PAYMENT.AMOUNT).As("total sales"),
 	}
-	return q, nil
+	return q
 }
 
 type STAFF_LIST struct {
@@ -1903,7 +1912,7 @@ type STAFF_LIST struct {
 	SID      sq.NumberField
 }
 
-func (_ STAFF_LIST) View(dialect string) (sq.Query, error) {
+func (_ STAFF_LIST) DDL(dialect string, v *V) sq.Query {
 	STAFF := NEW_STAFF(dialect, "s")
 	ADDRESS := NEW_ADDRESS(dialect, "a")
 	CITY := NEW_CITY(dialect, "ci")
@@ -1929,5 +1938,5 @@ func (_ STAFF_LIST) View(dialect string) (sq.Query, error) {
 		COUNTRY.COUNTRY,
 		STAFF.STORE_ID.As("sid"),
 	}
-	return q, nil
+	return q
 }
