@@ -2,6 +2,7 @@ package ddl3
 
 import (
 	"fmt"
+	"io/fs"
 	"reflect"
 
 	"github.com/bokwoon95/sq"
@@ -73,6 +74,13 @@ func WithDB(db sq.Queryer) CatalogOption {
 
 func WithTables(tables ...sq.SchemaTable) CatalogOption {
 	return func(c *Catalog) error {
+		var err error
+		for i, table := range tables {
+			err = c.loadTable(table)
+			if err != nil {
+				return fmt.Errorf("WithTables table #%d: %w", i+1, err)
+			}
+		}
 		return nil
 	}
 }
@@ -83,7 +91,7 @@ func WithDDLViews(ddlViews ...DDLView) CatalogOption {
 	}
 }
 
-func WithFunctions(functions ...Function) CatalogOption {
+func WithFunctionFile(functionSchema, functionName string, fsys fs.FS, filename string) CatalogOption {
 	return func(c *Catalog) error {
 		return nil
 	}
@@ -91,21 +99,6 @@ func WithFunctions(functions ...Function) CatalogOption {
 
 func NewCatalog(dialect string, opts ...CatalogOption) Catalog {
 	return Catalog{Dialect: dialect}
-}
-
-func (c *Catalog) LoadDB(db sq.Queryer) error {
-	return nil
-}
-
-func (c *Catalog) LoadTables(tables ...sq.SchemaTable) error {
-	var err error
-	for i, table := range tables {
-		err = c.loadTable(table)
-		if err != nil {
-			return fmt.Errorf("table #%d: %w", i+1, err)
-		}
-	}
-	return nil
 }
 
 func (c *Catalog) loadTable(table sq.SchemaTable) (err error) {
@@ -251,17 +244,6 @@ func (c *Catalog) loadTable(table sq.SchemaTable) (err error) {
 	return nil
 }
 
-func (c *Catalog) LoadDDLViews(ddlViews ...DDLView) error {
-	var err error
-	for i, ddlView := range ddlViews {
-		err = c.loadDDLView(ddlView)
-		if err != nil {
-			return fmt.Errorf("view #%d: %w", i+1, err)
-		}
-	}
-	return nil
-}
-
 func (c *Catalog) loadDDLView(ddlView DDLView) error {
 	if ddlView == nil {
 		return fmt.Errorf("view is nil")
@@ -273,17 +255,6 @@ func (c *Catalog) loadDDLView(ddlView DDLView) error {
 		return fmt.Errorf("fetching view fields: %w", err)
 	}
 	_ = gotFields
-	return nil
-}
-
-func (c *Catalog) LoadFunctions(functions ...Function) error {
-	var err error
-	for i, function := range functions {
-		err = c.loadFunction(function)
-		if err != nil {
-			return fmt.Errorf("function #%d: %w", i+1, err)
-		}
-	}
 	return nil
 }
 
