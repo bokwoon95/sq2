@@ -93,6 +93,10 @@ func WithDDLViews(ddlViews ...DDLView) CatalogOption {
 
 // TODO: toy with the idea of taking in a func(fn *Fn) instead
 // TODO: figure out how to accomodate WithFunction(Sprintf) and WithFunction(Filef)
+// TODO: OH GOD: if I can figure out how to scan the first few characters of a
+// CREATE TRIGGER or CREATE FUNCTION command for the schema name and the
+// trigger/function name, I can dispense with repeating the trigger or function
+// name in application code.
 func WithFunctionFile(functionSchema, functionName string, fsys fs.FS, filename string) CatalogOption {
 	return func(c *Catalog) error {
 		return nil
