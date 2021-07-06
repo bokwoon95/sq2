@@ -12,30 +12,30 @@ type Catalog struct {
 	schemasCache    map[string]int
 }
 
-func (c *Catalog) CachedSchemaIndex(schemaName string) (schemaIndex int) {
-	schemaIndex, ok := c.schemasCache[schemaName]
-	if !ok || schemaIndex < 0 || schemaIndex >= len(c.Schemas) {
+func (c *Catalog) CachedSchemaPosition(schemaName string) (schemaPosition int) {
+	schemaPosition, ok := c.schemasCache[schemaName]
+	if !ok || schemaPosition < 0 || schemaPosition >= len(c.Schemas) {
 		delete(c.schemasCache, schemaName)
 		return -1
 	}
-	if c.Schemas[schemaIndex].SchemaName != schemaName {
+	if c.Schemas[schemaPosition].SchemaName != schemaName {
 		delete(c.schemasCache, schemaName)
 		return -1
 	}
-	return schemaIndex
+	return schemaPosition
 }
 
-func (c *Catalog) AppendSchema(schema Schema) (schemaIndex int) {
+func (c *Catalog) AppendSchema(schema Schema) (schemaPosition int) {
 	c.Schemas = append(c.Schemas, schema)
 	if c.schemasCache == nil {
 		c.schemasCache = make(map[string]int)
 	}
-	schemaIndex = len(c.Schemas) - 1
-	c.schemasCache[schema.SchemaName] = schemaIndex
-	return schemaIndex
+	schemaPosition = len(c.Schemas) - 1
+	c.schemasCache[schema.SchemaName] = schemaPosition
+	return schemaPosition
 }
 
-func (c *Catalog) RefreshSchemaCache() {
+func (c *Catalog) RefreshSchemasCache() {
 	for i, schema := range c.Schemas {
 		if c.schemasCache == nil {
 			c.schemasCache = make(map[string]int)

@@ -48,7 +48,7 @@ func (tbl *Table) AppendColumn(column Column) (columnIndex int) {
 	return columnIndex
 }
 
-func (tbl *Table) RefreshColumnCache() {
+func (tbl *Table) RefreshColumnsCache() {
 	for i, column := range tbl.Columns {
 		if tbl.columnsCache == nil {
 			tbl.columnsCache = make(map[string]int)
