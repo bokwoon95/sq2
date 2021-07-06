@@ -9,6 +9,11 @@ import (
 	"github.com/bokwoon95/sq"
 )
 
+type DDLTable interface {
+	sq.SchemaTable
+	DDL(dialect string, t *T)
+}
+
 type Table struct {
 	TableSchema      string
 	TableName        string

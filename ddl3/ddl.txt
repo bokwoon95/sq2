@@ -1,7 +1,8 @@
 ddl.go
 lex.go
-schema.go
+view.go | function.go | trigger.go
 table.go
+schema.go
 t.go
 catalog.go
 

@@ -8,18 +8,16 @@ type View struct {
 	Contents   string
 }
 
-type IView interface {
+type DDLView interface {
 	sq.SchemaTable
 	DDL(dialect string, v *V) sq.Query
 }
 
 type V struct {
-	doOrReplace    bool
-	isMaterialized bool
-	isRecursive    bool
+	CreateOrReplace bool
+	IsMaterialized  bool
+	IsRecursive     bool
 }
-
-// TODO: maybe these should take in a bool instead?
 
 // NOTE: I can eventually add a v.Version(versionID string), in order to
 // support versioned Views/Functions/Triggers. The main issue with updating to
@@ -30,9 +28,3 @@ type V struct {
 // reach into the Catalog and change the View/Function/Trigger back to
 // unversioned (setting VersionID to an empty string) so that DiffCatalog never
 // generates those changes in the first place.
-
-func (v *V) Materialized() { v.isMaterialized = true }
-
-func (v *V) Recursive() { v.isRecursive = true }
-
-func (v *V) CreateOrReplace() { v.doOrReplace = true }
