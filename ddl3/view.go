@@ -3,11 +3,9 @@ package ddl3
 import "github.com/bokwoon95/sq"
 
 type View struct {
-	ViewSchema     string
-	ViewName       string
-	IsMaterialized bool
-	IsRecursive    bool
-	Contents       string
+	ViewSchema string
+	ViewName   string
+	Contents   string
 }
 
 type IView interface {
@@ -16,10 +14,15 @@ type IView interface {
 }
 
 type V struct {
+	doOrReplace    bool
 	isMaterialized bool
 	isRecursive    bool
 }
 
+// TODO: maybe these should take in a bool instead?
+
 func (v *V) Materialized() { v.isMaterialized = true }
 
 func (v *V) Recursive() { v.isRecursive = true }
+
+func (v *V) CreateOrReplace() { v.doOrReplace = true }

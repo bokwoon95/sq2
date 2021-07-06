@@ -9,8 +9,8 @@ import (
 )
 
 var (
-	bufpool = sync.Pool{New: func() interface{} { return new(bytes.Buffer) }}
-	// argspool = sync.Pool{New: func() interface{} { return make([]interface{}, 0) }}
+	bufpool  = sync.Pool{New: func() interface{} { return new(bytes.Buffer) }}
+	argspool = sync.Pool{New: func() interface{} { return make([]interface{}, 0) }}
 )
 
 const (

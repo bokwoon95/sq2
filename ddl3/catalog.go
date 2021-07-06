@@ -60,11 +60,11 @@ func (c *Catalog) loadTable(table sq.SchemaTable) error {
 	return nil
 }
 
-func (c *Catalog) LoadViews(views ...View) error {
+func (c *Catalog) LoadIViews(views ...IView) error {
 	return nil
 }
 
-func (c *Catalog) loadView(view View) error {
+func (c *Catalog) loadIView(view IView) error {
 	return nil
 }
 

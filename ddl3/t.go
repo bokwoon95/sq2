@@ -1,6 +1,7 @@
 package ddl3
 
 import (
+	"bytes"
 	"fmt"
 	"io/fs"
 	"runtime"
@@ -592,16 +593,65 @@ func (t *T) Trigger(triggerName string) *TTrigger {
 	return tTrigger
 }
 
-func (t *TTrigger) Contents(contents string) *TTrigger {
-	t.tbl.Triggers[t.triggerPosition].Contents = contents
+func (t *TTrigger) Sprintf(format string, values ...interface{}) *TTrigger {
+	if len(values) == 0 {
+		t.tbl.Triggers[t.triggerPosition].Contents = format
+		return t
+	}
+	buf := bufpool.Get().(*bytes.Buffer)
+	args := argspool.Get().([]interface{})
+	defer func() {
+		buf.Reset()
+		args = args[:0]
+		bufpool.Put(buf)
+		argspool.Put(args)
+	}()
+	err := sq.BufferPrintf(t.dialect, buf, &args, make(map[string][]int), nil, format, values)
+	if err != nil {
+		panicErr(fmt.Errorf("Sprintf: %w", err))
+	}
+	if len(args) == 0 {
+		t.tbl.Triggers[t.triggerPosition].Contents = buf.String()
+		return t
+	}
+	sql, err := sq.Sprintf(t.dialect, buf.String(), args)
+	if err != nil {
+		panicErr(fmt.Errorf("Sprintf: %w", err))
+	}
+	t.tbl.Triggers[t.triggerPosition].Contents = sql
 	return t
 }
 
-func (t *TTrigger) File(fsys fs.FS, name string) *TTrigger {
+func (t *TTrigger) Filef(fsys fs.FS, name string, values ...interface{}) *TTrigger {
 	b, err := fs.ReadFile(fsys, name)
 	if err != nil {
-		panicErr(fmt.Errorf("File: %w", err))
+		panicErr(fmt.Errorf("Filef: %w", err))
 	}
-	t.tbl.Triggers[t.triggerPosition].Contents = string(b)
+	sql := string(b)
+	if len(values) == 0 {
+		t.tbl.Triggers[t.triggerPosition].Contents = sql
+		return t
+	}
+	buf := bufpool.Get().(*bytes.Buffer)
+	args := argspool.Get().([]interface{})
+	defer func() {
+		buf.Reset()
+		args = args[:0]
+		bufpool.Put(buf)
+		argspool.Put(args)
+	}()
+	err = sq.BufferPrintf(t.dialect, buf, &args, make(map[string][]int), nil, sql, values)
+	if err != nil {
+		panicErr(fmt.Errorf("Filef: %w", err))
+	}
+	if len(args) == 0 {
+		t.tbl.Triggers[t.triggerPosition].Contents = buf.String()
+		return t
+	}
+	sql, err = sq.Sprintf(t.dialect, sql, args)
+	if err != nil {
+		panicErr(fmt.Errorf("Filef: %w", err))
+	}
+	t.tbl.Triggers[t.triggerPosition].Contents = sql
 	return t
 }
