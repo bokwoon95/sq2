@@ -21,11 +21,6 @@ type T struct {
 	tbl     *Table
 }
 
-type DDLer interface {
-	sq.SchemaTable
-	DDL(dialect string, t *T)
-}
-
 func (t *T) VirtualTable(moduleName string, moduleArgs ...string) {
 	t.tbl.VirtualTable = moduleName
 	t.tbl.VirtualTableArgs = moduleArgs
@@ -43,7 +38,7 @@ func (tbl *Table) tcol(dialect, columnName string) *TColumn {
 		dialect:        dialect,
 		tbl:            tbl,
 		columnName:     columnName,
-		columnPosition: tbl.CachedColumnPositions(columnName),
+		columnPosition: tbl.CachedColumnPosition(columnName),
 	}
 }
 
@@ -55,7 +50,7 @@ func (t *T) Column(field sq.Field) *TColumn {
 	if columnName == "" {
 		panicErr(fmt.Errorf("Column: field has no name"))
 	}
-	columnPosition := t.tbl.CachedColumnPositions(columnName)
+	columnPosition := t.tbl.CachedColumnPosition(columnName)
 	if columnPosition < 0 {
 		panicErr(fmt.Errorf("Column: table has no such column %s", columnName))
 	}

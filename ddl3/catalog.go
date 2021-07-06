@@ -58,6 +58,13 @@ func (c *Catalog) LoadDB(db sq.Queryer) error {
 }
 
 func (c *Catalog) LoadTables(tables ...sq.SchemaTable) error {
+	var err error
+	for i, table := range tables {
+		err = c.loadTable(table)
+		if err != nil {
+			return fmt.Errorf("table #%d: %w", i+1, err)
+		}
+	}
 	return nil
 }
 
@@ -178,14 +185,54 @@ func (c *Catalog) loadTable(table sq.SchemaTable) (err error) {
 			return err
 		}
 	}
+	defer func() {
+		for _, constraint := range tbl.Constraints {
+			if len(constraint.Columns) != 1 {
+				continue
+			}
+			columnPosition := tbl.CachedColumnPosition(constraint.Columns[0])
+			if columnPosition < 0 {
+				continue
+			}
+			switch constraint.ConstraintType {
+			case PRIMARY_KEY:
+				tbl.Columns[columnPosition].IsPrimaryKey = true
+			case UNIQUE:
+				tbl.Columns[columnPosition].IsUnique = true
+			}
+		}
+	}()
+	ddlTable, ok := table.(DDLTable)
+	if !ok {
+		return nil
+	}
+	t := &T{dialect: c.Dialect, tbl: &tbl}
+	ddlTable.DDL(c.Dialect, t)
 	return nil
 }
 
 func (c *Catalog) LoadDDLViews(ddlViews ...DDLView) error {
+	var err error
+	for i, ddlView := range ddlViews {
+		err = c.loadDDLView(ddlView)
+		if err != nil {
+			return fmt.Errorf("view #%d: %w", i+1, err)
+		}
+	}
 	return nil
 }
 
 func (c *Catalog) loadDDLView(ddlView DDLView) error {
+	if ddlView == nil {
+		return fmt.Errorf("view is nil")
+	}
+	v := &V{}
+	query := ddlView.DDL(c.Dialect, v)
+	gotFields, err := query.GetFetchableFields()
+	if err != nil {
+		return fmt.Errorf("fetching view fields: %w", err)
+	}
+	_ = gotFields
 	return nil
 }
 
