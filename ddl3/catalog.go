@@ -91,6 +91,8 @@ func WithDDLViews(ddlViews ...DDLView) CatalogOption {
 	}
 }
 
+// TODO: toy with the idea of taking in a func(fn *Fn) instead
+// TODO: figure out how to accomodate WithFunction(Sprintf) and WithFunction(Filef)
 func WithFunctionFile(functionSchema, functionName string, fsys fs.FS, filename string) CatalogOption {
 	return func(c *Catalog) error {
 		return nil
