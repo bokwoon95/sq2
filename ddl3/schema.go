@@ -7,7 +7,7 @@ type Schema struct {
 	Functions      []Function
 	tablesCache    map[string]int
 	viewsCache     map[string]int
-	functionsCache map[string]int
+	functionsCache map[string][]int
 }
 
 func (s *Schema) CachedTableIndex(tableName string) (tableIndex int) {
@@ -79,36 +79,46 @@ func (s *Schema) RefreshViewCache() {
 	return
 }
 
-func (s *Schema) CachedFunctionIndex(functionName string) (functionIndex int) {
+func (s *Schema) CachedFunctionIndexes(functionName string) (functionIndexes []int) {
 	if functionName == "" {
-		return -1
+		return nil
 	}
-	functionIndex, ok := s.functionsCache[functionName]
+	functionIndexes, ok := s.functionsCache[functionName]
 	if !ok {
-		return -1
+		return nil
 	}
-	if functionIndex < 0 || functionIndex >= len(s.Functions) || s.Functions[functionIndex].FunctionName != functionName {
-		delete(s.functionsCache, functionName)
-		return -1
+	var n int
+	var hasInvalidIndex bool
+	for _, index := range functionIndexes {
+		if index < 0 || index >= len(s.Functions) || s.Functions[index].FunctionName != functionName {
+			hasInvalidIndex = true
+			continue
+		}
+		functionIndexes[n] = index
+		n++
 	}
-	return functionIndex
+	if hasInvalidIndex {
+		functionIndexes = functionIndexes[:n]
+		s.functionsCache[functionName] = functionIndexes
+	}
+	return functionIndexes
 }
 
 func (s *Schema) AppendFunction(function Function) (functionIndex int) {
 	s.Functions = append(s.Functions, function)
 	if s.functionsCache == nil {
-		s.functionsCache = make(map[string]int)
+		s.functionsCache = make(map[string][]int)
 	}
 	functionIndex = len(s.Functions) - 1
-	s.functionsCache[function.FunctionName] = functionIndex
+	s.functionsCache[function.FunctionName] = append(s.functionsCache[function.FunctionName], functionIndex)
 	return functionIndex
 }
 
 func (s *Schema) RefreshFunctionCache() {
 	for i, function := range s.Functions {
 		if s.functionsCache == nil {
-			s.functionsCache = make(map[string]int)
+			s.functionsCache = make(map[string][]int)
 		}
-		s.functionsCache[function.FunctionName] = i
+		s.functionsCache[function.FunctionName] = append(s.functionsCache[function.FunctionName], i)
 	}
 }
