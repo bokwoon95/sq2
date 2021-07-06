@@ -10,29 +10,29 @@ type Schema struct {
 	functionsCache map[string][]int
 }
 
-func (s *Schema) CachedTableIndex(tableName string) (tableIndex int) {
+func (s *Schema) CachedTablePosition(tableName string) (tablePosition int) {
 	if tableName == "" {
 		return -1
 	}
-	tableIndex, ok := s.tablesCache[tableName]
+	tablePosition, ok := s.tablesCache[tableName]
 	if !ok {
 		return -1
 	}
-	if tableIndex < 0 || tableIndex >= len(s.Tables) || s.Tables[tableIndex].TableName != tableName {
+	if tablePosition < 0 || tablePosition >= len(s.Tables) || s.Tables[tablePosition].TableName != tableName {
 		delete(s.tablesCache, tableName)
 		return -1
 	}
-	return tableIndex
+	return tablePosition
 }
 
-func (s *Schema) AppendTable(table Table) (tableIndex int) {
+func (s *Schema) AppendTable(table Table) (tablePosition int) {
 	s.Tables = append(s.Tables, table)
 	if s.tablesCache == nil {
 		s.tablesCache = make(map[string]int)
 	}
-	tableIndex = len(s.Tables) - 1
-	s.tablesCache[table.TableName] = tableIndex
-	return tableIndex
+	tablePosition = len(s.Tables) - 1
+	s.tablesCache[table.TableName] = tablePosition
+	return tablePosition
 }
 
 func (s *Schema) RefreshTableCache() {
@@ -44,32 +44,32 @@ func (s *Schema) RefreshTableCache() {
 	}
 }
 
-func (s *Schema) CachedViewIndex(viewName string) (viewIndex int) {
+func (s *Schema) CachedViewPosition(viewName string) (viewPosition int) {
 	if viewName == "" {
 		return -1
 	}
-	viewIndex, ok := s.viewsCache[viewName]
+	viewPosition, ok := s.viewsCache[viewName]
 	if !ok {
 		return -1
 	}
-	if viewIndex < 0 || viewIndex >= len(s.Views) || s.Views[viewIndex].ViewName != viewName {
+	if viewPosition < 0 || viewPosition >= len(s.Views) || s.Views[viewPosition].ViewName != viewName {
 		delete(s.viewsCache, viewName)
 		return -1
 	}
-	return viewIndex
+	return viewPosition
 }
 
-func (s *Schema) AppendView(view View) (viewIndex int) {
+func (s *Schema) AppendView(view View) (viewPosition int) {
 	s.Views = append(s.Views, view)
 	if s.viewsCache == nil {
 		s.viewsCache = make(map[string]int)
 	}
-	viewIndex = len(s.Views) - 1
-	s.viewsCache[view.ViewName] = viewIndex
-	return viewIndex
+	viewPosition = len(s.Views) - 1
+	s.viewsCache[view.ViewName] = viewPosition
+	return viewPosition
 }
 
-func (s *Schema) RefreshViewCache() {
+func (s *Schema) RefreshViewsCache() {
 	for i, view := range s.Views {
 		if s.viewsCache == nil {
 			s.viewsCache = make(map[string]int)
@@ -79,42 +79,42 @@ func (s *Schema) RefreshViewCache() {
 	return
 }
 
-func (s *Schema) CachedFunctionIndexes(functionName string) (functionIndexes []int) {
+func (s *Schema) CachedFunctionPositions(functionName string) (functionPositions []int) {
 	if functionName == "" {
 		return nil
 	}
-	functionIndexes, ok := s.functionsCache[functionName]
+	functionPositions, ok := s.functionsCache[functionName]
 	if !ok {
 		return nil
 	}
 	var n int
-	var hasInvalidIndex bool
-	for _, index := range functionIndexes {
-		if index < 0 || index >= len(s.Functions) || s.Functions[index].FunctionName != functionName {
-			hasInvalidIndex = true
+	var hasInvalidPosition bool
+	for _, i := range functionPositions {
+		if i < 0 || i >= len(s.Functions) || s.Functions[i].FunctionName != functionName {
+			hasInvalidPosition = true
 			continue
 		}
-		functionIndexes[n] = index
+		functionPositions[n] = i
 		n++
 	}
-	if hasInvalidIndex {
-		functionIndexes = functionIndexes[:n]
-		s.functionsCache[functionName] = functionIndexes
+	if hasInvalidPosition {
+		functionPositions = functionPositions[:n]
+		s.functionsCache[functionName] = functionPositions
 	}
-	return functionIndexes
+	return functionPositions
 }
 
-func (s *Schema) AppendFunction(function Function) (functionIndex int) {
+func (s *Schema) AppendFunction(function Function) (functionPositions int) {
 	s.Functions = append(s.Functions, function)
 	if s.functionsCache == nil {
 		s.functionsCache = make(map[string][]int)
 	}
-	functionIndex = len(s.Functions) - 1
-	s.functionsCache[function.FunctionName] = append(s.functionsCache[function.FunctionName], functionIndex)
-	return functionIndex
+	functionPositions = len(s.Functions) - 1
+	s.functionsCache[function.FunctionName] = append(s.functionsCache[function.FunctionName], functionPositions)
+	return functionPositions
 }
 
-func (s *Schema) RefreshFunctionCache() {
+func (s *Schema) RefreshFunctionsCache() {
 	for i, function := range s.Functions {
 		if s.functionsCache == nil {
 			s.functionsCache = make(map[string][]int)
