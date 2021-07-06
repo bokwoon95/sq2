@@ -3,8 +3,8 @@ package ddl3
 type Schema struct {
 	SchemaName     string
 	Tables         []Table
-	Views          []Object
-	Functions      []Object
+	Views          []View
+	Functions      []Function
 	tablesCache    map[string]int
 	viewsCache     map[string]int
 	functionsCache map[string]int
@@ -52,20 +52,20 @@ func (s *Schema) CachedViewIndex(viewName string) (viewIndex int) {
 	if !ok {
 		return -1
 	}
-	if viewIndex < 0 || viewIndex >= len(s.Views) || s.Views[viewIndex].ObjectName != viewName {
+	if viewIndex < 0 || viewIndex >= len(s.Views) || s.Views[viewIndex].ViewName != viewName {
 		delete(s.viewsCache, viewName)
 		return -1
 	}
 	return viewIndex
 }
 
-func (s *Schema) AppendView(view Object) (viewIndex int) {
+func (s *Schema) AppendView(view View) (viewIndex int) {
 	s.Views = append(s.Views, view)
 	if s.viewsCache == nil {
 		s.viewsCache = make(map[string]int)
 	}
 	viewIndex = len(s.Views) - 1
-	s.viewsCache[view.ObjectName] = viewIndex
+	s.viewsCache[view.ViewName] = viewIndex
 	return viewIndex
 }
 
@@ -74,7 +74,7 @@ func (s *Schema) RefreshViewCache() {
 		if s.viewsCache == nil {
 			s.viewsCache = make(map[string]int)
 		}
-		s.viewsCache[view.ObjectName] = i
+		s.viewsCache[view.ViewName] = i
 	}
 	return
 }
@@ -87,20 +87,20 @@ func (s *Schema) CachedFunctionIndex(functionName string) (functionIndex int) {
 	if !ok {
 		return -1
 	}
-	if functionIndex < 0 || functionIndex >= len(s.Functions) || s.Functions[functionIndex].ObjectName != functionName {
+	if functionIndex < 0 || functionIndex >= len(s.Functions) || s.Functions[functionIndex].FunctionName != functionName {
 		delete(s.functionsCache, functionName)
 		return -1
 	}
 	return functionIndex
 }
 
-func (s *Schema) AppendFunction(function Object) (functionIndex int) {
+func (s *Schema) AppendFunction(function Function) (functionIndex int) {
 	s.Functions = append(s.Functions, function)
 	if s.functionsCache == nil {
 		s.functionsCache = make(map[string]int)
 	}
 	functionIndex = len(s.Functions) - 1
-	s.functionsCache[function.ObjectName] = functionIndex
+	s.functionsCache[function.FunctionName] = functionIndex
 	return functionIndex
 }
 
@@ -109,6 +109,6 @@ func (s *Schema) RefreshFunctionCache() {
 		if s.functionsCache == nil {
 			s.functionsCache = make(map[string]int)
 		}
-		s.functionsCache[function.ObjectName] = i
+		s.functionsCache[function.FunctionName] = i
 	}
 }
