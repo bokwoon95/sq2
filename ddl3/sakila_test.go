@@ -495,9 +495,9 @@ func (tbl FILM) DDL(dialect string, t *T) {
 	case sq.DialectSQLite:
 		const (
 			lastUpdateTriggerName = "film_last_update_after_update_trg"
-			fts5InsertTriggerName  = "film_fts5_after_insert_trg"
-			fts5DeleteTriggerName  = "film_fts5_after_delete_trg"
-			fts5UpdateTriggerName  = "film_fts5_after_update_trg"
+			fts5InsertTriggerName = "film_fts5_after_insert_trg"
+			fts5DeleteTriggerName = "film_fts5_after_delete_trg"
+			fts5UpdateTriggerName = "film_fts5_after_update_trg"
 		)
 		t.Column(tbl.FULLTEXT).Ignore()
 		t.Check("film_release_year_check", "{1} >= 1901 AND {1} <= 2155", tbl.RELEASE_YEAR)
@@ -777,7 +777,7 @@ type FILM_CATEGORY struct {
 func (tbl FILM_CATEGORY) DDL(dialect string, t *T) {
 	switch dialect {
 	case sq.DialectSQLite:
-		const lastUpdateTriggerName = "film_actor_last_update_after_update_trg"
+		const lastUpdateTriggerName = "film_category_last_update_after_update_trg"
 		t.Trigger(lastUpdateTriggerName).Sprintf(sqliteLastUpdateTrigger,
 			sq.Param("triggerName", sq.Literal(lastUpdateTriggerName)),
 			sq.Param("table", tbl),
@@ -845,6 +845,14 @@ type STAFF struct {
 
 func (tbl STAFF) DDL(dialect string, t *T) {
 	switch dialect {
+	case sq.DialectSQLite:
+		const lastUpdateTriggerName = "staff_last_update_after_update_trg"
+		t.Trigger(lastUpdateTriggerName).Sprintf(sqliteLastUpdateTrigger,
+			sq.Param("triggerName", sq.Literal(lastUpdateTriggerName)),
+			sq.Param("table", tbl),
+			sq.Param("lastUpdate", sq.NameOnly(tbl.LAST_UPDATE)),
+			sq.Param("field", sq.NameOnly(tbl.STAFF_ID)),
+		)
 	case sq.DialectPostgres:
 		t.Column(tbl.STAFF_ID).Type("INT").Identity()
 		t.Column(tbl.LAST_UPDATE).Type("TIMESTAMPTZ").Default("NOW()")
@@ -935,6 +943,14 @@ type STORE struct {
 
 func (tbl STORE) DDL(dialect string, t *T) {
 	switch dialect {
+	case sq.DialectSQLite:
+		const lastUpdateTriggerName = "store_last_update_after_update_trg"
+		t.Trigger(lastUpdateTriggerName).Sprintf(sqliteLastUpdateTrigger,
+			sq.Param("triggerName", sq.Literal(lastUpdateTriggerName)),
+			sq.Param("table", tbl),
+			sq.Param("lastUpdate", sq.NameOnly(tbl.LAST_UPDATE)),
+			sq.Param("field", sq.NameOnly(tbl.STORE_ID)),
+		)
 	case sq.DialectPostgres:
 		t.Column(tbl.STORE_ID).Type("INT").Identity()
 		t.Column(tbl.LAST_UPDATE).Type("TIMESTAMPTZ").Default("NOW()")
@@ -1007,6 +1023,14 @@ type CUSTOMER struct {
 
 func (tbl CUSTOMER) DDL(dialect string, t *T) {
 	switch dialect {
+	case sq.DialectSQLite:
+		const lastUpdateTriggerName = "customer_last_update_after_update_trg"
+		t.Trigger(lastUpdateTriggerName).Sprintf(sqliteLastUpdateTrigger,
+			sq.Param("triggerName", sq.Literal(lastUpdateTriggerName)),
+			sq.Param("table", tbl),
+			sq.Param("lastUpdate", sq.NameOnly(tbl.LAST_UPDATE)),
+			sq.Param("field", sq.NameOnly(tbl.CUSTOMER_ID)),
+		)
 	case sq.DialectPostgres:
 		t.Column(tbl.CUSTOMER_ID).Type("INT").Identity()
 		t.Column(tbl.CREATE_DATE).Type("TIMESTAMPTZ").Default("NOW()")
@@ -1105,6 +1129,14 @@ type INVENTORY struct {
 
 func (tbl INVENTORY) DDL(dialect string, t *T) {
 	switch dialect {
+	case sq.DialectSQLite:
+		const lastUpdateTriggerName = "inventory_last_update_after_update_trg"
+		t.Trigger(lastUpdateTriggerName).Sprintf(sqliteLastUpdateTrigger,
+			sq.Param("triggerName", sq.Literal(lastUpdateTriggerName)),
+			sq.Param("table", tbl),
+			sq.Param("lastUpdate", sq.NameOnly(tbl.LAST_UPDATE)),
+			sq.Param("field", sq.NameOnly(tbl.INVENTORY_ID)),
+		)
 	case sq.DialectPostgres:
 		t.Column(tbl.INVENTORY_ID).Type("INT").Identity()
 		t.Column(tbl.LAST_UPDATE).Type("TIMESTAMPTZ").Default("NOW()")
@@ -1174,6 +1206,14 @@ type RENTAL struct {
 
 func (tbl RENTAL) DDL(dialect string, t *T) {
 	switch dialect {
+	case sq.DialectSQLite:
+		const lastUpdateTriggerName = "rental_last_update_after_update_trg"
+		t.Trigger(lastUpdateTriggerName).Sprintf(sqliteLastUpdateTrigger,
+			sq.Param("triggerName", sq.Literal(lastUpdateTriggerName)),
+			sq.Param("table", tbl),
+			sq.Param("lastUpdate", sq.NameOnly(tbl.LAST_UPDATE)),
+			sq.Param("field", sq.NameOnly(tbl.RENTAL_ID)),
+		)
 	case sq.DialectPostgres:
 		t.Column(tbl.RENTAL_ID).Type("INT").Identity()
 		t.Column(tbl.RETURN_DATE).Type("TIMESTAMPTZ")
