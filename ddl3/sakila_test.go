@@ -5,10 +5,10 @@ import (
 )
 
 const (
-	postgresLastUpdateTrg = "CREATE TRIGGER {triggerName} BEFORE UPDATE ON {table}" +
-		" FOR EACH ROW EXECUTE PROCEDURE last_updated_trg();"
-	sqliteLastUpdateTrg = "CREATE TRIGGER {triggerName} AFTER UPDATE ON {table} BEGIN" +
-		" UPDATE {table} SET {lastUpdate} = DATETIME('now') WHERE {field} = NEW.{field}" +
+	postgresLastUpdateTrigger = "CREATE TRIGGER {triggerName} BEFORE UPDATE ON {table}" +
+		" FOR EACH ROW EXECUTE PROCEDURE last_update_trg();"
+	sqliteLastUpdateTrigger = "CREATE TRIGGER {triggerName} AFTER UPDATE ON {table} BEGIN" +
+		" UPDATE {table} SET {lastUpdate} = DATETIME('now') WHERE {field} = NEW.{field};" +
 		" END;"
 )
 
@@ -43,14 +43,21 @@ type ACTOR struct {
 func (tbl ACTOR) DDL(dialect string, t *T) {
 	switch dialect {
 	case sq.DialectSQLite:
+		const lastUpdateTriggerName = "actor_last_update_after_update_trg"
 		t.Column(tbl.ACTOR_ID).Type("INTEGER").Autoincrement()
+		t.Trigger(lastUpdateTriggerName).Sprintf(sqliteLastUpdateTrigger,
+			sq.Param("triggerName", sq.Literal(lastUpdateTriggerName)),
+			sq.Param("table", tbl),
+			sq.Param("lastUpdate", sq.NameOnly(tbl.LAST_UPDATE)),
+			sq.Param("field", sq.NameOnly(tbl.ACTOR_ID)),
+		)
 	case sq.DialectPostgres:
+		const lastUpdateTriggerName = "actor_last_update_before_update_trg"
 		t.Column(tbl.ACTOR_ID).Type("INT").Identity()
 		t.Column(tbl.FULL_NAME).Generated("{} || ' ' || {}", tbl.FIRST_NAME, tbl.LAST_NAME).Stored()
 		t.Column(tbl.LAST_UPDATE).Type("TIMESTAMPTZ").Default("NOW()")
-		const triggerName = "actor_last_updated_before_update_trg"
-		t.Trigger(triggerName).Sprintf(postgresLastUpdateTrg,
-			sq.Param("triggerName", sq.Literal(triggerName)),
+		t.Trigger(lastUpdateTriggerName).Sprintf(postgresLastUpdateTrigger,
+			sq.Param("triggerName", sq.Literal(lastUpdateTriggerName)),
 			sq.Param("table", tbl),
 		)
 	case sq.DialectMySQL:
@@ -64,13 +71,6 @@ func (tbl ACTOR) DDL(dialect string, t *T) {
 			c.GeneratedExprStored = true
 		})
 		t.Column(tbl.LAST_UPDATE).Type("TIMESTAMP").Default("CURRENT_TIMESTAMP").OnUpdateCurrentTimestamp()
-		const triggerName = "actor_last_updated_after_update_trg"
-		t.Trigger(triggerName).Sprintf(sqliteLastUpdateTrg,
-			sq.Param("triggerName", sq.Literal(triggerName)),
-			sq.Param("table", tbl),
-			sq.Param("lastUpdate", tbl.LAST_UPDATE),
-			sq.Param("field", tbl.ACTOR_ID),
-		)
 	}
 }
 
@@ -129,6 +129,14 @@ type CATEGORY struct {
 
 func (tbl CATEGORY) DDL(dialect string, t *T) {
 	switch dialect {
+	case sq.DialectSQLite:
+		const lastUpdateTriggerName = "category_last_update_after_update_trg"
+		t.Trigger(lastUpdateTriggerName).Sprintf(sqliteLastUpdateTrigger,
+			sq.Param("triggerName", sq.Literal(lastUpdateTriggerName)),
+			sq.Param("table", tbl),
+			sq.Param("lastUpdate", sq.NameOnly(tbl.LAST_UPDATE)),
+			sq.Param("field", sq.NameOnly(tbl.CATEGORY_ID)),
+		)
 	case sq.DialectPostgres:
 		t.Column(tbl.CATEGORY_ID).Type("INT").Identity()
 		t.Column(tbl.LAST_UPDATE).Type("TIMESTAMPTZ").Default("NOW()")
@@ -182,6 +190,14 @@ type COUNTRY struct {
 
 func (tbl COUNTRY) DDL(dialect string, t *T) {
 	switch dialect {
+	case sq.DialectSQLite:
+		const lastUpdateTriggerName = "country_last_update_after_update_trg"
+		t.Trigger(lastUpdateTriggerName).Sprintf(sqliteLastUpdateTrigger,
+			sq.Param("triggerName", sq.Literal(lastUpdateTriggerName)),
+			sq.Param("table", tbl),
+			sq.Param("lastUpdate", sq.NameOnly(tbl.LAST_UPDATE)),
+			sq.Param("field", sq.NameOnly(tbl.COUNTRY_ID)),
+		)
 	case sq.DialectPostgres:
 		t.Column(tbl.COUNTRY_ID).Type("INT").Identity()
 		t.Column(tbl.LAST_UPDATE).Type("TIMESTAMPTZ").Default("NOW()")
@@ -238,7 +254,14 @@ func (tbl CITY) DDL(dialect string, t *T) {
 	COUNTRY := NEW_COUNTRY(dialect, "")
 	switch dialect {
 	case sq.DialectSQLite:
+		const triggerName = "city_last_update_after_update_trg"
 		t.ForeignKey(tbl.COUNTRY_ID).References(COUNTRY, COUNTRY.COUNTRY_ID).OnUpdate(CASCADE).OnDelete(RESTRICT)
+		t.Trigger(triggerName).Sprintf(sqliteLastUpdateTrigger,
+			sq.Param("triggerName", sq.Literal(triggerName)),
+			sq.Param("table", tbl),
+			sq.Param("lastUpdate", sq.NameOnly(tbl.LAST_UPDATE)),
+			sq.Param("field", sq.NameOnly(tbl.CITY_ID)),
+		)
 	case sq.DialectPostgres:
 		t.Column(tbl.CITY_ID).Type("INT").Identity()
 		t.Column(tbl.LAST_UPDATE).Type("TIMESTAMPTZ").Default("NOW()")
@@ -309,6 +332,14 @@ type ADDRESS struct {
 func (tbl ADDRESS) DDL(dialect string, t *T) {
 	CITY := NEW_CITY(dialect, "")
 	switch dialect {
+	case sq.DialectSQLite:
+		const lastUpdateTriggerName = "address_last_update_after_update_trg"
+		t.Trigger(lastUpdateTriggerName).Sprintf(sqliteLastUpdateTrigger,
+			sq.Param("triggerName", sq.Literal(lastUpdateTriggerName)),
+			sq.Param("table", tbl),
+			sq.Param("lastUpdate", sq.NameOnly(tbl.LAST_UPDATE)),
+			sq.Param("field", sq.NameOnly(tbl.ADDRESS_ID)),
+		)
 	case sq.DialectPostgres:
 		t.Column(tbl.ADDRESS_ID).Type("INT").Identity()
 		t.Column(tbl.LAST_UPDATE).Type("TIMESTAMPTZ").Default("NOW()")
@@ -389,6 +420,14 @@ type LANGUAGE struct {
 
 func (tbl LANGUAGE) DDL(dialect string, t *T) {
 	switch dialect {
+	case sq.DialectSQLite:
+		const lastUpdateTriggerName = "language_last_update_after_update_trg"
+		t.Trigger(lastUpdateTriggerName).Sprintf(sqliteLastUpdateTrigger,
+			sq.Param("triggerName", sq.Literal(lastUpdateTriggerName)),
+			sq.Param("table", tbl),
+			sq.Param("lastUpdate", sq.NameOnly(tbl.LAST_UPDATE)),
+			sq.Param("field", sq.NameOnly(tbl.LANGUAGE_ID)),
+		)
 	case sq.DialectPostgres:
 		t.Column(tbl.LANGUAGE_ID).Type("INT").Identity()
 		t.Column(tbl.LAST_UPDATE).Type("TIMESTAMPTZ").Default("NOW()")
@@ -454,9 +493,56 @@ type FILM struct {
 func (tbl FILM) DDL(dialect string, t *T) {
 	switch dialect {
 	case sq.DialectSQLite:
+		const (
+			lastUpdateTriggerName = "film_last_update_after_update_trg"
+			fts5InsertTriggerName  = "film_fts5_after_insert_trg"
+			fts5DeleteTriggerName  = "film_fts5_after_delete_trg"
+			fts5UpdateTriggerName  = "film_fts5_after_update_trg"
+		)
 		t.Column(tbl.FULLTEXT).Ignore()
 		t.Check("film_release_year_check", "{1} >= 1901 AND {1} <= 2155", tbl.RELEASE_YEAR)
 		t.Check("film_rating_check", "{} IN ('G','PG','PG-13','R','NC-17')", tbl.RATING)
+		t.Trigger(lastUpdateTriggerName).Sprintf(sqliteLastUpdateTrigger,
+			sq.Param("triggerName", sq.Literal(lastUpdateTriggerName)),
+			sq.Param("table", tbl),
+			sq.Param("lastUpdate", sq.NameOnly(tbl.LAST_UPDATE)),
+			sq.Param("field", sq.NameOnly(tbl.FILM_ID)),
+		)
+		FILM_TEXT := NEW_FILM_TEXT(dialect, "")
+		New := func(field sq.Field) sq.Field { return sq.Literal("NEW." + field.GetName()) }
+		Old := func(field sq.Field) sq.Field { return sq.Literal("OLD." + field.GetName()) }
+		t.Trigger(fts5InsertTriggerName).Sprintf(
+			"CREATE TRIGGER {triggerName} AFTER INSERT ON {table} BEGIN"+
+				" INSERT INTO {ftsTable} ({ftsFields}) VALUES ({insertValues});"+
+				" END;",
+			sq.Param("triggerName", sq.Literal(fts5InsertTriggerName)),
+			sq.Param("table", tbl),
+			sq.Param("ftsTable", FILM_TEXT),
+			sq.Param("ftsFields", sq.Fields{sq.Literal("ROWID"), FILM_TEXT.TITLE, FILM_TEXT.DESCRIPTION}),
+			sq.Param("insertValues", sq.Fields{New(tbl.FILM_ID), New(tbl.TITLE), New(tbl.DESCRIPTION)}),
+		)
+		t.Trigger(fts5DeleteTriggerName).Sprintf(
+			"CREATE TRIGGER {triggerName} AFTER DELETE ON {table} BEGIN"+
+				" INSERT INTO {ftsTable} ({ftsTable}, {ftsFields}) VALUES ('delete', {deleteValues});"+
+				" END;",
+			sq.Param("triggerName", sq.Literal(fts5DeleteTriggerName)),
+			sq.Param("table", tbl),
+			sq.Param("ftsTable", FILM_TEXT),
+			sq.Param("ftsFields", sq.Fields{sq.Literal("ROWID"), FILM_TEXT.TITLE, FILM_TEXT.DESCRIPTION}),
+			sq.Param("deleteValues", sq.Fields{Old(tbl.FILM_ID), Old(tbl.TITLE), Old(tbl.DESCRIPTION)}),
+		)
+		t.Trigger(fts5UpdateTriggerName).Sprintf(
+			"CREATE TRIGGER {triggerName} AFTER DELETE ON {table} BEGIN"+
+				" INSERT INTO {ftsTable} ({ftsTable}, {ftsFields}) VALUES ('delete', {deleteValues});"+
+				" INSERT INTO {ftsTable} ({ftsFields}) VALUES ({insertValues});"+
+				" END;",
+			sq.Param("triggerName", sq.Literal(fts5UpdateTriggerName)),
+			sq.Param("table", tbl),
+			sq.Param("ftsTable", FILM_TEXT),
+			sq.Param("ftsFields", sq.Fields{sq.Literal("ROWID"), FILM_TEXT.TITLE, FILM_TEXT.DESCRIPTION}),
+			sq.Param("deleteValues", sq.Fields{Old(tbl.FILM_ID), Old(tbl.TITLE), Old(tbl.DESCRIPTION)}),
+			sq.Param("insertValues", sq.Fields{New(tbl.FILM_ID), New(tbl.TITLE), New(tbl.DESCRIPTION)}),
+		)
 	case sq.DialectPostgres:
 		t.Column(tbl.FILM_ID).Type("INT").Identity()
 		t.Column(tbl.RELEASE_YEAR).Type("year")
@@ -623,6 +709,14 @@ type FILM_ACTOR struct {
 func (tbl FILM_ACTOR) DDL(dialect string, t *T) {
 	t.Index(tbl.ACTOR_ID, tbl.FILM_ID).Unique()
 	switch dialect {
+	case sq.DialectSQLite:
+		const lastUpdateTriggerName = "film_actor_last_update_after_update_trg"
+		t.Trigger(lastUpdateTriggerName).Sprintf(sqliteLastUpdateTrigger,
+			sq.Param("triggerName", sq.Literal(lastUpdateTriggerName)),
+			sq.Param("table", tbl),
+			sq.Param("lastUpdate", sq.NameOnly(tbl.LAST_UPDATE)),
+			sq.Param("field", sq.Literal("ROWID")),
+		)
 	case sq.DialectPostgres:
 		t.Column(tbl.LAST_UPDATE).Type("TIMESTAMPTZ").Default("NOW()")
 	case sq.DialectMySQL:
@@ -682,6 +776,14 @@ type FILM_CATEGORY struct {
 
 func (tbl FILM_CATEGORY) DDL(dialect string, t *T) {
 	switch dialect {
+	case sq.DialectSQLite:
+		const lastUpdateTriggerName = "film_actor_last_update_after_update_trg"
+		t.Trigger(lastUpdateTriggerName).Sprintf(sqliteLastUpdateTrigger,
+			sq.Param("triggerName", sq.Literal(lastUpdateTriggerName)),
+			sq.Param("table", tbl),
+			sq.Param("lastUpdate", sq.NameOnly(tbl.LAST_UPDATE)),
+			sq.Param("field", sq.Literal("ROWID")),
+		)
 	case sq.DialectPostgres:
 		t.Column(tbl.LAST_UPDATE).Type("TIMESTAMPTZ").Default("NOW()")
 	case sq.DialectMySQL:
