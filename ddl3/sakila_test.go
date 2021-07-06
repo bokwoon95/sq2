@@ -5,11 +5,11 @@ import (
 )
 
 const (
-	postgresLastUpdateTrigger = "CREATE TRIGGER {triggerName} BEFORE UPDATE ON {table}" +
-		" FOR EACH ROW EXECUTE PROCEDURE last_update_trg();"
 	sqliteLastUpdateTrigger = "CREATE TRIGGER {triggerName} AFTER UPDATE ON {table} BEGIN" +
 		" UPDATE {table} SET {lastUpdate} = DATETIME('now') WHERE {field} = NEW.{field};" +
 		" END;"
+	postgresLastUpdateTrigger = "CREATE TRIGGER {triggerName} BEFORE UPDATE ON {table}" +
+		" FOR EACH ROW EXECUTE PROCEDURE last_update_trg();"
 )
 
 func NEW_ACTOR(dialect, alias string) ACTOR {
@@ -138,8 +138,13 @@ func (tbl CATEGORY) DDL(dialect string, t *T) {
 			sq.Param("field", sq.NameOnly(tbl.CATEGORY_ID)),
 		)
 	case sq.DialectPostgres:
+		const lastUpdateTriggerName = "category_last_update_before_update_trg"
 		t.Column(tbl.CATEGORY_ID).Type("INT").Identity()
 		t.Column(tbl.LAST_UPDATE).Type("TIMESTAMPTZ").Default("NOW()")
+		t.Trigger(lastUpdateTriggerName).Sprintf(postgresLastUpdateTrigger,
+			sq.Param("triggerName", sq.Literal(lastUpdateTriggerName)),
+			sq.Param("table", tbl),
+		)
 	case sq.DialectMySQL:
 		t.Column(tbl.CATEGORY_ID).Type("INT").Autoincrement()
 		t.Column(tbl.NAME).Type("VARCHAR(25)")
@@ -199,8 +204,13 @@ func (tbl COUNTRY) DDL(dialect string, t *T) {
 			sq.Param("field", sq.NameOnly(tbl.COUNTRY_ID)),
 		)
 	case sq.DialectPostgres:
+		const lastUpdateTriggerName = "country_last_update_before_update_trg"
 		t.Column(tbl.COUNTRY_ID).Type("INT").Identity()
 		t.Column(tbl.LAST_UPDATE).Type("TIMESTAMPTZ").Default("NOW()")
+		t.Trigger(lastUpdateTriggerName).Sprintf(postgresLastUpdateTrigger,
+			sq.Param("triggerName", sq.Literal(lastUpdateTriggerName)),
+			sq.Param("table", tbl),
+		)
 	case sq.DialectMySQL:
 		t.Column(tbl.COUNTRY_ID).Type("INT").Autoincrement()
 		t.Column(tbl.COUNTRY).Type("VARCHAR(50)")
@@ -263,8 +273,13 @@ func (tbl CITY) DDL(dialect string, t *T) {
 			sq.Param("field", sq.NameOnly(tbl.CITY_ID)),
 		)
 	case sq.DialectPostgres:
+		const lastUpdateTriggerName = "city_last_update_before_update_trg"
 		t.Column(tbl.CITY_ID).Type("INT").Identity()
 		t.Column(tbl.LAST_UPDATE).Type("TIMESTAMPTZ").Default("NOW()")
+		t.Trigger(lastUpdateTriggerName).Sprintf(postgresLastUpdateTrigger,
+			sq.Param("triggerName", sq.Literal(lastUpdateTriggerName)),
+			sq.Param("table", tbl),
+		)
 	case sq.DialectMySQL:
 		t.Column(tbl.CITY_ID).Type("INT").Autoincrement()
 		t.Column(tbl.CITY).Type("VARCHAR(50)")
@@ -341,8 +356,13 @@ func (tbl ADDRESS) DDL(dialect string, t *T) {
 			sq.Param("field", sq.NameOnly(tbl.ADDRESS_ID)),
 		)
 	case sq.DialectPostgres:
+		const lastUpdateTriggerName = "city_last_update_before_update_trg"
 		t.Column(tbl.ADDRESS_ID).Type("INT").Identity()
 		t.Column(tbl.LAST_UPDATE).Type("TIMESTAMPTZ").Default("NOW()")
+		t.Trigger(lastUpdateTriggerName).Sprintf(postgresLastUpdateTrigger,
+			sq.Param("triggerName", sq.Literal(lastUpdateTriggerName)),
+			sq.Param("table", tbl),
+		)
 	case sq.DialectMySQL:
 		t.Column(tbl.ADDRESS_ID).Type("INT").Autoincrement()
 		t.Column(tbl.ADDRESS).Type("VARCHAR(50)")
@@ -429,8 +449,13 @@ func (tbl LANGUAGE) DDL(dialect string, t *T) {
 			sq.Param("field", sq.NameOnly(tbl.LANGUAGE_ID)),
 		)
 	case sq.DialectPostgres:
+		const lastUpdateTriggerName = "language_last_update_before_update_trg"
 		t.Column(tbl.LANGUAGE_ID).Type("INT").Identity()
 		t.Column(tbl.LAST_UPDATE).Type("TIMESTAMPTZ").Default("NOW()")
+		t.Trigger(lastUpdateTriggerName).Sprintf(postgresLastUpdateTrigger,
+			sq.Param("triggerName", sq.Literal(lastUpdateTriggerName)),
+			sq.Param("table", tbl),
+		)
 	case sq.DialectMySQL:
 		t.Column(tbl.LANGUAGE_ID).Type("INT").Autoincrement()
 		t.Column(tbl.NAME).Type("CHAR(20)")
@@ -544,6 +569,10 @@ func (tbl FILM) DDL(dialect string, t *T) {
 			sq.Param("insertValues", sq.Fields{New(tbl.FILM_ID), New(tbl.TITLE), New(tbl.DESCRIPTION)}),
 		)
 	case sq.DialectPostgres:
+		const (
+			lastUpdateTriggerName = "film_last_update_before_update_trg"
+			ftsTriggerName        = "film_fulltext_before_insert_update_trg"
+		)
 		t.Column(tbl.FILM_ID).Type("INT").Identity()
 		t.Column(tbl.RELEASE_YEAR).Type("year")
 		t.Column(tbl.RATING).Type("mpaa_rating").Default("'G'::mpaa_rating")
@@ -551,6 +580,18 @@ func (tbl FILM) DDL(dialect string, t *T) {
 		t.Column(tbl.SPECIAL_FEATURES).Type("TEXT[]")
 		t.Column(tbl.FULLTEXT).Type("TSVECTOR")
 		t.Index(tbl.FULLTEXT).Using("GIST")
+		t.Trigger(lastUpdateTriggerName).Sprintf(postgresLastUpdateTrigger,
+			sq.Param("triggerName", sq.Literal(lastUpdateTriggerName)),
+			sq.Param("table", tbl),
+		)
+		t.Trigger(ftsTriggerName).Sprintf(
+			"CREATE TRIGGER {triggerName} BEFORE INSERT OR UPDATE ON {table} FOR EACH ROW EXECUTE PROCEDURE"+
+				" tsvector_update_trigger({tsvectorField}, 'pg_catalog.english', {textFields})",
+			sq.Param("triggerName", sq.Literal(ftsTriggerName)),
+			sq.Param("table", tbl),
+			sq.Param("tsvectorField", tbl.FULLTEXT.GetName()),
+			sq.Param("textFields", []string{tbl.TITLE.GetName(), tbl.DESCRIPTION.GetName()}),
+		)
 	case sq.DialectMySQL:
 		t.Column(tbl.FILM_ID).Type("INT").Autoincrement()
 		t.Column(tbl.TITLE).Type("VARCHAR(255)")
@@ -718,7 +759,12 @@ func (tbl FILM_ACTOR) DDL(dialect string, t *T) {
 			sq.Param("field", sq.Literal("ROWID")),
 		)
 	case sq.DialectPostgres:
+		const lastUpdateTriggerName = "film_actor_last_update_before_update_trg"
 		t.Column(tbl.LAST_UPDATE).Type("TIMESTAMPTZ").Default("NOW()")
+		t.Trigger(lastUpdateTriggerName).Sprintf(postgresLastUpdateTrigger,
+			sq.Param("triggerName", sq.Literal(lastUpdateTriggerName)),
+			sq.Param("table", tbl),
+		)
 	case sq.DialectMySQL:
 		t.Column(tbl.LAST_UPDATE).Type("TIMESTAMP").Default("CURRENT_TIMESTAMP").OnUpdateCurrentTimestamp()
 	}
@@ -785,7 +831,12 @@ func (tbl FILM_CATEGORY) DDL(dialect string, t *T) {
 			sq.Param("field", sq.Literal("ROWID")),
 		)
 	case sq.DialectPostgres:
+		const lastUpdateTriggerName = "film_category_last_update_before_update_trg"
 		t.Column(tbl.LAST_UPDATE).Type("TIMESTAMPTZ").Default("NOW()")
+		t.Trigger(lastUpdateTriggerName).Sprintf(postgresLastUpdateTrigger,
+			sq.Param("triggerName", sq.Literal(lastUpdateTriggerName)),
+			sq.Param("table", tbl),
+		)
 	case sq.DialectMySQL:
 		t.Column(tbl.LAST_UPDATE).Type("TIMESTAMP").Default("CURRENT_TIMESTAMP").OnUpdateCurrentTimestamp()
 	}
@@ -854,9 +905,14 @@ func (tbl STAFF) DDL(dialect string, t *T) {
 			sq.Param("field", sq.NameOnly(tbl.STAFF_ID)),
 		)
 	case sq.DialectPostgres:
+		const lastUpdateTriggerName = "staff_last_update_before_update_trg"
 		t.Column(tbl.STAFF_ID).Type("INT").Identity()
 		t.Column(tbl.LAST_UPDATE).Type("TIMESTAMPTZ").Default("NOW()")
 		t.Column(tbl.PICTURE).Type("BYTEA")
+		t.Trigger(lastUpdateTriggerName).Sprintf(postgresLastUpdateTrigger,
+			sq.Param("triggerName", sq.Literal(lastUpdateTriggerName)),
+			sq.Param("table", tbl),
+		)
 	case sq.DialectMySQL:
 		t.Column(tbl.STAFF_ID).Type("INT").Autoincrement()
 		t.Column(tbl.FIRST_NAME).Type("VARCHAR(45)")
@@ -952,8 +1008,13 @@ func (tbl STORE) DDL(dialect string, t *T) {
 			sq.Param("field", sq.NameOnly(tbl.STORE_ID)),
 		)
 	case sq.DialectPostgres:
+		const lastUpdateTriggerName = "store_last_update_before_update_trg"
 		t.Column(tbl.STORE_ID).Type("INT").Identity()
 		t.Column(tbl.LAST_UPDATE).Type("TIMESTAMPTZ").Default("NOW()")
+		t.Trigger(lastUpdateTriggerName).Sprintf(postgresLastUpdateTrigger,
+			sq.Param("triggerName", sq.Literal(lastUpdateTriggerName)),
+			sq.Param("table", tbl),
+		)
 	case sq.DialectMySQL:
 		t.Column(tbl.STORE_ID).Type("INT").Autoincrement()
 		t.Column(tbl.LAST_UPDATE).Type("TIMESTAMP").Default("CURRENT_TIMESTAMP").OnUpdateCurrentTimestamp()
@@ -1032,9 +1093,14 @@ func (tbl CUSTOMER) DDL(dialect string, t *T) {
 			sq.Param("field", sq.NameOnly(tbl.CUSTOMER_ID)),
 		)
 	case sq.DialectPostgres:
+		const lastUpdateTriggerName = "customer_last_update_before_update_trg"
 		t.Column(tbl.CUSTOMER_ID).Type("INT").Identity()
 		t.Column(tbl.CREATE_DATE).Type("TIMESTAMPTZ").Default("NOW()")
 		t.Column(tbl.LAST_UPDATE).Type("TIMESTAMPTZ").Default("NOW()")
+		t.Trigger(lastUpdateTriggerName).Sprintf(postgresLastUpdateTrigger,
+			sq.Param("triggerName", sq.Literal(lastUpdateTriggerName)),
+			sq.Param("table", tbl),
+		)
 	case sq.DialectMySQL:
 		t.Column(tbl.CUSTOMER_ID).Type("INT").Autoincrement()
 		t.Column(tbl.FIRST_NAME).Type("VARCHAR(45)")
@@ -1138,8 +1204,13 @@ func (tbl INVENTORY) DDL(dialect string, t *T) {
 			sq.Param("field", sq.NameOnly(tbl.INVENTORY_ID)),
 		)
 	case sq.DialectPostgres:
+		const lastUpdateTriggerName = "inventory_last_update_before_update_trg"
 		t.Column(tbl.INVENTORY_ID).Type("INT").Identity()
 		t.Column(tbl.LAST_UPDATE).Type("TIMESTAMPTZ").Default("NOW()")
+		t.Trigger(lastUpdateTriggerName).Sprintf(postgresLastUpdateTrigger,
+			sq.Param("triggerName", sq.Literal(lastUpdateTriggerName)),
+			sq.Param("table", tbl),
+		)
 	case sq.DialectMySQL:
 		t.Column(tbl.INVENTORY_ID).Type("INT").Autoincrement()
 		t.Column(tbl.LAST_UPDATE).Type("TIMESTAMP").Default("CURRENT_TIMESTAMP").OnUpdateCurrentTimestamp()
@@ -1215,9 +1286,14 @@ func (tbl RENTAL) DDL(dialect string, t *T) {
 			sq.Param("field", sq.NameOnly(tbl.RENTAL_ID)),
 		)
 	case sq.DialectPostgres:
+		const lastUpdateTriggerName = "rental_last_update_before_update_trg"
 		t.Column(tbl.RENTAL_ID).Type("INT").Identity()
 		t.Column(tbl.RETURN_DATE).Type("TIMESTAMPTZ")
 		t.Column(tbl.LAST_UPDATE).Type("TIMESTAMPTZ").Default("NOW()")
+		t.Trigger(lastUpdateTriggerName).Sprintf(postgresLastUpdateTrigger,
+			sq.Param("triggerName", sq.Literal(lastUpdateTriggerName)),
+			sq.Param("table", tbl),
+		)
 	case sq.DialectMySQL:
 		t.Column(tbl.RENTAL_ID).Type("INT").Autoincrement()
 		t.Column(tbl.RETURN_DATE).Type("TIMESTAMP")
