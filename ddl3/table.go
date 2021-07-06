@@ -1,6 +1,7 @@
 package ddl3
 
 import (
+	"bytes"
 	"fmt"
 	"strconv"
 	"strings"
@@ -11,6 +12,7 @@ import (
 type Table struct {
 	TableSchema      string
 	TableName        string
+	TableAlias       string
 	Columns          []Column
 	Constraints      []Constraint
 	Indexes          []Index
@@ -21,6 +23,20 @@ type Table struct {
 	constraintsCache map[string]int
 	indexesCache     map[string]int
 	triggersCache    map[string]int
+}
+
+var _ sq.Table = Table{}
+
+func (tbl Table) GetAlias() string { return tbl.TableAlias }
+
+func (tbl Table) GetName() string { return tbl.TableName }
+
+func (tbl Table) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
+	if tbl.TableSchema != "" {
+		buf.WriteString(sq.QuoteIdentifier(dialect, tbl.TableSchema) + ".")
+	}
+	buf.WriteString(sq.QuoteIdentifier(dialect, tbl.TableName))
+	return nil
 }
 
 func (tbl *Table) CachedColumnPositions(columnName string) (columnPosition int) {

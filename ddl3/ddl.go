@@ -2,6 +2,7 @@ package ddl3
 
 import (
 	"bytes"
+	"sort"
 	"strings"
 	"sync"
 
@@ -34,7 +35,9 @@ const (
 type Column struct {
 	TableSchema              string
 	TableName                string
+	TableAlias               string
 	ColumnName               string
+	ColumnAlias              string
 	ColumnType               string
 	NormalizedColumnType     string // Not needed if we have a IsEquivalentType(dialect, typeA, typeB string) bool
 	Precision                int
@@ -50,6 +53,30 @@ type Column struct {
 	CollationName            string
 	ColumnDefault            string
 	Ignore                   bool
+}
+
+var _ sq.Field = Column{}
+
+func (c Column) GetName() string { return c.ColumnName }
+
+func (c Column) GetAlias() string { return c.ColumnAlias }
+
+func (c Column) AppendSQLExclude(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int, excludedTableQualifiers []string) error {
+	tableQualifier := c.TableAlias
+	if tableQualifier == "" {
+		tableQualifier = c.TableName
+	}
+	if tableQualifier != "" {
+		i := sort.SearchStrings(excludedTableQualifiers, tableQualifier)
+		if i < len(excludedTableQualifiers) && excludedTableQualifiers[i] == tableQualifier {
+			tableQualifier = ""
+		}
+	}
+	if tableQualifier != "" {
+		buf.WriteString(sq.QuoteIdentifier(dialect, tableQualifier) + ".")
+	}
+	buf.WriteString(sq.QuoteIdentifier(dialect, c.ColumnName))
+	return nil
 }
 
 type Constraint struct {
