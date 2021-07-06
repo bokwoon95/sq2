@@ -2,6 +2,7 @@ package ddl3
 
 import (
 	"fmt"
+	"io/fs"
 	"runtime"
 	"strconv"
 	"strings"
@@ -9,11 +10,9 @@ import (
 	"github.com/bokwoon95/sq"
 )
 
-func panicf(format string, a ...interface{}) {
-	// Skip two extra frames to account for this function and runtime.Caller
-	// itself.
+func panicErr(err error) {
 	_, file, line, _ := runtime.Caller(2)
-	panic(fmt.Errorf("%s:%d:%s", file, line, fmt.Sprintf(format, a...)))
+	panic(fmt.Errorf("%s:%d:%w", file, line, err))
 }
 
 type T struct {
@@ -49,15 +48,15 @@ func (tbl *Table) tcol(dialect, columnName string) *TColumn {
 
 func (t *T) Column(field sq.Field) *TColumn {
 	if field == nil {
-		panicf("field is nil")
+		panicErr(fmt.Errorf("Column: field is nil"))
 	}
 	columnName := field.GetName()
 	if columnName == "" {
-		panicf("field has no name")
+		panicErr(fmt.Errorf("Column: field has no name"))
 	}
 	columnPosition := t.tbl.CachedColumnPositions(columnName)
 	if columnPosition < 0 {
-		panicf("table has no such column %s", columnName)
+		panicErr(fmt.Errorf("Column: table has no such column %s", columnName))
 	}
 	return &TColumn{
 		dialect:        t.dialect,
@@ -115,7 +114,7 @@ func appendSQLExclude(dialect, tableName string, v sq.SQLExcludeAppender) (strin
 func (t *T) Sprintf(format string, values ...interface{}) string {
 	expr, err := sprintf(t.dialect, t.tbl.TableName, format, values)
 	if err != nil {
-		panicf(err.Error())
+		panicErr(fmt.Errorf("Sprintf: %w", err))
 	}
 	return expr
 }
@@ -123,7 +122,7 @@ func (t *T) Sprintf(format string, values ...interface{}) string {
 func (t *TColumn) Generated(format string, values ...interface{}) *TColumn {
 	expr, err := sprintf(t.dialect, t.tbl.TableName, format, values)
 	if err != nil {
-		panicf(err.Error())
+		panicErr(fmt.Errorf("Generated: %w", err))
 	}
 	t.tbl.Columns[t.columnPosition].GeneratedExpr = expr
 	return t
@@ -159,7 +158,7 @@ func (t *TColumn) Default(format string, values ...interface{}) *TColumn {
 	}
 	expr, err := sprintf(t.dialect, t.tbl.TableName, format, values)
 	if err != nil {
-		panicf(err.Error())
+		panicErr(fmt.Errorf("Default: %w", err))
 	}
 	if t.dialect != sq.DialectPostgres {
 		expr = "(" + expr + ")"
@@ -197,7 +196,7 @@ func (t *TColumn) PrimaryKey() *TColumn {
 	constraintName := generateName(PRIMARY_KEY, t.tbl.TableName, t.columnName)
 	_, err := createOrUpdateConstraint(t.tbl, PRIMARY_KEY, constraintName, []string{t.columnName}, "")
 	if err != nil {
-		panicf(err.Error())
+		panicErr(fmt.Errorf("PrimaryKey: %w", err))
 	}
 	return t
 }
@@ -206,7 +205,7 @@ func (t *TColumn) Unique() *TColumn {
 	constraintName := generateName(UNIQUE, t.tbl.TableName, t.columnName)
 	_, err := createOrUpdateConstraint(t.tbl, UNIQUE, constraintName, []string{t.columnName}, "")
 	if err != nil {
-		panicf(err.Error())
+		panicErr(fmt.Errorf("Unique: %w", err))
 	}
 	return t
 }
@@ -266,7 +265,7 @@ func createOrUpdateConstraint(tbl *Table, constraintType, constraintName string,
 func (t *T) Check(constraintName string, format string, values ...interface{}) *TConstraint {
 	expr, err := sprintf(t.dialect, t.tbl.TableName, format, values)
 	if err != nil {
-		panicf(err.Error())
+		panicErr(fmt.Errorf("Check: %w", err))
 	}
 	tConstraint := &TConstraint{
 		dialect:        t.dialect,
@@ -275,7 +274,7 @@ func (t *T) Check(constraintName string, format string, values ...interface{}) *
 	}
 	tConstraint.constraintPosition, err = createOrUpdateConstraint(t.tbl, CHECK, constraintName, nil, expr)
 	if err != nil {
-		panicf(err.Error())
+		panicErr(fmt.Errorf("Check: %w", err))
 	}
 	return tConstraint
 }
@@ -283,7 +282,7 @@ func (t *T) Check(constraintName string, format string, values ...interface{}) *
 func (t *T) Unique(fields ...sq.Field) *TConstraint {
 	columnNames, err := getColumnNames(fields)
 	if err != nil {
-		panicf(err.Error())
+		panicErr(fmt.Errorf("Unique: %w", err))
 	}
 	constraintName := generateName(UNIQUE, t.tbl.TableName, columnNames...)
 	tConstraint := &TConstraint{
@@ -293,7 +292,7 @@ func (t *T) Unique(fields ...sq.Field) *TConstraint {
 	}
 	tConstraint.constraintPosition, err = createOrUpdateConstraint(t.tbl, UNIQUE, constraintName, columnNames, "")
 	if err != nil {
-		panicf(err.Error())
+		panicErr(fmt.Errorf("Unique: %w", err))
 	}
 	return tConstraint
 }
@@ -301,7 +300,7 @@ func (t *T) Unique(fields ...sq.Field) *TConstraint {
 func (t *T) PrimaryKey(fields ...sq.Field) *TConstraint {
 	columnNames, err := getColumnNames(fields)
 	if err != nil {
-		panicf(err.Error())
+		panicErr(fmt.Errorf("PrimaryKey: %w", err))
 	}
 	constraintName := generateName(PRIMARY_KEY, t.tbl.TableName, columnNames...)
 	tConstraint := &TConstraint{
@@ -311,7 +310,7 @@ func (t *T) PrimaryKey(fields ...sq.Field) *TConstraint {
 	}
 	tConstraint.constraintPosition, err = createOrUpdateConstraint(t.tbl, PRIMARY_KEY, constraintName, columnNames, "")
 	if err != nil {
-		panicf(err.Error())
+		panicErr(fmt.Errorf("PrimaryKey: %w", err))
 	}
 	return tConstraint
 }
@@ -319,7 +318,7 @@ func (t *T) PrimaryKey(fields ...sq.Field) *TConstraint {
 func (t *T) ForeignKey(fields ...sq.Field) *TConstraint {
 	columnNames, err := getColumnNames(fields)
 	if err != nil {
-		panicf(err.Error())
+		panicErr(fmt.Errorf("ForeignKey: %w", err))
 	}
 	constraintName := generateName(FOREIGN_KEY, t.tbl.TableName, columnNames...)
 	tConstraint := &TConstraint{
@@ -329,7 +328,7 @@ func (t *T) ForeignKey(fields ...sq.Field) *TConstraint {
 	}
 	tConstraint.constraintPosition, err = createOrUpdateConstraint(t.tbl, FOREIGN_KEY, constraintName, columnNames, "")
 	if err != nil {
-		panicf(err.Error())
+		panicErr(fmt.Errorf("ForeignKey: %w", err))
 	}
 	return tConstraint
 }
@@ -337,7 +336,7 @@ func (t *T) ForeignKey(fields ...sq.Field) *TConstraint {
 func (t *T) NameUnique(constraintName string, fields ...sq.Field) *TConstraint {
 	columnNames, err := getColumnNames(fields)
 	if err != nil {
-		panicf(err.Error())
+		panicErr(fmt.Errorf("NameUnique: %w", err))
 	}
 	tConstraint := &TConstraint{
 		dialect:        t.dialect,
@@ -346,7 +345,7 @@ func (t *T) NameUnique(constraintName string, fields ...sq.Field) *TConstraint {
 	}
 	tConstraint.constraintPosition, err = createOrUpdateConstraint(t.tbl, UNIQUE, constraintName, columnNames, "")
 	if err != nil {
-		panicf(err.Error())
+		panicErr(fmt.Errorf("NameUnique: %w", err))
 	}
 	return tConstraint
 }
@@ -354,7 +353,7 @@ func (t *T) NameUnique(constraintName string, fields ...sq.Field) *TConstraint {
 func (t *T) NamePrimaryKey(constraintName string, fields ...sq.Field) *TConstraint {
 	columnNames, err := getColumnNames(fields)
 	if err != nil {
-		panicf(err.Error())
+		panicErr(fmt.Errorf("NamePrimaryKey: %w", err))
 	}
 	tConstraint := &TConstraint{
 		dialect:        t.dialect,
@@ -363,7 +362,7 @@ func (t *T) NamePrimaryKey(constraintName string, fields ...sq.Field) *TConstrai
 	}
 	tConstraint.constraintPosition, err = createOrUpdateConstraint(t.tbl, PRIMARY_KEY, constraintName, columnNames, "")
 	if err != nil {
-		panicf(err.Error())
+		panicErr(fmt.Errorf("NamePrimaryKey: %w", err))
 	}
 	return tConstraint
 }
@@ -371,7 +370,7 @@ func (t *T) NamePrimaryKey(constraintName string, fields ...sq.Field) *TConstrai
 func (t *T) NameForeignKey(constraintName string, fields ...sq.Field) *TConstraint {
 	columnNames, err := getColumnNames(fields)
 	if err != nil {
-		panicf(err.Error())
+		panicErr(fmt.Errorf("NameForeignKey: %w", err))
 	}
 	tConstraint := &TConstraint{
 		dialect:        t.dialect,
@@ -380,7 +379,7 @@ func (t *T) NameForeignKey(constraintName string, fields ...sq.Field) *TConstrai
 	}
 	tConstraint.constraintPosition, err = createOrUpdateConstraint(t.tbl, FOREIGN_KEY, constraintName, columnNames, "")
 	if err != nil {
-		panicf(err.Error())
+		panicErr(fmt.Errorf("NameForeignKey: %w", err))
 	}
 	return tConstraint
 }
@@ -396,15 +395,15 @@ func (t *TConstraint) Config(config func(constraint *Constraint)) {
 
 func (t *TConstraint) References(table sq.Table, fields ...sq.Field) *TConstraint {
 	if table == nil {
-		panicf("referenced table is nil")
+		panicErr(fmt.Errorf("References: referenced table is nil"))
 	}
 	referencesTable := table.GetName()
 	if referencesTable == "" {
-		panicf("referenced table has no name")
+		panicErr(fmt.Errorf("References: referenced table has no name"))
 	}
 	referencesColumns, err := getColumnNames(fields)
 	if err != nil {
-		panicf("referenced " + err.Error())
+		panicErr(fmt.Errorf("References: %w", err))
 	}
 	constraint := t.tbl.Constraints[t.constraintPosition]
 	constraint.ReferencesTable = referencesTable
@@ -500,7 +499,7 @@ func createOrUpdateIndex(tbl *Table, indexName string, columns []string, exprs [
 func (t *T) Index(fields ...sq.Field) *TIndex {
 	columnNames, exprs, err := getColumnNamesAndExprs(t.dialect, t.tbl.TableName, fields)
 	if err != nil {
-		panicf(err.Error())
+		panicErr(fmt.Errorf("Index: %w", err))
 	}
 	indexName := generateName(INDEX, t.tbl.TableName, columnNames...)
 	tIndex := &TIndex{
@@ -510,7 +509,7 @@ func (t *T) Index(fields ...sq.Field) *TIndex {
 	}
 	tIndex.indexPosition, err = createOrUpdateIndex(t.tbl, indexName, columnNames, exprs)
 	if err != nil {
-		panicf(err.Error())
+		panicErr(fmt.Errorf("Index: %w", err))
 	}
 	return tIndex
 }
@@ -518,7 +517,7 @@ func (t *T) Index(fields ...sq.Field) *TIndex {
 func (t *T) NameIndex(indexName string, fields ...sq.Field) *TIndex {
 	columnNames, exprs, err := getColumnNamesAndExprs(t.dialect, t.tbl.TableName, fields)
 	if err != nil {
-		panicf(err.Error())
+		panicErr(fmt.Errorf("NameIndex: %w", err))
 	}
 	tIndex := &TIndex{
 		dialect:   t.dialect,
@@ -527,7 +526,7 @@ func (t *T) NameIndex(indexName string, fields ...sq.Field) *TIndex {
 	}
 	tIndex.indexPosition, err = createOrUpdateIndex(t.tbl, indexName, columnNames, exprs)
 	if err != nil {
-		panicf(err.Error())
+		panicErr(fmt.Errorf("NameIndex: %w", err))
 	}
 	return tIndex
 }
@@ -545,7 +544,7 @@ func (t *TIndex) Using(indexType string) *TIndex {
 func (t *TIndex) Where(format string, values ...interface{}) *TIndex {
 	expr, err := sprintf(t.dialect, t.tbl.TableName, format, values)
 	if err != nil {
-		panicf(err.Error())
+		panicErr(fmt.Errorf("Where: %w", err))
 	}
 	t.tbl.Indexes[t.indexPosition].Where = expr
 	return t
@@ -554,7 +553,7 @@ func (t *TIndex) Where(format string, values ...interface{}) *TIndex {
 func (t *TIndex) Include(fields ...sq.Field) *TIndex {
 	columnNames, err := getColumnNames(fields)
 	if err != nil {
-		panicf(err.Error())
+		panicErr(fmt.Errorf("Include: %w", err))
 	}
 	t.tbl.Indexes[t.indexPosition].Include = columnNames
 	return t
@@ -567,4 +566,42 @@ func (t *TIndex) Config(config func(index *Index)) {
 	index.TableName = t.tbl.TableName
 	index.IndexName = t.indexName
 	t.tbl.Indexes[t.indexPosition] = index
+}
+
+type TTrigger struct {
+	dialect         string
+	tbl             *Table
+	triggerName     string
+	triggerPosition int
+}
+
+func (t *T) Trigger(triggerName string) *TTrigger {
+	tTrigger := &TTrigger{
+		dialect:     t.dialect,
+		tbl:         t.tbl,
+		triggerName: triggerName,
+	}
+	tTrigger.triggerPosition = t.tbl.CachedTriggerPosition(triggerName)
+	if tTrigger.triggerPosition < 0 {
+		tTrigger.triggerPosition = t.tbl.AppendTrigger(Trigger{
+			TableSchema: t.tbl.TableSchema,
+			TableName:   t.tbl.TableName,
+			TriggerName: triggerName,
+		})
+	}
+	return tTrigger
+}
+
+func (t *TTrigger) Contents(contents string) *TTrigger {
+	t.tbl.Triggers[t.triggerPosition].Contents = contents
+	return t
+}
+
+func (t *TTrigger) File(fsys fs.FS, name string) *TTrigger {
+	b, err := fs.ReadFile(fsys, name)
+	if err != nil {
+		panicErr(fmt.Errorf("File: %w", err))
+	}
+	t.tbl.Triggers[t.triggerPosition].Contents = string(b)
+	return t
 }
