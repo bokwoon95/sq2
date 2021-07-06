@@ -44,7 +44,7 @@ func (tbl Table) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{
 	return nil
 }
 
-func (tbl *Table) CachedColumnPositions(columnName string) (columnPosition int) {
+func (tbl *Table) CachedColumnPosition(columnName string) (columnPosition int) {
 	if columnName == "" {
 		return -1
 	}
@@ -334,7 +334,7 @@ func (tbl *Table) LoadColumnConfig(dialect, columnName, columnType, config strin
 		return fmt.Errorf("%s: %s", qualifiedColumn, err.Error())
 	}
 	var col Column
-	if i := tbl.CachedColumnPositions(columnName); i >= 0 {
+	if i := tbl.CachedColumnPosition(columnName); i >= 0 {
 		col = tbl.Columns[i]
 		defer func(i int) { tbl.Columns[i] = col }(i)
 	} else {
