@@ -81,15 +81,6 @@ type Index struct {
 	Where       string
 }
 
-type Object struct {
-	Type         string // VIEW | FUNCTION | TRIGGER
-	TableSchema  string
-	TableName    string
-	ObjectSchema string
-	ObjectName   string
-	SQL          []string
-}
-
 const (
 	DROP_SCHEMA     = "DROP SCHEMA"
 	DROP_TABLE      = "DROP TABLE"

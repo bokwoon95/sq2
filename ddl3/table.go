@@ -14,7 +14,7 @@ type Table struct {
 	Columns          []Column
 	Constraints      []Constraint
 	Indices          []Index
-	Triggers         []Object
+	Triggers         []Trigger
 	VirtualTable     string
 	VirtualTableArgs []string
 	columnsCache     map[string]int
@@ -133,20 +133,20 @@ func (tbl *Table) CachedTriggerIndex(triggerName string) (triggerIndex int) {
 	if !ok {
 		return -1
 	}
-	if triggerIndex < 0 || triggerIndex >= len(tbl.Triggers) || tbl.Triggers[triggerIndex].ObjectName != triggerName {
+	if triggerIndex < 0 || triggerIndex >= len(tbl.Triggers) || tbl.Triggers[triggerIndex].TriggerName != triggerName {
 		delete(tbl.triggersCache, triggerName)
 		return -1
 	}
 	return triggerIndex
 }
 
-func (tbl *Table) AppendTrigger(trigger Object) (triggerIndex int) {
+func (tbl *Table) AppendTrigger(trigger Trigger) (triggerIndex int) {
 	tbl.Triggers = append(tbl.Triggers, trigger)
 	if tbl.triggersCache == nil {
 		tbl.triggersCache = make(map[string]int)
 	}
 	triggerIndex = len(tbl.Triggers) - 1
-	tbl.triggersCache[trigger.ObjectName] = triggerIndex
+	tbl.triggersCache[trigger.TriggerName] = triggerIndex
 	return triggerIndex
 }
 
@@ -155,7 +155,7 @@ func (tbl *Table) RefreshTriggerCache() {
 		if tbl.triggersCache == nil {
 			tbl.triggersCache = make(map[string]int)
 		}
-		tbl.triggersCache[trigger.ObjectName] = i
+		tbl.triggersCache[trigger.TriggerName] = i
 	}
 }
 
