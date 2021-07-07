@@ -8,6 +8,7 @@ import (
 )
 
 type CreateTableCommand struct {
+	Valid         bool
 	Dialect       string
 	DoIfNotExists bool
 	Table         Table

@@ -1,6 +1,7 @@
 package ddl3
 
 type AddColumnCommand struct {
+	Valid           bool
 	Dialect         string
 	DoIfTableExists bool
 	TableSchema     string

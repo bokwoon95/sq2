@@ -1,6 +1,7 @@
 package ddl3
 
 type AddConstraintCommand struct {
+	Valid           bool
 	Dialect         string
 	DoIfTableExists bool
 	TableSchema     string

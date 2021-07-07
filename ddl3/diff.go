@@ -26,8 +26,8 @@ func (set CatalogDiff) WriteOut(w io.Writer) error {
 
 type SchemaDiff struct {
 	SchemaName         string
-	CreateCommand      Command
-	DropCommand        Command
+	CreateCommand      CreateSchemaCommand
+	DropCommand        DropSchemaCommand
 	RenameCommand      Command
 	TableDiffs         []TableDiff
 	ViewDiffs          []ViewDiff
@@ -38,24 +38,27 @@ type SchemaDiff struct {
 }
 
 type TableDiff struct {
-	TableSchema     string
-	TableName       string
-	CreateCommand   Command
-	DropCommand     Command
-	RenameCommand   Command
-	ColumnDiffs     []ColumnDiff
-	ConstraintDiffs []ConstraintDiff
-	IndexDiffs      []IndexDiff
-	DataQueries     []sq.Query
+	TableSchema          string
+	TableName            string
+	CreateCommand        CreateTableCommand
+	DropCommand          DropTableCommand
+	RenameCommand        Command
+	ColumnDiffs          []ColumnDiff
+	ConstraintDiffs      []ConstraintDiff
+	IndexDiffs           []IndexDiff
+	DataQueries          []sq.Query
+	columnDiffsCache     map[string]int
+	constraintDiffsCache map[string]int
+	indexDiffsCache      map[string]int
 }
 
 type ColumnDiff struct {
 	TableSchema   string
 	TableName     string
 	ColumnName    string
-	AddCommand    Command
-	AlterCommand  Command
-	DropCommand   Command
+	AddCommand    AddColumnCommand
+	AlterCommand  AlterColumnCommand
+	DropCommand   DropColumnCommand
 	RenameCommand Command
 }
 
@@ -64,8 +67,8 @@ type ConstraintDiff struct {
 	TableName      string
 	ConstraintName string
 	ConstraintType string
-	AddCommand     Command
-	DropCommand    Command
+	AddCommand     AddConstraintCommand
+	DropCommand    DropConstraintCommand
 	RenameCommand  Command
 }
 
@@ -74,8 +77,8 @@ type IndexDiff struct {
 	TableName     string
 	IndexName     string
 	IndexType     string
-	CreateCommand Command
-	DropCommand   Command
+	CreateCommand CreateIndexCommand
+	DropCommand   DropIndexCommand
 	RenameCommand Command
 }
 
@@ -84,8 +87,8 @@ type TriggerDiff struct {
 	TableName     string
 	TriggerName   string
 	Commands      []Command
-	CreateCommand Command
-	DropCommand   Command
+	CreateCommand CreateTriggerCommand
+	DropCommand   DropTriggerCommand
 	RenameCommand Command
 }
 
@@ -93,16 +96,15 @@ type ViewDiff struct {
 	ViewSchema    string
 	ViewName      string
 	Commands      []Command
-	CreateCommand Command
-	DropCommand   Command
+	CreateCommand CreateViewCommand
+	DropCommand   DropViewCommand
 	RenameCommand Command
 }
 
 type FunctionDiff struct {
 	FunctionSchema string
 	FunctionName   string
-	Commands       []Command
-	CreateCommand  Command
-	DropCommand    Command
+	CreateCommand  CreateFunctionCommand
+	DropCommand    DropFunctionCommand
 	RenameCommand  Command
 }
