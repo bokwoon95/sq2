@@ -571,21 +571,63 @@ type TTrigger struct {
 	triggerPosition int
 }
 
-func (t *T) Trigger(triggerName string) *TTrigger {
-	tTrigger := &TTrigger{
-		dialect:     t.dialect,
-		tbl:         t.tbl,
-		triggerName: triggerName,
+func (t *T) Trigger(sql string) {
+	tableSchema, tableName, triggerName, err := getTriggerInfo(sql)
+	if err != nil {
+		panicErr(fmt.Errorf("Trigger: %w", err))
 	}
-	tTrigger.triggerPosition = t.tbl.CachedTriggerPosition(triggerName)
-	if tTrigger.triggerPosition < 0 {
-		tTrigger.triggerPosition = t.tbl.AppendTrigger(Trigger{
+	if tableSchema == "" {
+		tableSchema = t.tbl.TableSchema
+	}
+	if tableSchema != t.tbl.TableSchema {
+		panicErr(fmt.Errorf("Trigger: table schema does not match (got=%s, want=%s)", t.tbl.TableSchema, tableSchema))
+	}
+	if tableName != t.tbl.TableName {
+		panicErr(fmt.Errorf("Trigger: table name does not match (got=%s, want=%s)", t.tbl.TableName, tableName))
+	}
+	triggerPosition := t.tbl.CachedTriggerPosition(triggerName)
+	if triggerPosition < 0 {
+		t.tbl.AppendTrigger(Trigger{
 			TableSchema: t.tbl.TableSchema,
 			TableName:   t.tbl.TableName,
 			TriggerName: triggerName,
+			SQL:         sql,
 		})
+	} else {
+		t.tbl.Triggers[triggerPosition].SQL = sql
 	}
-	return tTrigger
+}
+
+func (t *T) TriggerFile(fsys fs.FS, name string) {
+	b, err := fs.ReadFile(fsys, name)
+	if err != nil {
+		panicErr(fmt.Errorf("TriggerFile: %w", err))
+	}
+	sql := string(b)
+	tableSchema, tableName, triggerName, err := getTriggerInfo(sql)
+	if err != nil {
+		panicErr(fmt.Errorf("TriggerFile: %w", err))
+	}
+	if tableSchema == "" {
+		tableSchema = t.tbl.TableSchema
+	}
+	if tableSchema != t.tbl.TableSchema {
+		panicErr(fmt.Errorf("TriggerFile: table schema does not match (got=%s, want=%s)", t.tbl.TableSchema, tableSchema))
+	}
+	if tableName != t.tbl.TableName {
+		panicErr(fmt.Errorf("TriggerFile: table name does not match (got=%s, want=%s)", t.tbl.TableName, tableName))
+	}
+	triggerPosition := t.tbl.CachedTriggerPosition(triggerName)
+	if triggerPosition < 0 {
+		t.tbl.AppendTrigger(Trigger{
+			TableSchema: t.tbl.TableSchema,
+			TableName:   t.tbl.TableName,
+			TriggerName: triggerName,
+			SQL:         sql,
+		})
+	} else {
+		t.tbl.Triggers[triggerPosition].SQL = sql
+	}
 }
 
 func (t *TTrigger) Sprintf(format string, values ...interface{}) *TTrigger {

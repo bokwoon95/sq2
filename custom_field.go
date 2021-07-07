@@ -107,10 +107,6 @@ func (f FieldLiteral) As(alias string) FieldLiteral {
 	return f
 }
 
-func NameOnly(namer interface{ GetName() string }) FieldLiteral {
-	return FieldLiteral{literal: namer.GetName()}
-}
-
 type FieldValue struct {
 	value interface{}
 	alias string

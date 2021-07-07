@@ -57,12 +57,6 @@ func (c *Catalog) RefreshSchemasCache() {
 // tables/etc so painful that people avoid it because of the error checking
 // boilerplate.
 
-func NewCatalogFromDB() {
-}
-
-// how about we go the functional options route.
-func NewCatalogFromTables(dialect string, tables []sq.SchemaTable, opts ...interface{}) {
-}
 
 type CatalogOption func(*Catalog) error
 
