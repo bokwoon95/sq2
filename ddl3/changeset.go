@@ -63,6 +63,7 @@ type ConstraintDiff struct {
 	TableSchema    string
 	TableName      string
 	ConstraintName string
+	ConstraintType string
 	AddCommand     Command
 	DropCommand    Command
 	RenameCommand  Command
@@ -72,6 +73,7 @@ type IndexDiff struct {
 	TableSchema   string
 	TableName     string
 	IndexName     string
+	IndexType     string
 	CreateCommand Command
 	DropCommand   Command
 	RenameCommand Command
