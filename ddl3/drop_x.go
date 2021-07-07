@@ -1,6 +1,7 @@
 package ddl3
 
 type DropSchemaCommand struct {
+	Valid       bool
 	Dialect     string
 	DoIfExists  bool
 	SchemaNames []string
@@ -8,6 +9,7 @@ type DropSchemaCommand struct {
 }
 
 type DropTableCommand struct {
+	Valid        bool
 	Dialect      string
 	DoIfExists   bool
 	TableSchemas []string
@@ -16,6 +18,7 @@ type DropTableCommand struct {
 }
 
 type DropColumnCommand struct {
+	Valid       bool
 	Dialect     string
 	DoIfExists  bool
 	TableSchema string
@@ -25,6 +28,7 @@ type DropColumnCommand struct {
 }
 
 type DropConstraintCommand struct {
+	Valid            bool
 	Dialect          string
 	DoIfExists       bool
 	TableSchema      string
@@ -35,6 +39,7 @@ type DropConstraintCommand struct {
 }
 
 type DropIndexCommand struct {
+	Valid          bool
 	Dialect        string
 	DoConcurrently bool
 	DoIfExists     bool
@@ -46,6 +51,7 @@ type DropIndexCommand struct {
 }
 
 type DropViewCommand struct {
+	Valid       bool
 	Dialect     string
 	DoIfExists  bool
 	ViewSchemas []string
@@ -54,6 +60,7 @@ type DropViewCommand struct {
 }
 
 type DropFunctionCommand struct {
+	Valid          bool
 	Dialect        string
 	DoIfExists     bool
 	FunctionSchema string
@@ -65,6 +72,7 @@ type DropFunctionCommand struct {
 }
 
 type DropTriggerCommand struct {
+	Valid       bool
 	Dialect     string
 	DoIfExists  bool
 	TableSchema string
