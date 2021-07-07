@@ -8,10 +8,10 @@ import (
 )
 
 type CreateTableCommand struct {
-	Valid         bool
-	DoIfNotExists bool
-	Table         Table
-	Query         sq.Query
+	Valid       bool
+	IfNotExists bool
+	Table       Table
+	Query       sq.Query
 }
 
 var _ Command = CreateTableCommand{}
@@ -36,7 +36,7 @@ func (cmd CreateTableCommand) ToSQL(dialect string) (string, error) {
 	} else {
 		buf.WriteString("CREATE TABLE ")
 	}
-	if cmd.DoIfNotExists {
+	if cmd.IfNotExists {
 		buf.WriteString("IF NOT EXISTS ")
 	}
 	if cmd.Table.TableSchema != "" {
