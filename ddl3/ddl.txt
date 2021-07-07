@@ -39,3 +39,74 @@ FUG man functions are giving me so much grief. Have to design something that can
 for SQLite's COPY NEW TABLE -> COPY DATA -> DROP OLD TABLE -> RENAME NEW TABLE flow, we will likely need an extra field in Changeset struct to accomodate DML data copying. The fields will not be from the table themselves, rather (TODO:) ddl.Column should implement sq.Field interface so that they can be used with the query builders instead. This way, given a current table and desired table, we can programatically generate the UPDATE new_table INSERT (from new table) query, by using the Column as sq.Fields directly.
 
 Also, rename operations. Rename table, rename column (rename constraint? rename index?).
+
+t.Trigger(`CREATE TRIGGER actor_last_update_after_update_trg AFTER UPDATE ON actor BEGIN
+    UPDATE actor SET last_update = DATETIME('now') WHERE actor_id = NEW.actor_id;
+END;`)
+
+gotCatalog, err := NewCatalog("sqlite", ddl.WithDB(db))
+if err != nil {
+}
+wantCatalog, err := NewCatalog("sqlite",
+    ddl.WithTables(
+        NEW_ACTOR(dialect, ""),
+        NEW_CATEGORY(dialect, ""),
+        NEW_COUNTRY(dialect, ""),
+        NEW_CITY(dialect, ""),
+        NEW_ADDRESS(dialect, ""),
+        NEW_LANGUAGE(dialect, ""),
+        NEW_FILM(dialect, ""),
+        NEW_FILM_TEXT(dialect, ""),
+        NEW_FILM_ACTOR(dialect, ""),
+        NEW_FILM_CATEGORY(dialect, ""),
+        NEW_STAFF(dialect, ""),
+        NEW_STORE(dialect, ""),
+        NEW_CUSTOMER(dialect, ""),
+        NEW_INVENTORY(dialect, ""),
+        NEW_RENTAL(dialect, ""),
+        NEW_PAYMENT(dialect, ""),
+        NEW_DUMMY_TABLE(dialect, ""),
+        NEW_DUMMY_TABLE_2(dialect, ""),
+    ),
+    ddl.WithViews(
+        NEW_ACTOR_INFO(dialect, ""),
+        NEW_CUSTOMER_LIST(dialect, ""),
+        NEW_FILM_LIST(dialect, ""),
+        NEW_NICER_BUT_SLOWER_FILM_LIST(dialect, ""),
+        NEW_SALES_BY_FILM_CATEGORY(dialect, ""),
+        NEW_SALES_BY_STORE(dialect, ""),
+        NEW_STAFF_LIST(dialect, ""),
+    ),
+    ddl.WithFunction(`CREATE OR REPLACE FUNCTION last_update_trg()
+    RETURNS TRIGGER AS $$ BEGIN
+        NEW.last_update = NOW();
+        RETURN NEW;
+    END; $$ LANGUAGE plpgsql;`),
+    ddl.WithFunctionFile(os.DirFS("."), "last_update_trg.sql"),
+)
+if err != nil {
+}
+changeset, err := ddl.DiffCatalog(gotCatalog, wantCatalog)
+if err != nil {
+}
+var sql string
+for _, cmd := range changeset.Commands() {
+    sql, _, _, err = sq.ToSQL(dialect, cmd)
+    if err != nil {
+    }
+    _, err = db.ExecContext(ctx, sql)
+    if err != nil {
+    }
+}
+t.Trigger()
+
+wantCatalog, err := ddl.NewCatalog(dialect, ddl.WithTables(NEW_ACTOR(dialect, "")))
+if err != nil {
+}
+changeset, err := ddl.DiffCatalog(ddl.NewCatalog(dialect), wantCatalog)
+if err != nil {
+}
+buf := &strings.Buffer{}
+err = changeset.WriteOut(buf)
+if err != nil {
+}

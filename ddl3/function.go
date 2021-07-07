@@ -14,10 +14,16 @@ catalog.LoadFunction(Function{
 })
 */
 
+// GetFunctionName -> functionSchema, functionName, (functionArgs?)
+
 type Function struct {
 	FunctionSchema string
 	FunctionName   string
 	SQL            string
+}
+
+func getFunctionInfo(sql string) (functionSchema, functionName string, err error) {
+	return "", "", nil
 }
 
 // all IFunctions can be converted into Functions. An IFunction is simply a
