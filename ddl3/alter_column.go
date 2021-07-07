@@ -2,7 +2,6 @@ package ddl3
 
 type AlterColumnCommand struct {
 	Valid           bool
-	Dialect         string
 	DoIfTableExists bool
 	DropDefault     bool
 	DropNull        bool
