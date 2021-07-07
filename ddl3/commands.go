@@ -7,12 +7,7 @@ import (
 )
 
 type Command interface {
-	sq.SQLAppender
-	// TODO: there's no point in making it an SQL appender. Every command
-	// already embeds the dialect. The only method you need on a command should
-	// be `ToSQL() (string, error)`.
-	// TODO: what if... the command didn't embed the dialect then? Would it make AppendSQL viable?
-	GetType() string
+	ToSQL(dialect string) (string, error)
 }
 
 type Commands []Command
