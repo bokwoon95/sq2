@@ -14,6 +14,7 @@ type Catalog struct {
 	VersionString   string
 	VersionNum      [2]int // MAJOR.MINOR (are PATCH versions ever significant in the case of databases?)
 	GeneratedFromDB bool
+	DefaultSchema   string
 	Schemas         []Schema
 	schemasCache    map[string]int
 }
@@ -56,7 +57,6 @@ func (c *Catalog) RefreshSchemasCache() {
 // configuration power takes place. Don't make loading from db and loading from
 // tables/etc so painful that people avoid it because of the error checking
 // boilerplate.
-
 
 type CatalogOption func(*Catalog) error
 
