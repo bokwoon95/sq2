@@ -4,14 +4,6 @@ import (
 	"github.com/bokwoon95/sq"
 )
 
-const (
-	sqliteLastUpdateTrigger = "CREATE TRIGGER {triggerName} AFTER UPDATE ON {table} BEGIN" +
-		" UPDATE {table} SET {lastUpdate} = DATETIME('now') WHERE {field} = NEW.{field};" +
-		" END;"
-	postgresLastUpdateTrigger = "CREATE TRIGGER {triggerName} BEFORE UPDATE ON {table}" +
-		" FOR EACH ROW EXECUTE PROCEDURE last_update_trg();"
-)
-
 var last_update_trg = Function{
 	FunctionSchema: "public",
 	FunctionName:   "last_update_trg",
