@@ -21,6 +21,6 @@ func (cmds Commands) ExecDB(db sq.Queryer) error {
 	return nil
 }
 
-func AutoMigrate(db sq.Queryer, tables []sq.Table, items ...interface{}) error {
+func AutoMigrate(db sq.Queryer, opts ...CatalogOption) error {
 	return nil
 }
