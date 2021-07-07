@@ -8,7 +8,7 @@ import (
 
 type CatalogDiff struct {
 	SchemaDiffs      []SchemaDiff
-	schemaDiffsCache map[string]int
+	schemaDiffsCache map[string]int // 8 bytes
 }
 
 func DiffCatalog(gotCatalog, wantCatalog Catalog) (CatalogDiff, error) {
@@ -24,17 +24,29 @@ func (set CatalogDiff) WriteOut(w io.Writer) error {
 	return nil
 }
 
+/*
+TODO: implement the Rename* commands
+- RenameSchemaCommand
+- RenameTableCommand
+- RenameColumnCommand
+- RenameConstraintCommand // may not be possible
+- RenameIndexCommand // may not be possible
+- RenameTriggerCommand // may not be possible
+- RenameViewCommand // may not be possible
+- RenameFunctionCommand // may not be possible
+*/
+
 type SchemaDiff struct {
-	SchemaName         string
-	CreateCommand      CreateSchemaCommand
-	DropCommand        DropSchemaCommand
+	SchemaName         string              // 16 bytes
+	CreateCommand      CreateSchemaCommand // 50 bytes
+	DropCommand        DropSchemaCommand   // 43 bytes
 	RenameCommand      Command
 	TableDiffs         []TableDiff
 	ViewDiffs          []ViewDiff
 	FunctionDiffs      []FunctionDiff
-	tableDiffsCache    map[string]int
-	viewDiffsCache     map[string]int
-	functionDiffsCache map[string][]int
+	tableDiffsCache    map[string]int   // 8 bytes
+	viewDiffsCache     map[string]int   // 8 bytes
+	functionDiffsCache map[string][]int // 8 bytes
 }
 
 type TableDiff struct {
