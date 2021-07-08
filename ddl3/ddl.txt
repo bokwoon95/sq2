@@ -139,6 +139,11 @@ stage 2: support sqlite ghost table/column migrations for otherwise impossible c
     sqlite needs less support because fkeys are probably lazily evaluated, so even if you drop old table and rename new table to old table the fkey is probably still valid
 stage 3: support postgres/mysql ghost table/column style migration for otherwise impossible changes (e.g. redefining a constraint/index)
 
+for (sqlite/postgres/mysql) when you drop old table -> rename new table to old table, what associations are you breaking?
+- I assume fkeys will be violated
+- views should be fine because they are evaluated only when called
+- triggers and indices will be dropped together with the old table. they will have to be re-added to the new table after it has been renamed.
+
 There is no reason to do the rename+drop flow for postgres/mysql! Because if you are assuming only one writer during migration, then we can do the inefficient and direct alter column methods instead of creating a new column, copying data, renaming and dropping. Same with tables.
 Read: DML/DROP/RENAME commands are generated solely for SQLite migrations. Postgres and MySQL migrations will never generate DML/DROP/RENAME.
 

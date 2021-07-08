@@ -64,19 +64,3 @@ const (
 	// Table DML
 	TABLE_DML
 )
-
-/*
-Creation granularity is table-centric
-- CreateSchema
-- CreateTable
-	- AddColumn
-	- AlterColumn
-	- AddConstraint
-	- CreateIndex
-- CreateView
-- CreateFunction
-- CreateTrigger
-- DML
-- RenameX
-- DropX
-*/
