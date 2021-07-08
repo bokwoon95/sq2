@@ -5,6 +5,7 @@ import "github.com/bokwoon95/sq"
 type View struct {
 	ViewSchema string
 	ViewName   string
+	Columns    []string
 	SQL        string
 }
 
