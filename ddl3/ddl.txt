@@ -110,3 +110,17 @@ buf := &strings.Buffer{}
 err = changeset.WriteOut(buf)
 if err != nil {
 }
+
+create schemas
+create tables+columns+constraints (including alter columns)
+table dml
+create fkey constraints
+rename x
+drop x
+create index
+create functions
+create views
+create triggers
+
+because indexes, functions, views and triggers are created after the rename+delete ops, we don't have to worry about rename breaking the existing table references.
+Also, we assume that no one else is doing inserts when the migration is happening so that the table dml can accurately transfer all data from one table to another.

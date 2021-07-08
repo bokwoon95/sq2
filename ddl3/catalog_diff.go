@@ -22,40 +22,47 @@ func (set CatalogDiff) WriteOut(w io.Writer) error {
 	return nil
 }
 
-/*
-TODO: implement the Rename* commands
-- RenameSchemaCommand
-- RenameTableCommand
-- RenameColumnCommand
-- RenameConstraintCommand // may not be possible
-- RenameIndexCommand // may not be possible
-- RenameTriggerCommand // may not be possible
-- RenameViewCommand // may not be possible
-- RenameFunctionCommand // may not be possible
-*/
-
 type CommandType int
 
+// TODO: For (sqlite,postgres,mysql) does renaming a table:
+// - break triggers?
+// - break views?
 const (
-	DROP_SCHEMA     = "DROP SCHEMA"
-	DROP_TABLE      = "DROP TABLE"
-	DROP_COLUMN     = "ALTER TABLE DROP COLUMN"
-	DROP_CONSTRAINT = "ALTER TABLE DROP CONSTRAINT"
-	DROP_INDEX      = "DROP INDEX"
-	DROP_VIEW       = "DROP VIEW"
-	DROP_FUNCTION   = "DROP FUNCTION"
-	DROP_TRIGGER    = "DROP TRIGGER"
-
-	CREATE_SCHEMA   = "CREATE SCHEMA"
-	CREATE_TABLE    = "CREATE TABLE"
-	ADD_COLUMN      = "ALTER TABLE ADD COLUMN"
-	ADD_CONSTRAINT  = "ALTER TABLE ADD CONSTRAINT"
-	CREATE_INDEX    = "CREATE INDEX"
-	CREATE_VIEW     = "CREATE VIEW"
-	CREATE_FUNCTION = "CREATE FUNCTION"
-	CREATE_TRIGGER  = "CREATE TRIGGER"
-
-	ALTER_COLUMN = "ALTER TABLE ALTER COLUMN"
+	// Schema
+	CREATE_SCHEMA CommandType = 1 << iota
+	RENAME_SCHEMA
+	DROP_SCHEMA
+	// Table
+	CREATE_TABLE
+	RENAME_TABLE
+	DROP_TABLE
+	// Column
+	ADD_COLUMN
+	ALTER_COLUMN
+	RENAME_COLUMN
+	DROP_COLUMN
+	// Constraint
+	ADD_CONSTRAINT
+	RENAME_CONSTRAINT
+	DROP_CONSTRAINT
+	// Index
+	CREATE_INDEX
+	RENAME_INDEX
+	DROP_INDEX
+	// Function
+	CREATE_FUNCTION
+	RENAME_FUNCTION
+	DROP_FUNCTION
+	// View
+	CREATE_VIEW
+	RENAME_VIEW
+	DROP_VIEW
+	// Trigger
+	CREATE_TRIGGER
+	RENAME_TRIGGER
+	DROP_TRIGGER
+	// Table DML
+	TABLE_DML
 )
 
 /*
