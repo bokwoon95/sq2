@@ -7,27 +7,31 @@ type IndexDiff struct {
 	IndexType     string
 	CreateCommand CreateIndexCommand
 	DropCommand   DropIndexCommand
-	RenameCommand Command
+	RenameCommand RenameIndexCommand
 }
 
 type CreateIndexCommand struct {
-	Valid          bool
-	DoConcurrently bool
-	DoIfNotExists  bool
-	Index          Index
+	Valid              bool
+	CreateConcurrently bool
+	CreateIfNotExists  bool
+	Index              Index
 }
 
 type DropIndexCommand struct {
-	Valid          bool
-	DoConcurrently bool
-	DoIfExists     bool
-	TableSchemas   []string
-	TableNames     []string
-	IndexSchemas   []string
-	IndexNames     []string
-	DoCascade      bool
+	Valid            bool
+	DropConcurrently bool
+	DropIfExists     bool
+	TableSchema      string
+	TableName        string
+	IndexName        string
+	DropCascade      bool
 }
 
 type RenameIndexCommand struct {
-	Valid bool
+	Valid              bool
+	AlterIndexIfExists bool
+	TableSchema        string
+	TableName          string
+	IndexName          string
+	RenameToName       string
 }

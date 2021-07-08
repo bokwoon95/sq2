@@ -20,7 +20,7 @@ type DropTriggerCommand struct {
 	TableSchema  string
 	TableName    string
 	TriggerName  string
-	Cascade      bool
+	DropCascade  bool
 }
 
 type RenameTriggerCommand struct {

@@ -29,7 +29,7 @@ type DropConstraintCommand struct {
 	TableName          string
 	DropIfExists       bool
 	ConstraintName     string
-	DoCascade          bool
+	DropCascade        bool
 }
 
 type RenameConstraintCommand struct {

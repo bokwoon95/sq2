@@ -15,7 +15,7 @@ type AddColumnCommand struct {
 	AlterTableIfExists bool
 	TableSchema        string
 	TableName          string
-	DoIfNotExists      bool
+	AddIfNotExists     bool
 	Column             Column
 	CheckExprs         []string
 	ReferencesTable    string
@@ -25,23 +25,23 @@ type AddColumnCommand struct {
 type AlterColumnCommand struct {
 	Valid              bool
 	AlterTableIfExists bool
-	DoIfExists         bool
+	AlterIfExists      bool
 	Column             Column
 	DropDefault        bool
 	DropNull           bool
 	DropExpr           bool
 	DropIdentity       bool
-	Using              string
+	UsingExpr          string
 }
 
 type DropColumnCommand struct {
 	Valid              bool
 	AlterTableIfExists bool
-	DoIfExists         bool
+	DropIfExists       bool
 	TableSchema        string
 	TableName          string
 	ColumnName         string
-	DoCascade          bool
+	DropCascade        bool
 }
 
 type RenameColumnCommand struct {

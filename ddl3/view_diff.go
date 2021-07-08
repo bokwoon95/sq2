@@ -18,13 +18,13 @@ type DropViewCommand struct {
 	DropIfExists bool
 	ViewSchemas  []string
 	ViewNames    []string
-	DoCascade    bool
+	DropCascade  bool
 }
 
 type RenameViewCommand struct {
-	Valid         bool
-	AlterIfExists bool
-	ViewSchema    string
-	ViewName      string
-	RenameToName  string
+	Valid             bool
+	AlterViewIfExists bool
+	ViewSchema        string
+	ViewName          string
+	RenameToName      string
 }
