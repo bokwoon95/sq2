@@ -6,6 +6,7 @@ type FunctionDiff struct {
 	CreateCommand  CreateFunctionCommand
 	DropCommand    DropFunctionCommand
 	RenameCommand  RenameFunctionCommand
+	ReplaceCommand RenameFunctionCommand
 }
 
 type CreateFunctionCommand struct {

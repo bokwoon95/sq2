@@ -1,11 +1,12 @@
 package ddl3
 
 type ViewDiff struct {
-	ViewSchema    string
-	ViewName      string
-	CreateCommand CreateViewCommand
-	DropCommand   DropViewCommand
-	RenameCommand RenameViewCommand
+	ViewSchema     string
+	ViewName       string
+	CreateCommand  CreateViewCommand
+	DropCommand    DropViewCommand
+	RenameCommand  RenameViewCommand
+	ReplaceCommand RenameViewCommand
 }
 
 type CreateViewCommand struct {

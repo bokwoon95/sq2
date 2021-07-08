@@ -8,6 +8,7 @@ type ConstraintDiff struct {
 	AddCommand     AddConstraintCommand
 	DropCommand    DropConstraintCommand
 	RenameCommand  RenameConstraintCommand
+	ReplaceCommand RenameConstraintCommand
 }
 
 type AddConstraintCommand struct {
