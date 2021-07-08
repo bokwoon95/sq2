@@ -122,13 +122,22 @@ create functions
 create views
 create triggers
 
+simple:
 create schemas
 create functions
 create table | create or alter columns | create constraints
 create index
+create functions
 create views
+create triggers
 
-the main problem is that I want to create functions, views and triggers at the very end. but dml may need triggers.
+oh my god if you try to dupe a table with primary keys that are referenced by foreign keys, you need to drop those foreign keys first. then add them back after the rename.
+
+step-by-step:
+stage 1: support only creation and column altering
+stage 2: support sqlite ghost table/column migrations for otherwise impossible changes (e.g altering constraints)
+    sqlite needs less support because fkeys are probably lazily evaluated, so even if you drop old table and rename new table to old table the fkey is probably still valid
+stage 3: support postgres/mysql ghost table/column style migration for otherwise impossible changes (e.g. redefining a constraint/index)
 
 There is no reason to do the rename+drop flow for postgres/mysql! Because if you are assuming only one writer during migration, then we can do the inefficient and direct alter column methods instead of creating a new column, copying data, renaming and dropping. Same with tables.
 Read: DML/DROP/RENAME commands are generated solely for SQLite migrations. Postgres and MySQL migrations will never generate DML/DROP/RENAME.
