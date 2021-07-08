@@ -108,28 +108,6 @@ type Index struct {
 	Where       string
 }
 
-const (
-	DROP_SCHEMA     = "DROP SCHEMA"
-	DROP_TABLE      = "DROP TABLE"
-	DROP_COLUMN     = "ALTER TABLE DROP COLUMN"
-	DROP_CONSTRAINT = "ALTER TABLE DROP CONSTRAINT"
-	DROP_INDEX      = "DROP INDEX"
-	DROP_VIEW       = "DROP VIEW"
-	DROP_FUNCTION   = "DROP FUNCTION"
-	DROP_TRIGGER    = "DROP TRIGGER"
-
-	CREATE_SCHEMA   = "CREATE SCHEMA"
-	CREATE_TABLE    = "CREATE TABLE"
-	ADD_COLUMN      = "ALTER TABLE ADD COLUMN"
-	ADD_CONSTRAINT  = "ALTER TABLE ADD CONSTRAINT"
-	CREATE_INDEX    = "CREATE INDEX"
-	CREATE_VIEW     = "CREATE VIEW"     // use CREATE OR REPLACE where possible
-	CREATE_FUNCTION = "CREATE FUNCTION" // use CREATE OR REPLACE where possible
-	CREATE_TRIGGER  = "CREATE TRIGGER"
-
-	ALTER_COLUMN = "ALTER TABLE ALTER COLUMN"
-)
-
 func generateName(nameType string, tableName string, columnNames ...string) string {
 	buf := bufpool.Get().(*bytes.Buffer)
 	defer func() {
