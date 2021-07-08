@@ -1,13 +1,14 @@
 package ddl3
 
 type IndexDiff struct {
-	TableSchema   string
-	TableName     string
-	IndexName     string
-	IndexType     string
-	CreateCommand CreateIndexCommand
-	DropCommand   DropIndexCommand
-	RenameCommand RenameIndexCommand
+	TableSchema    string
+	TableName      string
+	IndexName      string
+	IndexType      string
+	CreateCommand  CreateIndexCommand
+	DropCommand    DropIndexCommand
+	RenameCommand  RenameIndexCommand
+	ReplaceCommand RenameIndexCommand
 }
 
 type CreateIndexCommand struct {

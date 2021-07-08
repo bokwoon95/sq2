@@ -1,13 +1,14 @@
 package ddl3
 
 type ColumnDiff struct {
-	TableSchema   string
-	TableName     string
-	ColumnName    string
-	AddCommand    AddColumnCommand
-	AlterCommand  AlterColumnCommand
-	DropCommand   DropColumnCommand
-	RenameCommand RenameColumnCommand
+	TableSchema    string
+	TableName      string
+	ColumnName     string
+	AddCommand     AddColumnCommand
+	AlterCommand   AlterColumnCommand
+	DropCommand    DropColumnCommand
+	RenameCommand  RenameColumnCommand
+	ReplaceCommand RenameColumnCommand
 }
 
 type AddColumnCommand struct {

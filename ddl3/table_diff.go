@@ -13,6 +13,7 @@ type TableDiff struct {
 	CreateCommand        CreateTableCommand
 	DropCommand          DropTableCommand
 	RenameCommand        RenameTableCommand
+	ReplaceCommand       RenameTableCommand
 	ColumnDiffs          []ColumnDiff
 	ConstraintDiffs      []ConstraintDiff
 	IndexDiffs           []IndexDiff
