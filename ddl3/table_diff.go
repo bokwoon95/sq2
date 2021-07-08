@@ -74,7 +74,7 @@ type DropTableCommand struct {
 	DropIfExists bool
 	TableSchema  string
 	TableName    string
-	Cascade      bool
+	DropCascade  bool
 }
 
 type RenameTableCommand struct {

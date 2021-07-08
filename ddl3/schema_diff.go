@@ -23,7 +23,7 @@ type DropSchemaCommand struct {
 	Valid        bool
 	DropIfExists bool
 	SchemaName   string
-	Cascade      bool
+	DropCascade  bool
 }
 
 type RenameSchemaCommand struct {
