@@ -122,5 +122,19 @@ create functions
 create views
 create triggers
 
+There is no reason to do the rename+drop flow for postgres/mysql! Because if you are assuming only one writer during migration, then we can do the inefficient and direct alter column methods instead of creating a new column, copying data, renaming and dropping. Same with tables.
+
+To answer: if there is a table_old and table_new, where should I put the constraints for the column? In table(_old) or table_new?
+
 because indexes, functions, views and triggers are created after the rename+delete ops, we don't have to worry about rename breaking the existing table references.
 Also, we assume that no one else is doing inserts when the migration is happening so that the table dml can accurately transfer all data from one table to another.
+
+BEGIN;
+CREATE table_new
+CREATE TRIGGER table_new_trg ON table AFTER INSERT, INSERT INTO table_new
+INSERT INTO table_new SELECT * FROM table_old ON CONFLICT DO NOTHING
+ALTER TABLE table RENAME TO table_old
+ALTER TABLE table_new RENAME TO table
+DROP TRIGGER table_new_trg
+DROP TABLE table_old
+COMMIT;
