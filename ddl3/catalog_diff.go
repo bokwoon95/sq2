@@ -262,15 +262,6 @@ func DiffColumn(dialect string, columnDiffs *[]ColumnDiff, gotTable Table, wantC
 	} else if gotColumn.Identity != "" && wantColumn.Identity == "" {
 		alterCmd.DropIdentity = true
 	}
-	// TODO: MySQL PRIMARY KEY should be handled only
-	if gotColumn.Autoincrement == wantColumn.Autoincrement {
-		alterCmd.Column.Autoincrement = false
-	} else if gotColumn.Autoincrement && !wantColumn.Autoincrement {
-		// TODO: I think MySQL doesn't allow for dropping autoincrement without
-		// dropping primary key, need to investigate further. SQLite doesn't
-		// even allow dropping any constraint in the first place.
-		alterCmd.DropAutoincrement = true
-	}
 	if gotColumn.IsNotNull == wantColumn.IsNotNull {
 		alterCmd.Column.IsNotNull = false
 	} else if gotColumn.IsNotNull && !wantColumn.IsNotNull {
