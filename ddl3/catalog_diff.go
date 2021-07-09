@@ -2,8 +2,6 @@ package ddl3
 
 import (
 	"fmt"
-
-	"github.com/bokwoon95/sq"
 )
 
 type CatalogDiff struct {
@@ -22,85 +20,7 @@ func DiffCatalog(gotCatalog, wantCatalog Catalog) (CatalogDiff, error) {
 	}
 	gotCatalog.RefreshSchemasCache()
 	for _, wantSchema := range wantCatalog.Schemas {
-		schemaDiff := SchemaDiff{
-			SchemaName: wantSchema.SchemaName,
-		}
-		var gotSchema Schema
-		if n := gotCatalog.CachedSchemaPosition(wantSchema.SchemaName); n < 0 {
-			schemaDiff.CreateCommand.Valid = true
-			schemaDiff.CreateCommand.CreateIfNotExists = true
-			schemaDiff.CreateCommand.SchemaName = schemaDiff.SchemaName
-		} else {
-			gotSchema = gotCatalog.Schemas[n]
-			gotSchema.RefreshTableCache()
-			gotSchema.RefreshViewsCache()
-			gotSchema.RefreshFunctionsCache()
-		}
-		for _, wantTable := range wantSchema.Tables {
-			tableDiff := TableDiff{
-				TableSchema: schemaDiff.SchemaName,
-				TableName:   wantTable.TableName,
-			}
-			var gotTable Table
-			if n := gotSchema.CachedTablePosition(wantTable.TableName); n < 0 {
-				tableDiff.CreateCommand.Valid = true
-				tableDiff.CreateCommand.CreateIfNotExists = true
-				tableDiff.CreateCommand.Table = wantTable
-			} else {
-				gotTable = gotSchema.Tables[n]
-				gotTable.RefreshColumnsCache()
-				gotTable.RefreshConstraintsCache()
-				gotTable.RefreshIndexesCache()
-				gotTable.RefreshTriggersCache()
-			}
-			for _, wantColumn := range wantTable.Columns {
-				if tableDiff.CreateCommand.Valid {
-					break
-				}
-				columnDiff := ColumnDiff{
-					TableSchema: tableDiff.TableSchema,
-					TableName:   tableDiff.TableName,
-					ColumnName:  wantColumn.ColumnName,
-				}
-				var gotColumn Column
-				if n := gotTable.CachedColumnPosition(wantColumn.ColumnName); n >= 0 {
-					gotColumn = gotTable.Columns[n]
-				} else {
-					columnDiff.AddCommand.Valid = true
-					columnDiff.AddCommand.AddIfNotExists = true
-					columnDiff.AddCommand.Column = wantColumn
-					if wantCatalog.Dialect == sq.DialectSQLite {
-					}
-				}
-				_ = gotColumn
-			}
-			for _, wantConstraint := range wantTable.Constraints {
-				if n := gotTable.CachedConstraintPosition(wantConstraint.ConstraintName); n < 0 {
-				}
-			}
-			for _, wantIndex := range wantTable.Indexes {
-				if n := gotTable.CachedIndexPosition(wantIndex.IndexName); n < 0 {
-				}
-			}
-			for _, wantTrigger := range wantTable.Triggers {
-				if n := gotTable.CachedTriggerPosition(wantTrigger.TriggerName); n < 0 {
-				}
-			}
-			if tableDiff.CreateCommand.Valid || tableDiff.DropCommand.Valid || tableDiff.RenameCommand.Valid || len(tableDiff.ColumnDiffs) > 0 || len(tableDiff.ConstraintDiffs) > 0 || len(tableDiff.IndexDiffs) > 0 || len(tableDiff.TriggerDiffs) > 0 {
-				schemaDiff.TableDiffs = append(schemaDiff.TableDiffs, tableDiff)
-			}
-		}
-		for _, wantView := range wantSchema.Views {
-			if n := gotSchema.CachedViewPosition(wantView.ViewName); n < 0 {
-			}
-		}
-		for _, wantFunction := range wantSchema.Functions {
-			if ns := gotSchema.CachedFunctionPositions(wantFunction.FunctionName); len(ns) == 0 {
-			}
-		}
-		if schemaDiff.CreateCommand.Valid || schemaDiff.DropCommand.Valid || schemaDiff.RenameCommand.Valid || len(schemaDiff.TableDiffs) > 0 || len(schemaDiff.ViewDiffs) > 0 || len(schemaDiff.FunctionDiffs) > 0 {
-			catalogDiff.SchemaDiffs = append(catalogDiff.SchemaDiffs, schemaDiff)
-		}
+		_ = wantSchema
 	}
 	return catalogDiff, nil
 }
@@ -116,9 +36,10 @@ func DiffSchema(dialect string, schemaDiffs *[]SchemaDiff, gotCatalog Catalog, w
 		gotSchema.RefreshViewsCache()
 		gotSchema.RefreshFunctionsCache()
 	} else {
-		schemaDiff.CreateCommand.Valid = true
-		schemaDiff.CreateCommand.CreateIfNotExists = true
-		schemaDiff.CreateCommand.SchemaName = schemaDiff.SchemaName
+		schemaDiff.CreateCommand = &CreateSchemaCommand{
+			CreateIfNotExists: true,
+			SchemaName:        wantSchema.SchemaName,
+		}
 	}
 	var err error
 	for i, wantTable := range wantSchema.Tables {
@@ -132,7 +53,7 @@ func DiffSchema(dialect string, schemaDiffs *[]SchemaDiff, gotCatalog Catalog, w
 			schemaDiff.ViewDiffs = append(schemaDiff.ViewDiffs, ViewDiff{
 				ViewSchema:    wantSchema.SchemaName,
 				ViewName:      wantView.ViewName,
-				CreateCommand: CreateViewCommand{Valid: true, View: wantView},
+				CreateCommand: &CreateViewCommand{View: wantView},
 			})
 		}
 	}
@@ -141,11 +62,11 @@ func DiffSchema(dialect string, schemaDiffs *[]SchemaDiff, gotCatalog Catalog, w
 			schemaDiff.FunctionDiffs = append(schemaDiff.FunctionDiffs, FunctionDiff{
 				FunctionSchema: wantSchema.SchemaName,
 				FunctionName:   wantFunction.FunctionName,
-				CreateCommand:  CreateFunctionCommand{Valid: true, Function: wantFunction},
+				CreateCommand:  &CreateFunctionCommand{Function: wantFunction},
 			})
 		}
 	}
-	if schemaDiff.CreateCommand.Valid || schemaDiff.DropCommand.Valid || schemaDiff.RenameCommand.Valid || len(schemaDiff.TableDiffs) > 0 || len(schemaDiff.ViewDiffs) > 0 || len(schemaDiff.FunctionDiffs) > 0 {
+	if schemaDiff.CreateCommand != nil || schemaDiff.DropCommand != nil || schemaDiff.RenameCommand != nil || len(schemaDiff.TableDiffs) > 0 || len(schemaDiff.ViewDiffs) > 0 || len(schemaDiff.FunctionDiffs) > 0 {
 		*schemaDiffs = append(*schemaDiffs, schemaDiff)
 	}
 	return nil
@@ -164,13 +85,14 @@ func DiffTable(dialect string, tableDiffs *[]TableDiff, gotSchema Schema, wantTa
 		gotTable.RefreshIndexesCache()
 		gotTable.RefreshTriggersCache()
 	} else {
-		tableDiff.CreateCommand.Valid = true
-		tableDiff.CreateCommand.CreateIfNotExists = true
-		tableDiff.CreateCommand.Table = wantTable
+		tableDiff.CreateCommand = &CreateTableCommand{
+			CreateIfNotExists: true,
+			Table:             wantTable,
+		}
 	}
 	var err error
 	for i, wantColumn := range wantTable.Columns {
-		if tableDiff.CreateCommand.Valid {
+		if tableDiff.CreateCommand != nil {
 			break
 		}
 		err = DiffColumn(dialect, &tableDiff.ColumnDiffs, gotTable, wantColumn)
@@ -185,8 +107,7 @@ func DiffTable(dialect string, tableDiffs *[]TableDiff, gotSchema Schema, wantTa
 				TableName:      wantTable.TableName,
 				ConstraintName: wantConstraint.ConstraintName,
 				ConstraintType: wantConstraint.ConstraintType,
-				AddCommand: AddConstraintCommand{
-					Valid:              true,
+				AddCommand: &AddConstraintCommand{
 					AlterTableIfExists: true,
 					TableSchema:        wantTable.TableSchema,
 					TableName:          wantTable.TableName,
@@ -203,8 +124,7 @@ func DiffTable(dialect string, tableDiffs *[]TableDiff, gotSchema Schema, wantTa
 				TableName:   wantTable.TableName,
 				IndexName:   wantIndex.IndexName,
 				IndexType:   wantIndex.IndexType,
-				CreateCommand: CreateIndexCommand{
-					Valid:             true,
+				CreateCommand: &CreateIndexCommand{
 					CreateIfNotExists: true,
 					Index:             wantIndex,
 				},
@@ -217,14 +137,13 @@ func DiffTable(dialect string, tableDiffs *[]TableDiff, gotSchema Schema, wantTa
 				TableSchema: wantTable.TableSchema,
 				TableName:   wantTable.TableName,
 				TriggerName: wantTrigger.TriggerName,
-				CreateCommand: CreateTriggerCommand{
-					Valid:   true,
+				CreateCommand: &CreateTriggerCommand{
 					Trigger: wantTrigger,
 				},
 			})
 		}
 	}
-	if tableDiff.CreateCommand.Valid || tableDiff.DropCommand.Valid || tableDiff.RenameCommand.Valid || len(tableDiff.ColumnDiffs) > 0 || len(tableDiff.ConstraintDiffs) > 0 || len(tableDiff.IndexDiffs) > 0 || len(tableDiff.TriggerDiffs) > 0 {
+	if tableDiff.CreateCommand != nil || tableDiff.DropCommand != nil || tableDiff.RenameCommand != nil || len(tableDiff.ColumnDiffs) > 0 || len(tableDiff.ConstraintDiffs) > 0 || len(tableDiff.IndexDiffs) > 0 || len(tableDiff.TriggerDiffs) > 0 {
 		*tableDiffs = append(*tableDiffs, tableDiff)
 	}
 	return nil
@@ -240,16 +159,16 @@ func DiffColumn(dialect string, columnDiffs *[]ColumnDiff, gotTable Table, wantC
 	if n := gotTable.CachedColumnPosition(wantColumn.ColumnName); n >= 0 {
 		gotColumn = gotTable.Columns[n]
 	} else {
-		columnDiff.AddCommand.Valid = true
-		columnDiff.AddCommand.AlterTableIfExists = true
-		columnDiff.AddCommand.TableSchema = columnDiff.TableSchema
-		columnDiff.AddCommand.TableName = columnDiff.TableName
-		columnDiff.AddCommand.AddIfNotExists = true
-		columnDiff.AddCommand.Column = wantColumn
+		columnDiff.AddCommand = &AddColumnCommand{
+			AlterTableIfExists: true,
+			TableSchema:        wantColumn.TableSchema,
+			TableName:          wantColumn.TableName,
+			AddIfNotExists:     true,
+			Column:             wantColumn,
+		}
 		return nil
 	}
-	alterCmd := AlterColumnCommand{
-		Valid:              true,
+	alterCmd := &AlterColumnCommand{
 		AlterTableIfExists: true,
 		AlterIfExists:      true,
 		Column:             wantColumn,
@@ -267,7 +186,7 @@ func DiffColumn(dialect string, columnDiffs *[]ColumnDiff, gotTable Table, wantC
 	} else if gotColumn.IsNotNull && !wantColumn.IsNotNull {
 		alterCmd.DropNotNull = true
 	}
-	if columnDiff.AddCommand.Valid || columnDiff.AlterCommand.Valid || columnDiff.DropCommand.Valid || columnDiff.RenameCommand.Valid || columnDiff.ReplaceCommand.Valid {
+	if columnDiff.AddCommand != nil || columnDiff.AlterCommand != nil || columnDiff.DropCommand != nil || columnDiff.RenameCommand != nil || columnDiff.ReplaceCommand != nil {
 		*columnDiffs = append(*columnDiffs, columnDiff)
 	}
 	return nil

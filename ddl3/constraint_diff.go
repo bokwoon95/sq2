@@ -5,14 +5,13 @@ type ConstraintDiff struct {
 	TableName      string
 	ConstraintName string
 	ConstraintType string
-	AddCommand     AddConstraintCommand
-	DropCommand    DropConstraintCommand
-	RenameCommand  RenameConstraintCommand
-	ReplaceCommand RenameConstraintCommand
+	AddCommand     *AddConstraintCommand
+	DropCommand    *DropConstraintCommand
+	RenameCommand  *RenameConstraintCommand
+	ReplaceCommand *RenameConstraintCommand
 }
 
 type AddConstraintCommand struct {
-	Valid              bool
 	AlterTableIfExists bool
 	TableSchema        string
 	TableName          string
@@ -24,7 +23,6 @@ type AddConstraintCommand struct {
 }
 
 type DropConstraintCommand struct {
-	Valid              bool
 	AlterTableIfExists bool
 	TableSchema        string
 	TableName          string
@@ -34,7 +32,6 @@ type DropConstraintCommand struct {
 }
 
 type RenameConstraintCommand struct {
-	Valid              bool
 	AlterTableIfExists bool
 	TableSchema        string
 	TableName          string

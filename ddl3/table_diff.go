@@ -10,32 +10,31 @@ import (
 type TableDiff struct {
 	TableSchema          string
 	TableName            string
-	CreateCommand        CreateTableCommand
-	DropCommand          DropTableCommand
-	RenameCommand        RenameTableCommand
-	ReplaceCommand       RenameTableCommand
+	CreateCommand        *CreateTableCommand
+	DropCommand          *DropTableCommand
+	RenameCommand        *RenameTableCommand
+	ReplaceCommand       *RenameTableCommand
 	ColumnDiffs          []ColumnDiff
 	ConstraintDiffs      []ConstraintDiff
 	IndexDiffs           []IndexDiff
 	TriggerDiffs         []TriggerDiff
-	SyncQueries          []sq.Query
+	SyncDataQueries      []sq.Query
 	columnDiffsCache     map[string]int
 	constraintDiffsCache map[string]int
 	indexDiffsCache      map[string]int
 }
 
 type CreateTableCommand struct {
-	Valid              bool
 	CreateIfNotExists  bool
 	IncludeConstraints bool
 	Table              Table
 	Query              sq.Query
 }
 
-var _ Command = CreateTableCommand{}
+var _ Command = &CreateTableCommand{}
 
-func (cmd CreateTableCommand) ToSQL(dialect string) (string, error) {
-	if !cmd.Valid {
+func (cmd *CreateTableCommand) ToSQL(dialect string) (string, error) {
+	if cmd == nil {
 		return "", nil
 	}
 	buf := bufpool.Get().(*bytes.Buffer)
@@ -72,7 +71,6 @@ func (cmd CreateTableCommand) ToSQL(dialect string) (string, error) {
 }
 
 type DropTableCommand struct {
-	Valid        bool
 	DropIfExists bool
 	TableSchema  string
 	TableName    string
@@ -80,7 +78,6 @@ type DropTableCommand struct {
 }
 
 type RenameTableCommand struct {
-	Valid          bool
 	RenameIfExists bool
 	TableSchema    string
 	TableName      string
