@@ -221,3 +221,7 @@ const (
 	// Table DML
 	TABLE_DML
 )
+
+func hasEquivalentColumnTypes(gotColumn, wantColumn Column) bool {
+	return gotColumn.ColumnType == wantColumn.ColumnType
+}
