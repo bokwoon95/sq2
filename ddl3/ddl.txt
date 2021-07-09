@@ -156,3 +156,5 @@ ALTER TABLE table_new RENAME TO table
 DROP TRIGGER table_new_trg
 DROP TABLE table_old
 COMMIT;
+
+there's still a bunch of uncertainty of command order when it comes to renaming columns/tables. One issue that sticks out like a sore thumb is the fact that once a column is renamed, -ALL- its constraints and indices should be renamed to reflect the updated table names. What this means is that all the constraints and indices on to-be-renamed tables and columns must be deferred to after rename. ugh

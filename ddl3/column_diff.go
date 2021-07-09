@@ -23,6 +23,14 @@ type AddColumnCommand struct {
 	ReferencesColumn   string
 }
 
+// TODO: MySQL will be troublesome because its ALTER TABLE MODIFY|RENAME COLUMN
+// is a bit of a problem child: you can string together multiple operations in
+// the same command e.g. ALTER TABLE tbl DROP PRIMARY KEY, MODIFY COLUMN column
+// BIGINT, column PRIMARY KEY;
+// TODO: what if we handled all MySQL ALTER COLUMN using RENAME only? Don't
+// support any of that multi-action crap. Is that enough?
+// TODO: MySQL PRIMARY KEY should not be handled as a constraint, because the
+// name is always PRIMARY (stupid silly MySQL).
 type AlterColumnCommand struct {
 	Valid              bool
 	AlterTableIfExists bool
