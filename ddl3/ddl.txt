@@ -12,21 +12,6 @@ NOTE: if the incoming table's schema is empty, set it to whatever the current de
     This step is important when it comes to diffing the catalogs, because the catalog loaded from the database will contain the schema name while the catalog loaded from the user-provided tables may omit the schema name.
     Maybe just treat the empty schema and the default schemas as the same when diffing the catalog, instead of literally filling in the schema name.
 
-func NewCatalog() Catalog
-func (catalog *Catalog) LoadDB(db sq.Queryer) error
-func (catalog *Catalog) LoadTables(tables ...sq.SchemaTable) error
-func (catalog *Catalog) LoadViews(views ...View) error
-func (catalog *Catalog) LoadFunctions(functions ...Function) error
-func DiffCatalog(gotCatalog, wantCatalog Catalog) (Changeset, error)
-// DDL, Diff, DiffCommands, which to choose? DDL is bad because it takes up the `ddl` variable name, which is already used for the package.
-func (set Changeset) Commands() Commands
-func (cmds Commands) WriteOut(w io.Writer) error
-func (cmds Commands) ExecDB(db sq.Queryer) error
-func AutoMigrate(db sq.Queryer, tables sq.Tables, items ...interface{}) error
-type AutoMigrateItems struct{
-}
-// have to decide between materializing all the params, accepting a AutoMigrateItems struct or simply ...interface{} my way out.
-
 Changeset should somehow accomodate SQLite's migration strategy of constructing a new table, copying the data, dropping the old table and renaming the new table to the old table.
 
 TODO: need to implement RENAME operations as well
@@ -99,6 +84,14 @@ for _, cmd := range changeset.Commands() {
     }
 }
 t.Trigger()
+for _, cmd := range catalogDiff.Commands(0) {
+    sql, err := cmd.ToSQL()
+    if err != nil {
+    }
+    _, err = db.ExecContext(ctx, sql)
+    if err != nil {
+    }
+}
 
 wantCatalog, err := ddl.NewCatalog(dialect, ddl.WithTables(NEW_ACTOR(dialect, "")))
 if err != nil {

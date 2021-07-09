@@ -17,6 +17,7 @@ type TableDiff struct {
 	ColumnDiffs          []ColumnDiff
 	ConstraintDiffs      []ConstraintDiff
 	IndexDiffs           []IndexDiff
+	TriggerDiffs         []TriggerDiff
 	SyncQueries          []sq.Query
 	columnDiffsCache     map[string]int
 	constraintDiffsCache map[string]int
