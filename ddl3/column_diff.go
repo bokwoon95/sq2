@@ -3,15 +3,16 @@ package ddl3
 import "github.com/bokwoon95/sq"
 
 type ColumnDiff struct {
-	TableSchema     string
-	TableName       string
-	ColumnName      string
-	AddCommand      *AddColumnCommand
-	AlterCommand    *AlterColumnCommand
-	DropCommand     *DropColumnCommand
-	RenameCommand   *RenameColumnCommand
-	ReplaceCommand  *RenameColumnCommand
-	SyncDataQueries []sq.Query
+	TableSchema       string
+	TableName         string
+	ColumnName        string
+	AddCommand        *AddColumnCommand
+	AlterCommand      *AlterColumnCommand
+	DropCommand       *DropColumnCommand
+	RenameCommand     *RenameColumnCommand
+	ReplaceCommand    *RenameColumnCommand
+	DualWriteTriggers []TriggerDiff
+	BackfillQueries   []sq.Query
 }
 
 type AddColumnCommand struct {
