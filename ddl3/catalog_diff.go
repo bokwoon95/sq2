@@ -218,6 +218,7 @@ func diffColumnType(column *Column, gotColumn, wantColumn Column) error {
 
 // TODO: oh no... I need to intersperse sq.Queries into the Command slice too. This means I will have to rework sq.Query and ddl.Command to share a common method, ToSQL:
 // ToSQL(dialect string) (query string, args []interface, params map[string][]int, err error)
+// TODO: AMENDMENT: instead of sq.Queries implementing ToSQL, ddl.Commands should implement SQLAppender. That way more reuse.
 func (catalogDiff CatalogDiff) Commands(cmdType CommandType) []Command {
 	var schemaCmds []Command
 	var functionCmds []Command
