@@ -20,7 +20,7 @@ const (
 	UNIQUE      = "UNIQUE"
 	CHECK       = "CHECK"
 	INDEX       = "INDEX"
-	// EXCLUDE = "EXCLUDE" // TODO: support postgres exclusion constraints
+	EXCLUDE     = "EXCLUDE"
 
 	BY_DEFAULT_AS_IDENTITY = "BY DEFAULT AS IDENTITY"
 	ALWAYS_AS_IDENTITY     = "ALWAYS AS IDENTITY"
@@ -85,6 +85,7 @@ type Constraint struct {
 	ConstraintName      string
 	ConstraintType      string
 	Columns             []string
+	Exprs               []string
 	ReferencesSchema    string
 	ReferencesTable     string
 	ReferencesColumns   []string
@@ -92,8 +93,16 @@ type Constraint struct {
 	OnDelete            string
 	MatchOption         string
 	CheckExpr           string
+	Operators           []string
+	IndexType           string
+	Where               string
 	IsDeferrable        bool
 	IsInitiallyDeferred bool
+}
+
+type Exclusions []struct {
+	Field    sq.Field
+	Operator string
 }
 
 type Index struct {
@@ -129,6 +138,8 @@ func generateName(nameType string, tableName string, columnNames ...string) stri
 		buf.WriteString("_idx")
 	case CHECK:
 		buf.WriteString("_check")
+	case EXCLUDE:
+		buf.WriteString("_excl")
 	}
 	return buf.String()
 }

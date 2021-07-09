@@ -429,7 +429,7 @@ func (t *TConstraint) Deferrable() *TConstraint {
 	return t
 }
 
-func (t *TConstraint) IsInitiallyDeferred() *TConstraint {
+func (t *TConstraint) InitiallyDeferred() *TConstraint {
 	constraint := t.tbl.Constraints[t.constraintPosition]
 	constraint.IsInitiallyDeferred = true
 	t.tbl.Constraints[t.constraintPosition] = constraint
