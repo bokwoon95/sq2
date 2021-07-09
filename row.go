@@ -27,12 +27,21 @@ func RowProcessingError(row *Row) error { return row.processingErr }
 
 func RowClosed(row *Row) bool { return row.closed }
 
-func (r *Row) Process(fn func() error) {
+func (r *Row) Process(fn func() error) error {
 	if !r.active || r.processingErr != nil {
-		return
+		// TODO: do I want a sticky error anymore, if I'm bubbling it up to the
+		// surface anyway? No, the point of bubbling was to explcitly free the
+		// user from error checking inside the mapper function. If the user has
+		// to do if err = row.Process() ... just to ensure two successive
+		// blocks don't run then I have failed.
+		// TODO: WHAT IF: what if I only allow one row.Process to run? There's
+		// no reason why there should be multiple blocks. The user should do
+		// all the stateless mapping first, then do whatever stateful thing he
+		// needs inside the processing function.
+		return r.processingErr
 	}
 	r.processingErr = fn()
-	return
+	return r.processingErr
 }
 
 func (r *Row) Close() { r.closed = true }

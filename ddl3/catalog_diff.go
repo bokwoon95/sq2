@@ -262,6 +262,7 @@ func DiffColumn(dialect string, columnDiffs *[]ColumnDiff, gotTable Table, wantC
 	} else if gotColumn.Identity != "" && wantColumn.Identity == "" {
 		alterCmd.DropIdentity = true
 	}
+	// TODO: MySQL PRIMARY KEY should be handled only
 	if gotColumn.Autoincrement == wantColumn.Autoincrement {
 		alterCmd.Column.Autoincrement = false
 	} else if gotColumn.Autoincrement && !wantColumn.Autoincrement {
@@ -279,4 +280,7 @@ func DiffColumn(dialect string, columnDiffs *[]ColumnDiff, gotTable Table, wantC
 		*columnDiffs = append(*columnDiffs, columnDiff)
 	}
 	return nil
+}
+
+func diffColumnType(column *Column, gotColumn, wantColumn Column) {
 }
