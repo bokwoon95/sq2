@@ -215,3 +215,32 @@ func diffColumnType(column *Column, gotColumn, wantColumn Column) error {
 	}
 	return nil
 }
+
+// TODO: oh no... I need to intersperse sq.Queries into the Command slice too. This means I will have to rework sq.Query and ddl.Command to share a common method, ToSQL:
+// ToSQL(dialect string) (query string, args []interface, params map[string][]int, err error)
+func (catalogDiff CatalogDiff) Commands(cmdType CommandType) []Command {
+	var schemaCmds []Command
+	var functionCmds []Command
+	var tableCmds []Command
+	var viewCmds []Command
+	var fkeyCmds []Command
+	var triggerCmds []Command
+	for _, schemaDiff := range catalogDiff.SchemaDiffs {
+		_ = schemaDiff
+	}
+	commands := make([]Command, len(schemaCmds)+
+		len(functionCmds)+
+		len(tableCmds)+
+		len(viewCmds)+
+		len(fkeyCmds)+
+		len(triggerCmds),
+	)
+	var offset int
+	for _, cmds := range [][]Command{schemaCmds, functionCmds, tableCmds, viewCmds, fkeyCmds, triggerCmds} {
+		for i, cmd := range cmds {
+			commands[i+offset] = cmd
+		}
+		offset += len(cmds)
+	}
+	return commands
+}

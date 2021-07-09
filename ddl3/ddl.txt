@@ -118,10 +118,9 @@ create triggers
 simple:
 create schemas
 create functions
-create table | create or alter columns | create constraints
-create index
-create functions
+create table | create or alter columns | create constraints | create index
 create views
+create fkeys
 create triggers
 
 oh my god if you try to dupe a table with primary keys that are referenced by foreign keys, you need to drop those foreign keys first. then add them back after the rename.
