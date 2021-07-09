@@ -101,7 +101,7 @@ func fetchContext(ctx context.Context, db Queryer, q Query, rowmapper func(*Row)
 		if shouldLogResults && rowCount <= int64(resultsLimit) {
 			accumulateResults(stats.Dialect, resultsBuf, fields, dest, rowCount)
 		}
-		RowResetIndex(r)
+		RowReset(r)
 		rowmapper(r)
 		err = RowProcessingError(r)
 		if err != nil {
