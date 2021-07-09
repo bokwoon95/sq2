@@ -29,9 +29,10 @@ type AlterColumnCommand struct {
 	AlterIfExists      bool
 	Column             Column
 	DropDefault        bool
-	DropNull           bool
+	DropNotNull        bool
 	DropExpr           bool
 	DropIdentity       bool
+	DropAutoincrement  bool
 	UsingExpr          string
 }
 
