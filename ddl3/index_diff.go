@@ -5,21 +5,19 @@ type IndexDiff struct {
 	TableName      string
 	IndexName      string
 	IndexType      string
-	CreateCommand  CreateIndexCommand
-	DropCommand    DropIndexCommand
-	RenameCommand  RenameIndexCommand
-	ReplaceCommand RenameIndexCommand
+	CreateCommand  *CreateIndexCommand
+	DropCommand    *DropIndexCommand
+	RenameCommand  *RenameIndexCommand
+	ReplaceCommand *RenameIndexCommand
 }
 
 type CreateIndexCommand struct {
-	Valid              bool
 	CreateConcurrently bool
 	CreateIfNotExists  bool
 	Index              Index
 }
 
 type DropIndexCommand struct {
-	Valid            bool
 	DropConcurrently bool
 	DropIfExists     bool
 	TableSchema      string
@@ -29,7 +27,6 @@ type DropIndexCommand struct {
 }
 
 type RenameIndexCommand struct {
-	Valid              bool
 	AlterIndexIfExists bool
 	TableSchema        string
 	TableName          string

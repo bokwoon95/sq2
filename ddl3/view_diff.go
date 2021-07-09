@@ -3,19 +3,17 @@ package ddl3
 type ViewDiff struct {
 	ViewSchema     string
 	ViewName       string
-	CreateCommand  CreateViewCommand
-	DropCommand    DropViewCommand
-	RenameCommand  RenameViewCommand
-	ReplaceCommand RenameViewCommand
+	CreateCommand  *CreateViewCommand
+	DropCommand    *DropViewCommand
+	RenameCommand  *RenameViewCommand
+	ReplaceCommand *RenameViewCommand
 }
 
 type CreateViewCommand struct {
-	Valid bool
-	View  View
+	View View
 }
 
 type DropViewCommand struct {
-	Valid        bool
 	DropIfExists bool
 	ViewSchemas  []string
 	ViewNames    []string
@@ -23,7 +21,6 @@ type DropViewCommand struct {
 }
 
 type RenameViewCommand struct {
-	Valid             bool
 	AlterViewIfExists bool
 	ViewSchema        string
 	ViewName          string

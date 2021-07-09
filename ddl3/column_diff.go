@@ -1,18 +1,20 @@
 package ddl3
 
+import "github.com/bokwoon95/sq"
+
 type ColumnDiff struct {
-	TableSchema    string
-	TableName      string
-	ColumnName     string
-	AddCommand     AddColumnCommand
-	AlterCommand   AlterColumnCommand
-	DropCommand    DropColumnCommand
-	RenameCommand  RenameColumnCommand
-	ReplaceCommand RenameColumnCommand
+	TableSchema     string
+	TableName       string
+	ColumnName      string
+	AddCommand      *AddColumnCommand
+	AlterCommand    *AlterColumnCommand
+	DropCommand     *DropColumnCommand
+	RenameCommand   *RenameColumnCommand
+	ReplaceCommand  *RenameColumnCommand
+	SyncDataQueries []sq.Query
 }
 
 type AddColumnCommand struct {
-	Valid              bool
 	AlterTableIfExists bool
 	TableSchema        string
 	TableName          string
@@ -32,7 +34,6 @@ type AddColumnCommand struct {
 // TODO: MySQL PRIMARY KEY should not be handled as a constraint, because the
 // name is always PRIMARY (stupid silly MySQL).
 type AlterColumnCommand struct {
-	Valid              bool
 	AlterTableIfExists bool
 	AlterIfExists      bool
 	Column             Column
@@ -45,7 +46,6 @@ type AlterColumnCommand struct {
 }
 
 type DropColumnCommand struct {
-	Valid              bool
 	AlterTableIfExists bool
 	DropIfExists       bool
 	TableSchema        string
@@ -55,7 +55,6 @@ type DropColumnCommand struct {
 }
 
 type RenameColumnCommand struct {
-	Valid              bool
 	AlterTableIfExists bool
 	TableSchema        string
 	TableName          string

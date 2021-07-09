@@ -2,9 +2,9 @@ package ddl3
 
 type SchemaDiff struct {
 	SchemaName         string
-	CreateCommand      CreateSchemaCommand
-	DropCommand        DropSchemaCommand
-	RenameCommand      RenameSchemaCommand
+	CreateCommand      *CreateSchemaCommand
+	DropCommand        *DropSchemaCommand
+	RenameCommand      *RenameSchemaCommand
 	TableDiffs         []TableDiff
 	ViewDiffs          []ViewDiff
 	FunctionDiffs      []FunctionDiff
@@ -14,20 +14,17 @@ type SchemaDiff struct {
 }
 
 type CreateSchemaCommand struct {
-	Valid             bool
 	CreateIfNotExists bool
 	SchemaName        string
 }
 
 type DropSchemaCommand struct {
-	Valid        bool
 	DropIfExists bool
 	SchemaName   string
 	DropCascade  bool
 }
 
 type RenameSchemaCommand struct {
-	Valid        bool
 	SchemaName   string
 	RenameToName string
 }
