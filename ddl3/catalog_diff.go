@@ -6,10 +6,9 @@ import (
 
 type CatalogDiff struct {
 	SchemaDiffs      []SchemaDiff
-	schemaDiffsCache map[string]int // 8 bytes
+	schemaDiffsCache map[string]int
 }
 
-// pass down dialect and default schema
 func DiffCatalog(gotCatalog, wantCatalog Catalog) (CatalogDiff, error) {
 	var catalogDiff CatalogDiff
 	if gotCatalog.Dialect != wantCatalog.Dialect {
@@ -19,8 +18,12 @@ func DiffCatalog(gotCatalog, wantCatalog Catalog) (CatalogDiff, error) {
 		return catalogDiff, fmt.Errorf("GeneratedFromDB mismatch, did you mix gotCatalog and wantCatalog up?")
 	}
 	gotCatalog.RefreshSchemasCache()
-	for _, wantSchema := range wantCatalog.Schemas {
-		_ = wantSchema
+	var err error
+	for i, wantSchema := range wantCatalog.Schemas {
+		err = DiffSchema(wantCatalog.Dialect, &catalogDiff.SchemaDiffs, gotCatalog, wantSchema)
+		if err != nil {
+			return catalogDiff, fmt.Errorf("schema #%d %s: %w", i+1, wantSchema.SchemaName, err)
+		}
 	}
 	return catalogDiff, nil
 }
@@ -173,8 +176,9 @@ func DiffColumn(dialect string, columnDiffs *[]ColumnDiff, gotTable Table, wantC
 		AlterIfExists:      true,
 		Column:             wantColumn,
 	}
-	if hasEquivalentColumnTypes(gotColumn, wantColumn) {
-		alterCmd.Column.ColumnType = ""
+	err := diffColumnType(&alterCmd.Column, gotColumn, wantColumn)
+	if err != nil {
+		return fmt.Errorf("diffing column type: %w", err)
 	}
 	if gotColumn.Identity == wantColumn.Identity {
 		alterCmd.Column.Identity = ""
@@ -186,11 +190,28 @@ func DiffColumn(dialect string, columnDiffs *[]ColumnDiff, gotTable Table, wantC
 	} else if gotColumn.IsNotNull && !wantColumn.IsNotNull {
 		alterCmd.DropNotNull = true
 	}
+	// NOTE: we are not touching generated exprs because their equality simply
+	// cannot be defined without parsing the SQL. For the same reason, we are
+	// not touching default expressions.
+	if gotColumn.CollationName == wantColumn.CollationName {
+		// Collation cannot be dropped, so we can only overwrite it or leave it alone
+		alterCmd.Column.CollationName = ""
+	}
+	if gotColumn.ColumnDefault != "" && wantColumn.ColumnDefault == "" {
+		alterCmd.Column.ColumnDefault = ""
+	}
 	if columnDiff.AddCommand != nil || columnDiff.AlterCommand != nil || columnDiff.DropCommand != nil || columnDiff.RenameCommand != nil || columnDiff.ReplaceCommand != nil {
 		*columnDiffs = append(*columnDiffs, columnDiff)
 	}
 	return nil
 }
 
-func diffColumnType(column *Column, gotColumn, wantColumn Column) {
+func diffColumnType(column *Column, gotColumn, wantColumn Column) error {
+	if (*column).ColumnType == "" {
+		*column = wantColumn
+	}
+	if gotColumn.ColumnType == wantColumn.ColumnType {
+		column.ColumnType = ""
+	}
+	return nil
 }
