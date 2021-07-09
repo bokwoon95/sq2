@@ -185,39 +185,30 @@ func defaultColumnType(dialect string, field sq.Field) (columnType string) {
 type CommandType int64
 
 const (
-	// Schema
 	CREATE_SCHEMA CommandType = 1 << iota
 	RENAME_SCHEMA
 	DROP_SCHEMA
-	// Table
 	CREATE_TABLE
 	RENAME_TABLE
 	DROP_TABLE
-	// Column
 	ADD_COLUMN
 	ALTER_COLUMN
 	RENAME_COLUMN
 	DROP_COLUMN
-	// Constraint
 	ADD_CONSTRAINT
 	RENAME_CONSTRAINT
 	DROP_CONSTRAINT
-	// Index
 	CREATE_INDEX
 	RENAME_INDEX
 	DROP_INDEX
-	// Function
 	CREATE_FUNCTION
 	RENAME_FUNCTION
 	DROP_FUNCTION
-	// View
 	CREATE_VIEW
 	RENAME_VIEW
 	DROP_VIEW
-	// Trigger
 	CREATE_TRIGGER
 	RENAME_TRIGGER
 	DROP_TRIGGER
-	// Table DML
 	TABLE_DML
 )
