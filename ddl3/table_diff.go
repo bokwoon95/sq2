@@ -34,24 +34,19 @@ type CreateTableCommand struct {
 
 var _ Command = &CreateTableCommand{}
 
-func (cmd *CreateTableCommand) ToSQL(dialect string) (string, error) {
+func (cmd *CreateTableCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
 	if cmd == nil {
-		return "", nil
+		return nil
 	}
-	buf := bufpool.Get().(*bytes.Buffer)
-	defer func() {
-		buf.Reset()
-		bufpool.Put(buf)
-	}()
 	if cmd.Table.TableName == "" {
-		return "", fmt.Errorf("CREATE TABLE: table has no name")
+		return fmt.Errorf("CREATE TABLE: table has no name")
 	}
 	if len(cmd.Table.Columns) == 0 {
-		return "", fmt.Errorf("CREATE TABLE: table %s has no columns", cmd.Table.TableName)
+		return fmt.Errorf("CREATE TABLE: table %s has no columns", cmd.Table.TableName)
 	}
 	if cmd.Table.VirtualTable != "" {
 		if dialect != sq.DialectSQLite {
-			return "", fmt.Errorf("CREATE TABLE: only SQLite has VIRTUAL TABLE support (table=%s)", cmd.Table.TableName)
+			return fmt.Errorf("CREATE TABLE: only SQLite has VIRTUAL TABLE support (table=%s)", cmd.Table.TableName)
 		}
 		buf.WriteString("CREATE VIRTUAL TABLE ")
 	} else {
@@ -68,7 +63,7 @@ func (cmd *CreateTableCommand) ToSQL(dialect string) (string, error) {
 		buf.WriteString(" USING " + cmd.Table.VirtualTable)
 	}
 	buf.WriteString(" (")
-	return buf.String(), nil
+	return nil
 }
 
 type DropTableCommand struct {

@@ -7,7 +7,7 @@ import (
 )
 
 type Command interface {
-	ToSQL(dialect string) (string, error)
+	sq.SQLAppender
 }
 
 type Commands []Command

@@ -18,6 +18,7 @@ type V struct {
 	CreateOrReplace bool
 	IsMaterialized  bool
 	IsRecursive     bool
+	Triggers        []Trigger
 }
 
 // NOTE: I can eventually add a v.Version(versionID string), in order to
