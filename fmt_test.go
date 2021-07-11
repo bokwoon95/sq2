@@ -88,35 +88,34 @@ func Test_Fprintf(t *testing.T) {
 		assert(t, tt)
 	})
 
-	// t.Run("nameonly", func(t *testing.T) {
-	// 	t.Parallel()
-	// 	USERS := struct {
-	// 		tmptable
-	// 		USER_ID tmpfield
-	// 		NAME    tmpfield
-	// 		EMAIL   tmpfield
-	// 		AGE     tmpfield
-	// 	}{
-	// 		tmptable: "users",
-	// 		USER_ID:  [2]string{"users", "user_id"},
-	// 		NAME:     [2]string{"users", "name"},
-	// 		EMAIL:    [2]string{"users", "email"},
-	// 		AGE:      [2]string{"users", "age"},
-	// 	}
-	// 	var tt TT
-	// 	tt.format = "UPDATE {:nameonly} SET {field} = NEW.{field:nameonly} WHERE {3:nameonly}"
-	// 	tt.values = []interface{}{
-	// 		Param("avg1", USERS.USER_ID),
-	// 		Param("avg2", USERS.AGE),
-	// 		Param("sum", USERS.AGE),
-	// 		Param("incr", 1),
-	// 		Param("slice", []int{1, 2, 3}),
-	// 	}
-	// 	tt.wantQuery = "(MAX(AVG(user_id), AVG(age), SUM(age)) + ?) IN (?, ?, ?)"
-	// 	tt.wantArgs = []interface{}{1, 1, 2, 3}
-	// 	tt.wantParams = map[string][]int{"incr": {0}}
-	// 	assert(t, tt)
-	// })
+	t.Run("nameonly", func(t *testing.T) {
+		t.Parallel()
+		USERS := struct {
+			tmptable
+			USER_ID tmpfield
+			NAME    tmpfield
+			EMAIL   tmpfield
+			AGE     tmpfield
+		}{
+			tmptable: [2]string{"public", "users"},
+			USER_ID:  [2]string{"users", "user_id"},
+			NAME:     [2]string{"users", "name"},
+			EMAIL:    [2]string{"users", "email"},
+			AGE:      [2]string{"users", "age"},
+		}
+		var tt TT
+		tt.format = "UPDATE {table:nameonly} SET {name} = {3:nameonly} WHERE {user_id} = NEW.{user_id:nameonly}"
+		tt.values = []interface{}{
+			Param("table", USERS),
+			Param("name", USERS.NAME),
+			"bob",
+			Param("user_id", USERS.USER_ID),
+		}
+		tt.wantQuery = "UPDATE users SET users.name = ? WHERE users.user_id = NEW.user_id"
+		tt.wantArgs = []interface{}{"bob"}
+		tt.wantParams = map[string][]int{}
+		assert(t, tt)
+	})
 
 	t.Run("mysql anonymous", func(t *testing.T) {
 		t.Parallel()
