@@ -37,15 +37,21 @@ func diffSchema(dialect string, schemaDiffs *[]SchemaDiff, gotCatalog Catalog, w
 		SchemaName: wantSchema.SchemaName,
 	}
 	var gotSchema Schema
-	if n := gotCatalog.CachedSchemaPosition(wantSchema.SchemaName); n >= 0 {
-		gotSchema = gotCatalog.Schemas[n]
-		gotSchema.RefreshTableCache()
-		gotSchema.RefreshViewsCache()
-		gotSchema.RefreshFunctionsCache()
-	} else {
-		schemaDiff.CreateCommand = &CreateSchemaCommand{
-			CreateIfNotExists: true,
-			SchemaName:        wantSchema.SchemaName,
+	schemaName := wantSchema.SchemaName
+	if schemaName == "" {
+		schemaName = gotCatalog.DefaultSchema
+	}
+	if schemaName != "" {
+		if n := gotCatalog.CachedSchemaPosition(schemaName); n >= 0 {
+			gotSchema = gotCatalog.Schemas[n]
+			gotSchema.RefreshTableCache()
+			gotSchema.RefreshViewsCache()
+			gotSchema.RefreshFunctionsCache()
+		} else {
+			schemaDiff.CreateCommand = &CreateSchemaCommand{
+				CreateIfNotExists: true,
+				SchemaName:        wantSchema.SchemaName,
+			}
 		}
 	}
 	var err error
@@ -93,8 +99,9 @@ func diffTable(dialect string, tableDiffs *[]TableDiff, gotSchema Schema, wantTa
 		gotTable.RefreshTriggersCache()
 	} else {
 		tableDiff.CreateCommand = &CreateTableCommand{
-			CreateIfNotExists: true,
-			Table:             wantTable,
+			CreateIfNotExists:  true,
+			IncludeConstraints: true,
+			Table:              wantTable,
 		}
 	}
 	var err error
@@ -220,7 +227,7 @@ func diffColumnType(column *Column, gotColumn, wantColumn Column) error {
 	return nil
 }
 
-func (catalogDiff CatalogDiff) Commands(includeCmd func(CommandType) bool) CommandSet {
+func (catalogDiff CatalogDiff) Commands() CommandSet {
 	cmdset := CommandSet{Dialect: catalogDiff.Dialect}
 	for _, schemaDiff := range catalogDiff.SchemaDiffs {
 		if schemaDiff.CreateCommand != nil {
