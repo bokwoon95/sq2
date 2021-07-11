@@ -240,7 +240,7 @@ func fetchExistsContext(ctx context.Context, db DB, q Query, skip int) (exists b
 	buf.WriteString(")")
 	stats.Query = buf.String()
 	start := time.Now()
-	rows, err := db.Query(stats.Query, stats.Args...)
+	rows, err := db.QueryContext(ctx, stats.Query, stats.Args...)
 	stats.TimeTaken = time.Since(start)
 	if err != nil {
 		return false, err
