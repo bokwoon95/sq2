@@ -7,15 +7,15 @@ import (
 	"time"
 )
 
-func Exec(db Queryer, q Query, execflag int) (rowsAffected, lastInsertID int64, err error) {
+func Exec(db DB, q Query, execflag int) (rowsAffected, lastInsertID int64, err error) {
 	return execContext(context.Background(), db, q, execflag, 1)
 }
 
-func ExecContext(ctx context.Context, db Queryer, q Query, execflag int) (rowsAffected, lastInsertID int64, err error) {
+func ExecContext(ctx context.Context, db DB, q Query, execflag int) (rowsAffected, lastInsertID int64, err error) {
 	return execContext(ctx, db, q, execflag, 1)
 }
 
-func execContext(ctx context.Context, db Queryer, q Query, execflag int, skip int) (rowsAffected, lastInsertID int64, err error) {
+func execContext(ctx context.Context, db DB, q Query, execflag int, skip int) (rowsAffected, lastInsertID int64, err error) {
 	if db == nil {
 		return 0, 0, errors.New("sq: db is nil")
 	}

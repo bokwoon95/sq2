@@ -10,15 +10,15 @@ import (
 	"time"
 )
 
-func Fetch(db Queryer, q Query, rowmapper func(*Row)) (rowCount int64, err error) {
+func Fetch(db DB, q Query, rowmapper func(*Row)) (rowCount int64, err error) {
 	return fetchContext(context.Background(), db, q, rowmapper, 1)
 }
 
-func FetchContext(ctx context.Context, db Queryer, q Query, rowmapper func(*Row)) (rowCount int64, err error) {
+func FetchContext(ctx context.Context, db DB, q Query, rowmapper func(*Row)) (rowCount int64, err error) {
 	return fetchContext(ctx, db, q, rowmapper, 1)
 }
 
-func fetchContext(ctx context.Context, db Queryer, q Query, rowmapper func(*Row), skip int) (rowCount int64, err error) {
+func fetchContext(ctx context.Context, db DB, q Query, rowmapper func(*Row), skip int) (rowCount int64, err error) {
 	defer func() {
 		if r := recover(); r != nil {
 			switch r := r.(type) {
@@ -190,15 +190,15 @@ func accumulateResults(dialect string, buf *bytes.Buffer, fields []Field, dest [
 	}
 }
 
-func FetchExists(db Queryer, q Query) (exists bool, err error) {
+func FetchExists(db DB, q Query) (exists bool, err error) {
 	return fetchExistsContext(context.Background(), db, q, 1)
 }
 
-func FetchExistsContext(ctx context.Context, db Queryer, q Query) (exists bool, err error) {
+func FetchExistsContext(ctx context.Context, db DB, q Query) (exists bool, err error) {
 	return fetchExistsContext(context.Background(), db, q, 1)
 }
 
-func fetchExistsContext(ctx context.Context, db Queryer, q Query, skip int) (exists bool, err error) {
+func fetchExistsContext(ctx context.Context, db DB, q Query, skip int) (exists bool, err error) {
 	if db == nil {
 		return false, errors.New("sq: db is nil")
 	}

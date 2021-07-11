@@ -60,7 +60,7 @@ func (c *Catalog) RefreshSchemasCache() {
 
 type CatalogOption func(*Catalog) error
 
-func WithDB(db sq.Queryer) CatalogOption {
+func WithDB(db sq.DB) CatalogOption {
 	return func(c *Catalog) error {
 		return nil
 	}

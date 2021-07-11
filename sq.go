@@ -117,7 +117,7 @@ type Predicate interface {
 	Not() Predicate
 }
 
-type Queryer interface {
+type DB interface {
 	// TODO: If we are no longer expecting the user to use sq.Queryer directly in their server struct, we can remove the extraneous utility methods and only leave 'QueryContext' and 'ExecContext'.
 	// TODO: if we are no longer creating an actual DB struct, we can call this interface 'DB' instead or the awkward 'Queryer'
 	Query(query string, args ...interface{}) (*sql.Rows, error)

@@ -16,10 +16,10 @@ func (cmds Commands) WriteOut(w io.Writer) error {
 	return nil
 }
 
-func (cmds Commands) ExecDB(db sq.Queryer) error {
+func (cmds Commands) ExecDB(db sq.DB) error {
 	return nil
 }
 
-func AutoMigrate(db sq.Queryer, opts ...CatalogOption) error {
+func AutoMigrate(db sq.DB, opts ...CatalogOption) error {
 	return nil
 }

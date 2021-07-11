@@ -20,7 +20,7 @@ func DiffCatalog(gotCatalog, wantCatalog Catalog) (CatalogDiff, error) {
 	gotCatalog.RefreshSchemasCache()
 	var err error
 	for i, wantSchema := range wantCatalog.Schemas {
-		err = DiffSchema(wantCatalog.Dialect, &catalogDiff.SchemaDiffs, gotCatalog, wantSchema)
+		err = diffSchema(wantCatalog.Dialect, &catalogDiff.SchemaDiffs, gotCatalog, wantSchema)
 		if err != nil {
 			return catalogDiff, fmt.Errorf("schema #%d %s: %w", i+1, wantSchema.SchemaName, err)
 		}
@@ -28,7 +28,7 @@ func DiffCatalog(gotCatalog, wantCatalog Catalog) (CatalogDiff, error) {
 	return catalogDiff, nil
 }
 
-func DiffSchema(dialect string, schemaDiffs *[]SchemaDiff, gotCatalog Catalog, wantSchema Schema) error {
+func diffSchema(dialect string, schemaDiffs *[]SchemaDiff, gotCatalog Catalog, wantSchema Schema) error {
 	schemaDiff := SchemaDiff{
 		SchemaName: wantSchema.SchemaName,
 	}
@@ -46,7 +46,7 @@ func DiffSchema(dialect string, schemaDiffs *[]SchemaDiff, gotCatalog Catalog, w
 	}
 	var err error
 	for i, wantTable := range wantSchema.Tables {
-		err = DiffTable(dialect, &schemaDiff.TableDiffs, gotSchema, wantTable)
+		err = diffTable(dialect, &schemaDiff.TableDiffs, gotSchema, wantTable)
 		if err != nil {
 			return fmt.Errorf("table #%d %s: %w", i+1, wantTable.TableName, err)
 		}
@@ -75,7 +75,7 @@ func DiffSchema(dialect string, schemaDiffs *[]SchemaDiff, gotCatalog Catalog, w
 	return nil
 }
 
-func DiffTable(dialect string, tableDiffs *[]TableDiff, gotSchema Schema, wantTable Table) error {
+func diffTable(dialect string, tableDiffs *[]TableDiff, gotSchema Schema, wantTable Table) error {
 	tableDiff := TableDiff{
 		TableSchema: wantTable.TableSchema,
 		TableName:   wantTable.TableName,
@@ -98,7 +98,7 @@ func DiffTable(dialect string, tableDiffs *[]TableDiff, gotSchema Schema, wantTa
 		if tableDiff.CreateCommand != nil {
 			break
 		}
-		err = DiffColumn(dialect, &tableDiff.ColumnDiffs, gotTable, wantColumn)
+		err = diffColumn(dialect, &tableDiff.ColumnDiffs, gotTable, wantColumn)
 		if err != nil {
 			return fmt.Errorf("column #%d %s: %w", i+1, wantColumn.ColumnName, err)
 		}
@@ -152,7 +152,7 @@ func DiffTable(dialect string, tableDiffs *[]TableDiff, gotSchema Schema, wantTa
 	return nil
 }
 
-func DiffColumn(dialect string, columnDiffs *[]ColumnDiff, gotTable Table, wantColumn Column) error {
+func diffColumn(dialect string, columnDiffs *[]ColumnDiff, gotTable Table, wantColumn Column) error {
 	columnDiff := ColumnDiff{
 		TableSchema: wantColumn.TableSchema,
 		TableName:   wantColumn.TableName,
@@ -216,7 +216,7 @@ func diffColumnType(column *Column, gotColumn, wantColumn Column) error {
 	return nil
 }
 
-func (catalogDiff CatalogDiff) Commands(cmdType CommandType) []Command {
+func (catalogDiff CatalogDiff) Commands(includeCmd func(CommandType) bool) []Command {
 	var schemaCmds []Command
 	var functionCmds []Command
 	var tableCmds []Command
