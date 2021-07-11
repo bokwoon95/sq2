@@ -104,14 +104,14 @@ func Test_Fprintf(t *testing.T) {
 			AGE:      [2]string{"users", "age"},
 		}
 		var tt TT
-		tt.format = "UPDATE {table:nameonly} SET {name} = {3:nameonly} WHERE {user_id} = NEW.{user_id:nameonly}"
+		tt.format = "UPDATE {table}, {table:nameonly} SET {name} = {3:nameonly} WHERE {user_id} = NEW.{user_id:nameonly}"
 		tt.values = []interface{}{
 			Param("table", USERS),
 			Param("name", USERS.NAME),
 			"bob",
 			Param("user_id", USERS.USER_ID),
 		}
-		tt.wantQuery = "UPDATE users SET users.name = ? WHERE users.user_id = NEW.user_id"
+		tt.wantQuery = "UPDATE public.users, users SET users.name = ? WHERE users.user_id = NEW.user_id"
 		tt.wantArgs = []interface{}{"bob"}
 		tt.wantParams = map[string][]int{}
 		assert(t, tt)
