@@ -1,5 +1,7 @@
 package ddl3
 
+import "bytes"
+
 type TriggerDiff struct {
 	TableSchema   string
 	TableName     string
@@ -11,6 +13,11 @@ type TriggerDiff struct {
 
 type CreateTriggerCommand struct {
 	Trigger Trigger
+}
+
+func (cmd *CreateTriggerCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
+	buf.WriteString(cmd.Trigger.SQL)
+	return nil
 }
 
 type DropTriggerCommand struct {

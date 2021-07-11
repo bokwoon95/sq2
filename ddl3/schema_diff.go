@@ -1,5 +1,12 @@
 package ddl3
 
+import (
+	"bytes"
+	"fmt"
+
+	"github.com/bokwoon95/sq"
+)
+
 type SchemaDiff struct {
 	SchemaName         string
 	CreateCommand      *CreateSchemaCommand
@@ -16,6 +23,18 @@ type SchemaDiff struct {
 type CreateSchemaCommand struct {
 	CreateIfNotExists bool
 	SchemaName        string
+}
+
+func (cmd *CreateSchemaCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
+	if dialect == sq.DialectSQLite {
+		return fmt.Errorf("sqlite does not support CREATE SCHEMA")
+	}
+	buf.WriteString("CREATE SCHEMA ")
+	if cmd.CreateIfNotExists {
+		buf.WriteString("IF NOT EXISTS ")
+	}
+	buf.WriteString(cmd.SchemaName + ";")
+	return nil
 }
 
 type DropSchemaCommand struct {

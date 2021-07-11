@@ -3,6 +3,7 @@ package ddl3
 import (
 	"bytes"
 	"fmt"
+	"strings"
 
 	"github.com/bokwoon95/sq"
 )
@@ -29,7 +30,7 @@ type CreateTableCommand struct {
 	CreateIfNotExists  bool
 	IncludeConstraints bool
 	Table              Table
-	Query              sq.Query
+	// Query              sq.Query
 }
 
 var _ Command = &CreateTableCommand{}
@@ -63,6 +64,60 @@ func (cmd *CreateTableCommand) AppendSQL(dialect string, buf *bytes.Buffer, args
 		buf.WriteString(" USING " + cmd.Table.VirtualTable)
 	}
 	buf.WriteString(" (")
+	var columnWritten bool
+	for i, column := range cmd.Table.Columns {
+		if column.Ignore {
+			continue
+		}
+		if !columnWritten {
+			columnWritten = true
+			buf.WriteString("\n    ")
+		} else {
+			buf.WriteString("\n    ,")
+		}
+		if strings.EqualFold(cmd.Table.VirtualTable, "fts5") {
+			column = Column{ColumnName: column.ColumnName}
+		}
+		err := writeColumn(dialect, buf, column)
+		if err != nil {
+			return fmt.Errorf("column #%d: %w", i+1, err)
+		}
+	}
+	if len(cmd.Table.VirtualTableArgs) > 0 && cmd.Table.VirtualTable == "" {
+		return fmt.Errorf("virtual table arguments present without a virtual table module")
+	}
+	if cmd.Table.VirtualTable != "" && dialect == sq.DialectSQLite && len(cmd.Table.VirtualTableArgs) > 0 {
+		for _, arg := range cmd.Table.VirtualTableArgs {
+			if !columnWritten {
+				columnWritten = true
+				buf.WriteString("\n    ")
+			} else {
+				buf.WriteString("\n    ,")
+			}
+			buf.WriteString(arg)
+		}
+	}
+	if cmd.IncludeConstraints {
+		var newlineWritten bool
+		for i, constraint := range cmd.Table.Constraints {
+			if dialect == sq.DialectSQLite && constraint.ConstraintType == PRIMARY_KEY && len(constraint.Columns) == 1 {
+				continue
+			}
+			if dialect != sq.DialectSQLite && constraint.ConstraintType == FOREIGN_KEY {
+				continue
+			}
+			if !newlineWritten {
+				buf.WriteString("\n")
+				newlineWritten = true
+			}
+			buf.WriteString("\n    ,CONSTRAINT ")
+			err := writeConstraint(dialect, buf, constraint)
+			if err != nil {
+				return fmt.Errorf("constraint #%d: %w", i+1, err)
+			}
+		}
+	}
+	buf.WriteString("\n);")
 	return nil
 }
 
