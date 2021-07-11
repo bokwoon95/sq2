@@ -12,7 +12,7 @@ func Test_Assignment(t *testing.T) {
 		EMAIL   tmpfield
 		AGE     tmpfield
 	}{
-		tmptable: "users",
+		tmptable: [2]string{"", "users"},
 		USER_ID:  [2]string{"users", "user_id"},
 		NAME:     [2]string{"users", "name"},
 		EMAIL:    [2]string{"users", "email"},
@@ -102,7 +102,7 @@ func Test_Assignments(t *testing.T) {
 		EMAIL   tmpfield
 		AGE     tmpfield
 	}{
-		tmptable: "users",
+		tmptable: [2]string{"", "users"},
 		USER_ID:  [2]string{"", "user_id"},
 		NAME:     [2]string{"", "name"},
 		EMAIL:    [2]string{"", "email"},
