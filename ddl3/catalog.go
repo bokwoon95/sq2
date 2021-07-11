@@ -72,7 +72,7 @@ func WithTables(tables ...sq.SchemaTable) CatalogOption {
 		for i, table := range tables {
 			err = c.loadTable(table)
 			if err != nil {
-				return fmt.Errorf("WithTables table #%d: %w", i+1, err)
+				return fmt.Errorf("WithTables: table #%d: %w", i+1, err)
 			}
 		}
 		return nil
@@ -101,8 +101,16 @@ func WithFunctionFile(functionSchema, functionName string, fsys fs.FS, filename 
 	}
 }
 
-func NewCatalog(dialect string, opts ...CatalogOption) Catalog {
-	return Catalog{Dialect: dialect}
+func NewCatalog(dialect string, opts ...CatalogOption) (Catalog, error) {
+	catalog := Catalog{Dialect: dialect}
+	var err error
+	for _, opt := range opts {
+		err = opt(&catalog)
+		if err != nil {
+			return catalog, err
+		}
+	}
+	return catalog, nil
 }
 
 func (c *Catalog) loadTable(table sq.SchemaTable) (err error) {

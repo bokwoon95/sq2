@@ -572,6 +572,7 @@ type TTrigger struct {
 }
 
 func (t *T) Trigger(sql string) {
+	// TODO: implement getTriggerInfo
 	tableSchema, tableName, triggerName, err := getTriggerInfo(sql)
 	if err != nil {
 		panicErr(fmt.Errorf("Trigger: %w", err))
@@ -580,11 +581,12 @@ func (t *T) Trigger(sql string) {
 		tableSchema = t.tbl.TableSchema
 	}
 	if tableSchema != t.tbl.TableSchema {
-		panicErr(fmt.Errorf("Trigger: table schema does not match (got=%s, want=%s)", t.tbl.TableSchema, tableSchema))
+		panicErr(fmt.Errorf("Trigger: table schema does not match (got=%s, want=%s)", tableSchema, t.tbl.TableSchema))
 	}
-	if tableName != t.tbl.TableName {
-		panicErr(fmt.Errorf("Trigger: table name does not match (got=%s, want=%s)", t.tbl.TableName, tableName))
-	}
+	_ = tableName
+	// if tableName != t.tbl.TableName {
+	// 	panicErr(fmt.Errorf("Trigger: table name does not match (got=%s, want=%s)", tableName, t.tbl.TableName))
+	// }
 	triggerPosition := t.tbl.CachedTriggerPosition(triggerName)
 	if triggerPosition < 0 {
 		t.tbl.AppendTrigger(Trigger{

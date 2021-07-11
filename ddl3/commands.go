@@ -12,7 +12,8 @@ type Command interface {
 }
 
 func (cmdset CommandSet) WriteOut(w io.Writer) error {
-	for i, cmds := range [][]Command{
+	var written bool
+	for _, cmds := range [][]Command{
 		cmdset.SchemaCommands,
 		cmdset.FunctionCommands,
 		cmdset.TableCommands,
@@ -31,7 +32,9 @@ func (cmdset CommandSet) WriteOut(w io.Writer) error {
 					return fmt.Errorf("command: %s: %w", query, err)
 				}
 			}
-			if i > 0 {
+			if !written {
+				written = true
+			} else {
 				io.WriteString(w, "\n\n")
 			}
 			io.WriteString(w, query)
