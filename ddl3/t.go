@@ -573,7 +573,7 @@ type TTrigger struct {
 
 func (t *T) Trigger(sql string) {
 	// TODO: implement getTriggerInfo
-	tableSchema, tableName, triggerName, err := getTriggerInfo(sql)
+	tableSchema, tableName, triggerName, err := getTriggerInfo(t.dialect, sql)
 	if err != nil {
 		panicErr(fmt.Errorf("Trigger: %w", err))
 	}
@@ -606,7 +606,7 @@ func (t *T) TriggerFile(fsys fs.FS, name string) {
 		panicErr(fmt.Errorf("TriggerFile: %w", err))
 	}
 	sql := string(b)
-	tableSchema, tableName, triggerName, err := getTriggerInfo(sql)
+	tableSchema, tableName, triggerName, err := getTriggerInfo(t.dialect, sql)
 	if err != nil {
 		panicErr(fmt.Errorf("TriggerFile: %w", err))
 	}
