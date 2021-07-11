@@ -1,6 +1,7 @@
 package ddl3
 
 import (
+	"fmt"
 	"io"
 
 	"github.com/bokwoon95/sq"
@@ -10,13 +11,46 @@ type Command interface {
 	sq.SQLAppender
 }
 
-type Commands []Command
-
-func (cmds Commands) WriteOut(w io.Writer) error {
+func (cmdset CommandSet) WriteOut(w io.Writer) error {
+	for i, cmds := range [][]Command{
+		cmdset.SchemaCommands,
+		cmdset.FunctionCommands,
+		cmdset.TableCommands,
+		cmdset.ViewCommands,
+		cmdset.TableFunctionCommands,
+		cmdset.ForeignKeyCommands,
+	} {
+		for _, cmd := range cmds {
+			query, args, _, err := sq.ToSQL(cmdset.Dialect, cmd)
+			if err != nil {
+				return fmt.Errorf("command: %s: %w", query, err)
+			}
+			if len(args) > 0 {
+				query, err = sq.Sprintf(cmdset.Dialect, query, args)
+				if err != nil {
+					return fmt.Errorf("command: %s: %w", query, err)
+				}
+			}
+			if i > 0 {
+				io.WriteString(w, "\n\n")
+			}
+			io.WriteString(w, query)
+		}
+	}
 	return nil
 }
 
-func (cmds Commands) ExecDB(db sq.DB) error {
+type CommandSet struct {
+	Dialect               string
+	SchemaCommands        []Command
+	FunctionCommands      []Command
+	TableCommands         []Command
+	ViewCommands          []Command
+	TableFunctionCommands []Command
+	ForeignKeyCommands    []Command
+}
+
+func (cmdset CommandSet) ExecDB(db sq.DB) error {
 	return nil
 }
 
