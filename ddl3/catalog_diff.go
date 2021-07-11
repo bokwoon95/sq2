@@ -220,24 +220,19 @@ func diffColumnType(column *Column, gotColumn, wantColumn Column) error {
 	return nil
 }
 
-func (catalogDiff CatalogDiff) Commands(includeCmd func(CommandType) bool) []Command {
-	var schemaCmds []Command
-	var functionCmds []Command
-	var tableCmds []Command
-	var viewCmds []Command
-	var tableFunctionCmds []Command
-	var fkeyCmds []Command
+func (catalogDiff CatalogDiff) Commands(includeCmd func(CommandType) bool) CommandSet {
+	cmdset := CommandSet{Dialect: catalogDiff.Dialect}
 	for _, schemaDiff := range catalogDiff.SchemaDiffs {
 		if schemaDiff.CreateCommand != nil {
-			schemaCmds = append(schemaCmds, schemaDiff.CreateCommand)
+			cmdset.SchemaCommands = append(cmdset.SchemaCommands, schemaDiff.CreateCommand)
 		}
 		for _, tableDiff := range schemaDiff.TableDiffs {
 			if tableDiff.CreateCommand != nil {
-				tableCmds = append(tableCmds, tableDiff.CreateCommand)
+				cmdset.TableCommands = append(cmdset.TableCommands, tableDiff.CreateCommand)
 			}
 			for _, columnDiff := range tableDiff.ColumnDiffs {
 				if columnDiff.AddCommand != nil {
-					tableCmds = append(tableCmds, columnDiff.AddCommand)
+					cmdset.TableCommands = append(cmdset.TableCommands, columnDiff.AddCommand)
 				}
 				// TODO: implement AlterColumnCommand
 				// if columnDiff.AlterCommand != nil {
@@ -251,58 +246,44 @@ func (catalogDiff CatalogDiff) Commands(includeCmd func(CommandType) bool) []Com
 				}
 				if constraintDiff.ConstraintType == FOREIGN_KEY && catalogDiff.Dialect != sq.DialectSQLite {
 					if constraintDiff.AddCommand != nil {
-						fkeyCmds = append(fkeyCmds, constraintDiff.AddCommand)
+						cmdset.ForeignKeyCommands = append(cmdset.ForeignKeyCommands, constraintDiff.AddCommand)
 					}
 					continue
 				}
 				if !constraintsAlreadyIncluded && constraintDiff.AddCommand != nil {
-					tableCmds = append(tableCmds, constraintDiff.AddCommand)
+					cmdset.TableCommands = append(cmdset.TableCommands, constraintDiff.AddCommand)
 				}
 			}
 			for _, indexDiff := range tableDiff.IndexDiffs {
 				if indexDiff.CreateCommand != nil {
-					tableCmds = append(tableCmds, indexDiff.CreateCommand)
+					cmdset.TableCommands = append(cmdset.TableCommands, indexDiff.CreateCommand)
 				}
 			}
 			for _, triggerDiff := range tableDiff.TriggerDiffs {
 				if triggerDiff.CreateCommand != nil {
-					tableCmds = append(tableCmds, triggerDiff.CreateCommand)
+					cmdset.TableCommands = append(cmdset.TableCommands, triggerDiff.CreateCommand)
 				}
 			}
 		}
 		for _, functionDiff := range schemaDiff.FunctionDiffs {
 			if functionDiff.CreateCommand != nil {
 				if functionDiff.CreateCommand.Function.ContainsTable {
-					tableFunctionCmds = append(tableFunctionCmds, functionDiff.CreateCommand)
+					cmdset.TableFunctionCommands = append(cmdset.TableFunctionCommands, functionDiff.CreateCommand)
 				} else {
-					functionCmds = append(functionCmds, functionDiff.CreateCommand)
+					cmdset.FunctionCommands = append(cmdset.FunctionCommands, functionDiff.CreateCommand)
 				}
 			}
 		}
 		for _, viewDiff := range schemaDiff.ViewDiffs {
 			if viewDiff.CreateCommand != nil {
-				viewCmds = append(viewCmds, viewDiff.CreateCommand)
+				cmdset.ViewCommands = append(cmdset.ViewCommands, viewDiff.CreateCommand)
 			}
 			for _, triggerDiff := range viewDiff.TriggerDiffs {
 				if triggerDiff.CreateCommand != nil {
-					viewCmds = append(viewCmds, triggerDiff.CreateCommand)
+					cmdset.ViewCommands = append(cmdset.ViewCommands, triggerDiff.CreateCommand)
 				}
 			}
 		}
 	}
-	commands := make([]Command, len(schemaCmds)+
-		len(functionCmds)+
-		len(tableCmds)+
-		len(viewCmds)+
-		len(tableFunctionCmds)+
-		len(fkeyCmds),
-	)
-	var offset int
-	for _, cmds := range [][]Command{schemaCmds, functionCmds, tableCmds, viewCmds, tableFunctionCmds, fkeyCmds} {
-		for i, cmd := range cmds {
-			commands[i+offset] = cmd
-		}
-		offset += len(cmds)
-	}
-	return commands
+	return cmdset
 }
