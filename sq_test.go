@@ -13,16 +13,19 @@ import (
 	"github.com/google/go-cmp/cmp"
 )
 
-type tmptable string
+type tmptable [2]string
 
-var _ Table = tmptable("")
+var _ Table = tmptable{}
 
 func (t tmptable) GetAlias() string { return "" }
 
-func (t tmptable) GetName() string { return string(t) }
+func (t tmptable) GetName() string { return string(t[1]) }
 
 func (t tmptable) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
-	buf.WriteString(QuoteIdentifier(dialect, string(t)))
+	if t[0] != "" {
+		buf.WriteString(QuoteIdentifier(dialect, string(t[0])) + ".")
+	}
+	buf.WriteString(QuoteIdentifier(dialect, string(t[1])))
 	return nil
 }
 
@@ -168,7 +171,7 @@ func Test_explodeSlice(t *testing.T) {
 	t.Run("tmptable slice", func(t *testing.T) {
 		t.Parallel()
 		var tt TT
-		tt.slice = []tmptable{"111", "222", "333"}
+		tt.slice = []tmptable{[2]string{"", "111"}, [2]string{"", "222"}, [2]string{"", "333"}}
 		tt.excludedTableQualifiers = []string{"222"}
 		tt.wantQuery = `"111", "222", "333"`
 		tt.wantArgs = []interface{}{}
