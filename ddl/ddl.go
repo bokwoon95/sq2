@@ -187,7 +187,7 @@ type Config struct {
 	WantViews      []View
 }
 
-func NewMetadataFromDB(dialect string, db sq.Queryer) (Metadata, error) {
+func NewMetadataFromDB(dialect string, db sq.DB) (Metadata, error) {
 	m := Metadata{Dialect: dialect}
 	return m, nil
 }
@@ -399,7 +399,7 @@ func DiffIndex(dialect string, gotIndex, wantIndex Index) ([]string, error) {
 	return nil, nil
 }
 
-func AutoMigrateContext(ctx context.Context, dialect string, db sq.Queryer, tables []sq.SchemaTable, config Config) error {
+func AutoMigrateContext(ctx context.Context, dialect string, db sq.DB, tables []sq.SchemaTable, config Config) error {
 	gotMetadata, err := NewMetadataFromDB(dialect, db) // TODO: gotMetadata.LoadDB(db)
 	if err != nil {
 		return fmt.Errorf("error obtaining metadata from DB: %w", err)

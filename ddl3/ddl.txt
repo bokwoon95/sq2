@@ -126,15 +126,17 @@ create triggers
 NOTE: when TableDiff is used to encode a replace table, all constraints, indexes and triggers must be added to the rename mix as well i.e. replace constraint, replace index, replace trigger. This is to not conflict with the new constraints, indexes and triggers which will be redefined on the new table.
 
 create schemas
+create functions
 foreach schema:
-    create functions
     foreach table:
         create table (with constraints, non fkey unless sqlite)
         create or alter columns
         create constraints (non fkey unless sqlite, non replace table)
         create index (non replace table)
+        create triggers
     create views
-    create triggers
+    create view triggers
+create table functions
 create dualwrite triggers
 run backfill queries
 rename x

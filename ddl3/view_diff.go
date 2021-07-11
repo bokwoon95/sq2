@@ -7,6 +7,7 @@ type ViewDiff struct {
 	DropCommand    *DropViewCommand
 	RenameCommand  *RenameViewCommand
 	ReplaceCommand *RenameViewCommand
+	ViewTriggers   []TriggerDiff
 }
 
 type CreateViewCommand struct {

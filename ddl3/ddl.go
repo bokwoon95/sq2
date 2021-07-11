@@ -182,10 +182,11 @@ func defaultColumnType(dialect string, field sq.Field) (columnType string) {
 	return "TEXT"
 }
 
-type CommandType int64
+type CommandType int
 
 const (
-	CREATE_SCHEMA CommandType = 1 << iota
+	// TODO: the top should include classes of operations that are usually used together
+	CREATE_SCHEMA CommandType = iota
 	RENAME_SCHEMA
 	DROP_SCHEMA
 	CREATE_TABLE

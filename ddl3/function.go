@@ -19,6 +19,7 @@ catalog.LoadFunction(Function{
 type Function struct {
 	FunctionSchema string
 	FunctionName   string
+	ContainsTable  bool
 	SQL            string
 }
 

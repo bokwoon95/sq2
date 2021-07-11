@@ -73,7 +73,7 @@ type Logger interface {
 }
 
 type QueryerLogger struct {
-	Queryer
+	DB
 	Logger
 }
 
@@ -94,12 +94,12 @@ var (
 	verboseLogger = NewLogger(os.Stdout, Lbeforeafter|Lcaller|Lcolor|Lresults)
 )
 
-func Log(db Queryer) QueryerLogger {
-	return QueryerLogger{Queryer: db, Logger: defaultLogger}
+func Log(db DB) QueryerLogger {
+	return QueryerLogger{DB: db, Logger: defaultLogger}
 }
 
-func VerboseLog(db Queryer) QueryerLogger {
-	return QueryerLogger{Queryer: db, Logger: verboseLogger}
+func VerboseLog(db DB) QueryerLogger {
+	return QueryerLogger{DB: db, Logger: verboseLogger}
 }
 
 func (l logger) LogResults() (shouldLogResults bool, limit int) { return true, 5 }
