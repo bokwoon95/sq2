@@ -127,26 +127,26 @@ NOTE: when TableDiff is used to encode a replace table, all constraints, indexes
 
 create schemas
 create functions
-foreach schema:
-    foreach table:
-        create table (with constraints, non fkey unless sqlite)
-        create or alter columns
-        create constraints (non fkey unless sqlite, non replace table)
-        create index (non replace table)
-        create triggers
-    create views
-    create view triggers
+foreach table:
+    create table (with constraints, non fkey unless sqlite)
+    create or alter columns
+    create constraints (non fkey unless sqlite, non replace table)
+    create index (non replace table)
+    create triggers
+create views
+create view triggers
 create table functions
 create dualwrite triggers
 run backfill queries
-rename x
-foreach schema:
-    foreach table:
-        create constraints (non fkey unless sqlite)
-        create index
-        create triggers
+foreach replace table:
+    create constraints (non fkey unless sqlite)
+    create index
+    create triggers
 create fkeys
+rename x
 drop x (including dualwrite triggers)
+
+there is no need to rename old constraints anymore. Instead, to prevent name conflicts an underscore '_' will either be appended or trimmed from the current constraint name.
 
 oh my god if you try to dupe a table with primary keys that are referenced by foreign keys, you need to drop those foreign keys first. then add them back after the rename.
 

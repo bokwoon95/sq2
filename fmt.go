@@ -60,7 +60,17 @@ func BufferPrintf(dialect string, buf *bytes.Buffer, args *[]interface{}, params
 		}
 		paramName := format[1:j] // if {1}, paramName=1. if {foobar}, paramName=foobar
 		format = format[j+1:]
+		var err error
 		var value interface{}
+		var modifierIndex map[string]int
+		if i := strings.IndexByte(paramName, ':'); i >= 0 {
+			var paramModifiers string
+			paramName, paramModifiers = paramName[:i], paramName[i+1:]
+			_, modifierIndex, err = lexModifiers(paramModifiers)
+			if err != nil {
+				return fmt.Errorf("lex %s: %w", paramModifiers, err)
+			}
+		}
 		if paramName == "" {
 			if runningValuesIndex >= len(values) {
 				return fmt.Errorf("too few values passed in to BufferPrintf, expected more than %d", runningValuesIndex)
@@ -88,7 +98,15 @@ func BufferPrintf(dialect string, buf *bytes.Buffer, args *[]interface{}, params
 				value = values[num]
 			}
 		}
-		err := BufferPrintValue(dialect, buf, args, params, excludedTableQualifiers, value, paramName)
+		if _, ok := modifierIndex["nameonly"]; ok {
+			switch v := value.(type) {
+			case Field:
+				value = Literal(v.GetName())
+			case Table:
+				value = Literal(v.GetName())
+			}
+		}
+		err = BufferPrintValue(dialect, buf, args, params, excludedTableQualifiers, value, paramName)
 		if err != nil {
 			return err
 		}
