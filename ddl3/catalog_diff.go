@@ -268,7 +268,7 @@ func (catalogDiff CatalogDiff) Commands() CommandSet {
 			}
 			for _, triggerDiff := range tableDiff.TriggerDiffs {
 				if triggerDiff.CreateCommand != nil {
-					cmdset.TableCommands = append(cmdset.TableCommands, triggerDiff.CreateCommand)
+					cmdset.TriggerCommands = append(cmdset.TriggerCommands, triggerDiff.CreateCommand)
 				}
 			}
 		}
