@@ -2,9 +2,12 @@ package ddl3
 
 import (
 	"fmt"
+
+	"github.com/bokwoon95/sq"
 )
 
 type CatalogDiff struct {
+	Dialect          string
 	SchemaDiffs      []SchemaDiff
 	schemaDiffsCache map[string]int
 }
@@ -14,13 +17,14 @@ func DiffCatalog(gotCatalog, wantCatalog Catalog) (CatalogDiff, error) {
 	if gotCatalog.Dialect != wantCatalog.Dialect {
 		return catalogDiff, fmt.Errorf("dialect mismatch")
 	}
+	catalogDiff.Dialect = wantCatalog.Dialect
 	if !gotCatalog.GeneratedFromDB && wantCatalog.GeneratedFromDB {
 		return catalogDiff, fmt.Errorf("GeneratedFromDB mismatch, did you mix gotCatalog and wantCatalog up?")
 	}
 	gotCatalog.RefreshSchemasCache()
 	var err error
 	for i, wantSchema := range wantCatalog.Schemas {
-		err = diffSchema(wantCatalog.Dialect, &catalogDiff.SchemaDiffs, gotCatalog, wantSchema)
+		err = diffSchema(catalogDiff.Dialect, &catalogDiff.SchemaDiffs, gotCatalog, wantSchema)
 		if err != nil {
 			return catalogDiff, fmt.Errorf("schema #%d %s: %w", i+1, wantSchema.SchemaName, err)
 		}
@@ -221,20 +225,80 @@ func (catalogDiff CatalogDiff) Commands(includeCmd func(CommandType) bool) []Com
 	var functionCmds []Command
 	var tableCmds []Command
 	var viewCmds []Command
+	var tableFunctionCmds []Command
 	var fkeyCmds []Command
-	var triggerCmds []Command
 	for _, schemaDiff := range catalogDiff.SchemaDiffs {
-		_ = schemaDiff
+		if schemaDiff.CreateCommand != nil {
+			schemaCmds = append(schemaCmds, schemaDiff.CreateCommand)
+		}
+		for _, tableDiff := range schemaDiff.TableDiffs {
+			if tableDiff.CreateCommand != nil {
+				tableCmds = append(tableCmds, tableDiff.CreateCommand)
+			}
+			for _, columnDiff := range tableDiff.ColumnDiffs {
+				if columnDiff.AddCommand != nil {
+					tableCmds = append(tableCmds, columnDiff.AddCommand)
+				}
+				// TODO: implement AlterColumnCommand
+				// if columnDiff.AlterCommand != nil {
+				// 	tableCmds = append(tableCmds, columnDiff.AlterCommand)
+				// }
+			}
+			constraintsAlreadyIncluded := tableDiff.CreateCommand != nil && tableDiff.CreateCommand.IncludeConstraints
+			for _, constraintDiff := range tableDiff.ConstraintDiffs {
+				if constraintDiff.ConstraintType == PRIMARY_KEY && catalogDiff.Dialect == sq.DialectSQLite {
+					continue
+				}
+				if constraintDiff.ConstraintType == FOREIGN_KEY && catalogDiff.Dialect != sq.DialectSQLite {
+					if constraintDiff.AddCommand != nil {
+						fkeyCmds = append(fkeyCmds, constraintDiff.AddCommand)
+					}
+					continue
+				}
+				if !constraintsAlreadyIncluded && constraintDiff.AddCommand != nil {
+					tableCmds = append(tableCmds, constraintDiff.AddCommand)
+				}
+			}
+			for _, indexDiff := range tableDiff.IndexDiffs {
+				if indexDiff.CreateCommand != nil {
+					tableCmds = append(tableCmds, indexDiff.CreateCommand)
+				}
+			}
+			for _, triggerDiff := range tableDiff.TriggerDiffs {
+				if triggerDiff.CreateCommand != nil {
+					tableCmds = append(tableCmds, triggerDiff.CreateCommand)
+				}
+			}
+		}
+		for _, functionDiff := range schemaDiff.FunctionDiffs {
+			if functionDiff.CreateCommand != nil {
+				if functionDiff.CreateCommand.Function.ContainsTable {
+					tableFunctionCmds = append(tableFunctionCmds, functionDiff.CreateCommand)
+				} else {
+					functionCmds = append(functionCmds, functionDiff.CreateCommand)
+				}
+			}
+		}
+		for _, viewDiff := range schemaDiff.ViewDiffs {
+			if viewDiff.CreateCommand != nil {
+				viewCmds = append(viewCmds, viewDiff.CreateCommand)
+			}
+			for _, triggerDiff := range viewDiff.TriggerDiffs {
+				if triggerDiff.CreateCommand != nil {
+					viewCmds = append(viewCmds, triggerDiff.CreateCommand)
+				}
+			}
+		}
 	}
 	commands := make([]Command, len(schemaCmds)+
 		len(functionCmds)+
 		len(tableCmds)+
 		len(viewCmds)+
-		len(fkeyCmds)+
-		len(triggerCmds),
+		len(tableFunctionCmds)+
+		len(fkeyCmds),
 	)
 	var offset int
-	for _, cmds := range [][]Command{schemaCmds, functionCmds, tableCmds, viewCmds, fkeyCmds, triggerCmds} {
+	for _, cmds := range [][]Command{schemaCmds, functionCmds, tableCmds, viewCmds, tableFunctionCmds, fkeyCmds} {
 		for i, cmd := range cmds {
 			commands[i+offset] = cmd
 		}

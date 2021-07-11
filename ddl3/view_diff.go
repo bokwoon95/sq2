@@ -1,5 +1,7 @@
 package ddl3
 
+import "bytes"
+
 type ViewDiff struct {
 	ViewSchema     string
 	ViewName       string
@@ -7,11 +9,16 @@ type ViewDiff struct {
 	DropCommand    *DropViewCommand
 	RenameCommand  *RenameViewCommand
 	ReplaceCommand *RenameViewCommand
-	ViewTriggers   []TriggerDiff
+	TriggerDiffs   []TriggerDiff
 }
 
 type CreateViewCommand struct {
 	View View
+}
+
+func (cmd *CreateViewCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
+	buf.WriteString(cmd.View.SQL)
+	return nil
 }
 
 type DropViewCommand struct {

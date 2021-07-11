@@ -133,8 +133,7 @@ foreach table:
     create constraints (non fkey unless sqlite, non replace table)
     create index (non replace table)
     create triggers
-create views
-create view triggers
+create views | view triggers
 create table functions
 create dualwrite triggers
 run backfill queries
