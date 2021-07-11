@@ -48,26 +48,26 @@ func Callers() string {
 }
 
 func Test_Z(t *testing.T) {
-	const dialect = sq.DialectPostgres
+	const dialect = sq.DialectSQLite
 	wantCatalog, err := NewCatalog(dialect, WithTables(
-        NEW_ACTOR(dialect, ""),
-        NEW_CATEGORY(dialect, ""),
-        NEW_COUNTRY(dialect, ""),
-        NEW_CITY(dialect, ""),
-        NEW_ADDRESS(dialect, ""),
-        NEW_LANGUAGE(dialect, ""),
-        NEW_FILM(dialect, ""),
-        NEW_FILM_TEXT(dialect, ""),
-        NEW_FILM_ACTOR(dialect, ""),
-        NEW_FILM_CATEGORY(dialect, ""),
-        NEW_STAFF(dialect, ""),
-        NEW_STORE(dialect, ""),
-        NEW_CUSTOMER(dialect, ""),
-        NEW_INVENTORY(dialect, ""),
-        NEW_RENTAL(dialect, ""),
-        NEW_PAYMENT(dialect, ""),
-        NEW_DUMMY_TABLE(dialect, ""),
-        NEW_DUMMY_TABLE_2(dialect, ""),
+		NEW_ACTOR(dialect, ""),
+		NEW_CATEGORY(dialect, ""),
+		NEW_COUNTRY(dialect, ""),
+		NEW_CITY(dialect, ""),
+		NEW_ADDRESS(dialect, ""),
+		NEW_LANGUAGE(dialect, ""),
+		NEW_FILM(dialect, ""),
+		NEW_FILM_TEXT(dialect, ""),
+		NEW_FILM_ACTOR(dialect, ""),
+		NEW_FILM_CATEGORY(dialect, ""),
+		NEW_STAFF(dialect, ""),
+		NEW_STORE(dialect, ""),
+		NEW_CUSTOMER(dialect, ""),
+		NEW_INVENTORY(dialect, ""),
+		NEW_RENTAL(dialect, ""),
+		NEW_PAYMENT(dialect, ""),
+		NEW_DUMMY_TABLE(dialect, ""),
+		NEW_DUMMY_TABLE_2(dialect, ""),
 	))
 	if err != nil {
 		t.Fatal(Callers(), err)
