@@ -19,6 +19,7 @@ func (cmdset CommandSet) WriteOut(w io.Writer) error {
 		cmdset.TableCommands,
 		cmdset.ViewCommands,
 		cmdset.TableFunctionCommands,
+		cmdset.TriggerCommands,
 		cmdset.ForeignKeyCommands,
 	} {
 		for _, cmd := range cmds {
@@ -50,6 +51,7 @@ type CommandSet struct {
 	TableCommands         []Command
 	ViewCommands          []Command
 	TableFunctionCommands []Command
+	TriggerCommands       []Command // TODO: extract triggers out to its own
 	ForeignKeyCommands    []Command
 }
 
