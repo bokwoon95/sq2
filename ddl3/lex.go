@@ -16,8 +16,7 @@ func cutValue(s string) (value, rest string, err error) {
 	isBraceQuoted := s[0] == '{'
 	for i := 0; i < len(s); {
 		r, size := utf8.DecodeRuneInString(s[i:])
-		i += size
-		splitAt = i
+		splitAt = i + size
 		switch r {
 		case '{':
 			bracelevel++
@@ -31,9 +30,10 @@ func cutValue(s string) (value, rest string, err error) {
 			break
 		}
 		if bracelevel == 0 && unicode.IsSpace(r) {
-			splitAt -= size
+			splitAt = i
 			break
 		}
+		i += size
 	}
 	if bracelevel > 0 {
 		return "", "", fmt.Errorf("unclosed brace")
