@@ -15,7 +15,7 @@ type Trigger struct {
 	SQL         string
 }
 
-func popWord(s string) (word, rest string) {
+func popWord(dialect, s string) (word, rest string) {
 	s = strings.TrimLeft(s, " \t\n\v\f\r\u0085\u00A0")
 	if s == "" {
 		return "", ""
@@ -33,10 +33,10 @@ func popWord(s string) (word, rest string) {
 	return s[:splitAt], s[splitAt:]
 }
 
-func popWords(s string, num int) (words []string, rest string) {
+func popWords(dialect, s string, num int) (words []string, rest string) {
 	word, rest := "", s
 	for i := 0; i < num && rest != ""; i++ {
-		word, rest = popWord(rest)
+		word, rest = popWord(dialect, rest)
 		words = append(words, word)
 	}
 	return words, rest
@@ -55,14 +55,14 @@ LOOP:
 	for rest != "" {
 		switch state {
 		case PRE_TRIGGER:
-			word, rest = popWord(rest)
+			word, rest = popWord(dialect, rest)
 			if strings.EqualFold(word, "TRIGGER") {
 				state = TRIGGER
 			}
 			continue
 		case TRIGGER:
 			if dialect == sq.DialectSQLite {
-				words, tmp := popWords(rest, 3)
+				words, tmp := popWords(dialect, rest, 3)
 				if len(words) == 3 &&
 					strings.EqualFold(words[0], "IF") &&
 					strings.EqualFold(words[1], "NOT") &&
@@ -70,17 +70,17 @@ LOOP:
 					rest = tmp
 				}
 			}
-			triggerName, rest = popWord(rest)
+			triggerName, rest = popWord(dialect, rest)
 			state = PRE_ON
 			continue
 		case PRE_ON:
-			word, rest = popWord(rest)
+			word, rest = popWord(dialect, rest)
 			if strings.EqualFold(word, "ON") {
 				state = ON
 			}
 			continue
 		case ON:
-			tableName, rest = popWord(rest)
+			tableName, rest = popWord(dialect, rest)
 			if i := strings.IndexByte(tableName, '.'); i >= 0 {
 				tableSchema, tableName = tableName[:i], tableName[i+1:]
 			}
