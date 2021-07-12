@@ -1,8 +1,57 @@
 package ddl
 
 import (
+	"path/filepath"
+	"reflect"
+	"runtime"
+	"strconv"
+	"strings"
 	"testing"
+
+	"github.com/bokwoon95/sq"
+	"github.com/google/go-cmp/cmp"
 )
+
+func testdiff(got, want interface{}) string {
+	diff := cmp.Diff(got, want, cmp.Exporter(func(typ reflect.Type) bool { return true }))
+	if diff != "" {
+		return "\n-got +want\n" + diff
+	}
+	return ""
+}
+
+func testcallers() string {
+	/* https://talks.godoc.org/github.com/davecheney/go-1.9-release-party/presentation.slide#20
+	 * "Users of runtime.Callers should avoid directly inspecting the resulting PC
+	 * slice and instead use runtime.CallersFrames to get a complete view of the
+	 * call stack, or runtime.Caller to get information about a single caller.
+	 * This is because an individual element of the PC slice cannot account for
+	 * inlined frames or other nuances of the call stack."
+	 */
+	var pc [50]uintptr
+	// Skip two extra frames to account for this function
+	// and runtime.Callers itself.
+	n := runtime.Callers(2, pc[:])
+	if n == 0 {
+		panic("zero callers found")
+	}
+	var callsites []string
+	frames := runtime.CallersFrames(pc[:n])
+	for frame, more := frames.Next(); more; frame, more = frames.Next() {
+		callsites = append(callsites, filepath.Base(frame.File)+":"+strconv.Itoa(frame.Line))
+	}
+	buf := &strings.Builder{}
+	last := len(callsites) - 2
+	buf.WriteString("[")
+	for i := last; i >= 0; i-- {
+		if i < last {
+			buf.WriteString(" -> ")
+		}
+		buf.WriteString(callsites[i])
+	}
+	buf.WriteString("]")
+	return buf.String()
+}
 
 func Test_lexModifiers(t *testing.T) {
 	type TT struct {
@@ -150,6 +199,79 @@ func Test_lexValue(t *testing.T) {
 			"onupdate": 1,
 			"ondelete": 2,
 		}
+		assert(t, tt)
+	})
+}
+
+func Test_popWords(t *testing.T) {
+	type TT struct {
+		dialect   string
+		s         string
+		num       int
+		wantWords []string
+		wantRest  string
+	}
+
+	assert := func(t *testing.T, tt TT) {
+		gotWords, gotRest := popWords(tt.dialect, tt.s, tt.num)
+		if diff := testdiff(gotWords, tt.wantWords); diff != "" {
+			t.Error(testcallers(), diff)
+		}
+		if diff := testdiff(gotRest, tt.wantRest); diff != "" {
+			t.Error(testcallers(), diff)
+		}
+	}
+
+	t.Run("empty (popWord)", func(t *testing.T) {
+		t.Parallel()
+		gotWord, gotRest := popWord("", "")
+		if diff := testdiff(gotWord, ""); diff != "" {
+			t.Error(testcallers(), diff)
+		}
+		if diff := testdiff(gotRest, ""); diff != "" {
+			t.Error(testcallers(), diff)
+		}
+	})
+
+	t.Run("empty", func(t *testing.T) {
+		t.Parallel()
+		var tt TT
+		tt.s = ""
+		tt.num = 3
+		tt.wantWords = nil
+		tt.wantRest = ""
+		assert(t, tt)
+	})
+
+	t.Run("simple", func(t *testing.T) {
+		t.Parallel()
+		var tt TT
+		tt.s = " the\n    quick\r\n\tbrown      fox  jumped over the lazy dog"
+		tt.num = 4
+		tt.wantWords = []string{"the", "quick", "brown", "fox"}
+		tt.wantRest = "  jumped over the lazy dog"
+		assert(t, tt)
+	})
+
+	t.Run("mysql quoted identifier", func(t *testing.T) {
+		t.Parallel()
+		var tt TT
+		tt.dialect = sq.DialectMySQL
+		tt.s = "CREATE TRIGGER \"a \"\"b c\".`d e f``ghi` AS"
+		tt.num = 4
+		tt.wantWords = []string{"CREATE", "TRIGGER", "\"a \"\"b c\".`d e f``ghi`", "AS"}
+		tt.wantRest = ""
+		assert(t, tt)
+	})
+
+	t.Run("sqlserver quoted identifier", func(t *testing.T) {
+		t.Parallel()
+		var tt TT
+		tt.s = "CREATE TRIGGER \"a \"\"b c\".[d e f]]ghi] AS"
+		tt.dialect = sq.DialectSQLServer
+		tt.num = 4
+		tt.wantWords = []string{"CREATE", "TRIGGER", "\"a \"\"b c\".[d e f]]ghi]", "AS"}
+		tt.wantRest = ""
 		assert(t, tt)
 	})
 }
