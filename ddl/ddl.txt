@@ -1,1 +1,6 @@
 ddl.go | lex.go
+trigger.go | function.go
+view.go
+table.go
+schema.go
+t.go
