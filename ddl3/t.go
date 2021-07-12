@@ -108,6 +108,7 @@ func appendSQLExclude(dialect, tableName string, v sq.SQLExcludeAppender) (strin
 }
 
 func (t *T) Sprintf(format string, values ...interface{}) string {
+	// TODO: use BufferPrintf directly. Also, do not exclude the table name because we don't want to exclude table names for triggers. Let the user use {:nameonly} if they wish
 	expr, err := sprintf(t.dialect, t.tbl.TableName, format, values)
 	if err != nil {
 		panicErr(fmt.Errorf("Sprintf: %w", err))
