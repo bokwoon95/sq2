@@ -1,6 +1,9 @@
 package ddl3
 
-import "strings"
+import (
+	"fmt"
+	"strings"
+)
 
 /*
 I no longer care about one Function object being able to contain every
@@ -48,6 +51,9 @@ LOOP:
 			}
 			break LOOP
 		}
+	}
+	if functionName == "" {
+		return functionSchema, functionName, fmt.Errorf("could not find function name, did you write the function correctly?")
 	}
 	return functionSchema, functionName, nil
 }
