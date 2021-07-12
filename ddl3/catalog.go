@@ -60,6 +60,7 @@ func (c *Catalog) RefreshSchemasCache() {
 
 type CatalogOption func(*Catalog) error
 
+// TODO: implement WithDB
 func WithDB(db sq.DB) CatalogOption {
 	return func(c *Catalog) error {
 		return nil
@@ -86,16 +87,44 @@ func WithDDLViews(ddlViews ...DDLView) CatalogOption {
 	}
 }
 
-// TODO: implement WithFunction
-func WithFunction(sql string) CatalogOption {
+func WithFunctions(functions ...Function) CatalogOption {
 	return func(c *Catalog) error {
+		var err error
+		for i, function := range functions {
+			if function.FunctionName == "" {
+				function.FunctionSchema, function.FunctionName, err = getFunctionInfo(c.Dialect, function.SQL)
+				if err != nil {
+					return fmt.Errorf("function #%d: %w", i+1, err)
+				}
+			}
+			err = c.loadFunction(function)
+			if err != nil {
+				return fmt.Errorf("function #%d: %w", i+1, err)
+			}
+		}
 		return nil
 	}
 }
 
-// TODO: implement WithFunctionFile
-func WithFunctionFile(fsys fs.FS, name string) CatalogOption {
+func WithFunctionFiles(fsys fs.FS, filenames ...string) CatalogOption {
 	return func(c *Catalog) error {
+		var err error
+		var b []byte
+		for i, filename := range filenames {
+			b, err = fs.ReadFile(fsys, filename)
+			if err != nil {
+				return fmt.Errorf("file #%d: %w", i+1, err)
+			}
+			function := Function{SQL: string(b)}
+			function.FunctionSchema, function.FunctionName, err = getFunctionInfo(c.Dialect, function.SQL)
+			if err != nil {
+				return fmt.Errorf("file #%d: %w", i+1, err)
+			}
+			err = c.loadFunction(function)
+			if err != nil {
+				return fmt.Errorf("file #%d: %w", i+1, err)
+			}
+		}
 		return nil
 	}
 }
@@ -270,5 +299,17 @@ func (c *Catalog) loadDDLView(ddlView DDLView) error {
 }
 
 func (c *Catalog) loadFunction(function Function) error {
+	if function.FunctionName == "" {
+		return fmt.Errorf("function name cannot be empty")
+	}
+	var schema Schema
+	if n := c.CachedSchemaPosition(function.FunctionSchema); n >= 0 {
+		schema = c.Schemas[n]
+		defer func() { c.Schemas[n] = schema }()
+	} else {
+		schema = Schema{SchemaName: function.FunctionSchema}
+		defer func() { c.AppendSchema(schema) }()
+	}
+	schema.Functions = append(schema.Functions, function)
 	return nil
 }
