@@ -1,6 +1,7 @@
 package ddl3
 
 import (
+	"fmt"
 	"strings"
 	"unicode"
 	"unicode/utf8"
@@ -118,6 +119,9 @@ LOOP:
 			}
 			break LOOP
 		}
+	}
+	if triggerName == "" || tableName == "" {
+		return tableSchema, tableName, triggerName, fmt.Errorf("could not find trigger name or table name, did you write the trigger correctly?")
 	}
 	return tableSchema, tableName, triggerName, nil
 }
