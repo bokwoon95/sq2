@@ -11,6 +11,22 @@ type Command interface {
 	sq.SQLAppender
 }
 
+type CommandSet struct {
+	Dialect               string
+	SchemaCommands        []Command
+	FunctionCommands      []Command
+	TableCommands         []Command
+	ViewCommands          []Command
+	TableFunctionCommands []Command
+	TriggerCommands       []Command
+	DualWriteTriggers     []Command
+	BackfillQueries       []sq.Query
+	GhostTableCommands    []Command
+	ForeignKeyCommands    []Command
+	RenameCommands        []Command
+	DropCommands          []Command
+}
+
 func (cmdset CommandSet) WriteOut(w io.Writer) error {
 	var written bool
 	for _, cmds := range [][]Command{
@@ -42,17 +58,6 @@ func (cmdset CommandSet) WriteOut(w io.Writer) error {
 		}
 	}
 	return nil
-}
-
-type CommandSet struct {
-	Dialect               string
-	SchemaCommands        []Command
-	FunctionCommands      []Command
-	TableCommands         []Command
-	ViewCommands          []Command
-	TableFunctionCommands []Command
-	TriggerCommands       []Command // TODO: extract triggers out to its own
-	ForeignKeyCommands    []Command
 }
 
 func (cmdset CommandSet) ExecDB(db sq.DB) error {
