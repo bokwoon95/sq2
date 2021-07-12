@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io/fs"
 	"reflect"
+	"strings"
 
 	"github.com/bokwoon95/sq"
 )
@@ -80,9 +81,15 @@ func WithTables(tables ...sq.SchemaTable) CatalogOption {
 	}
 }
 
-// TODO: implement WithDDLViews
 func WithDDLViews(ddlViews ...DDLView) CatalogOption {
 	return func(c *Catalog) error {
+		var err error
+		for i, ddlView := range ddlViews {
+			err = c.loadDDLView(ddlView)
+			if err != nil {
+				return fmt.Errorf("view #%d: %w", i+1, err)
+			}
+		}
 		return nil
 	}
 }
@@ -288,13 +295,67 @@ func (c *Catalog) loadDDLView(ddlView DDLView) error {
 	if ddlView == nil {
 		return fmt.Errorf("view is nil")
 	}
+	ddlViewValue := reflect.ValueOf(ddlView)
+	ddlViewType := ddlViewValue.Type()
+	if ddlViewType.Kind() != reflect.Struct {
+		return fmt.Errorf("view is not a struct")
+	}
+	if ddlViewValue.NumField() == 0 {
+		return fmt.Errorf("view is empty struct")
+	}
+	tableinfo, ok := ddlViewValue.Field(0).Interface().(sq.TableInfo)
+	if !ok {
+		return fmt.Errorf("first field of view struct is not an embedded sq.TableInfo")
+	}
+	if !ddlViewType.Field(0).Anonymous {
+		return fmt.Errorf("first field of view struct is not an embedded sq.TableInfo")
+	}
+	if tableinfo.TableName == "" {
+		return fmt.Errorf("view name is empty")
+	}
+	fieldNames := make(map[string]int)
+	for i := 1; i < ddlViewValue.NumField(); i++ {
+		field, ok := ddlViewValue.Field(i).Interface().(sq.Field)
+		if !ok {
+			continue
+		}
+		fieldName := field.GetName()
+		if fieldName == "" {
+			return fmt.Errorf("view struct %s field #%d has no name set for it", ddlViewType.Name(), i)
+		}
+		fieldNames[fieldName]--
+	}
 	v := &V{}
 	query := ddlView.DDL(c.Dialect, v)
-	gotFields, err := query.GetFetchableFields()
-	if err != nil {
-		return fmt.Errorf("fetching view fields: %w", err)
+	view := View{
+		ViewSchema: tableinfo.TableSchema,
+		ViewName:   tableinfo.TableName,
 	}
-	_ = gotFields
+	err := view.loadQuery(query, v)
+	if err != nil {
+		return fmt.Errorf("loading query: %w", err)
+	}
+	for _, fieldName := range view.FieldNames {
+		fieldNames[fieldName]++
+	}
+	var missingFields, extraFields []string
+	for fieldName, n := range fieldNames {
+		if n > 0 {
+			extraFields = append(extraFields, fieldName)
+		} else if n < 0 {
+			missingFields = append(missingFields, fieldName)
+		}
+	}
+	if len(missingFields) > 0 || len(extraFields) > 0 {
+		errMsg := "query fields does not match struct fields:"
+		if len(missingFields) > 0 {
+			errMsg += fmt.Sprintf(" (missingFields=%s)", strings.Join(missingFields, ", "))
+		}
+		if len(extraFields) > 0 {
+			errMsg += fmt.Sprintf(" (extraFields=%s)", strings.Join(missingFields, ", "))
+		}
+		return fmt.Errorf(errMsg)
+	}
 	return nil
 }
 
