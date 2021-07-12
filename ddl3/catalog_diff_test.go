@@ -68,6 +68,19 @@ func Test_Z(t *testing.T) {
 		NEW_PAYMENT(dialect, ""),
 		NEW_DUMMY_TABLE(dialect, ""),
 		NEW_DUMMY_TABLE_2(dialect, ""),
+	), WithFunctions(Function{
+		SQL: "CREATE OR REPLACE FUNCTION last_update_trg() RETURNS trigger AS $$ BEGIN" +
+			" NEW.last_update = NOW();" +
+			" RETURN NEW;" +
+			" END; $$ LANGUAGE plpgsql;",
+	}), WithDDLViews(
+		NEW_ACTOR_INFO(dialect, ""),
+		NEW_CUSTOMER_LIST(dialect, ""),
+		NEW_FILM_LIST(dialect, ""),
+		NEW_NICER_BUT_SLOWER_FILM_LIST(dialect, ""),
+		NEW_SALES_BY_FILM_CATEGORY(dialect, ""),
+		NEW_SALES_BY_STORE(dialect, ""),
+		NEW_STAFF_LIST(dialect, ""),
 	))
 	if err != nil {
 		t.Fatal(Callers(), err)

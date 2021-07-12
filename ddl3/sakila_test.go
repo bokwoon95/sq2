@@ -1505,6 +1505,22 @@ func json_array_agg(dialect string, value interface{}) sq.CustomField {
 	}
 }
 
+func NEW_ACTOR_INFO(dialect, alias string) ACTOR_INFO {
+	var tbl ACTOR_INFO
+	tbl.TableInfo = sq.TableInfo{TableName: "actor_info", TableAlias: alias}
+	switch dialect {
+	case sq.DialectPostgres:
+		tbl.TableInfo.TableSchema = "public"
+	case sq.DialectMySQL:
+		tbl.TableInfo.TableSchema = "db"
+	}
+	tbl.ACTOR_ID = sq.NewNumberField("actor_id", tbl.TableInfo)
+	tbl.FIRST_NAME = sq.NewStringField("first_name", tbl.TableInfo)
+	tbl.LAST_NAME = sq.NewStringField("last_name", tbl.TableInfo)
+	tbl.FILM_INFO = sq.NewJSONField("film_info", tbl.TableInfo)
+	return tbl
+}
+
 type ACTOR_INFO struct {
 	sq.TableInfo
 	ACTOR_ID   sq.NumberField
@@ -1546,6 +1562,27 @@ func (_ ACTOR_INFO) DDL(dialect string, v *V) sq.Query {
 	return q
 }
 
+func NEW_CUSTOMER_LIST(dialect, alias string) CUSTOMER_LIST {
+	var tbl CUSTOMER_LIST
+	tbl.TableInfo = sq.TableInfo{TableName: "customer_list", TableAlias: alias}
+	switch dialect {
+	case sq.DialectPostgres:
+		tbl.TableInfo.TableSchema = "public"
+	case sq.DialectMySQL:
+		tbl.TableInfo.TableSchema = "db"
+	}
+	tbl.ID = sq.NewNumberField("id", tbl.TableInfo)
+	tbl.NAME = sq.NewStringField("name", tbl.TableInfo)
+	tbl.ADDRESS = sq.NewStringField("address", tbl.TableInfo)
+	tbl.ZIP_CODE = sq.NewStringField("zip code", tbl.TableInfo)
+	tbl.PHONE = sq.NewStringField("phone", tbl.TableInfo)
+	tbl.CITY = sq.NewStringField("city", tbl.TableInfo)
+	tbl.COUNTRY = sq.NewStringField("country", tbl.TableInfo)
+	tbl.NOTES = sq.NewStringField("notes", tbl.TableInfo)
+	tbl.SID = sq.NewNumberField("sid", tbl.TableInfo)
+	return tbl
+}
+
 type CUSTOMER_LIST struct {
 	sq.TableInfo
 	ID       sq.NumberField
@@ -1579,14 +1616,34 @@ func (_ CUSTOMER_LIST) DDL(dialect string, v *V) sq.Query {
 		CUSTOMER.CUSTOMER_ID.As("id"),
 		sq.Fieldf(nameExpr, CUSTOMER.FIRST_NAME, CUSTOMER.LAST_NAME).As("name"),
 		ADDRESS.ADDRESS,
-		ADDRESS.POSTAL_CODE.As("zip_code"),
+		ADDRESS.POSTAL_CODE.As("zip code"),
 		ADDRESS.PHONE,
 		CITY.CITY,
 		COUNTRY.COUNTRY,
-		sq.CaseWhen(CUSTOMER.ACTIVE, "active").Else(""),
+		sq.CaseWhen(CUSTOMER.ACTIVE, "active").Else("").As("notes"),
 		CUSTOMER.STORE_ID.As("sid"),
 	}
 	return q
+}
+
+func NEW_FILM_LIST(dialect, alias string) FILM_LIST {
+	var tbl FILM_LIST
+	tbl.TableInfo = sq.TableInfo{TableName: "film_list", TableAlias: alias}
+	switch dialect {
+	case sq.DialectPostgres:
+		tbl.TableInfo.TableSchema = "public"
+	case sq.DialectMySQL:
+		tbl.TableInfo.TableSchema = "db"
+	}
+	tbl.FID = sq.NewNumberField("fid", tbl.TableInfo)
+	tbl.TITLE = sq.NewStringField("title", tbl.TableInfo)
+	tbl.DESCRIPTION = sq.NewStringField("description", tbl.TableInfo)
+	tbl.CATEGORY = sq.NewStringField("category", tbl.TableInfo)
+	tbl.PRICE = sq.NewNumberField("price", tbl.TableInfo)
+	tbl.LENGTH = sq.NewNumberField("length", tbl.TableInfo)
+	tbl.RATING = sq.NewStringField("rating", tbl.TableInfo)
+	tbl.ACTORS = sq.NewJSONField("actors", tbl.TableInfo)
+	return tbl
 }
 
 type FILM_LIST struct {
@@ -1636,9 +1693,29 @@ func (_ FILM_LIST) DDL(dialect string, v *V) sq.Query {
 		FILM.RENTAL_RATE.As("price"),
 		FILM.LENGTH,
 		FILM.RATING,
-		json_array_agg(dialect, sq.Fieldf(nameExpr, ACTOR.FIRST_NAME, ACTOR.LAST_NAME)),
+		json_array_agg(dialect, sq.Fieldf(nameExpr, ACTOR.FIRST_NAME, ACTOR.LAST_NAME)).As("actors"),
 	}
 	return q
+}
+
+func NEW_NICER_BUT_SLOWER_FILM_LIST(dialect, alias string) NICER_BUT_SLOWER_FILM_LIST {
+	var tbl NICER_BUT_SLOWER_FILM_LIST
+	tbl.TableInfo = sq.TableInfo{TableName: "nicer_but_slower_film_list", TableAlias: alias}
+	switch dialect {
+	case sq.DialectPostgres:
+		tbl.TableInfo.TableSchema = "public"
+	case sq.DialectMySQL:
+		tbl.TableInfo.TableSchema = "db"
+	}
+	tbl.FID = sq.NewNumberField("fid", tbl.TableInfo)
+	tbl.TITLE = sq.NewStringField("title", tbl.TableInfo)
+	tbl.DESCRIPTION = sq.NewStringField("description", tbl.TableInfo)
+	tbl.CATEGORY = sq.NewStringField("category", tbl.TableInfo)
+	tbl.PRICE = sq.NewNumberField("price", tbl.TableInfo)
+	tbl.LENGTH = sq.NewNumberField("length", tbl.TableInfo)
+	tbl.RATING = sq.NewStringField("rating", tbl.TableInfo)
+	tbl.ACTORS = sq.NewJSONField("actors", tbl.TableInfo)
+	return tbl
 }
 
 type NICER_BUT_SLOWER_FILM_LIST struct {
@@ -1689,9 +1766,23 @@ func (_ NICER_BUT_SLOWER_FILM_LIST) DDL(dialect string, v *V) sq.Query {
 		FILM.RENTAL_RATE.As("price"),
 		FILM.LENGTH,
 		FILM.RATING,
-		json_array_agg(dialect, sq.Fieldf(nameExpr, ACTOR.FIRST_NAME, ACTOR.LAST_NAME)),
+		json_array_agg(dialect, sq.Fieldf(nameExpr, ACTOR.FIRST_NAME, ACTOR.LAST_NAME)).As("actors"),
 	}
 	return q
+}
+
+func NEW_SALES_BY_FILM_CATEGORY(dialect, alias string) SALES_BY_FILM_CATEGORY {
+	var tbl SALES_BY_FILM_CATEGORY
+	tbl.TableInfo = sq.TableInfo{TableName: "sales_by_film_category", TableAlias: alias}
+	switch dialect {
+	case sq.DialectPostgres:
+		tbl.TableInfo.TableSchema = "public"
+	case sq.DialectMySQL:
+		tbl.TableInfo.TableSchema = "db"
+	}
+	tbl.CATEGORY = sq.NewStringField("category", tbl.TableInfo)
+	tbl.TOTAL_SALES = sq.NewNumberField("total_sales", tbl.TableInfo)
+	return tbl
 }
 
 type SALES_BY_FILM_CATEGORY struct {
@@ -1723,6 +1814,21 @@ func (_ SALES_BY_FILM_CATEGORY) DDL(dialect string, v *V) sq.Query {
 		sq.Fieldf("SUM({})", PAYMENT.AMOUNT).As("total_sales"),
 	}
 	return q
+}
+
+func NEW_SALES_BY_STORE(dialect, alias string) SALES_BY_STORE {
+	var tbl SALES_BY_STORE
+	tbl.TableInfo = sq.TableInfo{TableName: "sales_by_store", TableAlias: alias}
+	switch dialect {
+	case sq.DialectPostgres:
+		tbl.TableInfo.TableSchema = "public"
+	case sq.DialectMySQL:
+		tbl.TableInfo.TableSchema = "db"
+	}
+	tbl.STORE = sq.NewStringField("store", tbl.TableInfo)
+	tbl.MANAGER = sq.NewStringField("manager", tbl.TableInfo)
+	tbl.TOTAL_SALES = sq.NewNumberField("total_sales", tbl.TableInfo)
+	return tbl
 }
 
 type SALES_BY_STORE struct {
@@ -1772,12 +1878,33 @@ func (_ SALES_BY_STORE) DDL(dialect string, v *V) sq.Query {
 	q.SelectFields = sq.AliasFields{
 		sq.Fieldf(storeExpr, CITY.CITY, COUNTRY.COUNTRY).As("store"),
 		sq.Fieldf(managerExpr, STAFF.FIRST_NAME, STAFF.LAST_NAME).As("manager"),
-		sq.Fieldf("SUM({})", PAYMENT.AMOUNT).As("total sales"),
+		sq.Fieldf("SUM({})", PAYMENT.AMOUNT).As("total_sales"),
 	}
 	return q
 }
 
+func NEW_STAFF_LIST(dialect, alias string) STAFF_LIST {
+	var tbl STAFF_LIST
+	tbl.TableInfo = sq.TableInfo{TableName: "staff_list", TableAlias: alias}
+	switch dialect {
+	case sq.DialectPostgres:
+		tbl.TableInfo.TableSchema = "public"
+	case sq.DialectMySQL:
+		tbl.TableInfo.TableSchema = "db"
+	}
+	tbl.ID = sq.NewNumberField("id", tbl.TableInfo)
+	tbl.NAME = sq.NewStringField("name", tbl.TableInfo)
+	tbl.ADDRESS = sq.NewStringField("address", tbl.TableInfo)
+	tbl.ZIP_CODE = sq.NewStringField("zip code", tbl.TableInfo)
+	tbl.PHONE = sq.NewStringField("phone", tbl.TableInfo)
+	tbl.CITY = sq.NewStringField("city", tbl.TableInfo)
+	tbl.COUNTRY = sq.NewStringField("country", tbl.TableInfo)
+	tbl.SID = sq.NewNumberField("sid", tbl.TableInfo)
+	return tbl
+}
+
 type STAFF_LIST struct {
+	sq.TableInfo
 	ID       sq.NumberField
 	NAME     sq.StringField
 	ADDRESS  sq.StringField
@@ -1808,7 +1935,7 @@ func (_ STAFF_LIST) DDL(dialect string, v *V) sq.Query {
 		STAFF.STAFF_ID.As("id"),
 		sq.Fieldf(nameExpr, STAFF.FIRST_NAME, STAFF.LAST_NAME).As("name"),
 		ADDRESS.ADDRESS,
-		ADDRESS.POSTAL_CODE.As("zip_code"),
+		ADDRESS.POSTAL_CODE.As("zip code"),
 		ADDRESS.PHONE,
 		CITY.CITY,
 		COUNTRY.COUNTRY,

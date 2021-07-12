@@ -584,9 +584,9 @@ func (t *T) Trigger(sql string) {
 		panicErr(fmt.Errorf("Trigger: table schema does not match (got=%s, want=%s)", tableSchema, t.tbl.TableSchema))
 	}
 	_ = tableName
-	// if tableName != t.tbl.TableName {
-	// 	panicErr(fmt.Errorf("Trigger: table name does not match (got=%s, want=%s)", tableName, t.tbl.TableName))
-	// }
+	if tableName != t.tbl.TableName {
+		panicErr(fmt.Errorf("Trigger: table name does not match (got=%s, want=%s)", tableName, t.tbl.TableName))
+	}
 	triggerPosition := t.tbl.CachedTriggerPosition(triggerName)
 	if triggerPosition < 0 {
 		t.tbl.AppendTrigger(Trigger{
