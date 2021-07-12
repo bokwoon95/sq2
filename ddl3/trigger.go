@@ -20,30 +20,43 @@ func popWord(dialect, s string) (word, rest string) {
 	if s == "" {
 		return "", ""
 	}
-	// var openingQuote rune
-	// var insideIdentifier bool
-	// var mustWriteCharAt int
+	var openingQuote rune
+	var insideIdentifier bool
+	var mustWriteCharAt int
 	var splitAt int
 	for i := 0; i < len(s); {
 		r, size := utf8.DecodeRuneInString(s[i:])
 		i += size
-		// if mustWriteCharAt == i {
-		// 	continue
-		// }
-		// if insideIdentifier {
-		// 	switch openingQuote {
-		// 	case '\'', '"', '`':
-		// 		if r == openingQuote {
-		// 			if i+1 < len(rest) && rune(rest[i+1]) == openingQuote {
-		// 				mustWriteCharAt = i + 1
-		// 			} else {
-		// 				insideIdentifier = false
-		// 			}
-		// 		}
-		// 	case '[':
-		// 	}
-		// }
 		splitAt = i
+		if mustWriteCharAt == i {
+			continue
+		}
+		if insideIdentifier {
+			switch openingQuote {
+			case '\'', '"', '`':
+				if r == openingQuote {
+					if i+1 < len(rest) && rune(rest[i+1]) == openingQuote {
+						mustWriteCharAt = i + 1
+					} else {
+						insideIdentifier = false
+					}
+				}
+			case '[':
+				if r == ']' {
+					if i+1 < len(rest) && rest[i+1] == ']' {
+						mustWriteCharAt = i + 1
+					} else {
+						insideIdentifier = false
+					}
+				}
+			}
+			continue
+		}
+		if r == '"' || (r == '`' && dialect == sq.DialectMySQL) || (r == '[' && dialect == sq.DialectSQLServer) {
+			insideIdentifier = true
+			openingQuote = r
+			continue
+		}
 		if unicode.IsSpace(r) {
 			splitAt -= size
 			break
