@@ -48,7 +48,7 @@ func Callers() string {
 }
 
 func Test_Z(t *testing.T) {
-	const dialect = sq.DialectSQLite
+	const dialect = sq.DialectPostgres
 	wantCatalog, err := NewCatalog(dialect, WithTables(
 		NEW_ACTOR(dialect, ""),
 		NEW_CATEGORY(dialect, ""),

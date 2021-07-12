@@ -1,5 +1,7 @@
 package ddl3
 
+import "strings"
+
 /*
 I no longer care about one Function object being able to contain every
 overloaded function. If the user has multiple overloaded functions, there will
@@ -23,8 +25,31 @@ type Function struct {
 	SQL            string
 }
 
-func getFunctionInfo(sql string) (functionSchema, functionName string, err error) {
-	return "", "", nil
+func getFunctionInfo(dialect, sql string) (functionSchema, functionName string, err error) {
+	const (
+		PRE_FUNCTION = iota
+		FUNCTION
+	)
+	word, rest := "", sql
+	state := PRE_FUNCTION
+LOOP:
+	for rest != "" {
+		switch state {
+		case PRE_FUNCTION:
+			word, rest = popWord(dialect, rest)
+			if strings.EqualFold(word, "FUNCTION") {
+				state = FUNCTION
+			}
+			continue
+		case FUNCTION:
+			functionName, rest = popWord(dialect, rest)
+			if i := strings.IndexByte(functionName, '.'); i >= 0 {
+				functionSchema, functionName = functionName[:i], functionName[i+1:]
+			}
+			break LOOP
+		}
+	}
+	return functionSchema, functionName, nil
 }
 
 // all IFunctions can be converted into Functions. An IFunction is simply a
