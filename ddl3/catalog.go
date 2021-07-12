@@ -333,7 +333,7 @@ func (c *Catalog) loadDDLView(ddlView DDLView) error {
 	}
 	err := view.loadQuery(query, v)
 	if err != nil {
-		return fmt.Errorf("loading query: %w", err)
+		return fmt.Errorf("view %s loading query: %w", view.ViewName, err)
 	}
 	for _, fieldName := range view.FieldNames {
 		fieldNames[fieldName]++
@@ -347,14 +347,27 @@ func (c *Catalog) loadDDLView(ddlView DDLView) error {
 		}
 	}
 	if len(missingFields) > 0 || len(extraFields) > 0 {
-		errMsg := "query fields does not match struct fields:"
+		errMsg := fmt.Sprintf("view %s query fields does not match struct fields:", view.ViewName)
 		if len(missingFields) > 0 {
 			errMsg += fmt.Sprintf(" (missingFields=%s)", strings.Join(missingFields, ", "))
 		}
 		if len(extraFields) > 0 {
-			errMsg += fmt.Sprintf(" (extraFields=%s)", strings.Join(missingFields, ", "))
+			errMsg += fmt.Sprintf(" (extraFields=%s)", strings.Join(extraFields, ", "))
 		}
 		return fmt.Errorf(errMsg)
+	}
+	var schema Schema
+	if n := c.CachedSchemaPosition(view.ViewSchema); n >= 0 {
+		schema = c.Schemas[n]
+		defer func() { c.Schemas[n] = schema }()
+	} else {
+		schema = Schema{SchemaName: view.ViewSchema}
+		defer func() { c.AppendSchema(schema) }()
+	}
+	if n := schema.CachedViewPosition(view.ViewName); n >= 0 {
+		schema.Views[n] = view
+	} else {
+		schema.AppendView(view)
 	}
 	return nil
 }

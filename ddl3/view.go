@@ -40,6 +40,7 @@ func (view *View) loadQuery(q sq.Query, v *V) error {
 	if err != nil {
 		return err
 	}
+	buf.WriteString(";")
 	view.SQL = buf.String()
 	if len(args) > 0 {
 		view.SQL, err = sq.Sprintf(dialect, view.SQL, args)
@@ -47,7 +48,6 @@ func (view *View) loadQuery(q sq.Query, v *V) error {
 			return err
 		}
 	}
-	buf.WriteString(";")
 	fields, err := q.GetFetchableFields()
 	if err != nil {
 		return fmt.Errorf("fetching view fields: %w", err)

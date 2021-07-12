@@ -49,6 +49,9 @@ LOOP:
 			if i := strings.IndexByte(functionName, '.'); i >= 0 {
 				functionSchema, functionName = functionName[:i], functionName[i+1:]
 			}
+			if i := strings.IndexByte(functionName, '('); i >= 0 {
+				functionName = functionName[:i]
+			}
 			break LOOP
 		}
 	}
