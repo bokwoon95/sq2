@@ -77,7 +77,6 @@ type V struct {
 	CreateOrReplace   bool
 	CreateIfNotExists bool
 	IsMaterialized    bool
-	IsRecursive       bool
 	Triggers          []Trigger
 }
 
@@ -92,7 +91,9 @@ type ViewDiff struct {
 }
 
 type CreateViewCommand struct {
-	View View
+	CreateOrReplace   bool
+	CreateIfNotExists bool
+	View              View
 }
 
 func (cmd *CreateViewCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
