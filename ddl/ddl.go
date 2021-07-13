@@ -63,6 +63,10 @@ const (
 	TABLE_DML
 )
 
+type Command interface {
+	sq.SQLAppender
+}
+
 type Column struct {
 	TableSchema              string `json:",omitempty"`
 	TableName                string `json:",omitempty"`
