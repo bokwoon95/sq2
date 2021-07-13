@@ -5,3 +5,8 @@ table.go
 schema.go
 t.go
 catalog.go
+trigger_diff.go | function_diff.go
+view_diff.go
+table_diff.go
+schema_diff.go
+catalog_diff.go

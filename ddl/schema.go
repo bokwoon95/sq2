@@ -1,10 +1,10 @@
 package ddl
 
 type Schema struct {
-	SchemaName     string
-	Tables         []Table
-	Views          []View
-	Functions      []Function
+	SchemaName     string     `json:",omitempty"`
+	Tables         []Table    `json:",omitempty"`
+	Views          []View     `json:",omitempty"`
+	Functions      []Function `json:",omitempty"`
 	tablesCache    map[string]int
 	viewsCache     map[string]int
 	functionsCache map[string][]int

@@ -64,25 +64,25 @@ const (
 )
 
 type Column struct {
-	TableSchema              string
-	TableName                string
-	TableAlias               string
-	ColumnName               string
-	ColumnAlias              string
-	ColumnType               string
-	Precision                int
-	Scale                    int
-	Identity                 string
-	Autoincrement            bool
-	IsNotNull                bool
-	IsUnique                 bool
-	IsPrimaryKey             bool
-	OnUpdateCurrentTimestamp bool
-	GeneratedExpr            string
-	GeneratedExprStored      bool
-	CollationName            string
-	ColumnDefault            string
-	Ignore                   bool
+	TableSchema              string `json:",omitempty"`
+	TableName                string `json:",omitempty"`
+	TableAlias               string `json:",omitempty"`
+	ColumnName               string `json:",omitempty"`
+	ColumnAlias              string `json:",omitempty"`
+	ColumnType               string `json:",omitempty"`
+	Precision                int    `json:",omitempty"`
+	Scale                    int    `json:",omitempty"`
+	Identity                 string `json:",omitempty"`
+	Autoincrement            bool   `json:",omitempty"`
+	IsNotNull                bool   `json:",omitempty"`
+	IsUnique                 bool   `json:",omitempty"`
+	IsPrimaryKey             bool   `json:",omitempty"`
+	OnUpdateCurrentTimestamp bool   `json:",omitempty"`
+	GeneratedExpr            string `json:",omitempty"`
+	GeneratedExprStored      bool   `json:",omitempty"`
+	CollationName            string `json:",omitempty"`
+	ColumnDefault            string `json:",omitempty"`
+	Ignore                   bool   `json:",omitempty"`
 }
 
 var _ sq.Field = Column{}
@@ -136,14 +136,14 @@ type Exclusions []struct {
 }
 
 type Index struct {
-	TableSchema string
-	TableName   string
-	IndexName   string
-	IndexType   string
-	IsUnique    bool
-	Columns     []string
-	Exprs       []string
-	Include     []string
+	TableSchema string   `json:",omitempty"`
+	TableName   string   `json:",omitempty"`
+	IndexName   string   `json:",omitempty"`
+	IndexType   string   `json:",omitempty"`
+	IsUnique    bool     `json:",omitempty"`
+	Columns     []string `json:",omitempty"`
+	Exprs       []string `json:",omitempty"`
+	Include     []string `json:",omitempty"`
 	Where       string
 }
 

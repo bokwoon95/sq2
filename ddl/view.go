@@ -8,10 +8,10 @@ import (
 )
 
 type View struct {
-	ViewSchema string
-	ViewName   string
-	FieldNames []string
-	SQL        string
+	ViewSchema string   `json:",omitempty"`
+	ViewName   string   `json:",omitempty"`
+	FieldNames []string `json:",omitempty"` // can the field names of a view be fetched using sql?
+	SQL        string   `json:",omitempty"`
 }
 
 func (view *View) loadQuery(q sq.Query, v *V) error {
