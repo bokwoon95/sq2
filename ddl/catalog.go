@@ -10,13 +10,13 @@ import (
 )
 
 type Catalog struct {
-	Dialect         string
-	CatalogName     string
-	VersionString   string
-	VersionNum      [2]int // MAJOR.MINOR (are PATCH versions ever significant in the case of databases?)
-	GeneratedFromDB bool
-	DefaultSchema   string
-	Schemas         []Schema
+	Dialect         string   `json:",omitempty"`
+	CatalogName     string   `json:",omitempty"`
+	VersionString   string   `json:",omitempty"`
+	VersionNums     []int    `json:",omitempty"`
+	GeneratedFromDB bool     `json:",omitempty"`
+	DefaultSchema   string   `json:",omitempty"`
+	Schemas         []Schema `json:",omitempty"`
 	schemasCache    map[string]int
 }
 

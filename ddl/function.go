@@ -1,15 +1,16 @@
 package ddl
 
 import (
+	"bytes"
 	"fmt"
 	"strings"
 )
 
 type Function struct {
-	FunctionSchema string
-	FunctionName   string
-	ContainsTable  bool
-	SQL            string
+	FunctionSchema string `json:",omitempty"`
+	FunctionName   string `json:",omitempty"`
+	ContainsTable  bool   `json:",omitempty"`
+	SQL            string `json:",omitempty"`
 }
 
 func getFunctionInfo(dialect, sql string) (functionSchema, functionName string, err error) {
@@ -43,4 +44,35 @@ LOOP:
 		return functionSchema, functionName, fmt.Errorf("could not find function name, did you write the function correctly?")
 	}
 	return functionSchema, functionName, nil
+}
+
+type FunctionDiff struct {
+	FunctionSchema string
+	FunctionName   string
+	CreateCommand  *CreateFunctionCommand
+	DropCommand    *DropFunctionCommand
+	RenameCommand  *RenameFunctionCommand
+	ReplaceCommand *RenameFunctionCommand
+}
+
+type CreateFunctionCommand struct {
+	Function Function
+}
+
+func (cmd *CreateFunctionCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
+	buf.WriteString(cmd.Function.SQL)
+	return nil
+}
+
+type DropFunctionCommand struct {
+	DropIfExists   bool
+	FunctionSchema string
+	FunctionName   string
+	DropCascade    bool
+}
+
+type RenameFunctionCommand struct {
+	FunctionSchema string
+	FunctionName   string
+	RenameToName   string
 }

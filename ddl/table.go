@@ -10,15 +10,15 @@ import (
 )
 
 type Table struct {
-	TableSchema      string
-	TableName        string
-	TableAlias       string
-	Columns          []Column
-	Constraints      []Constraint
-	Indexes          []Index
-	Triggers         []Trigger
-	VirtualTable     string
-	VirtualTableArgs []string
+	TableSchema      string       `json:",omitempty"`
+	TableName        string       `json:",omitempty"`
+	TableAlias       string       `json:",omitempty"`
+	Columns          []Column     `json:",omitempty"`
+	Constraints      []Constraint `json:",omitempty"`
+	Indexes          []Index      `json:",omitempty"`
+	Triggers         []Trigger    `json:",omitempty"`
+	VirtualTable     string       `json:",omitempty"`
+	VirtualTableArgs []string     `json:",omitempty"`
 	columnsCache     map[string]int
 	constraintsCache map[string]int
 	indexesCache     map[string]int
