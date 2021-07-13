@@ -30,8 +30,15 @@ func (f CustomField) AppendSQLExclude(dialect string, buf *bytes.Buffer, args *[
 
 func Fieldf(format string, values ...interface{}) CustomField {
 	return CustomField{info: FieldInfo{
-		Format: format,
-		Values: values,
+		Formats: map[string]string{"default": format},
+		Values:  values,
+	}}
+}
+
+func FieldfDialect(formats map[string]string, values ...interface{}) CustomField {
+	return CustomField{info: FieldInfo{
+		Formats: formats,
+		Values:  values,
 	}}
 }
 

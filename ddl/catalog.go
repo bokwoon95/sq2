@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"io/fs"
 	"reflect"
-	"strings"
 
 	"github.com/bokwoon95/sq"
 )
@@ -284,7 +283,17 @@ func (c *Catalog) loadTable(table sq.SchemaTable) (err error) {
 	return nil
 }
 
-func (c *Catalog) loadDDLView(ddlView DDLView) error {
+func (c *Catalog) loadDDLView(ddlView DDLView) (err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			switch r := r.(type) {
+			case error:
+				err = r
+			default:
+				err = fmt.Errorf("panic: " + fmt.Sprint(r))
+			}
+		}
+	}()
 	if ddlView == nil {
 		return fmt.Errorf("view is nil")
 	}
@@ -306,7 +315,13 @@ func (c *Catalog) loadDDLView(ddlView DDLView) error {
 	if tableinfo.TableName == "" {
 		return fmt.Errorf("view name is empty")
 	}
-	fieldNames := make(map[string]int)
+	v := &V{
+		dialect: c.Dialect,
+		view: &View{
+			ViewSchema: tableinfo.TableSchema,
+			ViewName:   tableinfo.TableName,
+		},
+	}
 	for i := 1; i < ddlViewValue.NumField(); i++ {
 		field, ok := ddlViewValue.Field(i).Interface().(sq.Field)
 		if !ok {
@@ -316,51 +331,21 @@ func (c *Catalog) loadDDLView(ddlView DDLView) error {
 		if fieldName == "" {
 			return fmt.Errorf("view struct %s field #%d has no name set for it", ddlViewType.Name(), i)
 		}
-		fieldNames[fieldName]--
+		v.wantColumns = append(v.wantColumns, fieldName)
 	}
-	v := &V{}
-	query := ddlView.DDL(c.Dialect, v)
-	view := View{
-		ViewSchema: tableinfo.TableSchema,
-		ViewName:   tableinfo.TableName,
-	}
-	err := view.loadQuery(query, v)
-	if err != nil {
-		return fmt.Errorf("view %s loading query: %w", view.ViewName, err)
-	}
-	for _, fieldName := range view.Columns {
-		fieldNames[fieldName]++
-	}
-	var missingFields, extraFields []string
-	for fieldName, n := range fieldNames {
-		if n > 0 {
-			extraFields = append(extraFields, fieldName)
-		} else if n < 0 {
-			missingFields = append(missingFields, fieldName)
-		}
-	}
-	if len(missingFields) > 0 || len(extraFields) > 0 {
-		errMsg := fmt.Sprintf("view %s query fields does not match struct fields:", view.ViewName)
-		if len(missingFields) > 0 {
-			errMsg += fmt.Sprintf(" (missingFields=%s)", strings.Join(missingFields, ", "))
-		}
-		if len(extraFields) > 0 {
-			errMsg += fmt.Sprintf(" (extraFields=%s)", strings.Join(extraFields, ", "))
-		}
-		return fmt.Errorf(errMsg)
-	}
+	ddlView.DDL(c.Dialect, v)
 	var schema Schema
-	if n := c.CachedSchemaPosition(view.ViewSchema); n >= 0 {
+	if n := c.CachedSchemaPosition(v.view.ViewSchema); n >= 0 {
 		schema = c.Schemas[n]
 		defer func() { c.Schemas[n] = schema }()
 	} else {
-		schema = Schema{SchemaName: view.ViewSchema}
+		schema = Schema{SchemaName: v.view.ViewSchema}
 		defer func() { c.AppendSchema(schema) }()
 	}
-	if n := schema.CachedViewPosition(view.ViewName); n >= 0 {
-		schema.Views[n] = view
+	if n := schema.CachedViewPosition(v.view.ViewName); n >= 0 {
+		schema.Views[n] = *v.view
 	} else {
-		schema.AppendView(view)
+		schema.AppendView(*v.view)
 	}
 	return nil
 }

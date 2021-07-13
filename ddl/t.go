@@ -13,7 +13,7 @@ import (
 
 func panicErr(err error) {
 	_, file, line, _ := runtime.Caller(2)
-	panic(fmt.Errorf("%s:%d:%w", file, line, err))
+	panic(fmt.Errorf("%s:%d: %w", file, line, err))
 }
 
 type DDLTable interface {
@@ -85,20 +85,31 @@ func (t *TColumn) Config(config func(c *Column)) {
 	t.tbl.Columns[t.columnPosition] = column
 }
 
-func sprintf(dialect, tableName string, format string, values []interface{}) (string, error) {
-	if len(values) == 0 {
-		return format, nil
-	}
-	// TODO: should I use sq.BufferPrintf here directly instead?
-	str, err := appendSQLExclude(dialect, tableName, sq.Fieldf(format, values...))
+func sprintf(dialect string, format string, values []interface{}, excludedTableQualifiers []string) (string, error) {
+	buf := bufpool.Get().(*bytes.Buffer)
+	args := argspool.Get().([]interface{})
+	defer func() {
+		buf.Reset()
+		args = args[:0]
+		bufpool.Put(buf)
+		argspool.Put(args)
+	}()
+	err := sq.BufferPrintf(dialect, buf, &args, make(map[string][]int), excludedTableQualifiers, format, values)
 	if err != nil {
 		return "", err
+	}
+	str := buf.String()
+	if len(args) > 0 {
+		str, err = sq.Sprintf(dialect, str, args)
+		if err != nil {
+			return "", err
+		}
 	}
 	return str, nil
 }
 
-func appendSQLExclude(dialect, tableName string, v sq.SQLExcludeAppender) (string, error) {
-	query, args, _, err := sq.ToSQLExclude(dialect, v, []string{tableName})
+func appendSQLExclude(dialect string, v sq.SQLExcludeAppender, excludedTableQualifiers []string) (string, error) {
+	query, args, _, err := sq.ToSQLExclude(dialect, v, excludedTableQualifiers)
 	if err != nil {
 		return "", err
 	}
@@ -113,8 +124,7 @@ func appendSQLExclude(dialect, tableName string, v sq.SQLExcludeAppender) (strin
 }
 
 func (t *T) Sprintf(format string, values ...interface{}) string {
-	// TODO: use BufferPrintf directly. Also, do not exclude the table name because we don't want to exclude table names for triggers. Let the user use {:nameonly} if they wish
-	expr, err := sprintf(t.dialect, t.tbl.TableName, format, values)
+	expr, err := sprintf(t.dialect, format, values, nil)
 	if err != nil {
 		panicErr(fmt.Errorf("Sprintf: %w", err))
 	}
@@ -122,7 +132,7 @@ func (t *T) Sprintf(format string, values ...interface{}) string {
 }
 
 func (t *TColumn) Generated(format string, values ...interface{}) *TColumn {
-	expr, err := sprintf(t.dialect, t.tbl.TableName, format, values)
+	expr, err := sprintf(t.dialect, format, values, []string{t.tbl.TableName})
 	if err != nil {
 		panicErr(fmt.Errorf("Generated: %w", err))
 	}
@@ -158,7 +168,7 @@ func (t *TColumn) Default(format string, values ...interface{}) *TColumn {
 		t.tbl.Columns[t.columnPosition].ColumnDefault = expr
 		return t
 	}
-	expr, err := sprintf(t.dialect, t.tbl.TableName, format, values)
+	expr, err := sprintf(t.dialect, format, values, []string{t.tbl.TableName})
 	if err != nil {
 		panicErr(fmt.Errorf("Default: %w", err))
 	}
@@ -265,7 +275,7 @@ func createOrUpdateConstraint(tbl *Table, constraintType, constraintName string,
 }
 
 func (t *T) Check(constraintName string, format string, values ...interface{}) *TConstraint {
-	expr, err := sprintf(t.dialect, t.tbl.TableName, format, values)
+	expr, err := sprintf(t.dialect, format, values, []string{t.tbl.TableName})
 	if err != nil {
 		panicErr(fmt.Errorf("Check: %w", err))
 	}
@@ -457,16 +467,12 @@ func getColumnNamesAndExprs(dialect, tableName string, fields []sq.Field) (colum
 		var columnName, expr string
 		columnName = field.GetName()
 		if columnName == "" {
-			if f, ok := field.(sq.FieldLiteral); ok {
-				expr = f.GetName()
-			} else {
-				var err error
-				expr, err = appendSQLExclude(dialect, tableName, field)
-				if err != nil {
-					return nil, nil, fmt.Errorf("field #%d, :%w", i+1, err)
-				}
-				expr = "(" + expr + ")"
+			var err error
+			expr, err = appendSQLExclude(dialect, field, []string{tableName})
+			if err != nil {
+				return nil, nil, fmt.Errorf("field #%d, :%w", i+1, err)
 			}
+			expr = "(" + expr + ")"
 		}
 		columnNames = append(columnNames, columnName)
 		exprs = append(exprs, expr)
@@ -474,7 +480,7 @@ func getColumnNamesAndExprs(dialect, tableName string, fields []sq.Field) (colum
 	return columnNames, exprs, nil
 }
 
-func createOrUpdateIndex(tbl *Table, indexName string, columns []string, exprs []string) (indexPosition int, err error) {
+func (tbl *Table) createOrUpdateIndex(indexName string, columns []string, exprs []string) (indexPosition int, err error) {
 	if indexName == "" {
 		return -1, fmt.Errorf("indexName cannot be empty")
 	}
@@ -509,7 +515,7 @@ func (t *T) Index(fields ...sq.Field) *TIndex {
 		tbl:       t.tbl,
 		indexName: indexName,
 	}
-	tIndex.indexPosition, err = createOrUpdateIndex(t.tbl, indexName, columnNames, exprs)
+	tIndex.indexPosition, err = t.tbl.createOrUpdateIndex(indexName, columnNames, exprs)
 	if err != nil {
 		panicErr(fmt.Errorf("Index: %w", err))
 	}
@@ -526,7 +532,7 @@ func (t *T) NameIndex(indexName string, fields ...sq.Field) *TIndex {
 		tbl:       t.tbl,
 		indexName: indexName,
 	}
-	tIndex.indexPosition, err = createOrUpdateIndex(t.tbl, indexName, columnNames, exprs)
+	tIndex.indexPosition, err = t.tbl.createOrUpdateIndex(indexName, columnNames, exprs)
 	if err != nil {
 		panicErr(fmt.Errorf("NameIndex: %w", err))
 	}
@@ -544,7 +550,7 @@ func (t *TIndex) Using(indexType string) *TIndex {
 }
 
 func (t *TIndex) Where(format string, values ...interface{}) *TIndex {
-	expr, err := sprintf(t.dialect, t.tbl.TableName, format, values)
+	expr, err := sprintf(t.dialect, format, values, []string{t.tbl.TableName})
 	if err != nil {
 		panicErr(fmt.Errorf("Where: %w", err))
 	}
@@ -578,7 +584,6 @@ type TTrigger struct {
 }
 
 func (t *T) Trigger(sql string) {
-	// TODO: implement getTriggerInfo
 	tableSchema, tableName, triggerName, err := getTriggerInfo(t.dialect, sql)
 	if err != nil {
 		panicErr(fmt.Errorf("Trigger: %w", err))
@@ -589,20 +594,18 @@ func (t *T) Trigger(sql string) {
 	if tableSchema != t.tbl.TableSchema {
 		panicErr(fmt.Errorf("Trigger: table schema does not match (got=%s, want=%s)", tableSchema, t.tbl.TableSchema))
 	}
-	_ = tableName
 	if tableName != t.tbl.TableName {
 		panicErr(fmt.Errorf("Trigger: table name does not match (got=%s, want=%s)", tableName, t.tbl.TableName))
 	}
-	triggerPosition := t.tbl.CachedTriggerPosition(triggerName)
-	if triggerPosition < 0 {
+	if n := t.tbl.CachedTriggerPosition(triggerName); n >= 0 {
+		t.tbl.Triggers[n].SQL = sql
+	} else {
 		t.tbl.AppendTrigger(Trigger{
 			TableSchema: t.tbl.TableSchema,
 			TableName:   t.tbl.TableName,
 			TriggerName: triggerName,
 			SQL:         sql,
 		})
-	} else {
-		t.tbl.Triggers[triggerPosition].SQL = sql
 	}
 }
 

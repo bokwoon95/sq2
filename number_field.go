@@ -29,8 +29,8 @@ func NewNumberField(fieldName string, tableInfo TableInfo) NumberField {
 
 func NumberFieldf(format string, values ...interface{}) NumberField {
 	return NumberField{info: FieldInfo{
-		Format: format,
-		Values: values,
+		Formats: map[string]string{"default": format},
+		Values:  values,
 	}}
 }
 

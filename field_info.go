@@ -21,11 +21,11 @@ type FieldInfo struct {
 	TableAlias  string
 	FieldName   string
 	FieldAlias  string
-	Format      string
+	Formats     map[string]string
 	Values      []interface{}
 	Descending  sql.NullBool
 	NullsFirst  sql.NullBool
-	StickyErr   error
+	Err         error
 }
 
 var _ Field = FieldInfo{}
@@ -35,11 +35,15 @@ func (f FieldInfo) GetAlias() string { return f.FieldAlias }
 func (f FieldInfo) GetName() string { return f.FieldName }
 
 func (f FieldInfo) AppendSQLExclude(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int, excludedTableQualifiers []string) error {
-	if f.StickyErr != nil {
-		return f.StickyErr
+	if f.Err != nil {
+		return f.Err
 	}
-	if f.Format != "" {
-		err := BufferPrintf(dialect, buf, args, params, excludedTableQualifiers, f.Format, f.Values)
+	if len(f.Formats) > 0 {
+		format, ok := f.Formats[dialect]
+		if !ok {
+			format = f.Formats["default"]
+		}
+		err := BufferPrintf(dialect, buf, args, params, excludedTableQualifiers, format, f.Values)
 		if err != nil {
 			return err
 		}

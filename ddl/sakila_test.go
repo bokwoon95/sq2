@@ -786,40 +786,23 @@ func (tbl DUMMY_TABLE_2) DDL(dialect string, t *T) {
 	}
 }
 
-func json_object_agg(dialect string, name, value interface{}) sq.CustomField {
+func json_object_agg(name, value interface{}) sq.CustomField {
 	if query, ok := value.(sq.Query); ok {
 		value = sq.Fieldf("({})", query)
 	}
-	// TODO: if dialect not recognized, CustomField's StickyError should be set
-	// instead. This will be -incredibly- useful for people who want to define
-	// their own SQL functions but need some way to signal an error. But how do
-	// I want to expose this API to the user?
-	// NOTE: what if we just defined a default fallback here, and let the SQL
-	// database point out the error? Then CustomField no longer needs a
-	// StickyError.
-	switch dialect {
-	case sq.DialectSQLite:
-		return sq.Fieldf("json_group_object({}, {})", name, value)
-	case sq.DialectPostgres:
-		return sq.Fieldf("jsonb_object_agg({}, {})", name, value)
-	case sq.DialectMySQL:
-		return sq.Fieldf("json_objectagg({}, {})", name, value)
-	default:
-		return sq.Fieldf("%!(unrecognized dialect=" + dialect + ")")
-	}
+	return sq.FieldfDialect(map[string]string{
+		"default":        "jsonb_object_agg({}, {})",
+		sq.DialectSQLite: "json_group_object({}, {})",
+		sq.DialectMySQL:  "json_objectagg({}, {})",
+	}, name, value)
 }
 
-func json_array_agg(dialect string, value interface{}) sq.CustomField {
-	switch dialect {
-	case sq.DialectSQLite:
-		return sq.Fieldf("json_group_array({})", value)
-	case sq.DialectPostgres:
-		return sq.Fieldf("jsonb_agg({})", value)
-	case sq.DialectMySQL:
-		return sq.Fieldf("jsonb_arrayagg({})", value)
-	default:
-		return sq.Fieldf("%!(unrecognized dialect=" + dialect + ")")
-	}
+func json_array_agg(value interface{}) sq.CustomField {
+	return sq.FieldfDialect(map[string]string{
+		"default":        "jsonb_agg({})",
+		sq.DialectSQLite: "json_group_array({})",
+		sq.DialectMySQL:  "jsonb_arrayagg({})",
+	}, value)
 }
 
 func NEW_ACTOR_INFO(dialect, alias string) ACTOR_INFO {
@@ -846,37 +829,35 @@ type ACTOR_INFO struct {
 	FILM_INFO  sq.JSONField
 }
 
-func (_ ACTOR_INFO) DDL(dialect string, v *V) sq.Query {
+func (view ACTOR_INFO) DDL(dialect string, v *V) {
 	ACTOR := NEW_ACTOR(dialect, "a")
 	FILM := NEW_FILM(dialect, "f")
 	FILM_ACTOR := NEW_FILM_ACTOR(dialect, "fa")
 	FILM_CATEGORY := NEW_FILM_CATEGORY(dialect, "fc")
 	CATEGORY := NEW_CATEGORY(dialect, "c")
-	var q sq.SelectQuery
-	q.FromTable = ACTOR
-	q.JoinTables = sq.JoinTables{
-		sq.LeftJoin(FILM_ACTOR, FILM_ACTOR.ACTOR_ID.Eq(ACTOR.ACTOR_ID)),
-		sq.LeftJoin(FILM_CATEGORY, FILM_CATEGORY.FILM_ID.Eq(FILM_ACTOR.FILM_ID)),
-		sq.LeftJoin(CATEGORY, CATEGORY.CATEGORY_ID.Eq(FILM_CATEGORY.CATEGORY_ID)),
-	}
-	q.GroupByFields = sq.Fields{ACTOR.ACTOR_ID, ACTOR.FIRST_NAME, ACTOR.LAST_NAME}
-	q.SelectFields = sq.AliasFields{
-		ACTOR.ACTOR_ID,
-		ACTOR.FIRST_NAME,
-		ACTOR.LAST_NAME,
-		json_object_agg(dialect, CATEGORY.NAME, sq.SQLite.
-			Select(json_array_agg(dialect, FILM.TITLE)).
-			From(FILM).
-			Join(FILM_CATEGORY, FILM_CATEGORY.FILM_ID.Eq(FILM.FILM_ID)).
-			Join(FILM_ACTOR, FILM_ACTOR.FILM_ID.Eq(FILM.FILM_ID)).
-			Where(
-				FILM_CATEGORY.CATEGORY_ID.Eq(CATEGORY.CATEGORY_ID),
-				FILM_ACTOR.ACTOR_ID.Eq(ACTOR.ACTOR_ID),
-			).
-			GroupBy(FILM_ACTOR.ACTOR_ID),
-		).As("film_info"),
-	}
-	return q
+	v.AsQuery(sq.SQLite.
+		From(ACTOR).
+		LeftJoin(FILM_ACTOR, FILM_ACTOR.ACTOR_ID.Eq(ACTOR.ACTOR_ID)).
+		LeftJoin(FILM_CATEGORY, FILM_CATEGORY.FILM_ID.Eq(FILM_ACTOR.FILM_ID)).
+		LeftJoin(CATEGORY, CATEGORY.CATEGORY_ID.Eq(FILM_CATEGORY.CATEGORY_ID)).
+		GroupBy(ACTOR.ACTOR_ID, ACTOR.FIRST_NAME, ACTOR.LAST_NAME).
+		Select(
+			ACTOR.ACTOR_ID,
+			ACTOR.FIRST_NAME,
+			ACTOR.LAST_NAME,
+			json_object_agg(CATEGORY.NAME, sq.SQLite.
+				Select(json_array_agg(FILM.TITLE)).
+				From(FILM).
+				Join(FILM_CATEGORY, FILM_CATEGORY.FILM_ID.Eq(FILM.FILM_ID)).
+				Join(FILM_ACTOR, FILM_ACTOR.FILM_ID.Eq(FILM.FILM_ID)).
+				Where(
+					FILM_CATEGORY.CATEGORY_ID.Eq(CATEGORY.CATEGORY_ID),
+					FILM_ACTOR.ACTOR_ID.Eq(ACTOR.ACTOR_ID),
+				).
+				GroupBy(FILM_ACTOR.ACTOR_ID),
+			).As("film_info"),
+		),
+	)
 }
 
 func NEW_CUSTOMER_LIST(dialect, alias string) CUSTOMER_LIST {
@@ -913,34 +894,31 @@ type CUSTOMER_LIST struct {
 	SID      sq.NumberField
 }
 
-func (_ CUSTOMER_LIST) DDL(dialect string, v *V) sq.Query {
+func (view CUSTOMER_LIST) DDL(dialect string, v *V) {
 	CUSTOMER := NEW_CUSTOMER(dialect, "cu")
 	ADDRESS := NEW_ADDRESS(dialect, "a")
 	CITY := NEW_CITY(dialect, "")
 	COUNTRY := NEW_COUNTRY(dialect, "")
-	var q sq.SelectQuery
-	q.FromTable = CUSTOMER
-	q.JoinTables = sq.JoinTables{
-		sq.Join(ADDRESS, ADDRESS.ADDRESS_ID.Eq(CUSTOMER.ADDRESS_ID)),
-		sq.Join(CITY, CITY.CITY_ID.Eq(ADDRESS.CITY_ID)),
-		sq.Join(COUNTRY, COUNTRY.COUNTRY_ID.Eq(CITY.COUNTRY_ID)),
-	}
-	nameExpr := "{} || ' ' || {}"
-	if dialect == sq.DialectMySQL {
-		nameExpr = "CONCAT({}, ' ', {})"
-	}
-	q.SelectFields = sq.AliasFields{
-		CUSTOMER.CUSTOMER_ID.As("id"),
-		sq.Fieldf(nameExpr, CUSTOMER.FIRST_NAME, CUSTOMER.LAST_NAME).As("name"),
-		ADDRESS.ADDRESS,
-		ADDRESS.POSTAL_CODE.As("zip code"),
-		ADDRESS.PHONE,
-		CITY.CITY,
-		COUNTRY.COUNTRY,
-		sq.CaseWhen(CUSTOMER.ACTIVE, "active").Else("").As("notes"),
-		CUSTOMER.STORE_ID.As("sid"),
-	}
-	return q
+	v.AsQuery(sq.SQLite.
+		From(CUSTOMER).
+		Join(ADDRESS, ADDRESS.ADDRESS_ID.Eq(CUSTOMER.ADDRESS_ID)).
+		Join(CITY, CITY.CITY_ID.Eq(ADDRESS.CITY_ID)).
+		Join(COUNTRY, COUNTRY.COUNTRY_ID.Eq(CITY.COUNTRY_ID)).
+		Select(
+			CUSTOMER.CUSTOMER_ID.As("id"),
+			sq.FieldfDialect(map[string]string{
+				"default":       "{} || ' ' || {}",
+				sq.DialectMySQL: "CONCAT({}, ' ', {})",
+			}, CUSTOMER.FIRST_NAME, CUSTOMER.LAST_NAME).As("name"),
+			ADDRESS.ADDRESS,
+			ADDRESS.POSTAL_CODE.As("zip code"),
+			ADDRESS.PHONE,
+			CITY.CITY,
+			COUNTRY.COUNTRY,
+			sq.CaseWhen(CUSTOMER.ACTIVE, "active").Else("").As("notes"),
+			CUSTOMER.STORE_ID.As("sid"),
+		),
+	)
 }
 
 func NEW_FILM_LIST(dialect, alias string) FILM_LIST {
@@ -975,44 +953,43 @@ type FILM_LIST struct {
 	ACTORS      sq.JSONField
 }
 
-func (_ FILM_LIST) DDL(dialect string, v *V) sq.Query {
+func (view FILM_LIST) DDL(dialect string, v *V) {
 	CATEGORY := NEW_CATEGORY(dialect, "")
 	FILM_CATEGORY := NEW_FILM_CATEGORY(dialect, "")
 	FILM := NEW_FILM(dialect, "")
 	FILM_ACTOR := NEW_FILM_ACTOR(dialect, "")
 	ACTOR := NEW_ACTOR(dialect, "")
-	var q sq.SelectQuery
-	q.FromTable = CATEGORY
-	q.JoinTables = sq.JoinTables{
-		sq.LeftJoin(FILM_CATEGORY, FILM_CATEGORY.CATEGORY_ID.Eq(CATEGORY.CATEGORY_ID)),
-		sq.LeftJoin(FILM, FILM.FILM_ID.Eq(FILM_CATEGORY.FILM_ID)),
-		sq.Join(FILM_ACTOR, FILM_ACTOR.FILM_ID.Eq(FILM.FILM_ID)),
-		sq.Join(ACTOR, ACTOR.ACTOR_ID.Eq(FILM_ACTOR.ACTOR_ID)),
-	}
-	q.GroupByFields = sq.Fields{
-		FILM.FILM_ID,
-		FILM.TITLE,
-		FILM.DESCRIPTION,
-		CATEGORY.NAME,
-		FILM.RENTAL_RATE,
-		FILM.LENGTH,
-		FILM.RATING,
-	}
-	nameExpr := "{} || ' ' || {}"
-	if dialect == sq.DialectMySQL {
-		nameExpr = "CONCAT({}, ' ', {})"
-	}
-	q.SelectFields = sq.AliasFields{
-		FILM.FILM_ID.As("fid"),
-		FILM.TITLE,
-		FILM.DESCRIPTION,
-		CATEGORY.NAME.As("category"),
-		FILM.RENTAL_RATE.As("price"),
-		FILM.LENGTH,
-		FILM.RATING,
-		json_array_agg(dialect, sq.Fieldf(nameExpr, ACTOR.FIRST_NAME, ACTOR.LAST_NAME)).As("actors"),
-	}
-	return q
+	v.AsQuery(sq.SQLite.
+		From(CATEGORY).
+		LeftJoin(FILM_CATEGORY, FILM_CATEGORY.CATEGORY_ID.Eq(CATEGORY.CATEGORY_ID)).
+		LeftJoin(FILM, FILM.FILM_ID.Eq(FILM_CATEGORY.FILM_ID)).
+		Join(FILM_ACTOR, FILM_ACTOR.FILM_ID.Eq(FILM.FILM_ID)).
+		Join(ACTOR, ACTOR.ACTOR_ID.Eq(FILM_ACTOR.ACTOR_ID)).
+		GroupBy(
+			FILM.FILM_ID,
+			FILM.TITLE,
+			FILM.DESCRIPTION,
+			CATEGORY.NAME,
+			FILM.RENTAL_RATE,
+			FILM.LENGTH,
+			FILM.RATING,
+		).
+		Select(
+			FILM.FILM_ID.As("fid"),
+			FILM.TITLE,
+			FILM.DESCRIPTION,
+			CATEGORY.NAME.As("category"),
+			FILM.RENTAL_RATE.As("price"),
+			FILM.LENGTH,
+			FILM.RATING,
+			json_array_agg(
+				sq.FieldfDialect(map[string]string{
+					"default":       "{} || ' ' || {}",
+					sq.DialectMySQL: "CONCAT({}, ' ', {})",
+				}, ACTOR.FIRST_NAME, ACTOR.LAST_NAME),
+			).As("actors"),
+		),
+	)
 }
 
 func NEW_NICER_BUT_SLOWER_FILM_LIST(dialect, alias string) NICER_BUT_SLOWER_FILM_LIST {
@@ -1047,45 +1024,49 @@ type NICER_BUT_SLOWER_FILM_LIST struct {
 	ACTORS      sq.JSONField
 }
 
-func (_ NICER_BUT_SLOWER_FILM_LIST) DDL(dialect string, v *V) sq.Query {
+func (view NICER_BUT_SLOWER_FILM_LIST) DDL(dialect string, v *V) {
 	CATEGORY := NEW_CATEGORY(dialect, "")
 	FILM_CATEGORY := NEW_FILM_CATEGORY(dialect, "")
 	FILM := NEW_FILM(dialect, "")
 	FILM_ACTOR := NEW_FILM_ACTOR(dialect, "")
 	ACTOR := NEW_ACTOR(dialect, "")
-	var q sq.SelectQuery
-	q.FromTable = CATEGORY
-	q.JoinTables = sq.JoinTables{
-		sq.LeftJoin(FILM_CATEGORY, FILM_CATEGORY.CATEGORY_ID.Eq(CATEGORY.CATEGORY_ID)),
-		sq.LeftJoin(FILM, FILM.FILM_ID.Eq(FILM_CATEGORY.FILM_ID)),
-		sq.Join(FILM_ACTOR, FILM_ACTOR.FILM_ID.Eq(FILM.FILM_ID)),
-		sq.Join(ACTOR, ACTOR.ACTOR_ID.Eq(FILM_ACTOR.ACTOR_ID)),
-	}
-	q.GroupByFields = sq.Fields{
-		FILM.FILM_ID,
-		FILM.TITLE,
-		FILM.DESCRIPTION,
-		CATEGORY.NAME,
-		FILM.RENTAL_RATE,
-		FILM.LENGTH,
-		FILM.RATING,
-	}
-	nameExpr := "UPPER(SUBSTRING({1}, 1, 1))" +
-		" || LOWER(SUBSTRING({1}, 2))" +
-		" || ' '" +
-		" || UPPER(SUBSTRING({2}, 1, 1))" +
-		" || LOWER(SUBSTRING({2}, 2))"
-	q.SelectFields = sq.AliasFields{
-		FILM.FILM_ID.As("fid"),
-		FILM.TITLE,
-		FILM.DESCRIPTION,
-		CATEGORY.NAME.As("category"),
-		FILM.RENTAL_RATE.As("price"),
-		FILM.LENGTH,
-		FILM.RATING,
-		json_array_agg(dialect, sq.Fieldf(nameExpr, ACTOR.FIRST_NAME, ACTOR.LAST_NAME)).As("actors"),
-	}
-	return q
+	v.AsQuery(sq.SQLite.
+		From(CATEGORY).
+		LeftJoin(FILM_CATEGORY, FILM_CATEGORY.CATEGORY_ID.Eq(CATEGORY.CATEGORY_ID)).
+		LeftJoin(FILM, FILM.FILM_ID.Eq(FILM_CATEGORY.FILM_ID)).
+		Join(FILM_ACTOR, FILM_ACTOR.FILM_ID.Eq(FILM.FILM_ID)).
+		Join(ACTOR, ACTOR.ACTOR_ID.Eq(FILM_ACTOR.ACTOR_ID)).
+		GroupBy(
+			FILM.FILM_ID,
+			FILM.TITLE,
+			FILM.DESCRIPTION,
+			CATEGORY.NAME,
+			FILM.RENTAL_RATE,
+			FILM.LENGTH,
+			FILM.RATING,
+		).
+		Select(
+			FILM.FILM_ID.As("fid"),
+			FILM.TITLE,
+			FILM.DESCRIPTION,
+			CATEGORY.NAME.As("category"),
+			FILM.RENTAL_RATE.As("price"),
+			FILM.LENGTH,
+			FILM.RATING,
+			json_array_agg(sq.FieldfDialect(map[string]string{
+				"default": "UPPER(SUBSTRING({1}, 1, 1))" +
+					" || LOWER(SUBSTRING({1}, 2))" +
+					" || ' '" +
+					" || UPPER(SUBSTRING({2}, 1, 1))" +
+					" || LOWER(SUBSTRING({2}, 2))",
+				sq.DialectMySQL: "CONCAT(UPPER(SUBSTRING({1}, 1, 1))" +
+					", LOWER(SUBSTRING({1}, 2))" +
+					", ' '" +
+					", UPPER(SUBSTRING({2}, 1, 1))" +
+					", LOWER(SUBSTRING({2}, 2)))",
+			}, ACTOR.FIRST_NAME, ACTOR.LAST_NAME)).As("actors"),
+		),
+	)
 }
 
 func NEW_SALES_BY_FILM_CATEGORY(dialect, alias string) SALES_BY_FILM_CATEGORY {
@@ -1108,29 +1089,27 @@ type SALES_BY_FILM_CATEGORY struct {
 	TOTAL_SALES sq.NumberField
 }
 
-func (_ SALES_BY_FILM_CATEGORY) DDL(dialect string, v *V) sq.Query {
+func (view SALES_BY_FILM_CATEGORY) DDL(dialect string, v *V) {
 	PAYMENT := NEW_PAYMENT(dialect, "p")
 	RENTAL := NEW_RENTAL(dialect, "r")
 	INVENTORY := NEW_INVENTORY(dialect, "i")
 	FILM := NEW_FILM(dialect, "f")
 	FILM_CATEGORY := NEW_FILM_CATEGORY(dialect, "fc")
 	CATEGORY := NEW_CATEGORY(dialect, "c")
-	var q sq.SelectQuery
-	q.FromTable = PAYMENT
-	q.JoinTables = sq.JoinTables{
-		sq.Join(RENTAL, RENTAL.RENTAL_ID.Eq(PAYMENT.RENTAL_ID)),
-		sq.Join(INVENTORY, INVENTORY.INVENTORY_ID.Eq(RENTAL.INVENTORY_ID)),
-		sq.Join(FILM, FILM.FILM_ID.Eq(INVENTORY.FILM_ID)),
-		sq.Join(FILM_CATEGORY, FILM_CATEGORY.FILM_ID.Eq(FILM.FILM_ID)),
-		sq.Join(CATEGORY, CATEGORY.CATEGORY_ID.Eq(FILM_CATEGORY.CATEGORY_ID)),
-	}
-	q.GroupByFields = sq.Fields{CATEGORY.NAME}
-	q.OrderByFields = sq.Fields{sq.Fieldf("SUM({})", PAYMENT.AMOUNT).Desc()}
-	q.SelectFields = sq.AliasFields{
-		CATEGORY.NAME.As("category"),
-		sq.Fieldf("SUM({})", PAYMENT.AMOUNT).As("total_sales"),
-	}
-	return q
+	v.AsQuery(sq.SQLite.
+		From(PAYMENT).
+		Join(RENTAL, RENTAL.RENTAL_ID.Eq(PAYMENT.RENTAL_ID)).
+		Join(INVENTORY, INVENTORY.INVENTORY_ID.Eq(RENTAL.INVENTORY_ID)).
+		Join(FILM, FILM.FILM_ID.Eq(INVENTORY.FILM_ID)).
+		Join(FILM_CATEGORY, FILM_CATEGORY.FILM_ID.Eq(FILM.FILM_ID)).
+		Join(CATEGORY, CATEGORY.CATEGORY_ID.Eq(FILM_CATEGORY.CATEGORY_ID)).
+		GroupBy(CATEGORY.NAME).
+		OrderBy(sq.Fieldf("SUM({})", PAYMENT.AMOUNT).Desc()).
+		Select(
+			CATEGORY.NAME.As("category"),
+			sq.Fieldf("SUM({})", PAYMENT.AMOUNT).As("total_sales"),
+		),
+	)
 }
 
 func NEW_SALES_BY_STORE(dialect, alias string) SALES_BY_STORE {
@@ -1155,7 +1134,7 @@ type SALES_BY_STORE struct {
 	TOTAL_SALES sq.NumberField
 }
 
-func (_ SALES_BY_STORE) DDL(dialect string, v *V) sq.Query {
+func (view SALES_BY_STORE) DDL(dialect string, v *V) {
 	PAYMENT := NEW_PAYMENT(dialect, "p")
 	RENTAL := NEW_RENTAL(dialect, "r")
 	INVENTORY := NEW_INVENTORY(dialect, "i")
@@ -1164,40 +1143,38 @@ func (_ SALES_BY_STORE) DDL(dialect string, v *V) sq.Query {
 	CITY := NEW_CITY(dialect, "ci")
 	COUNTRY := NEW_COUNTRY(dialect, "co")
 	STAFF := NEW_STAFF(dialect, "m")
-	var q sq.SelectQuery
-	q.FromTable = PAYMENT
-	q.JoinTables = sq.JoinTables{
-		sq.Join(RENTAL, RENTAL.RENTAL_ID.Eq(PAYMENT.RENTAL_ID)),
-		sq.Join(INVENTORY, INVENTORY.INVENTORY_ID.Eq(RENTAL.INVENTORY_ID)),
-		sq.Join(STORE, STORE.STORE_ID.Eq(INVENTORY.STORE_ID)),
-		sq.Join(ADDRESS, ADDRESS.ADDRESS_ID.Eq(STORE.ADDRESS_ID)),
-		sq.Join(CITY, CITY.CITY_ID.Eq(ADDRESS.CITY_ID)),
-		sq.Join(COUNTRY, COUNTRY.COUNTRY_ID.Eq(CITY.COUNTRY_ID)),
-		sq.Join(STAFF, STAFF.STAFF_ID.Eq(STORE.MANAGER_STAFF_ID)),
-	}
-	q.GroupByFields = sq.Fields{
-		COUNTRY.COUNTRY,
-		CITY.CITY,
-		STORE.STORE_ID,
-		STAFF.FIRST_NAME,
-		STAFF.LAST_NAME,
-	}
-	q.OrderByFields = sq.Fields{
-		COUNTRY.COUNTRY,
-		CITY.CITY,
-	}
-	storeExpr := "{} || ',' || {}"
-	managerExpr := "{} || ' ' || {}"
-	if dialect == sq.DialectMySQL {
-		storeExpr = "CONCAT({}, ',', {})"
-		managerExpr = "CONCAT({}, ' ', {})"
-	}
-	q.SelectFields = sq.AliasFields{
-		sq.Fieldf(storeExpr, CITY.CITY, COUNTRY.COUNTRY).As("store"),
-		sq.Fieldf(managerExpr, STAFF.FIRST_NAME, STAFF.LAST_NAME).As("manager"),
-		sq.Fieldf("SUM({})", PAYMENT.AMOUNT).As("total_sales"),
-	}
-	return q
+	v.AsQuery(sq.SQLite.
+		From(PAYMENT).
+		Join(RENTAL, RENTAL.RENTAL_ID.Eq(PAYMENT.RENTAL_ID)).
+		Join(INVENTORY, INVENTORY.INVENTORY_ID.Eq(RENTAL.INVENTORY_ID)).
+		Join(STORE, STORE.STORE_ID.Eq(INVENTORY.STORE_ID)).
+		Join(ADDRESS, ADDRESS.ADDRESS_ID.Eq(STORE.ADDRESS_ID)).
+		Join(CITY, CITY.CITY_ID.Eq(ADDRESS.CITY_ID)).
+		Join(COUNTRY, COUNTRY.COUNTRY_ID.Eq(CITY.COUNTRY_ID)).
+		Join(STAFF, STAFF.STAFF_ID.Eq(STORE.MANAGER_STAFF_ID)).
+		GroupBy(
+			COUNTRY.COUNTRY,
+			CITY.CITY,
+			STORE.STORE_ID,
+			STAFF.FIRST_NAME,
+			STAFF.LAST_NAME,
+		).
+		OrderBy(
+			COUNTRY.COUNTRY,
+			CITY.CITY,
+		).
+		Select(
+			sq.FieldfDialect(map[string]string{
+				"default":       "{} || ',' || {}",
+				sq.DialectMySQL: "CONCAT({}, ',', {})",
+			}, CITY.CITY, COUNTRY.COUNTRY).As("store"),
+			sq.FieldfDialect(map[string]string{
+				"default":       "{} || ' ' || {}",
+				sq.DialectMySQL: "CONCAT({}, ' ', {})",
+			}, STAFF.FIRST_NAME, STAFF.LAST_NAME).As("manager"),
+			sq.Fieldf("SUM({})", PAYMENT.AMOUNT).As("total_sales"),
+		),
+	)
 }
 
 func NEW_STAFF_LIST(dialect, alias string) STAFF_LIST {
@@ -1232,31 +1209,28 @@ type STAFF_LIST struct {
 	SID      sq.NumberField
 }
 
-func (_ STAFF_LIST) DDL(dialect string, v *V) sq.Query {
+func (view STAFF_LIST) DDL(dialect string, v *V) {
 	STAFF := NEW_STAFF(dialect, "s")
 	ADDRESS := NEW_ADDRESS(dialect, "a")
 	CITY := NEW_CITY(dialect, "ci")
 	COUNTRY := NEW_COUNTRY(dialect, "co")
-	var q sq.SelectQuery
-	q.FromTable = STAFF
-	q.JoinTables = sq.JoinTables{
-		sq.Join(ADDRESS, ADDRESS.ADDRESS_ID.Eq(STAFF.ADDRESS_ID)),
-		sq.Join(CITY, CITY.CITY_ID.Eq(ADDRESS.CITY_ID)),
-		sq.Join(COUNTRY, COUNTRY.COUNTRY_ID.Eq(CITY.COUNTRY_ID)),
-	}
-	nameExpr := "{} || ' ' || {}"
-	if dialect == sq.DialectMySQL {
-		nameExpr = "CONCAT({}, ' ', {})"
-	}
-	q.SelectFields = sq.AliasFields{
-		STAFF.STAFF_ID.As("id"),
-		sq.Fieldf(nameExpr, STAFF.FIRST_NAME, STAFF.LAST_NAME).As("name"),
-		ADDRESS.ADDRESS,
-		ADDRESS.POSTAL_CODE.As("zip code"),
-		ADDRESS.PHONE,
-		CITY.CITY,
-		COUNTRY.COUNTRY,
-		STAFF.STORE_ID.As("sid"),
-	}
-	return q
+	v.AsQuery(sq.SQLite.
+		From(STAFF).
+		Join(ADDRESS, ADDRESS.ADDRESS_ID.Eq(STAFF.ADDRESS_ID)).
+		Join(CITY, CITY.CITY_ID.Eq(ADDRESS.CITY_ID)).
+		Join(COUNTRY, COUNTRY.COUNTRY_ID.Eq(CITY.COUNTRY_ID)).
+		Select(
+			STAFF.STAFF_ID.As("id"),
+			sq.FieldfDialect(map[string]string{
+				"default":       "{} || ' ' || {}",
+				sq.DialectMySQL: "CONCAT({}, ' ', {})",
+			}, STAFF.FIRST_NAME, STAFF.LAST_NAME).As("name"),
+			ADDRESS.ADDRESS,
+			ADDRESS.POSTAL_CODE.As("zip code"),
+			ADDRESS.PHONE,
+			CITY.CITY,
+			COUNTRY.COUNTRY,
+			STAFF.STORE_ID.As("sid"),
+		),
+	)
 }
