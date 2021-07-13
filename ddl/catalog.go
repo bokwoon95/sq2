@@ -328,7 +328,7 @@ func (c *Catalog) loadDDLView(ddlView DDLView) error {
 	if err != nil {
 		return fmt.Errorf("view %s loading query: %w", view.ViewName, err)
 	}
-	for _, fieldName := range view.FieldNames {
+	for _, fieldName := range view.Columns {
 		fieldNames[fieldName]++
 	}
 	var missingFields, extraFields []string

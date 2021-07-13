@@ -110,24 +110,24 @@ func (c Column) AppendSQLExclude(dialect string, buf *bytes.Buffer, args *[]inte
 }
 
 type Constraint struct {
-	TableSchema         string
-	TableName           string
-	ConstraintName      string
-	ConstraintType      string
-	Columns             []string
-	Exprs               []string
-	ReferencesSchema    string
-	ReferencesTable     string
-	ReferencesColumns   []string
-	OnUpdate            string
-	OnDelete            string
-	MatchOption         string
-	CheckExpr           string
-	Operators           []string
-	IndexType           string
-	Where               string
-	IsDeferrable        bool
-	IsInitiallyDeferred bool
+	TableSchema         string   `json:",omitempty"`
+	TableName           string   `json:",omitempty"`
+	ConstraintName      string   `json:",omitempty"`
+	ConstraintType      string   `json:",omitempty"`
+	Columns             []string `json:",omitempty"`
+	Exprs               []string `json:",omitempty"`
+	ReferencesSchema    string   `json:",omitempty"`
+	ReferencesTable     string   `json:",omitempty"`
+	ReferencesColumns   []string `json:",omitempty"`
+	OnUpdate            string   `json:",omitempty"`
+	OnDelete            string   `json:",omitempty"`
+	MatchOption         string   `json:",omitempty"`
+	CheckExpr           string   `json:",omitempty"`
+	Operators           []string `json:",omitempty"`
+	IndexType           string   `json:",omitempty"`
+	Where               string   `json:",omitempty"`
+	IsDeferrable        bool     `json:",omitempty"`
+	IsInitiallyDeferred bool     `json:",omitempty"`
 }
 
 type Exclusions []struct {
@@ -144,7 +144,7 @@ type Index struct {
 	Columns     []string `json:",omitempty"`
 	Exprs       []string `json:",omitempty"`
 	Include     []string `json:",omitempty"`
-	Where       string
+	Where       string   `json:",omitempty"`
 }
 
 func generateName(nameType string, tableName string, columnNames ...string) string {

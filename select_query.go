@@ -6,6 +6,11 @@ import (
 	"fmt"
 )
 
+// TODO: change all (SQLite|Postgres|MySQL)SelectQuery to become plain
+// SelectQuery types, instead of embedding SelectQuery. The primary benefit is
+// that any Query that is a (SQLite|Postgres|MySQL)SelectQuery can be type
+// asserted as a SelectQuery, instead having to loop through the possible
+// XXXSelectQuery types. Much better for query introspection.
 type SelectQuery struct {
 	Dialect string
 	// WITH

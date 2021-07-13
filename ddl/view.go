@@ -8,10 +8,13 @@ import (
 )
 
 type View struct {
-	ViewSchema string   `json:",omitempty"`
-	ViewName   string   `json:",omitempty"`
-	FieldNames []string `json:",omitempty"` // can the field names of a view be fetched using sql?
-	SQL        string   `json:",omitempty"`
+	ViewSchema     string    `json:",omitempty"`
+	ViewName       string    `json:",omitempty"`
+	IsMaterialized bool      `json:",omitempty"`
+	Columns        []string  `json:",omitempty"` // can the field names of a view be fetched using sql?
+	Indexes        []Index   `json:",omitempty"`
+	Triggers       []Trigger `json:",omitempty"`
+	Query          string    `json:",omitempty"`
 }
 
 func (view *View) loadQuery(q sq.Query, v *V) error {
@@ -41,9 +44,9 @@ func (view *View) loadQuery(q sq.Query, v *V) error {
 		return err
 	}
 	buf.WriteString(";")
-	view.SQL = buf.String()
+	view.Query = buf.String()
 	if len(args) > 0 {
-		view.SQL, err = sq.Sprintf(dialect, view.SQL, args)
+		view.Query, err = sq.Sprintf(dialect, view.Query, args)
 		if err != nil {
 			return err
 		}
@@ -60,7 +63,7 @@ func (view *View) loadQuery(q sq.Query, v *V) error {
 		if fieldName == "" {
 			return fmt.Errorf("view query %s field #%d has no name and no alias", view.ViewName, i+1)
 		}
-		view.FieldNames = append(view.FieldNames, fieldName)
+		view.Columns = append(view.Columns, fieldName)
 	}
 	return nil
 }
@@ -76,4 +79,37 @@ type V struct {
 	IsMaterialized    bool
 	IsRecursive       bool
 	Triggers          []Trigger
+}
+
+type ViewDiff struct {
+	ViewSchema     string
+	ViewName       string
+	CreateCommand  *CreateViewCommand
+	DropCommand    *DropViewCommand
+	RenameCommand  *RenameViewCommand
+	ReplaceCommand *RenameViewCommand
+	TriggerDiffs   []TriggerDiff
+}
+
+type CreateViewCommand struct {
+	View View
+}
+
+func (cmd *CreateViewCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
+	buf.WriteString(cmd.View.Query)
+	return nil
+}
+
+type DropViewCommand struct {
+	DropIfExists bool
+	ViewSchemas  []string
+	ViewNames    []string
+	DropCascade  bool
+}
+
+type RenameViewCommand struct {
+	AlterViewIfExists bool
+	ViewSchema        string
+	ViewName          string
+	RenameToName      string
 }
