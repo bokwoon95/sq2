@@ -101,9 +101,18 @@ func (cmd *CreateTableCommand) AppendSQL(dialect string, buf *bytes.Buffer, args
 		var newlineWritten bool
 		for i, constraint := range cmd.Table.Constraints {
 			if dialect == sq.DialectSQLite && constraint.ConstraintType == PRIMARY_KEY && len(constraint.Columns) == 1 {
+				// SQLite PRIMARY KEY is always be defined inline with the column,
+				// so we don't have to do it here.
 				continue
 			}
 			if dialect != sq.DialectSQLite && constraint.ConstraintType == FOREIGN_KEY {
+				// FOREIGN KEYs are always defined after all tables have been
+				// created, to avoid referencing tables that have yet to be
+				// created. SQLite is the exception because constraints cannot
+				// be defined outside of CREATE TABLE. However, SQLite foreign
+				// keys can be created even if the referencing tables do not
+				// yet exist, so it's not an issue.
+				// http://sqlite.1065341.n5.nabble.com/Circular-foreign-keys-td14977.html
 				continue
 			}
 			if !newlineWritten {

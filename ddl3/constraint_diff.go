@@ -32,7 +32,7 @@ type AddConstraintCommand struct {
 
 func (cmd *AddConstraintCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
 	if dialect == sq.DialectSQLite {
-		return fmt.Errorf("SQLite does not allow the creating of constraints separately")
+		return fmt.Errorf("sqlite does not allow constraints to be added after table creation")
 	}
 	buf.WriteString("ALTER TABLE ")
 	if cmd.Constraint.TableSchema != "" {
@@ -48,12 +48,12 @@ func (cmd *AddConstraintCommand) AppendSQL(dialect string, buf *bytes.Buffer, ar
 }
 
 func writeConstraint(dialect string, buf *bytes.Buffer, constraint Constraint) error {
-	buf.WriteString(constraint.ConstraintName + " " + constraint.ConstraintType)
+	buf.WriteString(constraint.ConstraintName)
 	switch constraint.ConstraintType {
 	case CHECK:
-		buf.WriteString(" (" + constraint.CheckExpr + ")")
+		buf.WriteString(" CHECK (" + constraint.CheckExpr + ")")
 	case FOREIGN_KEY:
-		buf.WriteString(" (" + strings.Join(constraint.Columns, ", ") + ") REFERENCES ")
+		buf.WriteString(" FOREIGN KEY (" + strings.Join(constraint.Columns, ", ") + ") REFERENCES ")
 		if constraint.ReferencesSchema != "" {
 			buf.WriteString(constraint.ReferencesSchema + ".")
 		}
@@ -71,8 +71,11 @@ func writeConstraint(dialect string, buf *bytes.Buffer, constraint Constraint) e
 			buf.WriteString(" ON DELETE " + constraint.OnDelete)
 		}
 	case EXCLUDE:
+		if dialect != sq.DialectPostgres {
+			return fmt.Errorf("%s does not support EXCLUDE constraints", dialect)
+		}
 		if constraint.IndexType != "" {
-			buf.WriteString(" USING " + constraint.IndexType)
+			buf.WriteString(" EXCLUDE USING " + constraint.IndexType)
 		}
 		buf.WriteString(" (")
 		for i := range constraint.Columns {
@@ -98,14 +101,21 @@ func writeConstraint(dialect string, buf *bytes.Buffer, constraint Constraint) e
 			buf.WriteString(" WHERE (" + constraint.Where + ")")
 		}
 	default:
-		buf.WriteString(" (" + strings.Join(constraint.Columns, ", ") + ")")
+		buf.WriteString(" " + constraint.ConstraintType + " (" + strings.Join(constraint.Columns, ", ") + ")")
 	}
-	var deferSupported bool
-	if (dialect == sq.DialectPostgres && constraint.ConstraintType != CHECK) ||
-		(dialect == sq.DialectSQLite && constraint.ConstraintType == FOREIGN_KEY) {
-		deferSupported = true
-	}
-	if deferSupported && constraint.IsDeferrable {
+	if constraint.IsDeferrable {
+		switch dialect {
+		case sq.DialectPostgres:
+			if constraint.ConstraintType == CHECK {
+				return fmt.Errorf("postgres CHECK constraints are not deferrable")
+			}
+		case sq.DialectSQLite:
+			if constraint.ConstraintType != FOREIGN_KEY {
+				return fmt.Errorf("sqlite %s constraints are not deferrable", constraint.ConstraintType)
+			}
+		default:
+			return fmt.Errorf("%s does not support deferrable constraints", dialect)
+		}
 		buf.WriteString(" DEFERRABLE")
 		if constraint.IsInitiallyDeferred {
 			buf.WriteString(" INITIALLY DEFERRED")

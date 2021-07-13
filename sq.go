@@ -122,12 +122,6 @@ type DB interface {
 	ExecContext(ctx context.Context, query string, args ...interface{}) (sql.Result, error)
 }
 
-// TODO: if we are no longer implementing any tx utility functions, we can remove this interface.
-type Transactor interface {
-	Begin() (*sql.Tx, error)
-	BeginTx(ctx context.Context, opts *sql.TxOptions) (*sql.Tx, error)
-}
-
 func isExplodableSlice(value interface{}) bool {
 	valueType := reflect.TypeOf(value)
 	if valueType == nil {
@@ -172,15 +166,7 @@ func explodeSlice(dialect string, buf *bytes.Buffer, args *[]interface{}, params
 }
 
 func QuoteIdentifier(dialect string, identifier string) string {
-	// TODO: think about doing away this function entirely. People shouldn't be
-	// using non-standaed identifier names at all. All it's doing is slowing
-	// down the happy path, which is that identifier names aren't quoted.  The
-	// other alternative is to always quote all identifiers.
 	var needsQuoting bool
-	// TODO: Run each loop iteration in parallel. Wait for the first "success"
-	// (finding a character that warrants quoting), then terminate the rest of
-	// the goroutines. Else if all goroutines exit without any reporting, then
-	// the identifier doesn't have to be quoted.
 	for i, char := range identifier {
 		if i == 0 && (char >= '0' && char <= '9') {
 			// first character cannot be a number
@@ -199,10 +185,10 @@ func QuoteIdentifier(dialect string, identifier string) string {
 			// configuration)
 			fallthrough
 		default:
-			// In general there may be some other characters that are allowed
-			// in unquoted identifiers (e.g. '$'), but different databases
-			// allow different things. We only recognize a-z0-9 as the true
-			// standard.
+			// If the character is anything else, we quote. In general there
+			// may be some other characters that are allowed in unquoted
+			// identifiers (e.g. '$'), but different databases allow different
+			// things. We only recognize _a-z0-9 as the true standard.
 			needsQuoting = true
 			break
 		}
