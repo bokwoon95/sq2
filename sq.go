@@ -200,7 +200,7 @@ func QuoteIdentifier(dialect string, identifier string) string {
 	case DialectMySQL:
 		return "`" + EscapeQuote(identifier, '`') + "`"
 	case DialectSQLServer:
-		return "[" + EscapeQuote(identifier, '[') + "]"
+		return "[" + EscapeQuote(identifier, ']') + "]"
 	default:
 		return `"` + EscapeQuote(identifier, '"') + `"`
 	}
