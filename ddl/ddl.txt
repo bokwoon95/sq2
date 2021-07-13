@@ -4,3 +4,4 @@ view.go
 table.go
 schema.go
 t.go
+catalog.go
