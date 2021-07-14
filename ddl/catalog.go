@@ -105,6 +105,12 @@ func WithFunctions(functions ...Function) CatalogOption {
 	}
 }
 
+// Maybe I need a different function category, called 'independent functions'.
+// nearform/temporal_table's versioning() plpgsql function and the
+// last_update_trg() function are examples of independent functions.
+// 'Function' and 'DependentFunction'
+
+// TODO: the problem with this is that it provides no way for the user to indicate that the function contains a table.
 func WithFunctionFiles(fsys fs.FS, filenames ...string) CatalogOption {
 	return func(c *Catalog) error {
 		var err error
