@@ -20,6 +20,12 @@ DropTableCommand/DropViewCommand/DropFunctionCommand and append it into the
 MigrationCommands struct. You can hen either execute the MigrationCommands
 directly or write it out to a file, the choice is yours.
 
+v.AsQuery()
+v.SQL() // used if you have the view literal
+This means the View struct must now store the full view definition, and not
+just the select query part. It also means we have to omit the IsMaterialized
+part of the struct. Everything compiles down to an SQL string.
+
 automigrate ops:
 - add schema
 - add table
