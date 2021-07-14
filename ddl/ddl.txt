@@ -7,6 +7,13 @@ schema.go
 t.go
 catalog.go
 
+dont bother with diffing catalogs to migrations at first:
+func (c Catalog) GenerateDDL(w io.Writer) error
+func (c Catalog) GenerateStructs(w io.Writer) error
+GenerateDDL will first create an intermediate CatalogMigration, which then gets
+transformed into a MigrationCommands struct, which then gets written out into
+the io.Writer.
+
 automigrate ops:
 - add schema
 - add table
