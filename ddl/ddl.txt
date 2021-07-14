@@ -1,10 +1,20 @@
 ddl.go | lex.go
+column.go | constraint.go
 trigger.go | trigger_migration.go | function.go | function_migration.go
 view.go | view_migration.go
 table.go | table_migration.go
 schema.go
 t.go
 catalog.go
+
+automigrate ops:
+- add schema
+- add table
+- add column
+- alter column nullable, default
+- change index columns
+generate migration ops:
+- all automigrate ops
 
 trigger_migration.go
 function_migration.go
