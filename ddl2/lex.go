@@ -5,6 +5,8 @@ import (
 	"strings"
 	"unicode"
 	"unicode/utf8"
+
+	"github.com/bokwoon95/sq"
 )
 
 func cutValue(s string) (value, rest string, err error) {
@@ -55,7 +57,7 @@ func lexValue(s string) (value string, modifiers [][2]string, modifierIndex map[
 	if err != nil {
 		return "", nil, modifierIndex, err
 	}
-	return value, modifiers, modifierIndex, err
+	return value, modifiers, modifierIndex, nil
 }
 
 func lexModifiers(s string) (modifiers [][2]string, modifierIndex map[string]int, err error) {
@@ -79,4 +81,59 @@ func lexModifiers(s string) (modifiers [][2]string, modifierIndex map[string]int
 		currentIndex++
 	}
 	return modifiers, modifierIndex, nil
+}
+
+func popWord(dialect, s string) (word, rest string) {
+	s = strings.TrimLeft(s, " \t\n\v\f\r\u0085\u00A0")
+	if s == "" {
+		return "", ""
+	}
+	var openingQuote rune
+	var insideIdentifier bool
+	var splitAt int
+	for i := 0; i < len(s); {
+		r, size := utf8.DecodeRuneInString(s[i:])
+		i += size
+		splitAt = i
+		if insideIdentifier {
+			switch openingQuote {
+			case '\'', '"', '`':
+				if r == openingQuote {
+					if i < len(s) && rune(s[i]) == openingQuote {
+						i += 1
+					} else {
+						insideIdentifier = false
+					}
+				}
+			case '[':
+				if r == ']' {
+					if i < len(s) && s[i] == ']' {
+						i += 1
+					} else {
+						insideIdentifier = false
+					}
+				}
+			}
+			continue
+		}
+		if r == '"' || (r == '`' && dialect == sq.DialectMySQL) || (r == '[' && dialect == sq.DialectSQLServer) {
+			insideIdentifier = true
+			openingQuote = r
+			continue
+		}
+		if unicode.IsSpace(r) {
+			splitAt -= size
+			break
+		}
+	}
+	return s[:splitAt], s[splitAt:]
+}
+
+func popWords(dialect, s string, num int) (words []string, rest string) {
+	word, rest := "", s
+	for i := 0; i < num && rest != ""; i++ {
+		word, rest = popWord(dialect, rest)
+		words = append(words, word)
+	}
+	return words, rest
 }
