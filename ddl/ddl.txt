@@ -10,9 +10,15 @@ catalog.go
 dont bother with diffing catalogs to migrations at first:
 func (c Catalog) GenerateDDL(w io.Writer) error
 func (c Catalog) GenerateStructs(w io.Writer) error
-GenerateDDL will first create an intermediate CatalogMigration, which then gets
-transformed into a MigrationCommands struct, which then gets written out into
-the io.Writer.
+GenerateDDL will append commands directly into a MigrationCommands struct,
+bypassing the CatalogMigration struct, because we have no need for it.
+
+to clean a database (for example to reset its state to zero), all you have to
+do is to loop the gotCatalog Catalog struct, for each table and view and
+function you simply convert it to the corresponding
+DropTableCommand/DropViewCommand/DropFunctionCommand and append it into the
+MigrationCommands struct. You can hen either execute the MigrationCommands
+directly or write it out to a file, the choice is yours.
 
 automigrate ops:
 - add schema
