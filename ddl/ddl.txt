@@ -76,3 +76,6 @@ type MigrationCommands struct {
 	RenameCommands        []Command
 	DropCommands          []Command
 }
+
+Idea: MigrateCatalog() should generate all of the drop (unused) X commands as well. AutoMigrate will simply ignore the drop queries.
+    but what about the scheduled drop (old <-> new) queries, like for migrating tables in sqlite?

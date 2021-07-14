@@ -8,7 +8,7 @@ import (
 type Function struct {
 	FunctionSchema string `json:",omitempty"`
 	FunctionName   string `json:",omitempty"`
-	ContainsTable  bool   `json:",omitempty"`
+	IsDependent    bool   `json:",omitempty"`
 	SQL            string `json:",omitempty"`
 }
 
