@@ -18,8 +18,8 @@ type Constraint struct {
 	ReferencesSchema    string   `json:",omitempty"`
 	ReferencesTable     string   `json:",omitempty"`
 	ReferencesColumns   []string `json:",omitempty"`
-	OnUpdate            string   `json:",omitempty"`
-	OnDelete            string   `json:",omitempty"`
+	UpdateRule          string   `json:",omitempty"`
+	DeleteRule          string   `json:",omitempty"`
 	MatchOption         string   `json:",omitempty"`
 	CheckExpr           string   `json:",omitempty"`
 	Operators           []string `json:",omitempty"`
@@ -97,11 +97,11 @@ func writeConstraintDefinition(dialect string, buf *bytes.Buffer, constraint Con
 		if constraint.MatchOption != "" {
 			buf.WriteString(" " + constraint.MatchOption)
 		}
-		if constraint.OnUpdate != "" {
-			buf.WriteString(" ON UPDATE " + constraint.OnUpdate)
+		if constraint.UpdateRule != "" {
+			buf.WriteString(" ON UPDATE " + constraint.UpdateRule)
 		}
-		if constraint.OnDelete != "" {
-			buf.WriteString(" ON DELETE " + constraint.OnDelete)
+		if constraint.DeleteRule != "" {
+			buf.WriteString(" ON DELETE " + constraint.DeleteRule)
 		}
 	case EXCLUDE:
 		if dialect != sq.DialectPostgres {
