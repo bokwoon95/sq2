@@ -97,7 +97,7 @@ func Test_AddColumnCommand(t *testing.T) {
 		}
 	}
 
-	t.Run("postgres identity column", func(t *testing.T) {
+	t.Run("(dialect == postgres) IDENTITY column", func(t *testing.T) {
 		t.Parallel()
 		var tt TT
 		tt.item = &AddColumnCommand{
@@ -115,7 +115,7 @@ func Test_AddColumnCommand(t *testing.T) {
 		assert(t, tt)
 	})
 
-	t.Run("postgres generated column", func(t *testing.T) {
+	t.Run("(dialect == postgres) GENERATED column", func(t *testing.T) {
 		t.Parallel()
 		var tt TT
 		tt.item = &AddColumnCommand{
@@ -131,7 +131,7 @@ func Test_AddColumnCommand(t *testing.T) {
 		assert(t, tt)
 	})
 
-	t.Run("postgres autoincrement column", func(t *testing.T) {
+	t.Run("(dialect == postgres) AUTOINCREMENT column", func(t *testing.T) {
 		t.Parallel()
 		var tt TT
 		tt.item = &AddColumnCommand{
@@ -148,7 +148,7 @@ func Test_AddColumnCommand(t *testing.T) {
 		}
 	})
 
-	t.Run("postgres generated virtual column", func(t *testing.T) {
+	t.Run("(dialect == postgres) GENERATED VIRTUAL column", func(t *testing.T) {
 		t.Parallel()
 		var tt TT
 		tt.item = &AddColumnCommand{
@@ -163,6 +163,235 @@ func Test_AddColumnCommand(t *testing.T) {
 		if err == nil {
 			t.Fatal("expected error but got nil")
 		}
+	})
+
+	t.Run("(dialect != postgres) add column if not exists", func(t *testing.T) {
+		t.Parallel()
+		var tt TT
+		tt.item = &AddColumnCommand{
+			AddIfNotExists: true,
+		}
+		tt.dialect = sq.DialectSQLite
+		_, _, _, err := sq.ToSQL(tt.dialect, tt.item)
+		if err == nil {
+			t.Fatal("expected error but got nil")
+		}
+	})
+
+	t.Run("(dialect != mysql) column with ON UPDATE CURRENT_TIMESTAMP", func(t *testing.T) {
+		t.Parallel()
+		var tt TT
+		tt.item = &AddColumnCommand{
+			Column: Column{
+				ColumnName:               "last_update",
+				ColumnType:               "TIMESTAMPTZ",
+				OnUpdateCurrentTimestamp: true,
+			},
+		}
+		tt.dialect = sq.DialectPostgres
+		_, _, _, err := sq.ToSQL(tt.dialect, tt.item)
+		if err == nil {
+			t.Fatal("expected error but got nil")
+		}
+	})
+
+	t.Run("(dialect == sqlite) PRIMARY KEY column", func(t *testing.T) {
+		t.Parallel()
+		var tt TT
+		tt.item = &AddColumnCommand{
+			Column: Column{
+				ColumnName:   "actor_id",
+				ColumnType:   "INTEGER",
+				IsPrimaryKey: true,
+			},
+		}
+		tt.dialect = sq.DialectSQLite
+		_, _, _, err := sq.ToSQL(tt.dialect, tt.item)
+		if err == nil {
+			t.Fatal("expected error but got nil")
+		}
+	})
+
+	t.Run("(dialect == sqlite) UNIQUE column", func(t *testing.T) {
+		t.Parallel()
+		var tt TT
+		tt.item = &AddColumnCommand{
+			Column: Column{
+				ColumnName: "actor_id",
+				ColumnType: "INTEGER",
+				IsUnique:   true,
+			},
+		}
+		tt.dialect = sq.DialectSQLite
+		_, _, _, err := sq.ToSQL(tt.dialect, tt.item)
+		if err == nil {
+			t.Fatal("expected error but got nil")
+		}
+	})
+
+	t.Run("(dialect == sqlite) NOT NULL column without a DEFAULT value", func(t *testing.T) {
+		t.Parallel()
+		var tt TT
+		tt.item = &AddColumnCommand{
+			Column: Column{
+				ColumnName: "actor_id",
+				ColumnType: "INTEGER",
+				IsNotNull:  true,
+			},
+		}
+		tt.dialect = sq.DialectSQLite
+		_, _, _, err := sq.ToSQL(tt.dialect, tt.item)
+		if err == nil {
+			t.Fatal("expected error but got nil")
+		}
+	})
+
+	t.Run("(dialect == sqlite) NOT NULL column with an expression as DEFAULT value", func(t *testing.T) {
+		t.Parallel()
+		var tt TT
+		tt.item = &AddColumnCommand{
+			Column: Column{
+				ColumnName:    "actor_id",
+				ColumnType:    "INTEGER",
+				IsNotNull:     true,
+				ColumnDefault: "(1 + 2 + 3)",
+			},
+		}
+		tt.dialect = sq.DialectSQLite
+		_, _, _, err := sq.ToSQL(tt.dialect, tt.item)
+		if err == nil {
+			t.Fatal("expected error but got nil")
+		}
+	})
+
+	t.Run("(dialect == sqlite) FOREIGN KEY column with non-null DEFAULT value", func(t *testing.T) {
+		t.Parallel()
+		var tt TT
+		tt.item = &AddColumnCommand{
+			Column: Column{
+				ColumnName:    "country_id",
+				ColumnType:    "INT",
+				ColumnDefault: "22",
+			},
+			ReferencesTable:  "country",
+			ReferencesColumn: "country_id",
+		}
+		tt.dialect = sq.DialectSQLite
+		_, _, _, err := sq.ToSQL(tt.dialect, tt.item)
+		if err == nil {
+			t.Fatal("expected error but got nil")
+		}
+	})
+
+	t.Run("(dialect == sqlite) GENERATED STORED column", func(t *testing.T) {
+		t.Parallel()
+		var tt TT
+		tt.item = &AddColumnCommand{
+			Column: Column{
+				ColumnName:          "full_name",
+				ColumnType:          "TEXT",
+				GeneratedExpr:       "first_name || ' ' || last_name",
+				GeneratedExprStored: true,
+			},
+		}
+		tt.dialect = sq.DialectSQLite
+		_, _, _, err := sq.ToSQL(tt.dialect, tt.item)
+		if err == nil {
+			t.Fatal("expected error but got nil")
+		}
+	})
+
+	t.Run("(dialect == sqlite) IDENTITY column", func(t *testing.T) {
+		t.Parallel()
+		var tt TT
+		tt.item = &AddColumnCommand{
+			Column: Column{
+				ColumnName: "actor_id",
+				ColumnType: "INT",
+				Identity:   BY_DEFAULT_AS_IDENTITY,
+			},
+		}
+		tt.dialect = sq.DialectSQLite
+		_, _, _, err := sq.ToSQL(tt.dialect, tt.item)
+		if err == nil {
+			t.Fatal("expected error but got nil")
+		}
+	})
+
+	t.Run("(dialect == sqlite) AUTOINCREMENT column", func(t *testing.T) {
+		t.Parallel()
+		var tt TT
+		tt.item = &AddColumnCommand{
+			Column: Column{
+				ColumnName:    "actor_id",
+				ColumnType:    "INT",
+				Autoincrement: true,
+			},
+		}
+		tt.dialect = sq.DialectSQLite
+		tt.wantQuery = "ADD COLUMN actor_id INT AUTOINCREMENT"
+		assert(t, tt)
+	})
+
+	t.Run("(dialect == sqlite) column with COLLATE", func(t *testing.T) {
+		t.Parallel()
+		var tt TT
+		tt.item = &AddColumnCommand{
+			Column: Column{
+				ColumnName:    "first_name",
+				ColumnType:    "TEXT",
+				CollationName: "nocase",
+			},
+		}
+		tt.dialect = sq.DialectSQLite
+		tt.wantQuery = "ADD COLUMN first_name TEXT COLLATE nocase"
+		assert(t, tt)
+	})
+
+	t.Run("(dialect == sqlite) GENERATED VIRTUAL column", func(t *testing.T) {
+		t.Parallel()
+		var tt TT
+		tt.item = &AddColumnCommand{
+			Column: Column{
+				ColumnName:    "full_name",
+				ColumnType:    "TEXT",
+				GeneratedExpr: "first_name || ' ' || last_name",
+			},
+		}
+		tt.dialect = sq.DialectSQLite
+		tt.wantQuery = "ADD COLUMN full_name TEXT GENERATED ALWAYS AS (first_name || ' ' || last_name) VIRTUAL"
+		assert(t, tt)
+	})
+
+	t.Run("(dialect == mysql) AUTOINCREMENT column", func(t *testing.T) {
+		t.Parallel()
+		var tt TT
+		tt.item = &AddColumnCommand{
+			Column: Column{
+				ColumnName:    "actor_id",
+				ColumnType:    "INT",
+				Autoincrement: true,
+			},
+		}
+		tt.dialect = sq.DialectMySQL
+		tt.wantQuery = "ADD COLUMN actor_id INT AUTO_INCREMENT"
+		assert(t, tt)
+	})
+
+	t.Run("(dialect == mysql) column with ON UPDATE CURRENT_TIMESTAMP", func(t *testing.T) {
+		t.Parallel()
+		var tt TT
+		tt.item = &AddColumnCommand{
+			Column: Column{
+				ColumnName:               "last_update",
+				ColumnType:               "DATETIME",
+				ColumnDefault:            "CURRENT_TIMESTAMP",
+				OnUpdateCurrentTimestamp: true,
+			},
+		}
+		tt.dialect = sq.DialectMySQL
+		tt.wantQuery = "ADD COLUMN last_update DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP"
+		assert(t, tt)
 	})
 }
 
