@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"sort"
+	"strings"
 
 	"github.com/bokwoon95/sq"
 )
@@ -63,20 +64,43 @@ type AddColumnCommand struct {
 }
 
 func (cmd *AddColumnCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
-	buf.WriteString("ALTER TABLE ")
-	if cmd.Column.TableSchema != "" {
-		buf.WriteString(sq.QuoteIdentifier(dialect, cmd.Column.TableSchema) + ".")
+	buf.WriteString("ADD COLUMN ")
+	if cmd.AddIfNotExists {
+		if dialect != sq.DialectPostgres {
+			return fmt.Errorf("%s does not support ADD COLUMN IF NOT EXISTS", dialect)
+		}
+		buf.WriteString("IF NOT EXISTS ")
 	}
-	buf.WriteString(sq.QuoteIdentifier(dialect, cmd.Column.TableName) + " ADD COLUMN " + sq.QuoteIdentifier(dialect, cmd.Column.ColumnName))
-	err := writeColumn(dialect, buf, cmd.Column)
+	if dialect == sq.DialectSQLite {
+		if cmd.Column.IsPrimaryKey {
+			return fmt.Errorf("sqlite does not allow adding a PRIMARY KEY column after table creation")
+		}
+		if cmd.Column.IsUnique {
+			return fmt.Errorf("sqlite does not allow adding a UNIQUE column after table creation")
+		}
+		if cmd.Column.IsNotNull {
+			if cmd.Column.ColumnDefault == "" || strings.EqualFold(cmd.Column.ColumnDefault, "NULL") {
+				return fmt.Errorf("sqlite does not allow adding a NOT NULL column without a non-null DEFAULT value")
+			}
+			if cmd.Column.ColumnDefault[0] == '(' && cmd.Column.ColumnDefault[len(cmd.Column.ColumnDefault)-1] == ')' {
+				return fmt.Errorf("sqlite does not allow adding a NOT NULL column with an expression as the DEFAULT value")
+			}
+		}
+		if (cmd.ReferencesTable != "" || cmd.ReferencesColumn != "") && cmd.Column.ColumnDefault != "" && !strings.EqualFold(cmd.Column.ColumnDefault, "NULL") {
+			return fmt.Errorf("sqlite does not allow adding a FOREIGN KEY column with a non-null DEFAULT value")
+		}
+		if cmd.Column.GeneratedExpr != "" && cmd.Column.GeneratedExprStored {
+			return fmt.Errorf("sqlite does not allow adding GENERATED STORED columns after table creation (use GENERATED VIRTUAL)")
+		}
+	}
+	err := writeColumnDefinition(dialect, buf, cmd.Column)
 	if err != nil {
 		return fmt.Errorf("ADD COLUMN: %w", err)
 	}
-	buf.WriteString(";")
 	return nil
 }
 
-func writeColumn(dialect string, buf *bytes.Buffer, column Column) error {
+func writeColumnDefinition(dialect string, buf *bytes.Buffer, column Column) error {
 	buf.WriteString(sq.QuoteIdentifier(dialect, column.ColumnName))
 	if column.ColumnType != "" {
 		buf.WriteString(" " + column.ColumnType)
@@ -88,7 +112,8 @@ func writeColumn(dialect string, buf *bytes.Buffer, column Column) error {
 		buf.WriteString(" DEFAULT " + column.ColumnDefault)
 	}
 	if column.IsPrimaryKey && dialect == sq.DialectSQLite {
-		// only SQLite primary key is defined inline, others are defined as separate constraints
+		// only SQLite primary key is defined inline with column, other
+		// dialects will define primary key constraints separately
 		buf.WriteString(" PRIMARY KEY")
 	}
 	if column.Autoincrement && dialect != sq.DialectMySQL && dialect != sq.DialectSQLite {
@@ -135,14 +160,85 @@ func writeColumn(dialect string, buf *bytes.Buffer, column Column) error {
 }
 
 type AlterColumnCommand struct {
-	Column            Column
-	DropDefault       bool
-	DropNotNull       bool
-	DropExpr          bool
-	DropExprIfExists  bool
-	DropIdentity      bool
-	DropAutoincrement bool
-	UsingExpr         string
+	Column               Column
+	DropDefault          bool
+	DropNotNull          bool
+	DropExpr             bool
+	DropExprIfExists     bool
+	DropIdentity         bool
+	DropIdentityIfExists bool
+	DropAutoincrement    bool
+	UsingExpr            string
+}
+
+func (cmd *AlterColumnCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
+	if dialect == sq.DialectSQLite {
+		return fmt.Errorf("sqlite not not support altering columns after table creation")
+	}
+	if dialect == sq.DialectMySQL {
+		buf.WriteString("MODIFY COLUMN ")
+		err := writeColumnDefinition(dialect, buf, cmd.Column)
+		if err != nil {
+			return fmt.Errorf("MODIFY COLUMN: %w", err)
+		}
+		return nil
+	}
+	// alterColumnName abstracts away the boilerplate of writing "ALTER COLUMN
+	// $COLUMN_NAME" every time. It also prepends each new ALTER COLUMN with a
+	// newline character (except for the first ALTER COLUMN because the initial
+	// newline will be handled by the parent ALTER TABLE command).
+	var written bool
+	alterColumnName := func() {
+		if !written {
+			written = true
+		} else {
+			buf.WriteString("\n")
+		}
+		buf.WriteString("ALTER COLUMN " + sq.QuoteIdentifier(dialect, cmd.Column.ColumnName))
+	}
+	// everything after this point only targets postgres
+	if cmd.Column.ColumnType != "" {
+		alterColumnName()
+		buf.WriteString(" SET DATA TYPE " + cmd.Column.ColumnType)
+		if cmd.Column.CollationName != "" {
+			buf.WriteString(` COLLATE "` + sq.EscapeQuote(cmd.Column.CollationName, '"') + `"`)
+		}
+		if cmd.UsingExpr != "" {
+			buf.WriteString(" USING " + cmd.UsingExpr)
+		}
+	}
+	if cmd.DropDefault {
+		alterColumnName()
+		buf.WriteString(" DROP DEFAULT")
+	} else if cmd.Column.ColumnDefault != "" {
+		alterColumnName()
+		buf.WriteString(" SET DEFAULT " + cmd.Column.ColumnDefault)
+	}
+	if cmd.DropNotNull {
+		alterColumnName()
+		buf.WriteString(" DROP NOT NULL")
+	} else if cmd.Column.IsNotNull {
+		alterColumnName()
+		buf.WriteString(" SET NOT NULL")
+	}
+	if cmd.DropExpr {
+		alterColumnName()
+		buf.WriteString(" DROP EXPRESSION")
+		if cmd.DropExprIfExists {
+			buf.WriteString(" IF EXISTS")
+		}
+	}
+	if cmd.DropIdentity {
+		alterColumnName()
+		buf.WriteString(" DROP IDENTITY")
+		if cmd.DropIdentityIfExists {
+			buf.WriteString(" IF EXISTS")
+		}
+	} else if cmd.Column.Identity != "" {
+		alterColumnName()
+		buf.WriteString(" ADD GENERATED " + cmd.Column.Identity)
+	}
+	return nil
 }
 
 type DropColumnCommand struct {
@@ -151,7 +247,30 @@ type DropColumnCommand struct {
 	DropCascade  bool
 }
 
+func (cmd *DropColumnCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
+	buf.WriteString("DROP COLUMN ")
+	if cmd.DropIfExists {
+		if dialect != sq.DialectPostgres {
+			return fmt.Errorf("%s does not support DROP COLUMN IF EXISTS", dialect)
+		}
+		buf.WriteString("IF EXISTS ")
+	}
+	buf.WriteString(sq.QuoteIdentifier(dialect, cmd.ColumnName))
+	if cmd.DropCascade {
+		if dialect != sq.DialectPostgres {
+			return fmt.Errorf("%s does not support DROP COLUMN ... CASCADE", dialect)
+		}
+		buf.WriteString(" CASCADE")
+	}
+	return nil
+}
+
 type RenameColumnCommand struct {
 	ColumnName   string
 	RenameToName string
+}
+
+func (cmd *RenameColumnCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
+	buf.WriteString("RENAME COLUMN " + sq.QuoteIdentifier(dialect, cmd.ColumnName) + " TO " + sq.QuoteIdentifier(dialect, cmd.RenameToName))
+	return nil
 }

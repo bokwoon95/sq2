@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	"github.com/bokwoon95/sq"
-	"github.com/google/uuid"
 )
 
 type Index struct {
@@ -90,20 +89,4 @@ type RenameIndexCommand struct {
 	TableName          string
 	IndexName          string
 	RenameToName       string
-}
-
-var _ = uuid.UUID{}
-
-var _ = func() {
-	setuuid(uuid.Nil)
-	uuid.Nil.Value()
-	uuid.Nil.Scan(nil)
-	uuid.Nil = getuuid()
-}
-
-func setuuid(value [16]byte) {
-}
-
-func getuuid() [16]byte {
-	return [16]byte{}
 }
