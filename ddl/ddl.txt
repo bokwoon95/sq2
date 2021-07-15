@@ -10,12 +10,14 @@ catalog.go
 step 1:
 Column | Constraint | Trigger | Function | View | Table | Schema | Catalog
 step 2:
-func (c *Catalog) loadDB(db sq.DB)
-func (tbl *Table) loadTable(table sq.Table)
-func (vw *View) loadDDLView(ddlView DDLView)
-func (c *Catalog) loadFunction(function Function)
-func (c *Catalog) loadTable(table sq.Table)
-func (c *Catalog) loadDDLView(ddlView DDLView)
+func (c *Catalog) ReadDB(db sq.DB) error
+func (tbl *Table) ReadTable(table sq.Table) error
+func (tbl *Table) WriteDDL(w io.Writer) error
+func (tbl *Table) WriteStruct(w io.Writer) error
+func (vw *View) ReadDDLView(ddlView DDLView) error
+func (c *Catalog) readFunction(function Function)
+func (c *Catalog) readTable(table sq.Table)
+func (c *Catalog) readDDLView(ddlView DDLView)
 step 3:
 Command
 MigrationCommands
