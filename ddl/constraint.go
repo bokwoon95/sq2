@@ -30,26 +30,54 @@ type Constraint struct {
 }
 
 type AddConstraintCommand struct {
-	Constraint  Constraint
-	IndexSchema string
-	IndexName   string
-	IsNotValid  bool
+	Constraint Constraint
+	IndexName  string
+	IsNotValid bool
 }
 
 func (cmd *AddConstraintCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
 	if dialect == sq.DialectSQLite {
 		return fmt.Errorf("sqlite does not allow constraints to be added after table creation")
 	}
-	buf.WriteString("ALTER TABLE ")
-	if cmd.Constraint.TableSchema != "" {
-		buf.WriteString(sq.QuoteIdentifier(dialect, cmd.Constraint.TableSchema) + ".")
+	buf.WriteString("ADD CONSTRAINT " + sq.QuoteIdentifier(dialect, cmd.Constraint.ConstraintName))
+	if cmd.IndexName != "" {
+		if dialect != sq.DialectPostgres {
+			return fmt.Errorf("%s does not allow the creation of constraints using an index", dialect)
+		}
+		if cmd.Constraint.ConstraintType != PRIMARY_KEY && cmd.Constraint.ConstraintType != UNIQUE {
+			return fmt.Errorf("postgres only allows PIRMARY KEY and UNIQUE constraints to be added using an index")
+		}
+		buf.WriteString(" " + cmd.Constraint.ConstraintType + " USING INDEX " + sq.QuoteIdentifier(dialect, cmd.IndexName))
+		if cmd.Constraint.IsDeferrable {
+			buf.WriteString(" DEFERRABLE")
+			if cmd.Constraint.IsInitiallyDeferred {
+				buf.WriteString(" INITIALLY DEFERRED")
+			} else {
+				buf.WriteString(" INITIALLY IMMEDIATE")
+			}
+		}
+	} else {
+		err := writeConstraintDefinition(dialect, buf, cmd.Constraint)
+		if err != nil {
+			return err
+		}
 	}
-	buf.WriteString(sq.QuoteIdentifier(dialect, cmd.Constraint.TableName) + " ADD CONSTRAINT " + sq.QuoteIdentifier(dialect, cmd.Constraint.ConstraintName))
-	err := writeConstraintDefinition(dialect, buf, cmd.Constraint)
-	if err != nil {
-		return err
+	if cmd.IsNotValid {
+		switch dialect {
+		case sq.DialectPostgres:
+			if cmd.Constraint.ConstraintType != CHECK && cmd.Constraint.ConstraintType != FOREIGN_KEY {
+				return fmt.Errorf("postgres %s constraints cannot be NOT VALID", cmd.Constraint.ConstraintType)
+			}
+			buf.WriteString(" NOT VALID")
+		case sq.DialectMySQL:
+			if cmd.Constraint.ConstraintType != CHECK {
+				return fmt.Errorf("mysql %s constraints cannot be NOT ENFORCED", cmd.Constraint.ConstraintType)
+			}
+			buf.WriteString(" NOT ENFORCED")
+		default:
+			return fmt.Errorf("%s does not allow NOT VALID constraints", dialect)
+		}
 	}
-	buf.WriteString(";")
 	return nil
 }
 
