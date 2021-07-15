@@ -170,6 +170,10 @@ func Test_AddColumnCommand(t *testing.T) {
 		var tt TT
 		tt.item = &AddColumnCommand{
 			AddIfNotExists: true,
+			Column: Column{
+				ColumnName: "first_name",
+				ColumnType: "TEXT",
+			},
 		}
 		tt.dialect = sq.DialectSQLite
 		_, _, _, err := sq.ToSQL(tt.dialect, tt.item)
