@@ -24,7 +24,7 @@ type Constraint struct {
 	CheckExpr           string   `json:",omitempty"`
 	Operators           []string `json:",omitempty"`
 	IndexType           string   `json:",omitempty"`
-	Where               string   `json:",omitempty"`
+	Predicate           string   `json:",omitempty"`
 	IsDeferrable        bool     `json:",omitempty"`
 	IsInitiallyDeferred bool     `json:",omitempty"`
 }
@@ -130,8 +130,8 @@ func writeConstraintDefinition(dialect string, buf *bytes.Buffer, constraint Con
 			}
 		}
 		buf.WriteString(")")
-		if constraint.Where != "" {
-			buf.WriteString(" WHERE (" + constraint.Where + ")")
+		if constraint.Predicate != "" {
+			buf.WriteString(" WHERE (" + constraint.Predicate + ")")
 		}
 	default:
 		buf.WriteString(" " + constraint.ConstraintType + " (" + strings.Join(constraint.Columns, ", ") + ")")
