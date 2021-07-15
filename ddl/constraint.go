@@ -44,8 +44,8 @@ func (cmd *AddConstraintCommand) AppendSQL(dialect string, buf *bytes.Buffer, ar
 	if cmd.Constraint.TableSchema != "" {
 		buf.WriteString(sq.QuoteIdentifier(dialect, cmd.Constraint.TableSchema) + ".")
 	}
-	buf.WriteString(sq.QuoteIdentifier(dialect, cmd.Constraint.TableName) + " ADD CONSTRAINT ")
-	err := writeConstraint(dialect, buf, cmd.Constraint)
+	buf.WriteString(sq.QuoteIdentifier(dialect, cmd.Constraint.TableName) + " ADD CONSTRAINT " + sq.QuoteIdentifier(dialect, cmd.Constraint.ConstraintName))
+	err := writeConstraintDefinition(dialect, buf, cmd.Constraint)
 	if err != nil {
 		return err
 	}
@@ -53,8 +53,7 @@ func (cmd *AddConstraintCommand) AppendSQL(dialect string, buf *bytes.Buffer, ar
 	return nil
 }
 
-func writeConstraint(dialect string, buf *bytes.Buffer, constraint Constraint) error {
-	buf.WriteString(constraint.ConstraintName)
+func writeConstraintDefinition(dialect string, buf *bytes.Buffer, constraint Constraint) error {
 	switch constraint.ConstraintType {
 	case CHECK:
 		buf.WriteString(" CHECK (" + constraint.CheckExpr + ")")
