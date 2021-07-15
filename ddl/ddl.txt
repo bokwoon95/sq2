@@ -7,6 +7,30 @@ schema.go
 t.go
 catalog.go
 
+step 1:
+Column | Constraint | Trigger | Function | View | Table | Schema | Catalog
+step 2:
+func (c *Catalog) loadDB(db sq.DB)
+func (tbl *Table) loadTable(table sq.Table)
+func (vw *View) loadDDLView(ddlView DDLView)
+func (c *Catalog) loadFunction(function Function)
+func (c *Catalog) loadTable(table sq.Table)
+func (c *Catalog) loadDDLView(ddlView DDLView)
+step 3:
+Command
+MigrationCommands
+- CreateSchemaCommand
+- CreateFunctionCommand
+- CreateTableCommand
+- AlterTableCommand
+-     AddColumnCommand
+-     AlterColumnCommand
+-     AddConstraintCommand
+- CreateIndexCommand
+- CreateTriggerCommand
+func (c Catalog) GenerateDDL(w io.Writer) error
+func (c Catalog) GenerateStructs(w io.Writer) error
+
 dont bother with diffing catalogs to migrations at first:
 func (c Catalog) GenerateDDL(w io.Writer) error
 func (c Catalog) GenerateStructs(w io.Writer) error
