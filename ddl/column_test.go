@@ -525,62 +525,110 @@ func Test_AlterColumnCommand(t *testing.T) {
 	})
 }
 
-// func Test_DropColumnCommand(t *testing.T) {
-// 	type TT struct {
-// 		dialect   string
-// 		item      Command
-// 		wantQuery string
-// 		wantArgs  []interface{}
-// 	}
-//
-// 	assert := func(t *testing.T, tt TT) {
-// 		gotQuery, gotArgs, _, err := sq.ToSQL(tt.dialect, tt.item)
-// 		if err != nil {
-// 			t.Fatal(testcallers(), err)
-// 		}
-// 		if diff := testdiff(gotQuery, tt.wantQuery); diff != "" {
-// 			t.Error(testcallers(), diff)
-// 		}
-// 		if diff := testdiff(gotArgs, tt.wantArgs); diff != "" {
-// 			t.Error(testcallers(), diff)
-// 		}
-// 	}
-//
-// 	t.Run("basic", func(t *testing.T) {
-// 		t.Parallel()
-// 		var tt TT
-// 		tt.item = &AddColumnCommand{}
-// 		tt.wantQuery = "actor.actor_id"
-// 		assert(t, tt)
-// 	})
-// }
-//
-// func Test_RenameColumnCommand(t *testing.T) {
-// 	type TT struct {
-// 		dialect   string
-// 		item      Command
-// 		wantQuery string
-// 		wantArgs  []interface{}
-// 	}
-//
-// 	assert := func(t *testing.T, tt TT) {
-// 		gotQuery, gotArgs, _, err := sq.ToSQL(tt.dialect, tt.item)
-// 		if err != nil {
-// 			t.Fatal(testcallers(), err)
-// 		}
-// 		if diff := testdiff(gotQuery, tt.wantQuery); diff != "" {
-// 			t.Error(testcallers(), diff)
-// 		}
-// 		if diff := testdiff(gotArgs, tt.wantArgs); diff != "" {
-// 			t.Error(testcallers(), diff)
-// 		}
-// 	}
-//
-// 	t.Run("basic", func(t *testing.T) {
-// 		t.Parallel()
-// 		var tt TT
-// 		tt.item = &AddColumnCommand{}
-// 		tt.wantQuery = "actor.actor_id"
-// 		assert(t, tt)
-// 	})
-// }
+func Test_DropColumnCommand(t *testing.T) {
+	type TT struct {
+		dialect   string
+		item      Command
+		wantQuery string
+		wantArgs  []interface{}
+	}
+
+	assert := func(t *testing.T, tt TT) {
+		gotQuery, gotArgs, _, err := sq.ToSQL(tt.dialect, tt.item)
+		if err != nil {
+			t.Fatal(testcallers(), err)
+		}
+		if diff := testdiff(gotQuery, tt.wantQuery); diff != "" {
+			t.Error(testcallers(), diff)
+		}
+		if diff := testdiff(gotArgs, tt.wantArgs); diff != "" {
+			t.Error(testcallers(), diff)
+		}
+	}
+
+	t.Run("(dialect != postgres) basic", func(t *testing.T) {
+		t.Parallel()
+		var tt TT
+		tt.dialect = sq.DialectSQLite
+		tt.item = &DropColumnCommand{
+			ColumnName: "actor_id",
+		}
+		tt.wantQuery = "DROP COLUMN actor_id"
+		assert(t, tt)
+	})
+
+	t.Run("(dialect != postgres) DROP IF EXISTS", func(t *testing.T) {
+		t.Parallel()
+		var tt TT
+		tt.dialect = sq.DialectSQLite
+		tt.item = &DropColumnCommand{
+			DropIfExists: true,
+			ColumnName:   "actor_id",
+		}
+		_, _, _, err := sq.ToSQL(tt.dialect, tt.item)
+		if err == nil {
+			t.Fatal("expected error but got nil")
+		}
+	})
+
+	t.Run("(dialect != postgres) DROP ... CASCADE", func(t *testing.T) {
+		t.Parallel()
+		var tt TT
+		tt.dialect = sq.DialectSQLite
+		tt.item = &DropColumnCommand{
+			ColumnName:  "actor_id",
+			DropCascade: true,
+		}
+		_, _, _, err := sq.ToSQL(tt.dialect, tt.item)
+		if err == nil {
+			t.Fatal("expected error but got nil")
+		}
+	})
+
+	t.Run("(dialect == postgres) DROP IF EXISTS CASCADE", func(t *testing.T) {
+		t.Parallel()
+		var tt TT
+		tt.dialect = sq.DialectPostgres
+		tt.item = &DropColumnCommand{
+			DropIfExists: true,
+			ColumnName:   "actor_id",
+			DropCascade:  true,
+		}
+		tt.wantQuery = "DROP COLUMN IF EXISTS actor_id CASCADE"
+		assert(t, tt)
+	})
+}
+
+func Test_RenameColumnCommand(t *testing.T) {
+	type TT struct {
+		dialect   string
+		item      Command
+		wantQuery string
+		wantArgs  []interface{}
+	}
+
+	assert := func(t *testing.T, tt TT) {
+		gotQuery, gotArgs, _, err := sq.ToSQL(tt.dialect, tt.item)
+		if err != nil {
+			t.Fatal(testcallers(), err)
+		}
+		if diff := testdiff(gotQuery, tt.wantQuery); diff != "" {
+			t.Error(testcallers(), diff)
+		}
+		if diff := testdiff(gotArgs, tt.wantArgs); diff != "" {
+			t.Error(testcallers(), diff)
+		}
+	}
+
+	t.Run("basic", func(t *testing.T) {
+		t.Parallel()
+		var tt TT
+		tt.dialect = sq.DialectPostgres
+		tt.item = &RenameColumnCommand{
+			ColumnName:   "actor_id",
+			RenameToName: "actor ID",
+		}
+		tt.wantQuery = `RENAME COLUMN actor_id TO "actor ID"`
+		assert(t, tt)
+	})
+}
