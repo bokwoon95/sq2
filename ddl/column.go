@@ -172,71 +172,72 @@ type AlterColumnCommand struct {
 }
 
 func (cmd *AlterColumnCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
-	if dialect == sq.DialectSQLite {
-		return fmt.Errorf("sqlite not not support altering columns after table creation")
-	}
-	if dialect == sq.DialectMySQL {
+	switch dialect {
+	case sq.DialectSQLite:
+		return fmt.Errorf("sqlite does not support altering columns after table creation")
+	case sq.DialectMySQL:
 		buf.WriteString("MODIFY COLUMN ")
 		err := writeColumnDefinition(dialect, buf, cmd.Column)
 		if err != nil {
 			return fmt.Errorf("MODIFY COLUMN: %w", err)
 		}
-		return nil
-	}
-	// alterColumnName abstracts away the boilerplate of writing "ALTER COLUMN
-	// $COLUMN_NAME" every time. It also prepends each new ALTER COLUMN with a
-	// newline character (except for the first ALTER COLUMN because the initial
-	// newline will be handled by the parent ALTER TABLE command).
-	var written bool
-	alterColumnName := func() {
-		if !written {
-			written = true
-		} else {
-			buf.WriteString("\n")
+	case sq.DialectPostgres:
+		// alterColumnName abstracts away the boilerplate of writing "ALTER COLUMN
+		// $COLUMN_NAME" every time. It also prepends each new ALTER COLUMN with a
+		// newline character (except for the first ALTER COLUMN because the initial
+		// newline will be handled by the parent ALTER TABLE command).
+		var written bool
+		alterColumnName := func() {
+			if !written {
+				written = true
+			} else {
+				buf.WriteString("\n,")
+			}
+			buf.WriteString("ALTER COLUMN " + sq.QuoteIdentifier(dialect, cmd.Column.ColumnName))
 		}
-		buf.WriteString("ALTER COLUMN " + sq.QuoteIdentifier(dialect, cmd.Column.ColumnName))
-	}
-	// everything after this point only targets postgres
-	if cmd.Column.ColumnType != "" {
-		alterColumnName()
-		buf.WriteString(" SET DATA TYPE " + cmd.Column.ColumnType)
-		if cmd.Column.CollationName != "" {
-			buf.WriteString(` COLLATE "` + sq.EscapeQuote(cmd.Column.CollationName, '"') + `"`)
+		if cmd.Column.ColumnType != "" {
+			alterColumnName()
+			buf.WriteString(" SET DATA TYPE " + cmd.Column.ColumnType)
+			if cmd.Column.CollationName != "" {
+				buf.WriteString(` COLLATE "` + sq.EscapeQuote(cmd.Column.CollationName, '"') + `"`)
+			}
+			if cmd.UsingExpr != "" {
+				buf.WriteString(" USING " + cmd.UsingExpr)
+			}
 		}
-		if cmd.UsingExpr != "" {
-			buf.WriteString(" USING " + cmd.UsingExpr)
+		if cmd.DropNotNull {
+			alterColumnName()
+			buf.WriteString(" DROP NOT NULL")
+		} else if cmd.Column.IsNotNull {
+			alterColumnName()
+			buf.WriteString(" SET NOT NULL")
 		}
-	}
-	if cmd.DropDefault {
-		alterColumnName()
-		buf.WriteString(" DROP DEFAULT")
-	} else if cmd.Column.ColumnDefault != "" {
-		alterColumnName()
-		buf.WriteString(" SET DEFAULT " + cmd.Column.ColumnDefault)
-	}
-	if cmd.DropNotNull {
-		alterColumnName()
-		buf.WriteString(" DROP NOT NULL")
-	} else if cmd.Column.IsNotNull {
-		alterColumnName()
-		buf.WriteString(" SET NOT NULL")
-	}
-	if cmd.DropExpr {
-		alterColumnName()
-		buf.WriteString(" DROP EXPRESSION")
-		if cmd.DropExprIfExists {
-			buf.WriteString(" IF EXISTS")
+		if cmd.DropDefault {
+			alterColumnName()
+			buf.WriteString(" DROP DEFAULT")
+		} else if cmd.Column.ColumnDefault != "" {
+			alterColumnName()
+			buf.WriteString(" SET DEFAULT " + cmd.Column.ColumnDefault)
 		}
-	}
-	if cmd.DropIdentity {
-		alterColumnName()
-		buf.WriteString(" DROP IDENTITY")
-		if cmd.DropIdentityIfExists {
-			buf.WriteString(" IF EXISTS")
+		if cmd.DropIdentity {
+			alterColumnName()
+			buf.WriteString(" DROP IDENTITY")
+			if cmd.DropIdentityIfExists {
+				buf.WriteString(" IF EXISTS")
+			}
+		} else if cmd.Column.Identity != "" {
+			alterColumnName()
+			buf.WriteString(" ADD GENERATED " + cmd.Column.Identity)
 		}
-	} else if cmd.Column.Identity != "" {
-		alterColumnName()
-		buf.WriteString(" ADD GENERATED " + cmd.Column.Identity)
+		if cmd.DropExpr {
+			alterColumnName()
+			buf.WriteString(" DROP EXPRESSION")
+			if cmd.DropExprIfExists {
+				buf.WriteString(" IF EXISTS")
+			}
+		}
+	default:
+		return fmt.Errorf("unrecognized dialect: %s", dialect)
 	}
 	return nil
 }
