@@ -367,6 +367,26 @@ func Test_AddColumnCommand(t *testing.T) {
 		assert(t, tt)
 	})
 
+	t.Run("(dialect == sqlite) column with constraints", func(t *testing.T) {
+		t.Parallel()
+		var tt TT
+		tt.item = &AddColumnCommand{
+			Column: Column{
+				ColumnName: "country_id",
+				ColumnType: "INT",
+			},
+			CheckExprs: []string{
+				"country_id > 0",
+				"country_id IS NOT NULL",
+			},
+			ReferencesTable:  "country",
+			ReferencesColumn: "country_id",
+		}
+		tt.dialect = sq.DialectSQLite
+		tt.wantQuery = "ADD COLUMN country_id INT CHECK (country_id > 0) CHECK (country_id IS NOT NULL) REFERENCES country (country_id)"
+		assert(t, tt)
+	})
+
 	t.Run("(dialect == mysql) AUTOINCREMENT column", func(t *testing.T) {
 		t.Parallel()
 		var tt TT

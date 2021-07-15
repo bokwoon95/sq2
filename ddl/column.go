@@ -97,6 +97,17 @@ func (cmd *AddColumnCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *
 	if err != nil {
 		return fmt.Errorf("ADD COLUMN: %w", err)
 	}
+	if dialect == sq.DialectSQLite {
+		for _, checkExpr := range cmd.CheckExprs {
+			buf.WriteString(" CHECK (" + checkExpr + ")")
+		}
+		if cmd.ReferencesTable != "" && cmd.ReferencesColumn != "" {
+			buf.WriteString(" REFERENCES " +
+				sq.QuoteIdentifier(dialect, cmd.ReferencesTable) +
+				" (" + sq.QuoteIdentifier(dialect, cmd.ReferencesColumn) + ")",
+			)
+		}
+	}
 	return nil
 }
 
