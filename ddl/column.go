@@ -87,7 +87,7 @@ func (cmd *AddColumnCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *
 			}
 		}
 		if (cmd.ReferencesTable != "" || cmd.ReferencesColumn != "") && cmd.Column.ColumnDefault != "" && !strings.EqualFold(cmd.Column.ColumnDefault, "NULL") {
-			return fmt.Errorf("sqlite does not allow adding a FOREIGN KEY column with a non-null DEFAULT value")
+			return fmt.Errorf("sqlite does not allow adding a FOREIGN KEY column without a NULL DEFAULT value")
 		}
 		if cmd.Column.GeneratedExpr != "" && cmd.Column.GeneratedExprStored {
 			return fmt.Errorf("sqlite does not allow adding GENERATED STORED columns after table creation (use GENERATED VIRTUAL)")
