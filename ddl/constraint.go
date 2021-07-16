@@ -199,7 +199,7 @@ type DropConstraintCommand struct {
 	DropCascade    bool
 }
 
-func (cmd *DropConstraintCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
+func (cmd DropConstraintCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
 	if dialect == sq.DialectSQLite {
 		return fmt.Errorf("sqlite does not support DROP CONSTRAINT")
 	}
@@ -225,7 +225,7 @@ type RenameConstraintCommand struct {
 	RenameToName   string
 }
 
-func (cmd *RenameConstraintCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
+func (cmd RenameConstraintCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
 	if dialect == sq.DialectSQLite {
 		return fmt.Errorf("sqlite does not support RENAME CONSTRAINT")
 	}

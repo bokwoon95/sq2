@@ -452,3 +452,138 @@ func Test_AlterConstraintCommnd(t *testing.T) {
 		}
 	})
 }
+
+func Test_DropConstraintCommnd(t *testing.T) {
+	type TT struct {
+		dialect   string
+		item      Command
+		wantQuery string
+		wantArgs  []interface{}
+	}
+
+	assert := func(t *testing.T, tt TT) {
+		gotQuery, gotArgs, _, err := sq.ToSQL(tt.dialect, tt.item)
+		if err != nil {
+			t.Fatal(testcallers(), err)
+		}
+		if diff := testdiff(gotQuery, tt.wantQuery); diff != "" {
+			t.Error(testcallers(), diff)
+		}
+		if diff := testdiff(gotArgs, tt.wantArgs); diff != "" {
+			t.Error(testcallers(), diff)
+		}
+	}
+
+	t.Run("(dialect == postgres) DROP IF EXISTS CASCADE", func(t *testing.T) {
+		t.Parallel()
+		var tt TT
+		tt.dialect = sq.DialectPostgres
+		tt.item = DropConstraintCommand{
+			DropIfExists:   true,
+			ConstraintName: "city_country_id_fkey",
+			DropCascade:    true,
+		}
+		tt.wantQuery = "DROP CONSTRAINT IF EXISTS city_country_id_fkey CASCADE"
+		assert(t, tt)
+	})
+
+	t.Run("(dialect == mysql) DROP", func(t *testing.T) {
+		t.Parallel()
+		var tt TT
+		tt.dialect = sq.DialectMySQL
+		tt.item = DropConstraintCommand{
+			ConstraintName: "city_country_id_fkey",
+		}
+		tt.wantQuery = "DROP CONSTRAINT city_country_id_fkey"
+		assert(t, tt)
+	})
+
+	t.Run("(dialect == sqlite)", func(t *testing.T) {
+		t.Parallel()
+		var tt TT
+		tt.dialect = sq.DialectSQLite
+		tt.item = DropConstraintCommand{
+			ConstraintName: "city_country_id_fkey",
+		}
+		_, _, _, err := sq.ToSQL(tt.dialect, tt.item)
+		if err == nil {
+			t.Fatal(testcallers(), "expected error but got nil")
+		}
+	})
+
+	t.Run("(dialect == mysql) DROP IF EXISTS", func(t *testing.T) {
+		t.Parallel()
+		var tt TT
+		tt.dialect = sq.DialectMySQL
+		tt.item = DropConstraintCommand{
+			DropIfExists:   true,
+			ConstraintName: "city_country_id_fkey",
+		}
+		_, _, _, err := sq.ToSQL(tt.dialect, tt.item)
+		if err == nil {
+			t.Fatal(testcallers(), "expected error but got nil")
+		}
+	})
+
+	t.Run("(dialect == mysql) DROP CASCADE", func(t *testing.T) {
+		t.Parallel()
+		var tt TT
+		tt.dialect = sq.DialectMySQL
+		tt.item = DropConstraintCommand{
+			ConstraintName: "city_country_id_fkey",
+			DropCascade:    true,
+		}
+		_, _, _, err := sq.ToSQL(tt.dialect, tt.item)
+		if err == nil {
+			t.Fatal(testcallers(), "expected error but got nil")
+		}
+	})
+}
+
+func Test_RenameConstraintCommnd(t *testing.T) {
+	type TT struct {
+		dialect   string
+		item      Command
+		wantQuery string
+		wantArgs  []interface{}
+	}
+
+	assert := func(t *testing.T, tt TT) {
+		gotQuery, gotArgs, _, err := sq.ToSQL(tt.dialect, tt.item)
+		if err != nil {
+			t.Fatal(testcallers(), err)
+		}
+		if diff := testdiff(gotQuery, tt.wantQuery); diff != "" {
+			t.Error(testcallers(), diff)
+		}
+		if diff := testdiff(gotArgs, tt.wantArgs); diff != "" {
+			t.Error(testcallers(), diff)
+		}
+	}
+
+	t.Run("(dialect == postgres)", func(t *testing.T) {
+		t.Parallel()
+		var tt TT
+		tt.dialect = sq.DialectPostgres
+		tt.item = RenameConstraintCommand{
+			ConstraintName: "city_country_id_fkey",
+			RenameToName:   "fk_city_country_id",
+		}
+		tt.wantQuery = "RENAME CONSTRAINT city_country_id_fkey TO fk_city_country_id"
+		assert(t, tt)
+	})
+
+	t.Run("(dialect == sqlite)", func(t *testing.T) {
+		t.Parallel()
+		var tt TT
+		tt.dialect = sq.DialectSQLite
+		tt.item = RenameConstraintCommand{
+			ConstraintName: "city_country_id_fkey",
+			RenameToName:   "fk_city_country_id",
+		}
+		_, _, _, err := sq.ToSQL(tt.dialect, tt.item)
+		if err == nil {
+			t.Fatal(testcallers(), "expected error but got nil")
+		}
+	})
+}
