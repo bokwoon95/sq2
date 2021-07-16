@@ -167,7 +167,7 @@ type AlterConstraintCommand struct {
 	IsInitiallyDeferred bool
 }
 
-func (cmd *AlterConstraintCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
+func (cmd AlterConstraintCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
 	switch dialect {
 	case sq.DialectPostgres:
 		break

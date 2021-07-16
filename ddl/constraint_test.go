@@ -352,3 +352,103 @@ func Test_AddConstraintCommnd(t *testing.T) {
 		}
 	})
 }
+
+func Test_AlterConstraintCommnd(t *testing.T) {
+	type TT struct {
+		dialect   string
+		item      Command
+		wantQuery string
+		wantArgs  []interface{}
+	}
+
+	assert := func(t *testing.T, tt TT) {
+		gotQuery, gotArgs, _, err := sq.ToSQL(tt.dialect, tt.item)
+		if err != nil {
+			t.Fatal(testcallers(), err)
+		}
+		if diff := testdiff(gotQuery, tt.wantQuery); diff != "" {
+			t.Error(testcallers(), diff)
+		}
+		if diff := testdiff(gotArgs, tt.wantArgs); diff != "" {
+			t.Error(testcallers(), diff)
+		}
+	}
+
+	t.Run("(dialect == postgres) no-op", func(t *testing.T) {
+		t.Parallel()
+		var tt TT
+		tt.dialect = sq.DialectPostgres
+		tt.item = AlterConstraintCommand{
+			ConstraintName: "city_country_id_fkey",
+		}
+		tt.wantQuery = ""
+		assert(t, tt)
+	})
+
+	t.Run("(dialect == postgres) ALTER CONSTRAINT DEFERRABLE INITIALLY DEFERRED", func(t *testing.T) {
+		t.Parallel()
+		var tt TT
+		tt.dialect = sq.DialectPostgres
+		tt.item = AlterConstraintCommand{
+			ConstraintName:      "city_country_id_fkey",
+			AlterDeferrable:     true,
+			IsDeferrable:        true,
+			IsInitiallyDeferred: true,
+		}
+		tt.wantQuery = "ALTER CONSTRAINT city_country_id_fkey DEFERRABLE INITIALLY DEFERRED"
+		assert(t, tt)
+	})
+
+	t.Run("(dialect == postgres) ALTER CONSTRAINT DEFERRABLE INITIALLY IMMEDIATE", func(t *testing.T) {
+		t.Parallel()
+		var tt TT
+		tt.dialect = sq.DialectPostgres
+		tt.item = AlterConstraintCommand{
+			ConstraintName:  "city_country_id_fkey",
+			AlterDeferrable: true,
+			IsDeferrable:    true,
+		}
+		tt.wantQuery = "ALTER CONSTRAINT city_country_id_fkey DEFERRABLE INITIALLY IMMEDIATE"
+		assert(t, tt)
+	})
+
+	t.Run("(dialect == postgres) ALTER CONSTRAINT NOT DEFERRABLE", func(t *testing.T) {
+		t.Parallel()
+		var tt TT
+		tt.dialect = sq.DialectPostgres
+		tt.item = AlterConstraintCommand{
+			ConstraintName:  "city_country_id_fkey",
+			AlterDeferrable: true,
+		}
+		tt.wantQuery = "ALTER CONSTRAINT city_country_id_fkey NOT DEFERRABLE"
+		assert(t, tt)
+	})
+
+	t.Run("(dialect == mysql)", func(t *testing.T) {
+		t.Parallel()
+		var tt TT
+		tt.dialect = sq.DialectMySQL
+		tt.item = AlterConstraintCommand{
+			ConstraintName:  "city_country_id_fkey",
+			AlterDeferrable: true,
+		}
+		_, _, _, err := sq.ToSQL(tt.dialect, tt.item)
+		if err == nil {
+			t.Fatal(testcallers(), "expected error but got nil")
+		}
+	})
+
+	t.Run("(dialect == sqlite)", func(t *testing.T) {
+		t.Parallel()
+		var tt TT
+		tt.dialect = sq.DialectSQLite
+		tt.item = AlterConstraintCommand{
+			ConstraintName:  "city_country_id_fkey",
+			AlterDeferrable: true,
+		}
+		_, _, _, err := sq.ToSQL(tt.dialect, tt.item)
+		if err == nil {
+			t.Fatal(testcallers(), "expected error but got nil")
+		}
+	})
+}
