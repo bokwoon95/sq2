@@ -146,7 +146,7 @@ func Test_AddColumnCommand(t *testing.T) {
 		tt.dialect = sq.DialectPostgres
 		_, _, _, err := sq.ToSQL(tt.dialect, tt.item)
 		if err == nil {
-			t.Fatal("expected error but got nil")
+			t.Fatal(testcallers(), "expected error but got nil")
 		}
 	})
 
@@ -163,7 +163,7 @@ func Test_AddColumnCommand(t *testing.T) {
 		tt.dialect = sq.DialectPostgres
 		_, _, _, err := sq.ToSQL(tt.dialect, tt.item)
 		if err == nil {
-			t.Fatal("expected error but got nil")
+			t.Fatal(testcallers(), "expected error but got nil")
 		}
 	})
 
@@ -180,7 +180,7 @@ func Test_AddColumnCommand(t *testing.T) {
 		tt.dialect = sq.DialectSQLite
 		_, _, _, err := sq.ToSQL(tt.dialect, tt.item)
 		if err == nil {
-			t.Fatal("expected error but got nil")
+			t.Fatal(testcallers(), "expected error but got nil")
 		}
 	})
 
@@ -197,7 +197,7 @@ func Test_AddColumnCommand(t *testing.T) {
 		tt.dialect = sq.DialectPostgres
 		_, _, _, err := sq.ToSQL(tt.dialect, tt.item)
 		if err == nil {
-			t.Fatal("expected error but got nil")
+			t.Fatal(testcallers(), "expected error but got nil")
 		}
 	})
 
@@ -214,7 +214,7 @@ func Test_AddColumnCommand(t *testing.T) {
 		tt.dialect = sq.DialectSQLite
 		_, _, _, err := sq.ToSQL(tt.dialect, tt.item)
 		if err == nil {
-			t.Fatal("expected error but got nil")
+			t.Fatal(testcallers(), "expected error but got nil")
 		}
 	})
 
@@ -231,7 +231,7 @@ func Test_AddColumnCommand(t *testing.T) {
 		tt.dialect = sq.DialectSQLite
 		_, _, _, err := sq.ToSQL(tt.dialect, tt.item)
 		if err == nil {
-			t.Fatal("expected error but got nil")
+			t.Fatal(testcallers(), "expected error but got nil")
 		}
 	})
 
@@ -248,7 +248,7 @@ func Test_AddColumnCommand(t *testing.T) {
 		tt.dialect = sq.DialectSQLite
 		_, _, _, err := sq.ToSQL(tt.dialect, tt.item)
 		if err == nil {
-			t.Fatal("expected error but got nil")
+			t.Fatal(testcallers(), "expected error but got nil")
 		}
 	})
 
@@ -266,7 +266,7 @@ func Test_AddColumnCommand(t *testing.T) {
 		tt.dialect = sq.DialectSQLite
 		_, _, _, err := sq.ToSQL(tt.dialect, tt.item)
 		if err == nil {
-			t.Fatal("expected error but got nil")
+			t.Fatal(testcallers(), "expected error but got nil")
 		}
 	})
 
@@ -285,7 +285,7 @@ func Test_AddColumnCommand(t *testing.T) {
 		tt.dialect = sq.DialectSQLite
 		_, _, _, err := sq.ToSQL(tt.dialect, tt.item)
 		if err == nil {
-			t.Fatal("expected error but got nil")
+			t.Fatal(testcallers(), "expected error but got nil")
 		}
 	})
 
@@ -303,7 +303,7 @@ func Test_AddColumnCommand(t *testing.T) {
 		tt.dialect = sq.DialectSQLite
 		_, _, _, err := sq.ToSQL(tt.dialect, tt.item)
 		if err == nil {
-			t.Fatal("expected error but got nil")
+			t.Fatal(testcallers(), "expected error but got nil")
 		}
 	})
 
@@ -320,7 +320,7 @@ func Test_AddColumnCommand(t *testing.T) {
 		tt.dialect = sq.DialectSQLite
 		_, _, _, err := sq.ToSQL(tt.dialect, tt.item)
 		if err == nil {
-			t.Fatal("expected error but got nil")
+			t.Fatal(testcallers(), "expected error but got nil")
 		}
 	})
 
@@ -449,7 +449,7 @@ func Test_AlterColumnCommand(t *testing.T) {
 		tt.item = AlterColumnCommand{}
 		_, _, _, err := sq.ToSQL(tt.dialect, tt.item)
 		if err == nil {
-			t.Fatal("expected error but got nil")
+			t.Fatal(testcallers(), "expected error but got nil")
 		}
 	})
 
@@ -482,7 +482,7 @@ func Test_AlterColumnCommand(t *testing.T) {
 		}
 		_, _, _, err := sq.ToSQL(tt.dialect, tt.item)
 		if err == nil {
-			t.Fatal("expected error but got nil")
+			t.Fatal(testcallers(), "expected error but got nil")
 		}
 	})
 
@@ -542,7 +542,7 @@ func Test_AlterColumnCommand(t *testing.T) {
 		}
 		_, _, _, err := sq.ToSQL(tt.dialect, tt.item)
 		if err == nil {
-			t.Fatal("expected error but got nil")
+			t.Fatal(testcallers(), "expected error but got nil")
 		}
 	})
 }
@@ -589,7 +589,7 @@ func Test_DropColumnCommand(t *testing.T) {
 		}
 		_, _, _, err := sq.ToSQL(tt.dialect, tt.item)
 		if err == nil {
-			t.Fatal("expected error but got nil")
+			t.Fatal(testcallers(), "expected error but got nil")
 		}
 	})
 
@@ -603,7 +603,7 @@ func Test_DropColumnCommand(t *testing.T) {
 		}
 		_, _, _, err := sq.ToSQL(tt.dialect, tt.item)
 		if err == nil {
-			t.Fatal("expected error but got nil")
+			t.Fatal(testcallers(), "expected error but got nil")
 		}
 	})
 
