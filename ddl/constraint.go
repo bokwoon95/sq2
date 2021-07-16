@@ -35,7 +35,7 @@ type AddConstraintCommand struct {
 	IsNotValid bool
 }
 
-func (cmd *AddConstraintCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
+func (cmd AddConstraintCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
 	if dialect == sq.DialectSQLite {
 		return fmt.Errorf("sqlite does not allow constraints to be added after table creation")
 	}
@@ -166,13 +166,68 @@ type AlterConstraintCommand struct {
 	IsInitiallyDeferred bool
 }
 
+func (cmd *AlterConstraintCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
+	switch dialect {
+	case sq.DialectPostgres:
+		break
+	case sq.DialectMySQL:
+		return fmt.Errorf("mysql ALTER CONSTRAINT not supported by this library")
+	default:
+		return fmt.Errorf("%s does not support ALTER CONSTRAINT", dialect)
+	}
+	if !cmd.AlterDeferrable {
+		return nil
+	}
+	buf.WriteString("ALTER CONSTRAINT " + sq.QuoteIdentifier(dialect, cmd.ConstraintName))
+	if cmd.IsDeferrable {
+		buf.WriteString(" DEFERRABLE")
+		if cmd.IsInitiallyDeferred {
+			buf.WriteString(" INITIALLY DEFERRED")
+		} else {
+			buf.WriteString(" INITIALLY IMMEDIATE")
+		}
+	} else {
+		buf.WriteString(" NOT DEFERRABLE")
+	}
+	return nil
+}
+
 type DropConstraintCommand struct {
 	DropIfExists   bool
 	ConstraintName string
 	DropCascade    bool
 }
 
+func (cmd *DropConstraintCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
+	if dialect == sq.DialectSQLite {
+		return fmt.Errorf("sqlite does not support DROP CONSTRAINT")
+	}
+	buf.WriteString("DROP CONSTRAINT ")
+	if cmd.DropIfExists {
+		if dialect != sq.DialectPostgres {
+			return fmt.Errorf("%s does not support DROP CONSTRAINT IF EXISTS", dialect)
+		}
+		buf.WriteString("IF EXISTS ")
+	}
+	buf.WriteString(sq.QuoteIdentifier(dialect, cmd.ConstraintName))
+	if cmd.DropCascade {
+		if dialect != sq.DialectPostgres {
+			return fmt.Errorf("%s does not support DROP CONSTRAINT ... CASCADE", dialect)
+		}
+		buf.WriteString(" CASCADE")
+	}
+	return nil
+}
+
 type RenameConstraintCommand struct {
 	ConstraintName string
 	RenameToName   string
+}
+
+func (cmd *RenameConstraintCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
+	if dialect == sq.DialectSQLite {
+		return fmt.Errorf("sqlite does not support RENAME CONSTRAINT")
+	}
+	buf.WriteString("RENAME CONSTRAINT " + sq.QuoteIdentifier(dialect, cmd.ConstraintName) + " TO " + sq.QuoteIdentifier(dialect, cmd.RenameToName))
+	return nil
 }
