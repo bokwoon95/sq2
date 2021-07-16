@@ -45,7 +45,7 @@ func (cmd AddConstraintCommand) AppendSQL(dialect string, buf *bytes.Buffer, arg
 			return fmt.Errorf("%s does not allow the creation of constraints using an index", dialect)
 		}
 		if cmd.Constraint.ConstraintType != PRIMARY_KEY && cmd.Constraint.ConstraintType != UNIQUE {
-			return fmt.Errorf("postgres only allows PIRMARY KEY and UNIQUE constraints to be added using an index")
+			return fmt.Errorf("postgres only allows PRIMARY KEY and UNIQUE constraints to be added using an index")
 		}
 		buf.WriteString(" " + cmd.Constraint.ConstraintType + " USING INDEX " + sq.QuoteIdentifier(dialect, cmd.IndexName))
 		if cmd.Constraint.IsDeferrable {
@@ -107,6 +107,9 @@ func writeConstraintDefinition(dialect string, buf *bytes.Buffer, constraint Con
 		if dialect != sq.DialectPostgres {
 			return fmt.Errorf("%s does not support EXCLUDE constraints", dialect)
 		}
+		if constraint.IndexType == "" {
+			return fmt.Errorf("postgres EXCLUDE constraint requires an index")
+		}
 		if constraint.IndexType != "" {
 			buf.WriteString(" EXCLUDE USING " + constraint.IndexType)
 		}
@@ -118,7 +121,7 @@ func writeConstraintDefinition(dialect string, buf *bytes.Buffer, constraint Con
 			if column := constraint.Columns[i]; column != "" {
 				buf.WriteString(column)
 			} else if expr := constraint.Exprs[i]; expr != "" {
-				buf.WriteString(expr)
+				buf.WriteString("(" + expr + ")")
 			} else {
 				return fmt.Errorf("column #%d: no column name or expression provided", i+1)
 			}
