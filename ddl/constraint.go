@@ -74,8 +74,6 @@ func (cmd AddConstraintCommand) AppendSQL(dialect string, buf *bytes.Buffer, arg
 				return fmt.Errorf("mysql %s constraints cannot be NOT ENFORCED", cmd.Constraint.ConstraintType)
 			}
 			buf.WriteString(" NOT ENFORCED")
-		default:
-			return fmt.Errorf("%s does not allow NOT VALID constraints", dialect)
 		}
 	}
 	return nil
