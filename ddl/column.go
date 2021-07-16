@@ -31,8 +31,6 @@ type Column struct {
 	Ignore                   bool   `json:",omitempty"`
 }
 
-var _ sq.Field = Column{}
-
 func (c Column) GetName() string { return c.ColumnName }
 
 func (c Column) GetAlias() string { return c.ColumnAlias }
@@ -63,7 +61,7 @@ type AddColumnCommand struct {
 	ReferencesColumn string
 }
 
-func (cmd *AddColumnCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
+func (cmd AddColumnCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
 	buf.WriteString("ADD COLUMN ")
 	if cmd.AddIfNotExists {
 		if dialect != sq.DialectPostgres {
@@ -182,7 +180,7 @@ type AlterColumnCommand struct {
 	UsingExpr            string
 }
 
-func (cmd *AlterColumnCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
+func (cmd AlterColumnCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
 	switch dialect {
 	case sq.DialectSQLite:
 		return fmt.Errorf("sqlite does not support altering columns after table creation")
@@ -259,7 +257,7 @@ type DropColumnCommand struct {
 	DropCascade  bool
 }
 
-func (cmd *DropColumnCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
+func (cmd DropColumnCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
 	buf.WriteString("DROP COLUMN ")
 	if cmd.DropIfExists {
 		if dialect != sq.DialectPostgres {
@@ -282,7 +280,7 @@ type RenameColumnCommand struct {
 	RenameToName string
 }
 
-func (cmd *RenameColumnCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
+func (cmd RenameColumnCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
 	buf.WriteString("RENAME COLUMN " + sq.QuoteIdentifier(dialect, cmd.ColumnName) + " TO " + sq.QuoteIdentifier(dialect, cmd.RenameToName))
 	return nil
 }
