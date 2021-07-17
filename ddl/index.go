@@ -145,7 +145,7 @@ func (cmd RenameIndexCommand) AppendSQL(dialect string, buf *bytes.Buffer, args 
 		if cmd.TableSchema != "" {
 			buf.WriteString(sq.QuoteIdentifier(dialect, cmd.TableSchema) + ".")
 		}
-		buf.WriteString(sq.QuoteIdentifier(dialect, cmd.IndexName) + " RENAME TO " + sq.QuoteIdentifier(dialect, cmd.RenameToName))
+		buf.WriteString(sq.QuoteIdentifier(dialect, cmd.IndexName) + " RENAME TO " + sq.QuoteIdentifier(dialect, cmd.RenameToName) + ";")
 	}
 	return nil
 }
