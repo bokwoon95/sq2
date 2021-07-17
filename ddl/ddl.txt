@@ -8,30 +8,26 @@ t.go
 catalog.go
 
 step 1:
-Column | Constraint | Trigger | Function | View | Table | Schema | Catalog
+Column | Constraint | Index | Trigger | Function | View | Table | Schema | Catalog
 step 2:
-func (c *Catalog) ReadDB(db sq.DB) error
-func (tbl *Table) ReadTable(table sq.Table) error
-func (tbl *Table) WriteDDL(w io.Writer) error
-func (tbl *Table) WriteStruct(w io.Writer) error
-func (vw *View) ReadDDLView(ddlView DDLView) error
-func (c *Catalog) readFunction(function Function)
+func (c *Catalog) readDB(db sq.DB) error
+func (tbl *Table) readTable(table sq.Table) error
+func (view *View) readDDLView(ddlView DDLView) error
 func (c *Catalog) readTable(table sq.Table)
 func (c *Catalog) readDDLView(ddlView DDLView)
+func (c *Catalog) readFunction(function Function)
+func NewCatalog(dialect string, opts ...CatalogOption) (Catalog, error)
+type CatalogOption func(*Catalog) error
+func WithDB() CatalogOption
+func WithTables() CatalogOption
+func WithDDLViews() CatalogOption
+func WithFunctions() CatalogOption
 step 3:
-Command
-MigrationCommands
-- CreateSchemaCommand
-- CreateFunctionCommand
-- CreateTableCommand
-- AlterTableCommand
--     AddColumnCommand
--     AlterColumnCommand
--     AddConstraintCommand
-- CreateIndexCommand
-- CreateTriggerCommand
-func (c Catalog) GenerateDDL(w io.Writer) error
-func (c Catalog) GenerateStructs(w io.Writer) error
+type MigrationCommands struct
+func (c Catalog) Commands() MigrationCommands
+func (c Catalog) WriteInto(w io.Writer) error
+func (m MigrationCommands) WriteInto(w io.Writer) error
+func (m MigrationCommands) Exec(db sq.DB) error
 
 dont bother with diffing catalogs to migrations at first:
 func (c Catalog) GenerateDDL(w io.Writer) error
@@ -43,7 +39,7 @@ to clean a database (for example to reset its state to zero), all you have to
 do is to loop the gotCatalog Catalog struct, for each table and view and
 function you simply convert it to the corresponding
 DropTableCommand/DropViewCommand/DropFunctionCommand and append it into the
-MigrationCommands struct. You can hen either execute the MigrationCommands
+MigrationCommands struct. You can then either execute the MigrationCommands
 directly or write it out to a file, the choice is yours.
 
 v.AsQuery()
