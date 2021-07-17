@@ -137,7 +137,7 @@ func (cmd DropIndexCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *[
 }
 
 type RenameIndexCommand struct {
-	AlterIndexIfExists bool
+	AlterIfExists bool
 	TableSchema        string
 	TableName          string
 	IndexName          string
@@ -152,7 +152,7 @@ func (cmd RenameIndexCommand) AppendSQL(dialect string, buf *bytes.Buffer, args 
 		buf.WriteString("RENAME INDEX " + sq.QuoteIdentifier(dialect, cmd.IndexName) + " TO " + sq.QuoteIdentifier(dialect, cmd.RenameToName))
 	default:
 		buf.WriteString("ALTER INDEX ")
-		if cmd.AlterIndexIfExists {
+		if cmd.AlterIfExists {
 			buf.WriteString("IF EXISTS ")
 		}
 		if cmd.TableSchema != "" {
