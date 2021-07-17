@@ -238,19 +238,7 @@ func Sprintf(dialect string, query string, args []interface{}) (string, error) {
 			}
 			continue
 		}
-		if char == '\'' || char == '"' {
-			insideStringOrIdentifier = true
-			openingQuote = char
-			buf.WriteRune(char)
-			continue
-		}
-		if char == '`' && dialect == DialectMySQL {
-			insideStringOrIdentifier = true
-			openingQuote = char
-			buf.WriteRune(char)
-			continue
-		}
-		if char == '[' && dialect == DialectSQLServer {
+		if char == '\'' || char == '"' || (char == '`' && dialect == DialectMySQL) || (char == '[' && dialect == DialectSQLServer) {
 			insideStringOrIdentifier = true
 			openingQuote = char
 			buf.WriteRune(char)
