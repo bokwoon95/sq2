@@ -1,5 +1,5 @@
 ddl.go | lex.go
-column.go | constraint.go
+column.go | constraint.go | index.go
 trigger.go | trigger_migration.go | function.go | function_migration.go
 view.go | view_migration.go
 table.go | table_migration.go
