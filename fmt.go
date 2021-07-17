@@ -222,7 +222,11 @@ func Sprintf(dialect string, query string, args []interface{}) (string, error) {
 			buf.WriteRune(char)
 			switch openingQuote {
 			case '\'', '"', '`':
+				// does the current char terminate the current string or identifier?
 				if char == openingQuote {
+					// is the next char the same as the current char, which
+					// escapes it and prevents it from terminating the current
+					// string or identifier?
 					if i+1 < len(query) && rune(query[i+1]) == openingQuote {
 						mustWriteCharAt = i + 1
 					} else {
@@ -230,7 +234,11 @@ func Sprintf(dialect string, query string, args []interface{}) (string, error) {
 					}
 				}
 			case '[':
+				// does the current char terminate the current string or identifier?
 				if char == ']' {
+					// is the next char the same as the current char, which
+					// escapes it and prevents it from terminating the current
+					// string or identifier?
 					if i+1 < len(query) && query[i+1] == ']' {
 						mustWriteCharAt = i + 1
 					} else {
@@ -247,8 +255,9 @@ func Sprintf(dialect string, query string, args []interface{}) (string, error) {
 			buf.WriteRune(char)
 			continue
 		}
-		// are we inside a parameter name?
+		// are we currently inside a parameter name?
 		if len(paramName) > 0 {
+			// does the current char terminate the current parameter name?
 			if nameTerminatingChars[char] {
 				paramValue, err := lookupParam(dialect, args, paramName, namedArgsLookup, runningArgsIndex)
 				if err != nil {
