@@ -134,6 +134,21 @@ func Test_AddConstraintCommnd(t *testing.T) {
 		assert(t, tt)
 	})
 
+	t.Run("(dialect == mysql) PRIMARY KEY", func(t *testing.T) {
+		t.Parallel()
+		var tt TT
+		tt.dialect = sq.DialectMySQL
+		tt.item = AddConstraintCommand{
+			Constraint: Constraint{
+				ConstraintName: "customer_customer_id_pkey",
+				ConstraintType: PRIMARY_KEY,
+				Columns:        []string{"customer_id"},
+			},
+		}
+		tt.wantQuery = "ADD PRIMARY KEY (customer_id)"
+		assert(t, tt)
+	})
+
 	t.Run("(dialect == mysql) CHECK ... NOT ENFORCED", func(t *testing.T) {
 		t.Parallel()
 		var tt TT
