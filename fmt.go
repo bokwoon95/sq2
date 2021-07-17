@@ -400,8 +400,11 @@ func Sprint(dialect string, v interface{}) (string, error) {
 			return "FALSE", nil
 		}
 	case []byte:
-		// TODO: Sprint needs to take in the dialect, because postgres BYTEA
-		// literals requires a different format 🙄.
+		if dialect == DialectPostgres {
+			// https://www.postgresql.org/docs/current/datatype-binary.html
+			// (see 8.4.1. bytea Hex Format)
+			return `'\x` + hex.EncodeToString(v) + `'::BYTEA`, nil
+		}
 		return `x'` + hex.EncodeToString(v) + `'`, nil
 	case string:
 		return `'` + EscapeQuote(v, '\'') + `'`, nil
