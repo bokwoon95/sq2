@@ -374,31 +374,6 @@ func lookupParam(dialect string, args []interface{}, paramName []rune, namedArgs
 	return paramValue, nil
 }
 
-func EscapeQuote(str string, quote byte) string {
-	i := strings.IndexByte(str, quote)
-	if i < 0 {
-		return str
-	}
-	buf := bufpool.Get().(*bytes.Buffer)
-	defer func() {
-		buf.Reset()
-		bufpool.Put(buf)
-	}()
-	buf.Grow(len(str))
-	escapedQuote := string([]byte{quote, quote})
-	for i >= 0 {
-		buf.WriteString(str[:i] + escapedQuote)
-		if len(str[i:]) > 2 && str[i:i+2] == escapedQuote {
-			str = str[i+2:]
-		} else {
-			str = str[i+1:]
-		}
-		i = strings.IndexByte(str, quote)
-	}
-	buf.WriteString(str)
-	return buf.String()
-}
-
 func Sprint(dialect string, v interface{}) (string, error) {
 	switch v := v.(type) {
 	case nil:
