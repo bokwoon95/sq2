@@ -293,7 +293,7 @@ func Sprintf(dialect string, query string, args []interface{}) (string, error) {
 			if runningArgsIndex >= len(args) {
 				return buf.String(), fmt.Errorf("too few args provided, expected more than %d", runningArgsIndex+1)
 			}
-			paramValue, err := Sprint(args[runningArgsIndex])
+			paramValue, err := Sprint(dialect, args[runningArgsIndex])
 			if err != nil {
 				return buf.String(), err
 			}
@@ -327,7 +327,7 @@ func lookupParam(dialect string, args []interface{}, paramName []rune, namedArgs
 		if paramName[0] != '?' {
 			return "", fmt.Errorf("parameter name missing")
 		}
-		paramValue, err = Sprint(args[runningArgsIndex])
+		paramValue, err = Sprint(dialect, args[runningArgsIndex])
 		if err != nil {
 			return "", err
 		}
@@ -340,7 +340,7 @@ func lookupParam(dialect string, args []interface{}, paramName []rune, namedArgs
 		if num < 0 || num >= len(args) {
 			return "", fmt.Errorf("args index %d out of bounds", num)
 		}
-		paramValue, err = Sprint(args[num])
+		paramValue, err = Sprint(dialect, args[num])
 		if err != nil {
 			return "", err
 		}
@@ -357,7 +357,7 @@ func lookupParam(dialect string, args []interface{}, paramName []rune, namedArgs
 	if num < 0 || num >= len(args) {
 		return "", fmt.Errorf("args index %d out of bounds", num)
 	}
-	paramValue, err = Sprint(args[num])
+	paramValue, err = Sprint(dialect, args[num])
 	if err != nil {
 		return "", err
 	}
@@ -389,7 +389,7 @@ func EscapeQuote(str string, quote byte) string {
 	return buf.String()
 }
 
-func Sprint(v interface{}) (string, error) {
+func Sprint(dialect string, v interface{}) (string, error) {
 	switch v := v.(type) {
 	case nil:
 		return "NULL", nil
@@ -432,7 +432,7 @@ func Sprint(v interface{}) (string, error) {
 	case float64:
 		return strconv.FormatFloat(v, 'g', -1, 64), nil
 	case sql.NamedArg:
-		return Sprint(v.Value)
+		return Sprint(dialect, v.Value)
 	case sql.NullBool:
 		if !v.Valid {
 			return "NULL", nil
@@ -516,7 +516,7 @@ func Sprint(v interface{}) (string, error) {
 		return "", fmt.Errorf("Go functions cannot be represented in SQL")
 	}
 	if deref > 0 {
-		return Sprint(rv.Interface())
+		return Sprint(dialect, rv.Interface())
 	}
 	return "", fmt.Errorf("could not convert %#v into its SQL representation", v)
 }
