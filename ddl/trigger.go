@@ -60,7 +60,7 @@ LOOP:
 			break LOOP
 		}
 	}
-	if trg.TriggerName == "" || trg.TableName == "" {
+	if trg.SQL != "" && (trg.TriggerName == "" || trg.TableName == "") {
 		return fmt.Errorf("could not find trigger name or table name, did you write the trigger correctly?")
 	}
 	return nil
