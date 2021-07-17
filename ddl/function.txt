@@ -1,0 +1,18 @@
+CREATE FUNCTION one() RETURNS integer
+
+CREATE FUNCTION tf1 (integer, numeric=3.14) RETURNS integer
+
+CREATE FUNCTION getfoo(int) RETURNS SETOF foo
+
+CREATE FUNCTION double_salary(emp) RETURNS numeric
+
+CREATE FUNCTION sum_n_product (int, y int, OUT sum int DEFAULT 3, OUT product int=22)
+
+CREATE FUNCTION make_array(anyelement, anyelement) RETURNS anyarray
+
+CREATE OR REPLACE FUNCTION years_compare( IN year1 integer DEFAULT NULL,
+                                          IN year2 integer DEFAULT NULL )
+
+create function foo(bar varchar , baz varchar='qux') returns varchar
+
+CREATE FUNCTION get_count_of_earners(salary_val IN decimal) RETURNS integer
