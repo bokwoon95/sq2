@@ -1,1 +1,71 @@
 package ddl
+
+import (
+	"testing"
+
+	"github.com/bokwoon95/sq"
+)
+
+func Test_CreateIndexCommnd(t *testing.T) {
+	type TT struct {
+		dialect   string
+		item      Command
+		wantQuery string
+		wantArgs  []interface{}
+	}
+
+	assert := func(t *testing.T, tt TT) {
+		gotQuery, gotArgs, _, err := sq.ToSQL(tt.dialect, tt.item)
+		if err != nil {
+			t.Fatal(testcallers(), err)
+		}
+		if diff := testdiff(gotQuery, tt.wantQuery); diff != "" {
+			t.Error(testcallers(), diff)
+		}
+		if diff := testdiff(gotArgs, tt.wantArgs); diff != "" {
+			t.Error(testcallers(), diff)
+		}
+	}
+
+	t.Run("(dialect == postgres)", func(t *testing.T) {
+		t.Parallel()
+		var tt TT
+		tt.dialect = sq.DialectPostgres
+		tt.item = CreateIndexCommand{
+			CreateConcurrently: true,
+			CreateIfNotExists:  true,
+			Index: Index{
+				TableSchema:    "some table schema",
+				TableName:      "some table name",
+				IndexName:      "some index name",
+				IndexType:      "HASH",
+				IsUnique:       true,
+				Columns:        []string{"column a", ""},
+				Exprs:          []string{"", "UPPER(column_b)"},
+				IncludeColumns: []string{"column_c", "column d"},
+				Predicate:      "column_e IS NOT NULL",
+			},
+		}
+		tt.wantQuery = `CREATE UNIQUE INDEX CONCURRENTLY IF NOT EXISTS` +
+			` "some index name" ON "some table schema"."some table name" USING HASH ("column a", UPPER(column_b))` +
+			` INCLUDE (column_c, "column d") WHERE column_e IS NOT NULL;`
+		assert(t, tt)
+	})
+
+	t.Run("(dialect == mysql) FULLTEXT", func(t *testing.T) {
+		t.Parallel()
+		var tt TT
+		tt.dialect = sq.DialectMySQL
+		tt.item = CreateIndexCommand{
+			Index: Index{
+				TableSchema: "my_table",
+				TableName:   "my_table",
+				IndexName:   "my_index",
+				IndexType:   "FULLTEXT",
+				Columns:     []string{"my_column"},
+			},
+		}
+		tt.wantQuery = `FULLTEXT INDEX my_index (my_column)`
+		assert(t, tt)
+	})
+}

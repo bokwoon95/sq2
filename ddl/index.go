@@ -46,11 +46,14 @@ func (cmd CreateIndexCommand) AppendSQL(dialect string, buf *bytes.Buffer, args 
 	if cmd.CreateIfNotExists && dialect != sq.DialectMySQL {
 		buf.WriteString("IF NOT EXISTS ")
 	}
-	buf.WriteString(sq.QuoteIdentifier(dialect, cmd.Index.IndexName) + " ON ")
-	if cmd.Index.TableSchema != "" {
-		buf.WriteString(sq.QuoteIdentifier(dialect, cmd.Index.TableSchema) + ".")
+	buf.WriteString(sq.QuoteIdentifier(dialect, cmd.Index.IndexName))
+	if dialect != sq.DialectMySQL {
+		buf.WriteString(" ON ")
+		if cmd.Index.TableSchema != "" {
+			buf.WriteString(sq.QuoteIdentifier(dialect, cmd.Index.TableSchema) + ".")
+		}
+		buf.WriteString(sq.QuoteIdentifier(dialect, cmd.Index.TableName))
 	}
-	buf.WriteString(sq.QuoteIdentifier(dialect, cmd.Index.TableName))
 	if cmd.Index.IndexType != "" && !isFulltextOrSpatial && !strings.EqualFold(cmd.Index.IndexType, "BTREE") {
 		buf.WriteString(" USING " + cmd.Index.IndexType)
 	}
@@ -60,7 +63,7 @@ func (cmd CreateIndexCommand) AppendSQL(dialect string, buf *bytes.Buffer, args 
 			buf.WriteString(", ")
 		}
 		if column != "" {
-			buf.WriteString(column)
+			buf.WriteString(sq.QuoteIdentifier(dialect, column))
 		} else {
 			buf.WriteString(cmd.Index.Exprs[i])
 		}
@@ -70,7 +73,14 @@ func (cmd CreateIndexCommand) AppendSQL(dialect string, buf *bytes.Buffer, args 
 		if dialect != sq.DialectPostgres {
 			return fmt.Errorf("%s does not support INDEX ... INCLUDE", dialect)
 		}
-		buf.WriteString(" INCLUDE (" + strings.Join(cmd.Index.IncludeColumns, ", ") + ")")
+		buf.WriteString(" INCLUDE (")
+		for i, column := range cmd.Index.IncludeColumns {
+			if i > 0 {
+				buf.WriteString(", ")
+			}
+			buf.WriteString(sq.QuoteIdentifier(dialect, column))
+		}
+		buf.WriteString(")")
 	}
 	if cmd.Index.Predicate != "" {
 		if dialect != sq.DialectPostgres && dialect != sq.DialectSQLite {
