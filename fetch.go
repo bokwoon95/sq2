@@ -181,7 +181,7 @@ func accumulateResults(dialect string, buf *bytes.Buffer, fields []Field, dest [
 			continue
 		}
 		buf.WriteString(lhs + ": ")
-		rhs, err := Sprint(dest[i])
+		rhs, err := Sprint(dialect, dest[i])
 		if err != nil {
 			buf.WriteString("%!(error=" + err.Error() + ")")
 			continue
