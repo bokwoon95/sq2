@@ -10,12 +10,12 @@ catalog.go
 step 1:
 Column | Constraint | Index | Trigger | Function | View | Table | Schema | Catalog
 step 2:
-func (c *Catalog) readDB(db sq.DB) error
-func (tbl *Table) readTable(table sq.Table) error
-func (view *View) readDDLView(ddlView DDLView) error
-func (c *Catalog) readTable(table sq.Table)
-func (c *Catalog) readDDLView(ddlView DDLView)
-func (c *Catalog) readFunction(function Function)
+func (tbl *Table) loadTable(table sq.Table) error
+func (view *View) loadDDLView(ddlView DDLView) error
+func (c *Catalog) loadDB(db sq.DB) error
+func (c *Catalog) loadTable(table sq.Table)
+func (c *Catalog) loadDDLView(ddlView DDLView)
+func (c *Catalog) loadFunction(function Function)
 func NewCatalog(dialect string, opts ...CatalogOption) (Catalog, error)
 type CatalogOption func(*Catalog) error
 func WithDB() CatalogOption
