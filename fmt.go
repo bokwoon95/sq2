@@ -283,12 +283,12 @@ func Sprintf(dialect string, query string, args []interface{}) (string, error) {
 		}
 		// is the current char the anonymous '?' parameter?
 		if char == '?' && dialect != DialectPostgres {
+			// for sqlite, just because we encounter a '?' doesn't mean it
+			// is an anonymous param. sqlite also supports using '?' for
+			// ordinal params (e.g. ?1, ?2, ?3) or named params (?foo,
+			// ?bar, ?baz). Hence we treat it as an ordinal/named param
+			// first, and handle the edge case later when it isn't.
 			if dialect == DialectSQLite {
-				// for sqlite, just because we encounter a '?' doesn't mean it
-				// is an anonymous param. sqlite also supports using '?' for
-				// ordinal params (e.g. ?1, ?2, ?3) or named params (?foo,
-				// ?bar, ?baz). Hence we treat it as an ordinal/named param
-				// first, and handle the edge case later when it isn't.
 				paramName = append(paramName, char)
 				continue
 			}
@@ -323,7 +323,7 @@ func Sprintf(dialect string, query string, args []interface{}) (string, error) {
 
 func lookupParam(dialect string, args []interface{}, paramName []rune, namedArgsLookup map[string]int, runningArgsIndex int) (paramValue string, err error) {
 	var maybeNum string
-	if paramName[0] == '@' && dialect == DialectSQLServer && len(paramName) > 2 && (paramName[1] == 'p' || paramName[1] == 'P') {
+	if paramName[0] == '@' && dialect == DialectSQLServer && len(paramName) >= 2 && (paramName[1] == 'p' || paramName[1] == 'P') {
 		maybeNum = string(paramName[2:])
 	} else {
 		maybeNum = string(paramName[1:])
