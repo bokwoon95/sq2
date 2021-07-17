@@ -328,6 +328,7 @@ func lookupParam(dialect string, args []interface{}, paramName []rune, namedArgs
 	} else {
 		maybeNum = string(paramName[1:])
 	}
+	// is paramName an anonymous parameter?
 	if maybeNum == "" {
 		if paramName[0] != '?' {
 			return "", fmt.Errorf("parameter name missing")
@@ -338,7 +339,7 @@ func lookupParam(dialect string, args []interface{}, paramName []rune, namedArgs
 		}
 		return paramValue, nil
 	}
-	// attempt to parse paramName as an ordinal parameter
+	// is paramName an ordinal paramater?
 	num, err := strconv.Atoi(maybeNum)
 	if err == nil {
 		num-- // decrement because ordinal parameters always lead the index by 1 (e.g. $1 corresponds to index 0)
@@ -351,7 +352,8 @@ func lookupParam(dialect string, args []interface{}, paramName []rune, namedArgs
 		}
 		return paramValue, nil
 	}
-	// if we reach here, we know that paramName is not an ordinal parameter
+	// if we reach here, we know that the paramName is not an ordinal parameter
+	// i.e. it is a named parameter
 	if dialect == DialectPostgres || dialect == DialectMySQL {
 		return "", fmt.Errorf("%s does not support %s named parameter", dialect, string(paramName))
 	}
