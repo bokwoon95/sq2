@@ -400,6 +400,8 @@ func Sprint(v interface{}) (string, error) {
 			return "FALSE", nil
 		}
 	case []byte:
+		// TODO: Sprint needs to take in the dialect, because postgres BYTEA
+		// literals requires a different format 🙄.
 		return `x'` + hex.EncodeToString(v) + `'`, nil
 	case string:
 		return `'` + EscapeQuote(v, '\'') + `'`, nil

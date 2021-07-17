@@ -190,6 +190,7 @@ func (t *TColumn) NotNull() *TColumn {
 }
 
 func (t *TColumn) PrimaryKey() *TColumn {
+	// TODO: if t.dialect == mysql, then the constraintName is always `PRIMARY`
 	constraintName := generateName(PRIMARY_KEY, t.tbl.TableName, t.columnName)
 	_, err := createOrUpdateConstraint(t.tbl, PRIMARY_KEY, constraintName, []string{t.columnName}, "")
 	if err != nil {
