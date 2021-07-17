@@ -39,7 +39,10 @@ func (cmd AddConstraintCommand) AppendSQL(dialect string, buf *bytes.Buffer, arg
 	if dialect == sq.DialectSQLite {
 		return fmt.Errorf("sqlite does not allow constraints to be added after table creation")
 	}
-	buf.WriteString("ADD CONSTRAINT " + sq.QuoteIdentifier(dialect, cmd.Constraint.ConstraintName))
+	buf.WriteString("ADD")
+	if dialect != sq.DialectMySQL || cmd.Constraint.ConstraintType != PRIMARY_KEY {
+		buf.WriteString(" CONSTRAINT " + sq.QuoteIdentifier(dialect, cmd.Constraint.ConstraintName))
+	}
 	if cmd.IndexName != "" {
 		if dialect != sq.DialectPostgres {
 			return fmt.Errorf("%s does not allow the creation of constraints using an index", dialect)
