@@ -188,6 +188,9 @@ func BufferPrintValue(dialect string, buf *bytes.Buffer, args *[]interface{}, pa
 }
 
 func Sprintf(dialect string, query string, args []interface{}) (string, error) {
+	if len(args) == 0 {
+		return query, nil
+	}
 	buf := bufpool.Get().(*bytes.Buffer)
 	defer func() {
 		buf.Reset()
