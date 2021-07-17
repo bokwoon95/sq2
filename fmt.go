@@ -264,7 +264,8 @@ func Sprintf(dialect string, query string, args []interface{}) (string, error) {
 				if err != nil {
 					return buf.String(), err
 				}
-				buf.WriteString(paramValue + string(char))
+				buf.WriteString(paramValue)
+				buf.WriteRune(char)
 				if len(paramName) == 1 && paramName[0] == '?' {
 					runningArgsIndex++
 				}
