@@ -9,15 +9,15 @@ import (
 )
 
 type Index struct {
-	TableSchema string   `json:",omitempty"`
-	TableName   string   `json:",omitempty"`
-	IndexName   string   `json:",omitempty"`
-	IndexType   string   `json:",omitempty"`
-	IsUnique    bool     `json:",omitempty"`
-	Columns     []string `json:",omitempty"`
-	Exprs       []string `json:",omitempty"`
-	Include     []string `json:",omitempty"`
-	Where       string   `json:",omitempty"`
+	TableSchema    string   `json:",omitempty"`
+	TableName      string   `json:",omitempty"`
+	IndexName      string   `json:",omitempty"`
+	IndexType      string   `json:",omitempty"`
+	IsUnique       bool     `json:",omitempty"`
+	Columns        []string `json:",omitempty"`
+	Exprs          []string `json:",omitempty"`
+	IncludeColumns []string `json:",omitempty"`
+	Predicate      string   `json:",omitempty"`
 }
 
 type CreateIndexCommand struct {
@@ -26,7 +26,6 @@ type CreateIndexCommand struct {
 	Index              Index
 }
 
-// TODO: if mysql, this would live as part of an ALTER TABLE command
 func (cmd CreateIndexCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
 	if dialect != sq.DialectMySQL {
 		buf.WriteString("CREATE ")
@@ -67,13 +66,21 @@ func (cmd CreateIndexCommand) AppendSQL(dialect string, buf *bytes.Buffer, args 
 		}
 	}
 	buf.WriteString(")")
-	if len(cmd.Index.Include) > 0 && dialect == sq.DialectPostgres {
-		buf.WriteString(" INCLUDE (" + strings.Join(cmd.Index.Include, ", ") + ")")
+	if len(cmd.Index.IncludeColumns) > 0 {
+		if dialect != sq.DialectPostgres {
+			return fmt.Errorf("%s does not support INDEX ... INCLUDE", dialect)
+		}
+		buf.WriteString(" INCLUDE (" + strings.Join(cmd.Index.IncludeColumns, ", ") + ")")
 	}
-	if cmd.Index.Where != "" && (dialect == sq.DialectPostgres || dialect == sq.DialectSQLite) {
-		buf.WriteString(" WHERE " + cmd.Index.Where)
+	if cmd.Index.Predicate != "" {
+		if dialect != sq.DialectPostgres && dialect != sq.DialectSQLite {
+			return fmt.Errorf("%s does not support INDEX ... WHERE", dialect)
+		}
+		buf.WriteString(" WHERE " + cmd.Index.Predicate)
 	}
-	buf.WriteString(";")
+	if dialect != sq.DialectMySQL {
+		buf.WriteString(";")
+	}
 	return nil
 }
 
@@ -86,7 +93,6 @@ type DropIndexCommand struct {
 	DropCascade      bool
 }
 
-// TODO: if mysql, this would live as part of an ALTER TABLE command
 func (cmd DropIndexCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
 	buf.WriteString("DROP INDEX ")
 	if cmd.DropConcurrently {
@@ -112,8 +118,8 @@ func (cmd DropIndexCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *[
 		buf.WriteString(" CASCADE")
 	}
 	if dialect != sq.DialectMySQL {
+		buf.WriteString(";")
 	}
-	buf.WriteString(";")
 	return nil
 }
 
@@ -123,4 +129,23 @@ type RenameIndexCommand struct {
 	TableName          string
 	IndexName          string
 	RenameToName       string
+}
+
+func (cmd RenameIndexCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
+	switch dialect {
+	case sq.DialectSQLite:
+		return fmt.Errorf("sqlite does not support renaming indexes")
+	case sq.DialectMySQL:
+		buf.WriteString("RENAME INDEX " + sq.QuoteIdentifier(dialect, cmd.IndexName) + " TO " + sq.QuoteIdentifier(dialect, cmd.RenameToName))
+	default:
+		buf.WriteString("ALTER INDEX ")
+		if cmd.AlterIndexIfExists {
+			buf.WriteString("IF EXISTS ")
+		}
+		if cmd.TableSchema != "" {
+			buf.WriteString(sq.QuoteIdentifier(dialect, cmd.TableSchema) + ".")
+		}
+		buf.WriteString(sq.QuoteIdentifier(dialect, cmd.IndexName) + " RENAME TO " + sq.QuoteIdentifier(dialect, cmd.RenameToName))
+	}
+	return nil
 }
