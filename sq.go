@@ -199,25 +199,18 @@ func QuoteIdentifier(dialect string, identifier string) string {
 			needsQuoting = true
 			break
 		}
-		switch {
-		case char == '_',
-			char >= '0' && char <= '9',
-			char >= 'a' && char <= 'z':
+		if char == '_' || (char >= '0' && char <= '9') || (char >= 'a' && char <= 'z') {
 			continue
-		case char >= 'A' && char <= 'Z':
-			// If there are capital letters, the identifier is quoted to
-			// preserve capitalization information (because databases treat
-			// capital letters differently based on their dialect or
-			// configuration)
-			fallthrough
-		default:
-			// If the character is anything else, we quote. In general there
-			// may be some other characters that are allowed in unquoted
-			// identifiers (e.g. '$'), but different databases allow different
-			// things. We only recognize _a-z0-9 as the true standard.
-			needsQuoting = true
-			break
 		}
+		// If there are capital letters, the identifier is quoted to preserve
+		// capitalization information (because databases treat capital letters
+		// differently based on their dialect or configuration).
+		// If the character is anything else, we also quote. In general there
+		// may be some special characters that are allowed in unquoted
+		// identifiers (e.g. '$'), but different databases allow different
+		// things. We only recognize _a-z0-9 as the true standard.
+		needsQuoting = true
+		break
 	}
 	if !needsQuoting {
 		return identifier
