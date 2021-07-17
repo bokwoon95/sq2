@@ -55,6 +55,9 @@ func (cmd CreateIndexCommand) AppendSQL(dialect string, buf *bytes.Buffer, args 
 		buf.WriteString(sq.QuoteIdentifier(dialect, cmd.Index.TableName))
 	}
 	if cmd.Index.IndexType != "" && !isFulltextOrSpatial && !strings.EqualFold(cmd.Index.IndexType, "BTREE") {
+		if dialect != sq.DialectPostgres && dialect != sq.DialectMySQL {
+			return fmt.Errorf("%s does not support index types", dialect)
+		}
 		buf.WriteString(" USING " + cmd.Index.IndexType)
 	}
 	buf.WriteString(" (")
