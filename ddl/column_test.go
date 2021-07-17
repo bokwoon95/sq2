@@ -689,9 +689,9 @@ func Test_RenameColumnCommand(t *testing.T) {
 		tt.dialect = sq.DialectPostgres
 		tt.item = RenameColumnCommand{
 			ColumnName:   "actor_id",
-			RenameToName: "aid",
+			RenameToName: "id",
 		}
-		tt.wantQuery = `RENAME COLUMN actor_id TO aid`
+		tt.wantQuery = `RENAME COLUMN actor_id TO id`
 		assert(t, tt)
 	})
 
