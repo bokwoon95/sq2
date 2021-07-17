@@ -28,14 +28,16 @@ type CreateIndexCommand struct {
 
 // TODO: if mysql, this would live as part of an ALTER TABLE command
 func (cmd CreateIndexCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
-	buf.WriteString("CREATE")
+	if dialect != sq.DialectMySQL {
+		buf.WriteString("CREATE ")
+	}
 	isFulltextOrSpatial := cmd.Index.IndexType == "FULLTEXT" || cmd.Index.IndexType == "SPATIAL"
 	if dialect == sq.DialectMySQL && isFulltextOrSpatial {
-		buf.WriteString(" " + cmd.Index.IndexType)
+		buf.WriteString(cmd.Index.IndexType + " ")
 	} else if cmd.Index.IsUnique {
-		buf.WriteString(" UNIQUE")
+		buf.WriteString("UNIQUE ")
 	}
-	buf.WriteString(" INDEX ")
+	buf.WriteString("INDEX ")
 	if cmd.CreateConcurrently {
 		if dialect != sq.DialectPostgres {
 			return fmt.Errorf("%s does not support CREATE INDEX CONCURRENTLY", dialect)
@@ -45,7 +47,7 @@ func (cmd CreateIndexCommand) AppendSQL(dialect string, buf *bytes.Buffer, args 
 	if cmd.CreateIfNotExists && dialect != sq.DialectMySQL {
 		buf.WriteString("IF NOT EXISTS ")
 	}
-	buf.WriteString(cmd.Index.IndexName + " ON ")
+	buf.WriteString(sq.QuoteIdentifier(dialect, cmd.Index.IndexName) + " ON ")
 	if cmd.Index.TableSchema != "" {
 		buf.WriteString(sq.QuoteIdentifier(dialect, cmd.Index.TableSchema) + ".")
 	}
