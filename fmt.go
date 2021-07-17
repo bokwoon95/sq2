@@ -212,10 +212,12 @@ func Sprintf(dialect string, query string, args []interface{}) (string, error) {
 		'\t': true, '\n': true, '\v': true, '\f': true, '\r': true, ' ': true, 0x85: true, 0xA0: true,
 	}
 	for i, char := range query {
+		// do we unconditionally write in the current char?
 		if mustWriteCharAt == i {
 			buf.WriteRune(char)
 			continue
 		}
+		// are we currently inside a string or identifier?
 		if insideStringOrIdentifier {
 			buf.WriteRune(char)
 			switch openingQuote {
@@ -238,14 +240,14 @@ func Sprintf(dialect string, query string, args []interface{}) (string, error) {
 			}
 			continue
 		}
+		// does the current char mark the start of a new string or identifier?
 		if char == '\'' || char == '"' || (char == '`' && dialect == DialectMySQL) || (char == '[' && dialect == DialectSQLServer) {
 			insideStringOrIdentifier = true
 			openingQuote = char
 			buf.WriteRune(char)
 			continue
 		}
-		// paramName will be non-empty only if the previous iteration inserted
-		// a parameter-prefixing character (i.e. '?', '$', ':' or '@') into it
+		// are we inside a parameter name?
 		if len(paramName) > 0 {
 			if nameTerminatingChars[char] {
 				paramValue, err := lookupParam(dialect, args, paramName, namedArgsLookup, runningArgsIndex)
@@ -263,12 +265,14 @@ func Sprintf(dialect string, query string, args []interface{}) (string, error) {
 			}
 			continue
 		}
+		// does the current char mark the start of a new parameter name?
 		if (char == '$' && (dialect == DialectSQLite || dialect == DialectPostgres)) ||
 			(char == ':' && dialect == DialectSQLite) ||
 			(char == '@' && (dialect == DialectSQLite || dialect == DialectSQLServer)) {
 			paramName = append(paramName, char)
 			continue
 		}
+		// is the current char the anonymous '?' parameter?
 		if char == '?' && dialect != DialectPostgres {
 			if dialect == DialectSQLite {
 				// for sqlite, just because we encounter a '?' doesn't mean it
@@ -290,8 +294,11 @@ func Sprintf(dialect string, query string, args []interface{}) (string, error) {
 			runningArgsIndex++
 			continue
 		}
+		// if all the above questions answer false, we just write the current
+		// char in and continue
 		buf.WriteRune(char)
 	}
+	// flush the paramName buffer (to handle edge case where the query ends with a parameter name)
 	if len(paramName) > 0 {
 		paramValue, err := lookupParam(dialect, args, paramName, namedArgsLookup, runningArgsIndex)
 		if err != nil {
