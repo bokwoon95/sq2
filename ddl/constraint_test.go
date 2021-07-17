@@ -42,6 +42,21 @@ func Test_AddConstraintCommnd(t *testing.T) {
 		assert(t, tt)
 	})
 
+	t.Run("(dialect == postgres) quoted identifier", func(t *testing.T) {
+		t.Parallel()
+		var tt TT
+		tt.dialect = sq.DialectPostgres
+		tt.item = AddConstraintCommand{
+			Constraint: Constraint{
+				ConstraintName: "bad constraint name",
+				ConstraintType: UNIQUE,
+			},
+			IndexName: "bad index name",
+		}
+		tt.wantQuery = `ADD CONSTRAINT "bad constraint name" UNIQUE USING INDEX "bad index name"`
+		assert(t, tt)
+	})
+
 	t.Run("(dialect == postgres) UNIQUE USING INDEX DEFERRABLE INITIALLY DEFERRED", func(t *testing.T) {
 		t.Parallel()
 		var tt TT
@@ -400,6 +415,18 @@ func Test_AlterConstraintCommnd(t *testing.T) {
 		assert(t, tt)
 	})
 
+	t.Run("(dialect == postgres) quoted identifier", func(t *testing.T) {
+		t.Parallel()
+		var tt TT
+		tt.dialect = sq.DialectPostgres
+		tt.item = AlterConstraintCommand{
+			ConstraintName:  "bad constraint name",
+			AlterDeferrable: true,
+		}
+		tt.wantQuery = `ALTER CONSTRAINT "bad constraint name" NOT DEFERRABLE`
+		assert(t, tt)
+	})
+
 	t.Run("(dialect == postgres) ALTER CONSTRAINT DEFERRABLE INITIALLY DEFERRED", func(t *testing.T) {
 		t.Parallel()
 		var tt TT
@@ -489,6 +516,17 @@ func Test_DropConstraintCommnd(t *testing.T) {
 		}
 	}
 
+	t.Run("(dialect == postgres) quoted identifier", func(t *testing.T) {
+		t.Parallel()
+		var tt TT
+		tt.dialect = sq.DialectPostgres
+		tt.item = DropConstraintCommand{
+			ConstraintName: "bad constraint name",
+		}
+		tt.wantQuery = `DROP CONSTRAINT "bad constraint name"`
+		assert(t, tt)
+	})
+
 	t.Run("(dialect == postgres) DROP IF EXISTS CASCADE", func(t *testing.T) {
 		t.Parallel()
 		var tt TT
@@ -575,6 +613,17 @@ func Test_RenameConstraintCommnd(t *testing.T) {
 			t.Error(testcallers(), diff)
 		}
 	}
+
+	t.Run("quoted identifier", func(t *testing.T) {
+		t.Parallel()
+		var tt TT
+		tt.item = RenameConstraintCommand{
+			ConstraintName: "bad constraint name",
+			RenameToName:   "4lso bad constraint name",
+		}
+		tt.wantQuery = `RENAME CONSTRAINT "bad constraint name" TO "4lso bad constraint name"`
+		assert(t, tt)
+	})
 
 	t.Run("(dialect == postgres)", func(t *testing.T) {
 		t.Parallel()
