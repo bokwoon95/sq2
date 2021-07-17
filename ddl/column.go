@@ -191,11 +191,11 @@ func (cmd AlterColumnCommand) AppendSQL(dialect string, buf *bytes.Buffer, args 
 			return fmt.Errorf("MODIFY COLUMN: %w", err)
 		}
 	case sq.DialectPostgres:
+		var written bool
 		// alterColumnName abstracts away the boilerplate of writing "ALTER COLUMN
 		// $COLUMN_NAME" every time. It also prepends each new ALTER COLUMN with a
 		// newline character (except for the first ALTER COLUMN because the initial
 		// newline will be handled by the parent ALTER TABLE command).
-		var written bool
 		alterColumnName := func() {
 			if !written {
 				written = true

@@ -26,7 +26,8 @@ type CreateIndexCommand struct {
 	Index              Index
 }
 
-func (cmd *CreateIndexCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
+// TODO: if mysql, this would live as part of an ALTER TABLE command
+func (cmd CreateIndexCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
 	buf.WriteString("CREATE")
 	isFulltextOrSpatial := cmd.Index.IndexType == "FULLTEXT" || cmd.Index.IndexType == "SPATIAL"
 	if dialect == sq.DialectMySQL && isFulltextOrSpatial {
@@ -81,6 +82,37 @@ type DropIndexCommand struct {
 	TableName        string
 	IndexName        string
 	DropCascade      bool
+}
+
+// TODO: if mysql, this would live as part of an ALTER TABLE command
+func (cmd DropIndexCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
+	buf.WriteString("DROP INDEX ")
+	if cmd.DropConcurrently {
+		if dialect != sq.DialectPostgres {
+			return fmt.Errorf("%s does not support DROP INDEX CONCURRENTLY", dialect)
+		}
+		buf.WriteString("CONCURRENTLY ")
+	}
+	if cmd.DropIfExists {
+		if dialect != sq.DialectPostgres && dialect != sq.DialectSQLite {
+			return fmt.Errorf("%s does not support DROP INDEX IF EXISTS", dialect)
+		}
+		buf.WriteString("IF EXISTS ")
+	}
+	if cmd.TableSchema != "" && dialect != sq.DialectMySQL {
+		buf.WriteString(sq.QuoteIdentifier(dialect, cmd.TableSchema) + ".")
+	}
+	buf.WriteString(sq.QuoteIdentifier(dialect, cmd.IndexName))
+	if cmd.DropCascade {
+		if dialect != sq.DialectPostgres {
+			return fmt.Errorf("%s does not support DROP INDEX CASCADE", dialect)
+		}
+		buf.WriteString(" CASCADE")
+	}
+	if dialect != sq.DialectMySQL {
+	}
+	buf.WriteString(";")
+	return nil
 }
 
 type RenameIndexCommand struct {

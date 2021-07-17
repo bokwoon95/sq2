@@ -57,6 +57,7 @@ func (cmd AddConstraintCommand) AppendSQL(dialect string, buf *bytes.Buffer, arg
 			}
 		}
 	} else {
+		buf.WriteByte(' ')
 		err := writeConstraintDefinition(dialect, buf, cmd.Constraint)
 		if err != nil {
 			return err
@@ -82,9 +83,9 @@ func (cmd AddConstraintCommand) AppendSQL(dialect string, buf *bytes.Buffer, arg
 func writeConstraintDefinition(dialect string, buf *bytes.Buffer, constraint Constraint) error {
 	switch constraint.ConstraintType {
 	case CHECK:
-		buf.WriteString(" CHECK (" + constraint.CheckExpr + ")")
+		buf.WriteString("CHECK (" + constraint.CheckExpr + ")")
 	case FOREIGN_KEY:
-		buf.WriteString(" FOREIGN KEY (" + strings.Join(constraint.Columns, ", ") + ") REFERENCES ")
+		buf.WriteString("FOREIGN KEY (" + strings.Join(constraint.Columns, ", ") + ") REFERENCES ")
 		if constraint.ReferencesSchema != "" {
 			buf.WriteString(constraint.ReferencesSchema + ".")
 		}
@@ -109,7 +110,7 @@ func writeConstraintDefinition(dialect string, buf *bytes.Buffer, constraint Con
 			return fmt.Errorf("postgres EXCLUDE constraint requires an index")
 		}
 		if constraint.IndexType != "" {
-			buf.WriteString(" EXCLUDE USING " + constraint.IndexType)
+			buf.WriteString("EXCLUDE USING " + constraint.IndexType)
 		}
 		buf.WriteString(" (")
 		for i := range constraint.Columns {
@@ -135,7 +136,7 @@ func writeConstraintDefinition(dialect string, buf *bytes.Buffer, constraint Con
 			buf.WriteString(" WHERE (" + constraint.Predicate + ")")
 		}
 	default:
-		buf.WriteString(" " + constraint.ConstraintType + " (" + strings.Join(constraint.Columns, ", ") + ")")
+		buf.WriteString(constraint.ConstraintType + " (" + strings.Join(constraint.Columns, ", ") + ")")
 	}
 	if constraint.IsDeferrable {
 		switch dialect {
