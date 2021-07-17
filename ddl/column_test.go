@@ -389,6 +389,22 @@ func Test_AddColumnCommand(t *testing.T) {
 		assert(t, tt)
 	})
 
+	t.Run("(dialect == sqlite) column quoted identifiers", func(t *testing.T) {
+		t.Parallel()
+		var tt TT
+		tt.item = AddColumnCommand{
+			Column: Column{
+				ColumnName: "bad column name",
+				ColumnType: "TEXT",
+			},
+			ReferencesTable:  "bad table name",
+			ReferencesColumn: "bad column name",
+		}
+		tt.dialect = sq.DialectSQLite
+		tt.wantQuery = `ADD COLUMN "bad column name" TEXT REFERENCES "bad table name" ("bad column name")`
+		assert(t, tt)
+	})
+
 	t.Run("(dialect == mysql) AUTOINCREMENT column", func(t *testing.T) {
 		t.Parallel()
 		var tt TT
@@ -451,6 +467,20 @@ func Test_AlterColumnCommand(t *testing.T) {
 		if err == nil {
 			t.Fatal(testcallers(), "expected error but got nil")
 		}
+	})
+
+	t.Run("quoted identifiers", func(t *testing.T) {
+		t.Parallel()
+		var tt TT
+		tt.dialect = sq.DialectPostgres
+		tt.item = AlterColumnCommand{
+			Column: Column{
+				ColumnName: "bad column name",
+				ColumnType: "TEXT",
+			},
+		}
+		tt.wantQuery = `ALTER COLUMN "bad column name" SET DATA TYPE TEXT`
+		assert(t, tt)
 	})
 
 	t.Run("dialect == mysql", func(t *testing.T) {
@@ -568,6 +598,17 @@ func Test_DropColumnCommand(t *testing.T) {
 		}
 	}
 
+	t.Run("quoted identifiers", func(t *testing.T) {
+		t.Parallel()
+		var tt TT
+		tt.dialect = sq.DialectPostgres
+		tt.item = DropColumnCommand{
+			ColumnName: "bad column name",
+		}
+		tt.wantQuery = `DROP COLUMN "bad column name"`
+		assert(t, tt)
+	})
+
 	t.Run("(dialect != postgres) DROP", func(t *testing.T) {
 		t.Parallel()
 		var tt TT
@@ -648,9 +689,21 @@ func Test_RenameColumnCommand(t *testing.T) {
 		tt.dialect = sq.DialectPostgres
 		tt.item = RenameColumnCommand{
 			ColumnName:   "actor_id",
-			RenameToName: "actor ID",
+			RenameToName: "aid",
 		}
-		tt.wantQuery = `RENAME COLUMN actor_id TO "actor ID"`
+		tt.wantQuery = `RENAME COLUMN actor_id TO aid`
+		assert(t, tt)
+	})
+
+	t.Run("quoted identifiers", func(t *testing.T) {
+		t.Parallel()
+		var tt TT
+		tt.dialect = sq.DialectPostgres
+		tt.item = RenameColumnCommand{
+			ColumnName:   "bad column name",
+			RenameToName: "w0rs3 COLumn naME",
+		}
+		tt.wantQuery = `RENAME COLUMN "bad column name" TO "w0rs3 COLumn naME"`
 		assert(t, tt)
 	})
 }
