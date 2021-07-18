@@ -63,7 +63,7 @@ LOOP:
 			for i, rawArg := range rawArgs {
 				tokens, _ := popIdentifierTokens(dialect, rawArg, 4)
 				if len(tokens) == 0 {
-					return fmt.Errorf("x: argument #%d ('%s') is invalid", i+1, rawArg)
+					return fmt.Errorf("argument #%d ('%s') is invalid", i+1, rawArg)
 				}
 				if strings.EqualFold(tokens[0], "IN") ||
 					strings.EqualFold(tokens[0], "OUT") ||
@@ -72,7 +72,7 @@ LOOP:
 					argMode, tokens = tokens[0], tokens[1:]
 				}
 				if len(tokens) == 0 {
-					return fmt.Errorf("y: argument #%d ('%s') is invalid", i+1, rawArg)
+					return fmt.Errorf("argument #%d ('%s') is invalid", i+1, rawArg)
 				}
 				for j := len(tokens) - 1; j >= 0; j-- {
 					if strings.EqualFold(tokens[j], "DEFAULT") || tokens[j][0] == '=' {
@@ -86,7 +86,7 @@ LOOP:
 				case 1:
 					argType = tokens[0]
 				default:
-					return fmt.Errorf("z: argument #%d ('%s', %#v) is invalid", i+1, rawArg, tokens)
+					return fmt.Errorf("argument #%d ('%s', %#v) is invalid", i+1, rawArg, tokens)
 				}
 				if j := strings.IndexByte(argType, '='); j >= 0 {
 					argType = argType[:j]

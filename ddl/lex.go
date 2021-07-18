@@ -134,6 +134,9 @@ func popIdentifierTokens(dialect, s string, num int) (tokens []string, remainder
 	token, remainder := "", s
 	for i := 0; i < num && remainder != ""; i++ {
 		token, remainder = popIdentifierToken(dialect, remainder)
+		if token == "" && remainder == "" {
+			break
+		}
 		tokens = append(tokens, token)
 	}
 	return tokens, remainder
