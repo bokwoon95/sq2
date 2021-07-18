@@ -20,55 +20,67 @@ func (fun *Function) populateFunctionInfo(dialect string) error {
 		PRE_FUNCTION = iota
 		FUNCTION
 	)
-	word, rest := "", fun.SQL
 	state := PRE_FUNCTION
+	token, remainder := "", fun.SQL
 LOOP:
-	for rest != "" {
+	for remainder != "" {
 		switch state {
 		case PRE_FUNCTION:
-			word, rest = popIdentifierToken(dialect, rest)
-			if strings.EqualFold(word, "FUNCTION") {
+			token, remainder = popIdentifierToken(dialect, remainder)
+			if strings.EqualFold(token, "FUNCTION") {
 				state = FUNCTION
 			}
 			continue
 		case FUNCTION:
-			fun.FunctionName, _ = popIdentifierToken(dialect, rest)
+			fun.FunctionName, _ = popIdentifierToken(dialect, remainder)
 			if i := strings.IndexByte(fun.FunctionName, '.'); i >= 0 {
 				fun.FunctionSchema, fun.FunctionName = fun.FunctionName[:i], fun.FunctionName[i+1:]
 			}
 			if i := strings.IndexByte(fun.FunctionName, '('); i >= 0 {
 				fun.FunctionName = fun.FunctionName[:i]
 			}
-			i := strings.IndexByte(rest, '(')
+			i := strings.IndexByte(remainder, '(')
 			if i < 0 {
 				return fmt.Errorf("opening bracket for args not found")
 			}
-			j := strings.IndexByte(rest, ')')
+			j := strings.IndexByte(remainder, ')')
 			if j < 0 {
 				return fmt.Errorf("closing bracket for args not found")
 			}
-			rawArgs := strings.Split(rest[i+1:j], ",")
+			rawArgs := strings.Split(remainder[i+1:j], ",")
 			fun.ArgModes = make([]string, len(rawArgs))
 			fun.ArgNames = make([]string, len(rawArgs))
 			fun.ArgTypes = make([]string, len(rawArgs))
+			var argMode, argName, argType string
 			for i, rawArg := range rawArgs {
-				words, _ := popIdentifierTokens(dialect, rawArg, 4)
-				if len(words) == 4 && (strings.EqualFold(words[3], "DEFAULT") || words[3][0] == '=') {
+				tokens, _ := popIdentifierTokens(dialect, rawArg, 4)
+				if len(tokens) == 0 {
+					return fmt.Errorf("argument #%d ('%s') is invalid", i+1, rawArg)
 				}
-				if len(words) == 1 {
-					argType := words[0]
-					if j := strings.IndexByte(argType, '='); j >= 0 {
-						argType = strings.TrimSpace(argType[:j])
-					}
-					continue
+				if strings.EqualFold(tokens[0], "IN") ||
+					strings.EqualFold(tokens[0], "OUT") ||
+					strings.EqualFold(tokens[0], "INOUT") ||
+					strings.EqualFold(tokens[0], "VARIADIC") {
+					argMode, tokens = tokens[0], tokens[1:]
 				}
-				if strings.EqualFold(words[0], "IN") ||
-					strings.EqualFold(words[0], "OUT") ||
-					strings.EqualFold(words[0], "INTOUT") ||
-					strings.EqualFold(words[0], "VARIADIC") {
-					fun.ArgModes[i], words = words[0], words[1:]
+				if len(tokens) == 0 {
+					return fmt.Errorf("argument #%d ('%s') is invalid", i+1, rawArg)
 				}
-				fun.ArgNames[i], fun.ArgTypes[i] = words[0], words[1]
+				if lastToken := tokens[len(tokens)-1]; strings.EqualFold(lastToken, "DEFAULT") || lastToken[0] == '=' {
+					tokens = tokens[:len(tokens)-1]
+				}
+				switch len(tokens) {
+				case 2:
+					argName, argType = tokens[0], tokens[1]
+				case 1:
+					argType = tokens[0]
+				default:
+					return fmt.Errorf("argument #%d ('%s') is invalid", i+1, rawArg)
+				}
+				if j := strings.IndexByte(argType, '='); j >= 0 {
+					argType = argType[:j]
+				}
+				fun.ArgModes[i], fun.ArgNames[i], fun.ArgTypes[i] = argMode, argName, argType
 			}
 			break LOOP
 		}
