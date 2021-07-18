@@ -14,7 +14,7 @@ func Test_lexModifiers(t *testing.T) {
 	}
 
 	assert := func(t *testing.T, tt TT) {
-		gotModifiers, gotModifierIndex, err := lexModifiers(tt.config)
+		gotModifiers, gotModifierIndex, err := tokenizeModifiers(tt.config)
 		if err != nil {
 			t.Fatal(testcallers(), err)
 		}
@@ -81,7 +81,7 @@ func Test_lexValue(t *testing.T) {
 	}
 
 	assert := func(t *testing.T, tt TT) {
-		gotValue, gotModifiers, gotModifierIndex, err := lexValue(tt.config)
+		gotValue, gotModifiers, gotModifierIndex, err := tokenizeValue(tt.config)
 		if err != nil {
 			t.Fatal(testcallers(), err)
 		}
@@ -166,7 +166,7 @@ func Test_popWords(t *testing.T) {
 	}
 
 	assert := func(t *testing.T, tt TT) {
-		gotWords, gotRest := popWords(tt.dialect, tt.s, tt.num)
+		gotWords, gotRest := popIdentifierTokens(tt.dialect, tt.s, tt.num)
 		if diff := testdiff(gotWords, tt.wantWords); diff != "" {
 			t.Error(testcallers(), diff)
 		}
@@ -177,7 +177,7 @@ func Test_popWords(t *testing.T) {
 
 	t.Run("empty (popWord)", func(t *testing.T) {
 		t.Parallel()
-		gotWord, gotRest := popWord("", "")
+		gotWord, gotRest := popIdentifierToken("", "")
 		if diff := testdiff(gotWord, ""); diff != "" {
 			t.Error(testcallers(), diff)
 		}
