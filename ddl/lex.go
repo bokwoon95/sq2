@@ -9,7 +9,7 @@ import (
 	"github.com/bokwoon95/sq"
 )
 
-func popBraceToken(s string) (value, rest string, err error) {
+func popBraceToken(s string) (token, remainder string, err error) {
 	s = strings.TrimLeft(s, " \t\n\v\f\r\u0085\u00A0")
 	if s == "" {
 		return "", "", nil
@@ -40,20 +40,20 @@ func popBraceToken(s string) (value, rest string, err error) {
 	if bracelevel > 0 {
 		return "", "", fmt.Errorf("unclosed brace")
 	}
-	value = s[:splitAt]
-	rest = s[splitAt:]
+	token = s[:splitAt]
+	remainder = s[splitAt:]
 	if isBraceQuoted {
-		value = value[1 : len(value)-1]
+		token = token[1 : len(token)-1]
 	}
-	return value, rest, nil
+	return token, remainder, nil
 }
 
 func tokenizeValue(s string) (value string, modifiers [][2]string, modifierIndex map[string]int, err error) {
-	value, rest, err := popBraceToken(s)
+	value, remainder, err := popBraceToken(s)
 	if err != nil {
 		return "", nil, modifierIndex, err
 	}
-	modifiers, modifierIndex, err = tokenizeModifiers(rest)
+	modifiers, modifierIndex, err = tokenizeModifiers(remainder)
 	if err != nil {
 		return "", nil, modifierIndex, err
 	}
@@ -62,23 +62,23 @@ func tokenizeValue(s string) (value string, modifiers [][2]string, modifierIndex
 
 func tokenizeModifiers(s string) (modifiers [][2]string, modifierIndex map[string]int, err error) {
 	modifierIndex = make(map[string]int)
-	var currentIndex int
-	value, rest := "", s
-	for rest != "" {
-		value, rest, err = popBraceToken(rest)
+	var i int
+	token, remainder := "", s
+	for remainder != "" {
+		token, remainder, err = popBraceToken(remainder)
 		if err != nil {
 			return nil, modifierIndex, err
 		}
-		subname, subvalue := value, ""
-		if j := strings.Index(value, "="); j >= 0 {
-			subname, subvalue = value[:j], value[j+1:]
-			if subvalue[0] == '{' {
-				subvalue = subvalue[1 : len(subvalue)-1]
+		key, value := token, ""
+		if j := strings.Index(token, "="); j >= 0 {
+			key, value = token[:j], token[j+1:]
+			if value[0] == '{' {
+				value = value[1 : len(value)-1]
 			}
 		}
-		modifierIndex[subname] = currentIndex
-		modifiers = append(modifiers, [2]string{subname, subvalue})
-		currentIndex++
+		modifiers = append(modifiers, [2]string{key, value})
+		modifierIndex[key] = i
+		i++
 	}
 	return modifiers, modifierIndex, nil
 }
