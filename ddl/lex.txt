@@ -1,0 +1,9 @@
+var i int
+for i = index(s[offset:]); i >= 0 {
+    if ignore(s[offset:i]) {
+        offset = i
+        continue
+    }
+    break
+}
+return s[:i], s[i:]

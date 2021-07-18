@@ -141,3 +141,100 @@ func popIdentifierTokens(dialect, s string, num int) (tokens []string, remainder
 	}
 	return tokens, remainder
 }
+
+func cut(s string, index func(string) int, ignore func(string) bool) (before, after string, found bool) {
+	i, offset := 0, 0
+	for i = index(s[offset:]); i >= 0; i = index(s[offset:]) {
+		if !found {
+			found = true
+		}
+		if ignore(s[offset:i]) {
+			offset = i
+			continue
+		}
+		break
+	}
+	return s[:i], s[i:], found
+}
+
+// func cutArg(s string) (arg, remainder string) {
+// 	i, offset := 0, 0
+// 	insideString, insideArray := false, false
+// 	bracketLevel := 0
+// 	for i = strings.IndexByte(s[offset:], ','); i >= 0; i = strings.IndexByte(s[offset:], ',') {
+// 		if insideString {
+// 			j := 0
+// 			for j = strings.IndexByte(s[offset+j:i], '\''); j >= 0; j = strings.IndexByte(s[offset+j:i], '\'') {
+// 			}
+// 		}
+// 	}
+// }
+
+func qlevel(s string, quote byte, level int) int {
+	for s != "" {
+		if i := strings.IndexByte(s, quote); i >= 0 {
+			if level == 0 {
+				level = 1
+				s = s[i:]
+				continue
+			}
+			j := i + 1
+			if j < len(s) && s[j] == quote {
+				s = s[j:]
+				continue
+			}
+			level = 0
+		}
+	}
+	return level
+}
+
+func quoteLevel(s string, openingQuote, closingQuote byte, level int) int {
+	for s != "" {
+		if level == 0 {
+			if i := strings.IndexByte(s, openingQuote); i >= 0 {
+				s = s[i:]
+				level++
+				continue
+			}
+		} else if level > 0 {
+		} else {
+		}
+	}
+	return level
+}
+
+type argsCutter struct {
+	insideString bool
+	insideArray  bool
+	bracketLevel int
+}
+
+func (c *argsCutter) index(s string) int {
+	return strings.IndexByte(s, ',')
+}
+
+func (c *argsCutter) ignore(s string) bool {
+	if c.insideString {
+		for i := strings.IndexByte(s, '\''); i >= 0; {
+			if s[i+1] == '\'' {
+				s = s[i+1:]
+				continue
+			}
+			c.insideString = false
+			return false
+		}
+		return true
+	}
+	if c.insideArray {
+		for _, r := range s {
+			switch r {
+			case '[':
+				c.bracketLevel++
+			case ']':
+				c.bracketLevel--
+			}
+		}
+	}
+	return false
+}
