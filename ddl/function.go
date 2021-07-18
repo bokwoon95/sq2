@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"fmt"
 	"strings"
+
+	"github.com/bokwoon95/sq"
 )
 
 type Function struct {
@@ -20,6 +22,9 @@ func (fun *Function) populateFunctionInfo(dialect string) error {
 		PRE_FUNCTION = iota
 		FUNCTION
 	)
+	if dialect != sq.DialectPostgres {
+		return nil
+	}
 	state := PRE_FUNCTION
 	token, remainder := "", fun.SQL
 LOOP:
@@ -47,6 +52,9 @@ LOOP:
 			if j < 0 {
 				return fmt.Errorf("closing bracket for args not found")
 			}
+			if i+1 == j {
+				break LOOP
+			}
 			rawArgs := strings.Split(remainder[i+1:j], ",")
 			fun.ArgModes = make([]string, len(rawArgs))
 			fun.ArgNames = make([]string, len(rawArgs))
@@ -55,7 +63,7 @@ LOOP:
 			for i, rawArg := range rawArgs {
 				tokens, _ := popIdentifierTokens(dialect, rawArg, 4)
 				if len(tokens) == 0 {
-					return fmt.Errorf("argument #%d ('%s') is invalid", i+1, rawArg)
+					return fmt.Errorf("x: argument #%d ('%s') is invalid", i+1, rawArg)
 				}
 				if strings.EqualFold(tokens[0], "IN") ||
 					strings.EqualFold(tokens[0], "OUT") ||
@@ -64,10 +72,13 @@ LOOP:
 					argMode, tokens = tokens[0], tokens[1:]
 				}
 				if len(tokens) == 0 {
-					return fmt.Errorf("argument #%d ('%s') is invalid", i+1, rawArg)
+					return fmt.Errorf("y: argument #%d ('%s') is invalid", i+1, rawArg)
 				}
-				if lastToken := tokens[len(tokens)-1]; strings.EqualFold(lastToken, "DEFAULT") || lastToken[0] == '=' {
-					tokens = tokens[:len(tokens)-1]
+				for j := len(tokens) - 1; j >= 0; j-- {
+					if strings.EqualFold(tokens[j], "DEFAULT") || tokens[j][0] == '=' {
+						tokens = tokens[:j]
+						break
+					}
 				}
 				switch len(tokens) {
 				case 2:
@@ -75,7 +86,7 @@ LOOP:
 				case 1:
 					argType = tokens[0]
 				default:
-					return fmt.Errorf("argument #%d ('%s') is invalid", i+1, rawArg)
+					return fmt.Errorf("z: argument #%d ('%s', %#v) is invalid", i+1, rawArg, tokens)
 				}
 				if j := strings.IndexByte(argType, '='); j >= 0 {
 					argType = argType[:j]
