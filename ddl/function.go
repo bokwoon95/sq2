@@ -65,28 +65,25 @@ LOOP:
 				if len(tokens) == 0 {
 					return fmt.Errorf("argument #%d ('%s') is invalid", i+1, rawArg)
 				}
-				if strings.EqualFold(tokens[0], "IN") ||
-					strings.EqualFold(tokens[0], "OUT") ||
-					strings.EqualFold(tokens[0], "INOUT") ||
-					strings.EqualFold(tokens[0], "VARIADIC") {
-					argMode, tokens = tokens[0], tokens[1:]
-				}
-				if len(tokens) == 0 {
-					return fmt.Errorf("argument #%d ('%s') is invalid", i+1, rawArg)
-				}
 				for j := len(tokens) - 1; j >= 0; j-- {
 					if strings.EqualFold(tokens[j], "DEFAULT") || tokens[j][0] == '=' {
 						tokens = tokens[:j]
 						break
 					}
 				}
-				switch len(tokens) {
-				case 2:
-					argName, argType = tokens[0], tokens[1]
-				case 1:
-					argType = tokens[0]
-				default:
+				if len(tokens) == 0 {
 					return fmt.Errorf("argument #%d ('%s', %#v) is invalid", i+1, rawArg, tokens)
+				}
+				argType, tokens = tokens[len(tokens)-1], tokens[:len(tokens)-1]
+				for _, token := range tokens {
+					if strings.EqualFold(token, "IN") ||
+						strings.EqualFold(token, "OUT") ||
+						strings.EqualFold(token, "INOUT") ||
+						strings.EqualFold(token, "VARIADIC") {
+						argMode = token
+					} else {
+						argName = token
+					}
 				}
 				if j := strings.IndexByte(argType, '='); j >= 0 {
 					argType = argType[:j]
