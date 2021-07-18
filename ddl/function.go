@@ -59,7 +59,6 @@ LOOP:
 			fun.ArgModes = make([]string, len(rawArgs))
 			fun.ArgNames = make([]string, len(rawArgs))
 			fun.ArgTypes = make([]string, len(rawArgs))
-			var argMode, argName, argType string
 			for i, rawArg := range rawArgs {
 				tokens, _ := popIdentifierTokens(dialect, rawArg, 4)
 				if len(tokens) == 0 {
@@ -74,21 +73,20 @@ LOOP:
 				if len(tokens) == 0 {
 					return fmt.Errorf("argument #%d ('%s', %#v) is invalid", i+1, rawArg, tokens)
 				}
-				argType, tokens = tokens[len(tokens)-1], tokens[:len(tokens)-1]
+				fun.ArgTypes[i], tokens = tokens[len(tokens)-1], tokens[:len(tokens)-1]
 				for _, token := range tokens {
 					if strings.EqualFold(token, "IN") ||
 						strings.EqualFold(token, "OUT") ||
 						strings.EqualFold(token, "INOUT") ||
 						strings.EqualFold(token, "VARIADIC") {
-						argMode = token
+						fun.ArgModes[i] = token
 					} else {
-						argName = token
+						fun.ArgNames[i] = token
 					}
 				}
-				if j := strings.IndexByte(argType, '='); j >= 0 {
-					argType = argType[:j]
+				if j := strings.IndexByte(fun.ArgTypes[i], '='); j >= 0 {
+					fun.ArgTypes[i] = fun.ArgTypes[i][:j]
 				}
-				fun.ArgModes[i], fun.ArgNames[i], fun.ArgTypes[i] = argMode, argName, argType
 			}
 			break LOOP
 		}
