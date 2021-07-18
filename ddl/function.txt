@@ -1,6 +1,6 @@
 CREATE FUNCTION one() RETURNS integer
 
-CREATE FUNCTION tf1 (integer, numeric=3.14) RETURNS integer
+CREATE FUNCTION tf1 (integer, in numeric = 3.14) RETURNS integer
 
 CREATE FUNCTION getfoo(int) RETURNS SETOF foo
 
@@ -16,3 +16,19 @@ CREATE OR REPLACE FUNCTION years_compare( IN year1 integer DEFAULT NULL,
 create function foo(bar varchar , baz varchar='qux') returns varchar
 
 CREATE FUNCTION get_count_of_earners(salary_val IN decimal) RETURNS integer
+
+pop 4
+
+is the 4th arg DEFAULT or does it start with '='? if so, we have ArgMode ArgName ArgType
+
+is the 3rd arg DEFAULT or does it start with '='? if so we have EITHER ArgMode ArgType or ArgName ArgType. easy to distinguish
+
+is the 2nd arg DEFAULT or does it start with '='? if so we have ArgType
+
+if the len == 3, we have ArgMode ArgName ArgType
+
+if len == 2, we have EITHER ArgMode ArgType or ArgName ArgType. easy to distinguish
+
+if len == 1, it is Argtype
+
+Check at the very end: Does ArgType contain '='? subslice it

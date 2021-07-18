@@ -52,7 +52,9 @@ LOOP:
 			fun.ArgNames = make([]string, len(rawArgs))
 			fun.ArgTypes = make([]string, len(rawArgs))
 			for i, rawArg := range rawArgs {
-				words, _ := popWords(dialect, rawArg, 3)
+				words, _ := popWords(dialect, rawArg, 4)
+				if len(words) == 4 && (strings.EqualFold(words[3], "DEFAULT") || words[3][0] == '=') {
+				}
 				if len(words) == 1 {
 					argType := words[0]
 					if j := strings.IndexByte(argType, '='); j >= 0 {

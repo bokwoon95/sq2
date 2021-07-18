@@ -29,6 +29,12 @@ func (c Catalog) WriteInto(w io.Writer) error
 func (m MigrationCommands) WriteInto(w io.Writer) error
 func (m MigrationCommands) Exec(db sq.DB) error
 
+if the user eventually wants to expose the sq.Query produced by a DDLView, I
+can add a public .Query field to V. Make a new constructor called NewV(dialect
+string, view *View, wantColumns []string) to keep the fields private but allow
+the user to inject them. Of course all this can be added later, only when
+required. I don't have to add it in now.
+
 dont bother with diffing catalogs to migrations at first:
 func (c Catalog) GenerateDDL(w io.Writer) error
 func (c Catalog) GenerateStructs(w io.Writer) error
