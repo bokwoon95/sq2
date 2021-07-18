@@ -27,7 +27,8 @@ func popBraceToken(s string) (token, remainder string, err error) {
 			bracelevel--
 		}
 		if bracelevel < 0 {
-			return "", "", fmt.Errorf("too many closing braces")
+			// TODO: do we actually ever end up here? can we just break from loop instead?
+			return "", "", fmt.Errorf("popBraceToken: too many closing braces")
 		}
 		if bracelevel == 0 && isBraceQuoted {
 			break
@@ -38,10 +39,10 @@ func popBraceToken(s string) (token, remainder string, err error) {
 		}
 	}
 	if bracelevel > 0 {
-		return "", "", fmt.Errorf("unclosed brace")
+		// TODO: do we actually ever end up here? can we just return instead?
+		return "", "", fmt.Errorf("popBraceToken: unclosed brace")
 	}
-	token = s[:splitAt]
-	remainder = s[splitAt:]
+	token, remainder = s[:splitAt], s[splitAt:]
 	if isBraceQuoted {
 		token = token[1 : len(token)-1]
 	}
@@ -129,11 +130,11 @@ func popIdentifierToken(dialect, s string) (word, rest string) {
 	return s[:splitAt], s[splitAt:]
 }
 
-func popIdentifierTokens(dialect, s string, num int) (words []string, rest string) {
-	word, rest := "", s
-	for i := 0; i < num && rest != ""; i++ {
-		word, rest = popIdentifierToken(dialect, rest)
-		words = append(words, word)
+func popIdentifierTokens(dialect, s string, num int) (tokens []string, remainder string) {
+	token, remainder := "", s
+	for i := 0; i < num && remainder != ""; i++ {
+		token, remainder = popIdentifierToken(dialect, remainder)
+		tokens = append(tokens, token)
 	}
-	return words, rest
+	return tokens, remainder
 }
