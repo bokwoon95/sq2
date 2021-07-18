@@ -9,7 +9,7 @@ import (
 	"github.com/bokwoon95/sq"
 )
 
-func cutValue(s string) (value, rest string, err error) {
+func popBraceToken(s string) (value, rest string, err error) {
 	s = strings.TrimLeft(s, " \t\n\v\f\r\u0085\u00A0")
 	if s == "" {
 		return "", "", nil
@@ -48,24 +48,24 @@ func cutValue(s string) (value, rest string, err error) {
 	return value, rest, nil
 }
 
-func lexValue(s string) (value string, modifiers [][2]string, modifierIndex map[string]int, err error) {
-	value, rest, err := cutValue(s)
+func tokenizeValue(s string) (value string, modifiers [][2]string, modifierIndex map[string]int, err error) {
+	value, rest, err := popBraceToken(s)
 	if err != nil {
 		return "", nil, modifierIndex, err
 	}
-	modifiers, modifierIndex, err = lexModifiers(rest)
+	modifiers, modifierIndex, err = tokenizeModifiers(rest)
 	if err != nil {
 		return "", nil, modifierIndex, err
 	}
 	return value, modifiers, modifierIndex, nil
 }
 
-func lexModifiers(s string) (modifiers [][2]string, modifierIndex map[string]int, err error) {
+func tokenizeModifiers(s string) (modifiers [][2]string, modifierIndex map[string]int, err error) {
 	modifierIndex = make(map[string]int)
 	var currentIndex int
 	value, rest := "", s
 	for rest != "" {
-		value, rest, err = cutValue(rest)
+		value, rest, err = popBraceToken(rest)
 		if err != nil {
 			return nil, modifierIndex, err
 		}
@@ -83,7 +83,7 @@ func lexModifiers(s string) (modifiers [][2]string, modifierIndex map[string]int
 	return modifiers, modifierIndex, nil
 }
 
-func popWord(dialect, s string) (word, rest string) {
+func popIdentifierToken(dialect, s string) (word, rest string) {
 	s = strings.TrimLeft(s, " \t\n\v\f\r\u0085\u00A0")
 	if s == "" {
 		return "", ""
@@ -129,10 +129,10 @@ func popWord(dialect, s string) (word, rest string) {
 	return s[:splitAt], s[splitAt:]
 }
 
-func popWords(dialect, s string, num int) (words []string, rest string) {
+func popIdentifierTokens(dialect, s string, num int) (words []string, rest string) {
 	word, rest := "", s
 	for i := 0; i < num && rest != ""; i++ {
-		word, rest = popWord(dialect, rest)
+		word, rest = popIdentifierToken(dialect, rest)
 		words = append(words, word)
 	}
 	return words, rest

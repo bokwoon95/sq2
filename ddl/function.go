@@ -26,13 +26,13 @@ LOOP:
 	for rest != "" {
 		switch state {
 		case PRE_FUNCTION:
-			word, rest = popWord(dialect, rest)
+			word, rest = popIdentifierToken(dialect, rest)
 			if strings.EqualFold(word, "FUNCTION") {
 				state = FUNCTION
 			}
 			continue
 		case FUNCTION:
-			fun.FunctionName, _ = popWord(dialect, rest)
+			fun.FunctionName, _ = popIdentifierToken(dialect, rest)
 			if i := strings.IndexByte(fun.FunctionName, '.'); i >= 0 {
 				fun.FunctionSchema, fun.FunctionName = fun.FunctionName[:i], fun.FunctionName[i+1:]
 			}
@@ -52,7 +52,7 @@ LOOP:
 			fun.ArgNames = make([]string, len(rawArgs))
 			fun.ArgTypes = make([]string, len(rawArgs))
 			for i, rawArg := range rawArgs {
-				words, _ := popWords(dialect, rawArg, 4)
+				words, _ := popIdentifierTokens(dialect, rawArg, 4)
 				if len(words) == 4 && (strings.EqualFold(words[3], "DEFAULT") || words[3][0] == '=') {
 				}
 				if len(words) == 1 {
