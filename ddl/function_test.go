@@ -84,7 +84,7 @@ func Test_Function(t *testing.T) {
 		t.Parallel()
 		var tt TT
 		tt.dialect = sq.DialectPostgres
-		tt.item.SQL = `CREATE FUNCTION sum_n_product (int, y int, OUT sum int DEFAULT 3, OUT product int=22)`
+		tt.item.SQL = `CREATE FUNCTION sum_n_product (int, y int =25, OUT sum int DEFAULT 3, OUT product int=22)`
 		tt.wantFunctionName = "sum_n_product"
 		tt.wantArgModes = []string{"", "", "OUT", "OUT"}
 		tt.wantArgNames = []string{"", "y", "sum", "product"}
@@ -110,7 +110,7 @@ func Test_Function(t *testing.T) {
 		tt.dialect = sq.DialectPostgres
 		tt.item.SQL = `
 CREATE OR REPLACE FUNCTION years_compare( IN year1 integer DEFAULT NULL,
-                                          IN year2 integer DEFAULT NULL )`
+                                          year2 IN integer DEFAULT NULL )`
 		tt.wantFunctionName = "years_compare"
 		tt.wantArgModes = []string{"IN", "IN"}
 		tt.wantArgNames = []string{"year1", "year2"}
