@@ -144,11 +144,11 @@ func popIdentifierTokens(dialect, s string, count int) (tokens []string, remaind
 
 func splitArgs(s string) []string {
 	var args []string
+	var splitAt, skipCharAt, arrayLevel int
+	var insideString bool
 	for s != "" {
-		splitAt := -1
-		skipCharAt := -1
-		arrayLevel := 0
-		insideString := false
+		splitAt, skipCharAt, arrayLevel = -1, -1, 0
+		insideString = false
 		for i, char := range s {
 			// do we unconditionally skip the current char?
 			if skipCharAt == i {
