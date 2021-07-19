@@ -11,7 +11,6 @@ type View struct {
 	ViewSchema     string    `json:",omitempty"`
 	ViewName       string    `json:",omitempty"`
 	IsMaterialized bool      `json:",omitempty"`
-	Columns        []string  `json:",omitempty"`
 	Indexes        []Index   `json:",omitempty"`
 	Triggers       []Trigger `json:",omitempty"`
 	SQL            string    `json:",omitempty"`
