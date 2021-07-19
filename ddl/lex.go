@@ -188,10 +188,7 @@ func splitArgs(s string) []string {
 				case '[':
 					arrayLevel++
 				}
-				// are we still inside an array literal?
-				if arrayLevel > 0 {
-					continue
-				}
+				continue
 			}
 			// are we currently inside a string?
 			if insideString {
@@ -218,11 +215,11 @@ func splitArgs(s string) []string {
 				insideString = true
 				continue
 			}
-			// does the current char delimit arguments?
+			// is the current char an argument delimiter?
 			if char == ',' {
 				// are we currently inside an array literal or string? if yes,
 				// the delimiter is part of the array literal or string and is
-				// not used to delimit arguments
+				// not an argument delimiter
 				if arrayLevel > 0 || insideString {
 					continue
 				}
