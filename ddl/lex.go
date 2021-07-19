@@ -154,7 +154,6 @@ func splitArgs(s string) []string {
 			if skipCharAt == i {
 				continue
 			}
-			nextIndex := i + 1
 			// are we currently inside an array literal?
 			if arrayLevel > 0 {
 				switch char {
@@ -169,6 +168,7 @@ func splitArgs(s string) []string {
 			}
 			// are we currently inside a string?
 			if insideString {
+				nextIndex := i + 1
 				// does the current char terminate the current string?
 				if char == '\'' {
 					// is the next char the same as the current char, which
@@ -194,12 +194,6 @@ func splitArgs(s string) []string {
 			}
 			// is the current char an argument delimiter?
 			if char == ',' {
-				// are we currently inside an array literal or string? if yes,
-				// the delimiter is part of the array literal or string and is
-				// not an argument delimiter
-				if arrayLevel > 0 || insideString {
-					continue
-				}
 				splitAt = i
 				break
 			}
