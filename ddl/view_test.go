@@ -130,9 +130,9 @@ func Test_CreateViewCommand(t *testing.T) {
 		tt.item = CreateViewCommand{
 			CreateIfNotExists: true,
 			View: View{
+				IsMaterialized: true,
 				ViewSchema:     "some table",
 				ViewName:       "some view",
-				IsMaterialized: true,
 				SQL:            "SELECT 1",
 			},
 		}

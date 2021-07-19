@@ -8,7 +8,10 @@ t.go
 catalog.go
 
 step 1:
-Column | Constraint | Index | Trigger | Function | View | Table | Schema | Catalog
+Column | Constraint | Index | Trigger | Function
+View | Table
+Schema
+Catalog
 step 2:
 func (c *Catalog) loadDB(db sq.DB) error
 func (c *Catalog) loadTable(table sq.Table)
