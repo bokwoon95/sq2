@@ -73,7 +73,7 @@ func (v *V) AsQuery(query sq.Query) {
 	for column, n := range columnDiff {
 		if n > 0 {
 			extraColumns = append(extraColumns, column)
-		} else {
+		} else if n < 0 {
 			missingColumns = append(missingColumns, column)
 		}
 	}

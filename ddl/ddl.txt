@@ -18,10 +18,15 @@ View | Table
 Schema
 Catalog
 step 2:
-func (c *Catalog) loadDB(db sq.DB) error
-func (c *Catalog) loadTable(table sq.Table)
-func (c *Catalog) loadDDLView(ddlView DDLView)
-func (c *Catalog) loadFunction(function Function)
+func (view *View) LoadDDLView(ddlView DDLView) error
+func (tbl *Table) LoadIndexConfig(table sq.Table) error
+func (tbl *Table) LoadConstraintConfig(table sq.Table) error
+func (tbl *Table) LoadColumnConfig(table sq.Table) error
+func (tbl *Table) LoadTable(table sq.Table) error
+func (c *Catalog) LoadDB(db sq.DB) error
+func (c *Catalog) LoadTable(table sq.Table)
+func (c *Catalog) LoadDDLView(ddlView DDLView)
+func (c *Catalog) LoadFunction(function Function)
 func NewCatalog(dialect string, opts ...CatalogOption) (Catalog, error)
 type CatalogOption func(*Catalog) error
 func WithDB() CatalogOption
