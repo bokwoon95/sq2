@@ -25,8 +25,8 @@ func WithFunctions() CatalogOption
 step 3:
 type MigrationCommands struct
 func (c Catalog) Commands() MigrationCommands
-func (c Catalog) WriteInto(w io.Writer) error
-func (m MigrationCommands) WriteInto(w io.Writer) error
+func (c Catalog) WriteStructs(w io.Writer) error
+func (m MigrationCommands) WriteSQL(w io.Writer) error
 func (m MigrationCommands) Exec(db sq.DB) error
 
 if the user eventually wants to expose the sq.Query produced by a DDLView, I

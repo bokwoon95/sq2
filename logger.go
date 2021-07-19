@@ -72,37 +72,39 @@ type Logger interface {
 	LogResults() (shouldLogResults bool, limit int)
 }
 
-type QueryerLogger struct {
-	DB
+type LoggerDB struct {
 	Logger
+	DB
 }
 
 type logger struct {
-	log     *log.Logger
-	logflag int
+	log          *log.Logger
+	logflag      int
+	resultsLimit int
 }
 
-func NewLogger(out io.Writer, logflag int) Logger {
+func NewLogger(out io.Writer, logflag int, resultsLimit int) Logger {
 	return logger{
-		log:     log.New(os.Stdout, "", log.LstdFlags),
-		logflag: logflag,
+		log:          log.New(os.Stdout, "", log.LstdFlags),
+		logflag:      logflag,
+		resultsLimit: resultsLimit,
 	}
 }
 
 var (
-	defaultLogger = NewLogger(os.Stdout, Linterpolate|Lcaller|Lcolor)
-	verboseLogger = NewLogger(os.Stdout, Lbeforeafter|Lcaller|Lcolor|Lresults)
+	defaultLogger = NewLogger(os.Stdout, Linterpolate|Lcaller|Lcolor, 5)
+	verboseLogger = NewLogger(os.Stdout, Lbeforeafter|Lcaller|Lcolor|Lresults, 5)
 )
 
-func Log(db DB) QueryerLogger {
-	return QueryerLogger{DB: db, Logger: defaultLogger}
+func Log(db DB) LoggerDB {
+	return LoggerDB{Logger: defaultLogger, DB: db}
 }
 
-func VerboseLog(db DB) QueryerLogger {
-	return QueryerLogger{DB: db, Logger: verboseLogger}
+func VerboseLog(db DB) LoggerDB {
+	return LoggerDB{Logger: verboseLogger, DB: db}
 }
 
-func (l logger) LogResults() (shouldLogResults bool, limit int) { return true, 5 }
+func (l logger) LogResults() (shouldLogResults bool, limit int) { return true, l.resultsLimit }
 
 func (l logger) LogQueryStats(ctx context.Context, stats QueryStats, skip int) {
 	select {

@@ -24,7 +24,7 @@ func execContext(ctx context.Context, db DB, q Query, execflag int, skip int) (r
 	}
 	var stats QueryStats
 	var logQueryStats func(ctx context.Context, stats QueryStats, skip int)
-	if db, ok := db.(QueryerLogger); ok {
+	if db, ok := db.(LoggerDB); ok {
 		logQueryStats = db.LogQueryStats
 	}
 	stats.Dialect = q.GetDialect()
