@@ -1,6 +1,10 @@
 package ddl
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/bokwoon95/sq"
+)
 
 func Test_View(t *testing.T) {
 	t.Run("Index", func(t *testing.T) {
@@ -79,5 +83,60 @@ func Test_View(t *testing.T) {
 		createOrUpdateIndex("A", []string{"a"}, nil, 0)
 		createOrUpdateIndex("B", []string{"b"}, nil, 1)
 		createOrUpdateIndex("C", []string{"c"}, nil, 2)
+	})
+}
+
+func Test_CreateViewCommand(t *testing.T) {
+	type TT struct {
+		dialect   string
+		item      Command
+		wantQuery string
+		wantArgs  []interface{}
+	}
+
+	assert := func(t *testing.T, tt TT) {
+		gotQuery, gotArgs, _, err := sq.ToSQL(tt.dialect, tt.item)
+		if err != nil {
+			t.Fatal(testcallers(), err)
+		}
+		if diff := testdiff(gotQuery, tt.wantQuery); diff != "" {
+			t.Error(testcallers(), diff)
+		}
+		if diff := testdiff(gotArgs, tt.wantArgs); diff != "" {
+			t.Error(testcallers(), diff)
+		}
+	}
+
+	t.Run("(dialect == postgres) create or replace", func(t *testing.T) {
+		t.Parallel()
+		var tt TT
+		tt.dialect = sq.DialectPostgres
+		tt.item = CreateViewCommand{
+			CreateOrReplace: true,
+			View: View{
+				ViewSchema: "some table",
+				ViewName:   "some view",
+				SQL:        "SELECT 1",
+			},
+		}
+		tt.wantQuery = `CREATE OR REPLACE VIEW "some table"."some view" AS SELECT 1;`
+		assert(t, tt)
+	})
+
+	t.Run("(dialect == postgres) create materialized view if not exists", func(t *testing.T) {
+		t.Parallel()
+		var tt TT
+		tt.dialect = sq.DialectPostgres
+		tt.item = CreateViewCommand{
+			CreateIfNotExists: true,
+			View: View{
+				ViewSchema:     "some table",
+				ViewName:       "some view",
+				IsMaterialized: true,
+				SQL:            "SELECT 1",
+			},
+		}
+		tt.wantQuery = `CREATE MATERIALIZED VIEW IF NOT EXISTS "some table"."some view" AS SELECT 1;`
+		assert(t, tt)
 	})
 }
