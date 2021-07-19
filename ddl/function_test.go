@@ -134,11 +134,11 @@ CREATE OR REPLACE FUNCTION years_compare( IN year1 integer DEFAULT NULL,
 		t.Parallel()
 		var tt TT
 		tt.dialect = sq.DialectPostgres
-		tt.item.SQL = `CREATE FUNCTION get_count_of_earners(salary_val IN decimal, names VARIADIC [][]text = ARRAY[ARRAY['a', 'b'], ARRAY['c', 'd']]) RETURNS integer`
+		tt.item.SQL = `CREATE FUNCTION get_count_of_earners(salary_val IN decimal, alphabets []TEXT='{"a", "b", "c"}', names VARIADIC [][]text = ARRAY[ARRAY['a', 'b'], ARRAY['c', 'd']]) RETURNS integer`
 		tt.wantFunctionName = "get_count_of_earners"
-		tt.wantArgModes = []string{"IN", "VARIADIC"}
-		tt.wantArgNames = []string{"salary_val", "names"}
-		tt.wantArgTypes = []string{"decimal", "[][]text"}
+		tt.wantArgModes = []string{"IN", "", "VARIADIC"}
+		tt.wantArgNames = []string{"salary_val", "alphabets", "names"}
+		tt.wantArgTypes = []string{"decimal", "[]TEXT", "[][]text"}
 		assert(t, tt)
 	})
 }
