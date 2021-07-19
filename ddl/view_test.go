@@ -46,7 +46,9 @@ func Test_View(t *testing.T) {
 		assertPosition("G", "H", "I", 2)
 		assertPosition("", "", "", -1)
 		assertPosition("", "", "does not exist", -1)
+		view.triggerCache[[3]string{"D", "E", "F"}] = 999
 		view.Triggers[2].TriggerName = "J"
+		assertPosition("D", "E", "F", -1)
 		assertPosition("G", "H", "I", -1)
 		view.triggerCache = nil
 		view.RefreshTriggerCache()
