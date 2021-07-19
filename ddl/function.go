@@ -55,7 +55,7 @@ LOOP:
 			if i+1 == j {
 				break LOOP
 			}
-			rawArgs := splitArgs(remainder[i+1:j])
+			rawArgs := splitArgs(remainder[i+1 : j])
 			fun.ArgModes = make([]string, len(rawArgs))
 			fun.ArgNames = make([]string, len(rawArgs))
 			fun.ArgTypes = make([]string, len(rawArgs))

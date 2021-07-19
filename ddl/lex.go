@@ -130,9 +130,9 @@ func popIdentifierToken(dialect, s string) (word, rest string) {
 	return s[:splitAt], s[splitAt:]
 }
 
-func popIdentifierTokens(dialect, s string, num int) (tokens []string, remainder string) {
+func popIdentifierTokens(dialect, s string, count int) (tokens []string, remainder string) {
 	token, remainder := "", s
-	for i := 0; i < num && remainder != ""; i++ {
+	for i := 0; i < count && remainder != ""; i++ {
 		token, remainder = popIdentifierToken(dialect, remainder)
 		if token == "" && remainder == "" {
 			break
