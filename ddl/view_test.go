@@ -60,7 +60,7 @@ func Test_View(t *testing.T) {
 	t.Run("createOrUpdateIndex", func(t *testing.T) {
 		t.Parallel()
 		var view View
-		assertPosition := func(indexName string, columns, exprs []string, wantPosition int) {
+		createOrUpdateIndex := func(indexName string, columns, exprs []string, wantPosition int) {
 			gotPosition, err := view.createOrUpdateIndex(indexName, columns, exprs)
 			if err != nil {
 				t.Fatal(testcallers(), err)
@@ -69,11 +69,15 @@ func Test_View(t *testing.T) {
 				t.Error(testcallers(), diff)
 			}
 		}
-		view.createOrUpdateIndex("A", nil, nil)
-		view.createOrUpdateIndex("B", nil, nil)
-		view.createOrUpdateIndex("C", nil, nil)
-		assertPosition("A", nil, nil, 0)
-		assertPosition("B", nil, nil, 1)
-		assertPosition("C", nil, nil, 2)
+		_, err := view.createOrUpdateIndex("", nil, nil)
+		if err == nil {
+			t.Error(testcallers(), "expected error but got nil")
+		}
+		createOrUpdateIndex("A", nil, nil, 0)
+		createOrUpdateIndex("B", nil, nil, 1)
+		createOrUpdateIndex("C", nil, nil, 2)
+		createOrUpdateIndex("A", []string{"a"}, nil, 0)
+		createOrUpdateIndex("B", []string{"b"}, nil, 1)
+		createOrUpdateIndex("C", []string{"c"}, nil, 2)
 	})
 }
