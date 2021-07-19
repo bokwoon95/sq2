@@ -94,6 +94,9 @@ func fetchContext(ctx context.Context, db DB, q Query, rowmapper func(*Row), ski
 	RowActivate(r)
 	for rows.Next() {
 		rowCount++
+		// Because dest and r.dest share the same backing array, any change
+		// that rows.Scan() makes to dest will be propagated to r.dest and
+		// hence be visible in the user's rowmapper. Hooray Go slices!
 		err = rows.Scan(dest...)
 		if err != nil {
 			return rowCount, decorateScanError(stats.Dialect, fields, dest, err)

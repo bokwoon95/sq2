@@ -142,99 +142,101 @@ func popIdentifierTokens(dialect, s string, num int) (tokens []string, remainder
 	return tokens, remainder
 }
 
-func cut(s string, index func(string) int, ignore func(string) bool) (before, after string, found bool) {
-	i, offset := 0, 0
-	for i = index(s[offset:]); i >= 0; i = index(s[offset:]) {
-		if !found {
-			found = true
-		}
-		if ignore(s[offset:i]) {
-			offset = i
-			continue
-		}
-		break
-	}
-	return s[:i], s[i:], found
-}
-
-// func cutArg(s string) (arg, remainder string) {
-// 	i, offset := 0, 0
-// 	insideString, insideArray := false, false
-// 	bracketLevel := 0
-// 	for i = strings.IndexByte(s[offset:], ','); i >= 0; i = strings.IndexByte(s[offset:], ',') {
-// 		if insideString {
-// 			j := 0
-// 			for j = strings.IndexByte(s[offset+j:i], '\''); j >= 0; j = strings.IndexByte(s[offset+j:i], '\'') {
-// 			}
-// 		}
-// 	}
-// }
-
 func qlevel(s string, quote byte, level int) int {
 	for s != "" {
-		if i := strings.IndexByte(s, quote); i >= 0 {
-			if level == 0 {
-				level = 1
-				s = s[i:]
-				continue
-			}
-			j := i + 1
-			if j < len(s) && s[j] == quote {
-				s = s[j:]
-				continue
-			}
-			level = 0
+		i := strings.IndexByte(s, quote)
+		if i < 0 {
+			break
 		}
-	}
-	return level
-}
-
-func quoteLevel(s string, openingQuote, closingQuote byte, level int) int {
-	for s != "" {
 		if level == 0 {
-			if i := strings.IndexByte(s, openingQuote); i >= 0 {
-				s = s[i:]
-				level++
-				continue
-			}
-		} else if level > 0 {
-		} else {
+			level = 1
+			s = s[i+1:]
+			continue
 		}
+		j := i + 1
+		if j < len(s) && s[j] == quote {
+			s = s[j+1:]
+			continue
+		}
+		s = s[i+1:]
+		level = 0
 	}
 	return level
 }
 
-type argsCutter struct {
-	insideString bool
-	insideArray  bool
-	bracketLevel int
-}
-
-func (c *argsCutter) index(s string) int {
-	return strings.IndexByte(s, ',')
-}
-
-func (c *argsCutter) ignore(s string) bool {
-	if c.insideString {
-		for i := strings.IndexByte(s, '\''); i >= 0; {
-			if s[i+1] == '\'' {
-				s = s[i+1:]
+func splitArgs(s string) []string {
+	var args []string
+	tmp := s
+	for tmp != "" {
+		skipCharAt := -1
+		splitAt := -1
+		insideString := false
+		arrayLevel := 0
+		for i, char := range tmp {
+			// do we unconditionally skip the current char?
+			if skipCharAt == i {
 				continue
 			}
-			c.insideString = false
-			return false
-		}
-		return true
-	}
-	if c.insideArray {
-		for _, r := range s {
-			switch r {
-			case '[':
-				c.bracketLevel++
-			case ']':
-				c.bracketLevel--
+			nextIndex := i + 1
+			// are we currently inside an array literal?
+			if arrayLevel > 0 {
+				switch char {
+				// does the current char close an array literal?
+				case ']':
+					arrayLevel--
+				// does the current char start a new array literal?
+				case '[':
+					arrayLevel++
+				}
+				// are we still inside an array literal?
+				if arrayLevel > 0 {
+					continue
+				}
+			}
+			// are we currently inside a string?
+			if insideString {
+				// does the current char terminate the current string?
+				if char == '\'' {
+					// is the next char the same as the current char, which
+					// escapes it and prevents it from terminating the current
+					// string?
+					if nextIndex < len(tmp) && tmp[nextIndex] == '\'' {
+						skipCharAt = nextIndex
+					} else {
+						insideString = false
+					}
+				}
+				continue
+			}
+			// does the current char mark the start of a new array literal?
+			if char == '[' {
+				arrayLevel++
+				continue
+			}
+			// does the current char mark the start of a new string?
+			if char == '\'' {
+				insideString = true
+				continue
+			}
+			// does the current char delimit arguments?
+			if char == ',' {
+				// are we currently inside an array literal or string? if yes,
+				// the delimiter is part of the array literal or string and is
+				// not used to delimit arguments
+				if arrayLevel > 0 || insideString {
+					continue
+				}
+				splitAt = i
+				break
 			}
 		}
+		// did we find an argument delimiter?
+		if splitAt >= 0 {
+			args, tmp = append(args, tmp[:splitAt]), tmp[splitAt+1:]
+		} else {
+			args = append(args, tmp)
+			break
+		}
 	}
-	return false
+	return args
 }

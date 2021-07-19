@@ -228,3 +228,35 @@ func Test_popWords(t *testing.T) {
 		assert(t, tt)
 	})
 }
+
+func Test_cut(t *testing.T) {
+	t.Run("", func(t *testing.T) {
+		level := qlevel("' bruh '' '' ' '", '\'', 0)
+		if diff := testdiff(level, 1); diff != "" {
+			t.Error(testcallers(), diff)
+		}
+	})
+	t.Run("", func(t *testing.T) {
+		level := qlevel("' bruh '' '' '  ", '\'', 0)
+		if diff := testdiff(level, 0); diff != "" {
+			t.Error(testcallers(), diff)
+		}
+	})
+	t.Run("", func(t *testing.T) {
+		level := qlevel(`"testing "" ""`, '"', 0)
+		if diff := testdiff(level, 1); diff != "" {
+			t.Error(testcallers(), diff)
+		}
+	})
+	t.Run("", func(t *testing.T) {
+		gotArgs := splitArgs(`salary_val IN decimal, alphabets []TEXT='{"a", "b", "c"}', names VARIADIC [][]text = ARRAY[ARRAY['a', 'b'], ARRAY['c', 'd']]`)
+		wantArgs := []string{
+			"salary_val IN decimal",
+			` alphabets []TEXT='{"a", "b", "c"}'`,
+			" names VARIADIC [][]text = ARRAY[ARRAY['a', 'b'], ARRAY['c', 'd']]",
+		}
+		if diff := testdiff(gotArgs, wantArgs); diff != "" {
+			t.Error(testcallers(), diff)
+		}
+	})
+}
