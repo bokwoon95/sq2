@@ -135,6 +135,9 @@ func (cmd CreateViewCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *
 		}
 		buf.WriteString("OR REPLACE ")
 	}
+	if cmd.View.IsMaterialized {
+		buf.WriteString("MATERIALIZED ")
+	}
 	buf.WriteString("VIEW ")
 	if cmd.CreateIfNotExists {
 		if dialect != sq.DialectSQLite && dialect != sq.DialectPostgres {
@@ -145,7 +148,10 @@ func (cmd CreateViewCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *
 		}
 		buf.WriteString("IF NOT EXISTS ")
 	}
-	buf.WriteString("AS " + cmd.View.SQL + ";")
+	if cmd.View.ViewSchema != "" {
+		buf.WriteString(sq.QuoteIdentifier(dialect, cmd.View.ViewSchema) + ".")
+	}
+	buf.WriteString(sq.QuoteIdentifier(dialect, cmd.View.ViewName) + " AS " + cmd.View.SQL + ";")
 	return nil
 }
 
