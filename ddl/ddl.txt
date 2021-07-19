@@ -10,6 +10,11 @@ catalog.go
 step 1:
 Column | Constraint | Index | Trigger | Function
 View | Table
+    As a compromise, ddl.Table will no longer implement sq.Table because I do
+    not want any value receivers on ddl.Table (and I want sq.Table methods to
+    be declared on values, not pointers). If a person wants to introspect and
+    create their own table, they can populate a TableInfo and FieldInfo and use
+    those directly as sq.Tables and sq.Fields.
 Schema
 Catalog
 step 2:
