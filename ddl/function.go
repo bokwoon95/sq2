@@ -64,16 +64,30 @@ LOOP:
 				if len(tokens) == 0 {
 					return fmt.Errorf("argument #%d ('%s') is invalid", i+1, rawArg)
 				}
+				// This loop filters out the tokens we are not interested in.
+				// we are only interested in tokens that contain the ArgMode,
+				// ArgName or ArgType.
 				for j := len(tokens) - 1; j >= 0; j-- {
+					// If a token is DEFAULT or starts with '=', everything
+					// after it (including the token itself) is filtered out.
 					if strings.EqualFold(tokens[j], "DEFAULT") || tokens[j][0] == '=' {
 						tokens = tokens[:j]
+						break
+					}
+					// If a token contains '=' (but does not start with it) it
+					// is assumed to contain the ArgType. Everything after the
+					// token is filtered out. We will strip the extraneous
+					// characters after the '=' later on down below.
+					if strings.IndexByte(tokens[j], '=') >= 0 {
+						tokens = tokens[:j+1]
 						break
 					}
 				}
 				if len(tokens) == 0 {
 					return fmt.Errorf("argument #%d ('%s', %#v) is invalid", i+1, rawArg, tokens)
 				}
-				fun.ArgTypes[i], tokens = tokens[len(tokens)-1], tokens[:len(tokens)-1]
+				fun.ArgTypes[i] = tokens[len(tokens)-1]
+				tokens = tokens[:len(tokens)-1]
 				for _, token := range tokens {
 					if strings.EqualFold(token, "IN") ||
 						strings.EqualFold(token, "OUT") ||
