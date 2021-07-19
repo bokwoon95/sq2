@@ -146,7 +146,7 @@ func splitArgs(s string) []string {
 	var args []string
 	var splitAt, skipCharAt, arrayLevel int
 	var insideString bool
-	for s != "" {
+	for {
 		splitAt, skipCharAt, arrayLevel = -1, -1, 0
 		insideString = false
 		for i, char := range s {
