@@ -142,37 +142,14 @@ func popIdentifierTokens(dialect, s string, count int) (tokens []string, remaind
 	return tokens, remainder
 }
 
-func qlevel(s string, quote byte, level int) int {
-	for s != "" {
-		i := strings.IndexByte(s, quote)
-		if i < 0 {
-			break
-		}
-		if level == 0 {
-			level = 1
-			s = s[i+1:]
-			continue
-		}
-		j := i + 1
-		if j < len(s) && s[j] == quote {
-			s = s[j+1:]
-			continue
-		}
-		s = s[i+1:]
-		level = 0
-	}
-	return level
-}
-
 func splitArgs(s string) []string {
 	var args []string
-	tmp := s
-	for tmp != "" {
-		skipCharAt := -1
+	for s != "" {
 		splitAt := -1
-		insideString := false
+		skipCharAt := -1
 		arrayLevel := 0
-		for i, char := range tmp {
+		insideString := false
+		for i, char := range s {
 			// do we unconditionally skip the current char?
 			if skipCharAt == i {
 				continue
@@ -197,7 +174,7 @@ func splitArgs(s string) []string {
 					// is the next char the same as the current char, which
 					// escapes it and prevents it from terminating the current
 					// string?
-					if nextIndex < len(tmp) && tmp[nextIndex] == '\'' {
+					if nextIndex < len(s) && s[nextIndex] == '\'' {
 						skipCharAt = nextIndex
 					} else {
 						insideString = false
@@ -229,9 +206,9 @@ func splitArgs(s string) []string {
 		}
 		// did we find an argument delimiter?
 		if splitAt >= 0 {
-			args, tmp = append(args, tmp[:splitAt]), tmp[splitAt+1:]
+			args, s = append(args, s[:splitAt]), s[splitAt+1:]
 		} else {
-			args = append(args, tmp)
+			args = append(args, s)
 			break
 		}
 	}
