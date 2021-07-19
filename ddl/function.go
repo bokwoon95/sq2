@@ -52,17 +52,18 @@ LOOP:
 			if j < 0 {
 				return fmt.Errorf("closing bracket for args not found")
 			}
-			if i+1 == j {
+			rawArgs := strings.TrimSpace(remainder[i+1 : j])
+			if rawArgs == "" {
 				break LOOP
 			}
-			rawArgs := splitArgs(remainder[i+1 : j])
-			fun.ArgModes = make([]string, len(rawArgs))
-			fun.ArgNames = make([]string, len(rawArgs))
-			fun.ArgTypes = make([]string, len(rawArgs))
-			for i, rawArg := range rawArgs {
-				tokens, _ := popIdentifierTokens(dialect, rawArg, 4)
+			args := splitArgs(rawArgs)
+			fun.ArgModes = make([]string, len(args))
+			fun.ArgNames = make([]string, len(args))
+			fun.ArgTypes = make([]string, len(args))
+			for i, arg := range args {
+				tokens, _ := popIdentifierTokens(dialect, arg, 4)
 				if len(tokens) == 0 {
-					return fmt.Errorf("argument #%d ('%s') is invalid", i+1, rawArg)
+					return fmt.Errorf("argument #%d ('%s') is invalid", i+1, arg)
 				}
 				// This loop filters out the tokens we are not interested in.
 				// we are only interested in tokens that contain the ArgMode,
@@ -84,7 +85,7 @@ LOOP:
 					}
 				}
 				if len(tokens) == 0 {
-					return fmt.Errorf("argument #%d ('%s', %#v) is invalid", i+1, rawArg, tokens)
+					return fmt.Errorf("argument #%d ('%s', %#v) is invalid", i+1, arg, tokens)
 				}
 				fun.ArgTypes[i] = tokens[len(tokens)-1]
 				tokens = tokens[:len(tokens)-1]
@@ -137,9 +138,12 @@ func (cmd DropFunctionCommand) AppendSQL(dialect string, buf *bytes.Buffer, args
 	if cmd.DropIfExists {
 		buf.WriteString("IF EXISTS ")
 	}
+	if cmd.Function.FunctionSchema != "" {
+		buf.WriteString(sq.QuoteIdentifier(dialect, cmd.Function.FunctionSchema) + ".")
+	}
 	buf.WriteString(sq.QuoteIdentifier(dialect, cmd.Function.FunctionName))
-	if len(cmd.Function.ArgTypes) > 0 && dialect == sq.DialectPostgres {
-		buf.WriteString(" (" + strings.Join(cmd.Function.ArgTypes, ", ") + ")")
+	if dialect == sq.DialectPostgres {
+		buf.WriteString("(" + strings.Join(cmd.Function.ArgTypes, ", ") + ")")
 	}
 	if cmd.DropCascade {
 		buf.WriteString(" CASCADE")
@@ -157,9 +161,13 @@ func (cmd RenameFunctionCommand) AppendSQL(dialect string, buf *bytes.Buffer, ar
 	if dialect == sq.DialectSQLite || dialect == sq.DialectMySQL {
 		return fmt.Errorf("%s does not support renaming functions", dialect)
 	}
-	buf.WriteString("ALTER FUNCTION " + sq.QuoteIdentifier(dialect, cmd.Function.FunctionName))
-	if len(cmd.Function.ArgTypes) > 0 && dialect == sq.DialectPostgres {
-		buf.WriteString(" (" + strings.Join(cmd.Function.ArgTypes, ", ") + ")")
+	buf.WriteString("ALTER FUNCTION ")
+	if cmd.Function.FunctionSchema != "" {
+		buf.WriteString(sq.QuoteIdentifier(dialect, cmd.Function.FunctionSchema) + ".")
+	}
+	buf.WriteString(sq.QuoteIdentifier(dialect, cmd.Function.FunctionName))
+	if dialect == sq.DialectPostgres {
+		buf.WriteString("(" + strings.Join(cmd.Function.ArgTypes, ", ") + ")")
 	}
 	buf.WriteString(" RENAME TO " + sq.QuoteIdentifier(dialect, cmd.RenameToName) + ";")
 	return nil
