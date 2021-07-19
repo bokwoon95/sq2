@@ -59,6 +59,15 @@ func Test_Function(t *testing.T) {
 		t.Parallel()
 		var tt TT
 		tt.dialect = sq.DialectPostgres
+		tt.item.SQL = `CREATE FUNCTION one(     ) RETURNS integer`
+		tt.wantFunctionName = "one"
+		assert(t, tt)
+	})
+
+	t.Run("(dialect == postgres)", func(t *testing.T) {
+		t.Parallel()
+		var tt TT
+		tt.dialect = sq.DialectPostgres
 		tt.item.SQL = `CREATE FUNCTION app.tf1 (integer, in numeric = 3.14) RETURNS integer`
 		tt.wantFunctionSchema = "app"
 		tt.wantFunctionName = "tf1"
@@ -140,5 +149,187 @@ CREATE OR REPLACE FUNCTION years_compare( IN year1 integer DEFAULT NULL,
 		tt.wantArgNames = []string{"salary_val", "alphabets", "names"}
 		tt.wantArgTypes = []string{"decimal", "[]TEXT", "[][]text"}
 		assert(t, tt)
+	})
+
+	t.Run("(dialect != postgres)", func(t *testing.T) {
+		t.Parallel()
+		var tt TT
+		tt.dialect = sq.DialectMySQL
+		tt.item.SQL = `CREATE FUNCTION hello (s CHAR(20)) RETURNS CHAR(50) DETERMINISTIC RETURN CONCAT('Hello, ',s,'!');`
+		assert(t, tt)
+	})
+
+	t.Run("(dialect == postgres) no opening bracket", func(t *testing.T) {
+		t.Parallel()
+		var tt TT
+		tt.dialect = sq.DialectPostgres
+		tt.item.SQL = `CREATE FUNCTION temp;`
+		err := tt.item.populateFunctionInfo(tt.dialect)
+		if err == nil {
+			t.Fatal(testcallers(), "expected error but got nil")
+		}
+	})
+
+	t.Run("(dialect == postgres) no closing bracket", func(t *testing.T) {
+		t.Parallel()
+		var tt TT
+		tt.dialect = sq.DialectPostgres
+		tt.item.SQL = `CREATE FUNCTION temp(;`
+		err := tt.item.populateFunctionInfo(tt.dialect)
+		if err == nil {
+			t.Fatal(testcallers(), "expected error but got nil")
+		}
+	})
+
+	t.Run("(dialect == postgres) empty args", func(t *testing.T) {
+		t.Parallel()
+		var tt TT
+		tt.dialect = sq.DialectPostgres
+		tt.item.SQL = `CREATE FUNCTION temp(,,,);`
+		err := tt.item.populateFunctionInfo(tt.dialect)
+		if err == nil {
+			t.Fatal(testcallers(), "expected error but got nil")
+		}
+	})
+
+	t.Run("(dialect == postgres) invalid args", func(t *testing.T) {
+		t.Parallel()
+		var tt TT
+		tt.dialect = sq.DialectPostgres
+		tt.item.SQL = `CREATE FUNCTION temp(   DEFAULT 'test',='test');`
+		err := tt.item.populateFunctionInfo(tt.dialect)
+		if err == nil {
+			t.Fatal(testcallers(), "expected error but got nil")
+		}
+	})
+
+	t.Run("(dialect == postgres) invalid function", func(t *testing.T) {
+		t.Parallel()
+		var tt TT
+		tt.dialect = sq.DialectPostgres
+		tt.item.SQL = `CREATE temp();`
+		err := tt.item.populateFunctionInfo(tt.dialect)
+		if err == nil {
+			t.Fatal(testcallers(), "expected error but got nil")
+		}
+	})
+}
+
+func Test_DropFunctionCommand(t *testing.T) {
+	type TT struct {
+		dialect   string
+		item      Command
+		wantQuery string
+		wantArgs  []interface{}
+	}
+
+	assert := func(t *testing.T, tt TT) {
+		gotQuery, gotArgs, _, err := sq.ToSQL(tt.dialect, tt.item)
+		if err != nil {
+			t.Fatal(testcallers(), err)
+		}
+		if diff := testdiff(gotQuery, tt.wantQuery); diff != "" {
+			t.Error(testcallers(), diff)
+		}
+		if diff := testdiff(gotArgs, tt.wantArgs); diff != "" {
+			t.Error(testcallers(), diff)
+		}
+	}
+
+	t.Run("(dialect == postgres)", func(t *testing.T) {
+		t.Parallel()
+		var tt TT
+		tt.dialect = sq.DialectPostgres
+		tt.item = DropFunctionCommand{
+			DropIfExists: true,
+			Function: Function{
+				FunctionSchema: "public",
+				FunctionName:   "my_function",
+				ArgNames:       []string{"IN", "IN"},
+				ArgModes:       []string{"arg_str", "arg_num"},
+				ArgTypes:       []string{"TEXT", "INT"},
+			},
+			DropCascade: true,
+		}
+		tt.wantQuery = `DROP FUNCTION IF EXISTS public.my_function(TEXT, INT) CASCADE;`
+		assert(t, tt)
+	})
+
+	t.Run("(dialect == sqlite)", func(t *testing.T) {
+		t.Parallel()
+		var tt TT
+		tt.dialect = sq.DialectSQLite
+		tt.item = DropFunctionCommand{
+			Function: Function{FunctionName: "my_function"},
+		}
+		_, _, _, err := sq.ToSQL(tt.dialect, tt.item)
+		if err == nil {
+			t.Fatal(testcallers(), "expected error but got nil")
+		}
+	})
+}
+
+func Test_RenameFunctionCommand(t *testing.T) {
+	type TT struct {
+		dialect   string
+		item      Command
+		wantQuery string
+		wantArgs  []interface{}
+	}
+
+	assert := func(t *testing.T, tt TT) {
+		gotQuery, gotArgs, _, err := sq.ToSQL(tt.dialect, tt.item)
+		if err != nil {
+			t.Fatal(testcallers(), err)
+		}
+		if diff := testdiff(gotQuery, tt.wantQuery); diff != "" {
+			t.Error(testcallers(), diff)
+		}
+		if diff := testdiff(gotArgs, tt.wantArgs); diff != "" {
+			t.Error(testcallers(), diff)
+		}
+	}
+
+	t.Run("(dialect == postgres)", func(t *testing.T) {
+		t.Parallel()
+		var tt TT
+		tt.dialect = sq.DialectPostgres
+		tt.item = RenameFunctionCommand{
+			Function: Function{
+				FunctionSchema: "public",
+				FunctionName:   "my_function",
+			},
+			RenameToName: "my_new_function",
+		}
+		tt.wantQuery = `ALTER FUNCTION public.my_function() RENAME TO my_new_function;`
+		assert(t, tt)
+	})
+
+	t.Run("(dialect == sqlite)", func(t *testing.T) {
+		t.Parallel()
+		var tt TT
+		tt.dialect = sq.DialectSQLite
+		tt.item = RenameFunctionCommand{
+			Function:     Function{FunctionName: "my_function"},
+			RenameToName: "my_new_function",
+		}
+		_, _, _, err := sq.ToSQL(tt.dialect, tt.item)
+		if err == nil {
+			t.Fatal(testcallers(), "expected error but got nil")
+		}
+	})
+
+	t.Run("(dialect == mysql)", func(t *testing.T) {
+		t.Parallel()
+		var tt TT
+		tt.dialect = sq.DialectMySQL
+		tt.item = RenameFunctionCommand{
+			Function:     Function{FunctionName: "my_function"},
+			RenameToName: "my_new_function",
+		}
+		_, _, _, err := sq.ToSQL(tt.dialect, tt.item)
+		if err == nil {
+			t.Fatal(testcallers(), "expected error but got nil")
+		}
 	})
 }
