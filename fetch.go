@@ -43,7 +43,7 @@ func fetchContext(ctx context.Context, db DB, q Query, rowmapper func(*Row), ski
 	var shouldLogResults bool
 	var resultsLimit int
 	var logQueryStats func(ctx context.Context, stats QueryStats, skip int)
-	if db, ok := db.(QueryerLogger); ok {
+	if db, ok := db.(LoggerDB); ok {
 		logQueryStats = db.LogQueryStats
 		shouldLogResults, resultsLimit = db.LogResults()
 	}
@@ -210,7 +210,7 @@ func fetchExistsContext(ctx context.Context, db DB, q Query, skip int) (exists b
 	}
 	var stats QueryStats
 	var logQueryStats func(ctx context.Context, stats QueryStats, skip int)
-	if db, ok := db.(QueryerLogger); ok {
+	if db, ok := db.(LoggerDB); ok {
 		logQueryStats = db.LogQueryStats
 	}
 	stats.Dialect = q.GetDialect()
