@@ -418,7 +418,7 @@ type AlterTableCommand struct {
 	AlterConstraintCommands  []AlterConstraintCommand
 	DropConstraintCommands   []DropConstraintCommand
 	RenameConstraintCommands []RenameConstraintCommand
-	// Indexes // mysql-only
+	// Indexes (mysql-only)
 	CreateIndexCommands []CreateIndexCommand
 	DropIndexCommands   []DropIndexCommand
 	RenameIndexCommands []RenameIndexCommand

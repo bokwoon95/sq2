@@ -384,11 +384,11 @@ func (t *TConstraint) Config(config func(constraint *Constraint)) {
 
 func (t *TConstraint) References(table sq.Table, fields ...sq.Field) *TConstraint {
 	if table == nil {
-		panicErr(fmt.Errorf("References: referenced table is nil"))
+		panicErr(fmt.Errorf("References: table is nil"))
 	}
 	referencesTable := table.GetName()
 	if referencesTable == "" {
-		panicErr(fmt.Errorf("References: referenced table has no name"))
+		panicErr(fmt.Errorf("References: table has no name"))
 	}
 	referencesColumns, err := getColumnNames(fields)
 	if err != nil {
