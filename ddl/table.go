@@ -2,7 +2,6 @@ package ddl
 
 import (
 	"fmt"
-	"reflect"
 	"strconv"
 	"strings"
 
@@ -400,117 +399,33 @@ func (tbl *Table) LoadColumnConfig(dialect, columnName, columnType, config strin
 	return nil
 }
 
-func (tbl *Table) LoadTable(dialect string, table sq.SchemaTable) (err error) {
-	defer func() {
-		if r := recover(); r != nil {
-			switch r := r.(type) {
-			case error:
-				err = r
-			default:
-				err = fmt.Errorf("panic: " + fmt.Sprint(r))
-			}
-		}
-	}()
-	if table == nil {
-		return fmt.Errorf("table is nil")
-	}
-	tableValue := reflect.ValueOf(table)
-	tableType := tableValue.Type()
-	if tableType.Kind() != reflect.Struct {
-		return fmt.Errorf("table is not a struct")
-	}
-	tbl.TableSchema, tbl.TableName = table.GetSchema(), table.GetName()
-	if tbl.TableName == "" {
-		return fmt.Errorf("table name is empty")
-	}
-	qualifiedTable := tbl.TableName
-	if tbl.TableSchema != "" {
-		qualifiedTable = tbl.TableSchema + "." + tbl.TableName
-	}
-	tableModifiers := tableType.Field(0).Tag.Get("ddl")
-	modifiers, _, err := tokenizeModifiers(tableModifiers)
-	if err != nil {
-		return fmt.Errorf("%s: %s", qualifiedTable, err.Error())
-	}
-	for _, modifier := range modifiers {
-		switch modifier[0] {
-		case "virtual":
-			virtualTable, submodifiers, _, err := tokenizeValue(modifier[1])
-			if err != nil {
-				return fmt.Errorf("%s: %s", qualifiedTable, err.Error())
-			}
-			tbl.VirtualTable = virtualTable
-			for _, submodifier := range submodifiers {
-				virtualTableArg := submodifier[0]
-				if submodifier[1] != "" {
-					virtualTableArg += "=" + submodifier[1]
-				}
-				tbl.VirtualTableArgs = append(tbl.VirtualTableArgs, virtualTableArg)
-			}
-		case "primarykey":
-			err = tbl.LoadConstraintConfig(PRIMARY_KEY, tbl.TableSchema, tbl.TableName, nil, modifier[1])
-			if err != nil {
-				return fmt.Errorf("%s: %s", qualifiedTable, err.Error())
-			}
-		case "references":
-			err = tbl.LoadConstraintConfig(FOREIGN_KEY, tbl.TableSchema, tbl.TableName, nil, modifier[1])
-			if err != nil {
-				return fmt.Errorf("%s: %s", qualifiedTable, err.Error())
-			}
-		case "unique":
-			err = tbl.LoadConstraintConfig(UNIQUE, tbl.TableSchema, tbl.TableName, nil, modifier[1])
-			if err != nil {
-				return fmt.Errorf("%s: %s", qualifiedTable, err.Error())
-			}
-		case "check":
-			err = tbl.LoadConstraintConfig(CHECK, tbl.TableSchema, tbl.TableName, nil, modifier[1])
-			if err != nil {
-				return fmt.Errorf("%s: %s", qualifiedTable, err.Error())
-			}
-		case "index":
-			err = tbl.LoadIndexConfig(tbl.TableSchema, tbl.TableName, nil, modifier[1])
-			if err != nil {
-				return fmt.Errorf("%s: %s", qualifiedTable, err.Error())
-			}
-		default:
-			return fmt.Errorf("%s: unknown modifier '%s'", qualifiedTable, modifier[0])
-		}
-	}
-	for i := 0; i < tableValue.NumField(); i++ {
-		field, ok := tableValue.Field(i).Interface().(sq.Field)
-		if !ok {
-			continue
-		}
-		columnName := field.GetName()
-		if columnName == "" {
-			return fmt.Errorf("table %s field #%d has no name", tbl.TableName, i)
-		}
-		columnType := defaultColumnType(dialect, field)
-		config := tableType.Field(i).Tag.Get("ddl")
-		err = tbl.LoadColumnConfig(dialect, columnName, columnType, config)
-		if err != nil {
-			return err
-		}
-	}
-	defer func() {
-		for _, constraint := range tbl.Constraints {
-			if len(constraint.Columns) != 1 {
-				continue
-			}
-			n := tbl.CachedColumnPosition(constraint.Columns[0])
-			if n < 0 {
-				continue
-			}
-			switch constraint.ConstraintType {
-			case PRIMARY_KEY:
-				tbl.Columns[n].IsPrimaryKey = true
-			case UNIQUE:
-				tbl.Columns[n].IsUnique = true
-			}
-		}
-	}()
-	if ddlTable, ok := table.(DDLTable); ok {
-		ddlTable.DDL(dialect, &T{dialect: dialect, tbl: tbl})
-	}
-	return nil
+type CreateTableCommand struct {
+	CreateIfNotExists   bool
+	IncludeConstraints  bool
+	Table               Table
+	CreateIndexCommands []CreateIndexCommand // mysql-only
+}
+
+type AlterTableCommand struct {
+	AlterIfExists bool
+	// Columns
+	AddColumnCommands    []AddColumnCommand
+	AlterColumnCommands  []AlterColumnCommand
+	DropColumnCommands   []DropColumnCommand
+	RenameColumnCommands []RenameColumnCommand
+	// Constraints
+	AddConstraintCommands    []AddConstraintCommand
+	AlterConstraintCommands  []AlterConstraintCommand
+	DropConstraintCommands   []DropConstraintCommand
+	RenameConstraintCommands []RenameConstraintCommand
+	// Indexes // mysql-only
+	CreateIndexCommands []CreateIndexCommand
+	DropIndexCommands   []DropIndexCommand
+	RenameIndexCommands []RenameIndexCommand
+}
+
+type RenameTableCommand struct {
+	TableSchemas  []string
+	TableNames    []string
+	RenameToNames []string
 }

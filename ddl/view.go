@@ -3,7 +3,6 @@ package ddl
 import (
 	"bytes"
 	"fmt"
-	"reflect"
 
 	"github.com/bokwoon95/sq"
 )
@@ -93,48 +92,6 @@ func (view *View) RefreshTriggerCache() {
 		key := [3]string{trigger.TableSchema, trigger.TableName, trigger.TriggerName}
 		view.triggerCache[key] = i
 	}
-}
-
-func (view *View) LoadDDLView(dialect string, ddlView DDLView) (err error) {
-	defer func() {
-		if r := recover(); r != nil {
-			switch r := r.(type) {
-			case error:
-				err = r
-			default:
-				err = fmt.Errorf("panic: " + fmt.Sprint(r))
-			}
-		}
-	}()
-	if ddlView == nil {
-		return fmt.Errorf("view is nil")
-	}
-	ddlViewValue := reflect.ValueOf(ddlView)
-	ddlViewType := ddlViewValue.Type()
-	if ddlViewType.Kind() != reflect.Struct {
-		return fmt.Errorf("view is not a struct")
-	}
-	view.ViewSchema, view.ViewName = ddlView.GetSchema(), ddlView.GetName()
-	if view.ViewName == "" {
-		return fmt.Errorf("view name is empty")
-	}
-	v := &V{
-		dialect: dialect,
-		view:    &View{ViewSchema: view.ViewSchema, ViewName: view.ViewName},
-	}
-	for i := 0; i < ddlViewValue.NumField(); i++ {
-		field, ok := ddlViewValue.Field(i).Interface().(sq.Field)
-		if !ok {
-			continue
-		}
-		fieldName := field.GetName()
-		if fieldName == "" {
-			return fmt.Errorf("view struct %s field #%d has no name set for it", ddlViewType.Name(), i)
-		}
-		v.wantColumns = append(v.wantColumns, fieldName)
-	}
-	ddlView.DDL(dialect, v)
-	return nil
 }
 
 func (view *View) createOrUpdateIndex(indexName string, columns []string, exprs []string) (indexPosition int, err error) {
