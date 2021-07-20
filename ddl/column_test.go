@@ -6,78 +6,6 @@ import (
 	"github.com/bokwoon95/sq"
 )
 
-func Test_Column(t *testing.T) {
-	type TT struct {
-		dialect                 string
-		item                    sq.SQLExcludeAppender
-		excludedTableQualifiers []string
-		wantQuery               string
-		wantArgs                []interface{}
-	}
-
-	var _ sq.Field = Column{}
-
-	assert := func(t *testing.T, tt TT) {
-		gotQuery, gotArgs, _, err := sq.ToSQLExclude(tt.dialect, tt.item, tt.excludedTableQualifiers)
-		if err != nil {
-			t.Fatal(testcallers(), err)
-		}
-		if diff := testdiff(gotQuery, tt.wantQuery); diff != "" {
-			t.Error(testcallers(), diff)
-		}
-		if diff := testdiff(gotArgs, tt.wantArgs); diff != "" {
-			t.Error(testcallers(), diff)
-		}
-	}
-
-	t.Run("basic", func(t *testing.T) {
-		t.Parallel()
-		var tt TT
-		tt.item = Column{
-			TableName:  "actor",
-			ColumnName: "actor_id",
-		}
-		tt.wantQuery = "actor.actor_id"
-		assert(t, tt)
-	})
-
-	t.Run("with table alias", func(t *testing.T) {
-		t.Parallel()
-		var tt TT
-		tt.item = Column{
-			TableName:  "actor",
-			TableAlias: "a",
-			ColumnName: "actor_id",
-		}
-		tt.wantQuery = "a.actor_id"
-		assert(t, tt)
-	})
-
-	t.Run("excludedTableQualifiers", func(t *testing.T) {
-		t.Parallel()
-		var tt TT
-		tt.item = Column{
-			TableName:  "actor",
-			ColumnName: "actor_id",
-		}
-		tt.excludedTableQualifiers = []string{"actor"}
-		tt.wantQuery = "actor_id"
-		assert(t, tt)
-	})
-
-	t.Run("quoted identifiers", func(t *testing.T) {
-		t.Parallel()
-		var tt TT
-		tt.item = Column{
-			TableName:  "table with spaces",
-			ColumnName: "column with spaces",
-		}
-		tt.excludedTableQualifiers = []string{"actor"}
-		tt.wantQuery = `"table with spaces"."column with spaces"`
-		assert(t, tt)
-	})
-}
-
 func Test_AddColumnCommand(t *testing.T) {
 	type TT struct {
 		dialect   string
@@ -102,7 +30,7 @@ func Test_AddColumnCommand(t *testing.T) {
 	t.Run("(dialect == postgres) IDENTITY column", func(t *testing.T) {
 		t.Parallel()
 		var tt TT
-		tt.item = AddColumnCommand{
+		tt.item = &AddColumnCommand{
 			AddIfNotExists: true,
 			Column: Column{
 				ColumnName:    "actor_id",
@@ -120,7 +48,7 @@ func Test_AddColumnCommand(t *testing.T) {
 	t.Run("(dialect == postgres) GENERATED column", func(t *testing.T) {
 		t.Parallel()
 		var tt TT
-		tt.item = AddColumnCommand{
+		tt.item = &AddColumnCommand{
 			Column: Column{
 				ColumnName:          "full_name",
 				ColumnType:          "TEXT",
@@ -136,7 +64,7 @@ func Test_AddColumnCommand(t *testing.T) {
 	t.Run("(dialect == postgres) AUTOINCREMENT column", func(t *testing.T) {
 		t.Parallel()
 		var tt TT
-		tt.item = AddColumnCommand{
+		tt.item = &AddColumnCommand{
 			Column: Column{
 				ColumnName:    "actor_id",
 				ColumnType:    "INT",
@@ -153,7 +81,7 @@ func Test_AddColumnCommand(t *testing.T) {
 	t.Run("(dialect == postgres) GENERATED VIRTUAL column", func(t *testing.T) {
 		t.Parallel()
 		var tt TT
-		tt.item = AddColumnCommand{
+		tt.item = &AddColumnCommand{
 			Column: Column{
 				ColumnName:    "full_name",
 				ColumnType:    "TEXT",
@@ -170,7 +98,7 @@ func Test_AddColumnCommand(t *testing.T) {
 	t.Run("(dialect != postgres) add column if not exists", func(t *testing.T) {
 		t.Parallel()
 		var tt TT
-		tt.item = AddColumnCommand{
+		tt.item = &AddColumnCommand{
 			AddIfNotExists: true,
 			Column: Column{
 				ColumnName: "first_name",
@@ -187,7 +115,7 @@ func Test_AddColumnCommand(t *testing.T) {
 	t.Run("(dialect != mysql) column with ON UPDATE CURRENT_TIMESTAMP", func(t *testing.T) {
 		t.Parallel()
 		var tt TT
-		tt.item = AddColumnCommand{
+		tt.item = &AddColumnCommand{
 			Column: Column{
 				ColumnName:               "last_update",
 				ColumnType:               "TIMESTAMPTZ",
@@ -204,7 +132,7 @@ func Test_AddColumnCommand(t *testing.T) {
 	t.Run("(dialect == sqlite) PRIMARY KEY column", func(t *testing.T) {
 		t.Parallel()
 		var tt TT
-		tt.item = AddColumnCommand{
+		tt.item = &AddColumnCommand{
 			Column: Column{
 				ColumnName:   "actor_id",
 				ColumnType:   "INTEGER",
@@ -221,7 +149,7 @@ func Test_AddColumnCommand(t *testing.T) {
 	t.Run("(dialect == sqlite) UNIQUE column", func(t *testing.T) {
 		t.Parallel()
 		var tt TT
-		tt.item = AddColumnCommand{
+		tt.item = &AddColumnCommand{
 			Column: Column{
 				ColumnName: "actor_id",
 				ColumnType: "INTEGER",
@@ -238,7 +166,7 @@ func Test_AddColumnCommand(t *testing.T) {
 	t.Run("(dialect == sqlite) NOT NULL column without a DEFAULT value", func(t *testing.T) {
 		t.Parallel()
 		var tt TT
-		tt.item = AddColumnCommand{
+		tt.item = &AddColumnCommand{
 			Column: Column{
 				ColumnName: "actor_id",
 				ColumnType: "INTEGER",
@@ -255,7 +183,7 @@ func Test_AddColumnCommand(t *testing.T) {
 	t.Run("(dialect == sqlite) NOT NULL column with an expression as DEFAULT value", func(t *testing.T) {
 		t.Parallel()
 		var tt TT
-		tt.item = AddColumnCommand{
+		tt.item = &AddColumnCommand{
 			Column: Column{
 				ColumnName:    "actor_id",
 				ColumnType:    "INTEGER",
@@ -273,7 +201,7 @@ func Test_AddColumnCommand(t *testing.T) {
 	t.Run("(dialect == sqlite) FOREIGN KEY column with non-null DEFAULT value", func(t *testing.T) {
 		t.Parallel()
 		var tt TT
-		tt.item = AddColumnCommand{
+		tt.item = &AddColumnCommand{
 			Column: Column{
 				ColumnName:    "country_id",
 				ColumnType:    "INT",
@@ -292,7 +220,7 @@ func Test_AddColumnCommand(t *testing.T) {
 	t.Run("(dialect == sqlite) GENERATED STORED column", func(t *testing.T) {
 		t.Parallel()
 		var tt TT
-		tt.item = AddColumnCommand{
+		tt.item = &AddColumnCommand{
 			Column: Column{
 				ColumnName:          "full_name",
 				ColumnType:          "TEXT",
@@ -310,7 +238,7 @@ func Test_AddColumnCommand(t *testing.T) {
 	t.Run("(dialect == sqlite) IDENTITY column", func(t *testing.T) {
 		t.Parallel()
 		var tt TT
-		tt.item = AddColumnCommand{
+		tt.item = &AddColumnCommand{
 			Column: Column{
 				ColumnName: "actor_id",
 				ColumnType: "INT",
@@ -327,7 +255,7 @@ func Test_AddColumnCommand(t *testing.T) {
 	t.Run("(dialect == sqlite) AUTOINCREMENT column", func(t *testing.T) {
 		t.Parallel()
 		var tt TT
-		tt.item = AddColumnCommand{
+		tt.item = &AddColumnCommand{
 			Column: Column{
 				ColumnName:    "actor_id",
 				ColumnType:    "INT",
@@ -342,7 +270,7 @@ func Test_AddColumnCommand(t *testing.T) {
 	t.Run("(dialect == sqlite) column with COLLATE", func(t *testing.T) {
 		t.Parallel()
 		var tt TT
-		tt.item = AddColumnCommand{
+		tt.item = &AddColumnCommand{
 			Column: Column{
 				ColumnName:    "first_name",
 				ColumnType:    "TEXT",
@@ -357,7 +285,7 @@ func Test_AddColumnCommand(t *testing.T) {
 	t.Run("(dialect == sqlite) GENERATED VIRTUAL column", func(t *testing.T) {
 		t.Parallel()
 		var tt TT
-		tt.item = AddColumnCommand{
+		tt.item = &AddColumnCommand{
 			Column: Column{
 				ColumnName:    "full_name",
 				ColumnType:    "TEXT",
@@ -372,7 +300,7 @@ func Test_AddColumnCommand(t *testing.T) {
 	t.Run("(dialect == sqlite) column with constraints", func(t *testing.T) {
 		t.Parallel()
 		var tt TT
-		tt.item = AddColumnCommand{
+		tt.item = &AddColumnCommand{
 			Column: Column{
 				ColumnName: "country_id",
 				ColumnType: "INT",
@@ -392,7 +320,7 @@ func Test_AddColumnCommand(t *testing.T) {
 	t.Run("(dialect == sqlite) column quoted identifiers", func(t *testing.T) {
 		t.Parallel()
 		var tt TT
-		tt.item = AddColumnCommand{
+		tt.item = &AddColumnCommand{
 			Column: Column{
 				ColumnName: "bad column name",
 				ColumnType: "TEXT",
@@ -408,7 +336,7 @@ func Test_AddColumnCommand(t *testing.T) {
 	t.Run("(dialect == mysql) AUTOINCREMENT column", func(t *testing.T) {
 		t.Parallel()
 		var tt TT
-		tt.item = AddColumnCommand{
+		tt.item = &AddColumnCommand{
 			Column: Column{
 				ColumnName:    "actor_id",
 				ColumnType:    "INT",
@@ -423,7 +351,7 @@ func Test_AddColumnCommand(t *testing.T) {
 	t.Run("(dialect == mysql) column with ON UPDATE CURRENT_TIMESTAMP", func(t *testing.T) {
 		t.Parallel()
 		var tt TT
-		tt.item = AddColumnCommand{
+		tt.item = &AddColumnCommand{
 			Column: Column{
 				ColumnName:               "last_update",
 				ColumnType:               "DATETIME",
@@ -462,7 +390,7 @@ func Test_AlterColumnCommand(t *testing.T) {
 		t.Parallel()
 		var tt TT
 		tt.dialect = sq.DialectSQLite
-		tt.item = AlterColumnCommand{}
+		tt.item = &AlterColumnCommand{}
 		_, _, _, err := sq.ToSQL(tt.dialect, tt.item)
 		if err == nil {
 			t.Fatal(testcallers(), "expected error but got nil")
@@ -473,7 +401,7 @@ func Test_AlterColumnCommand(t *testing.T) {
 		t.Parallel()
 		var tt TT
 		tt.dialect = sq.DialectPostgres
-		tt.item = AlterColumnCommand{
+		tt.item = &AlterColumnCommand{
 			Column: Column{
 				ColumnName: "bad column name",
 				ColumnType: "TEXT",
@@ -487,7 +415,7 @@ func Test_AlterColumnCommand(t *testing.T) {
 		t.Parallel()
 		var tt TT
 		tt.dialect = sq.DialectMySQL
-		tt.item = AlterColumnCommand{
+		tt.item = &AlterColumnCommand{
 			Column: Column{
 				ColumnName:    "replacement_cost",
 				ColumnType:    "DECIMAL(5,2)",
@@ -503,7 +431,7 @@ func Test_AlterColumnCommand(t *testing.T) {
 		t.Parallel()
 		var tt TT
 		tt.dialect = sq.DialectMySQL
-		tt.item = AlterColumnCommand{
+		tt.item = &AlterColumnCommand{
 			Column: Column{
 				ColumnName: "actor_id",
 				ColumnType: "INT",
@@ -520,7 +448,7 @@ func Test_AlterColumnCommand(t *testing.T) {
 		t.Parallel()
 		var tt TT
 		tt.dialect = sq.DialectPostgres
-		tt.item = AlterColumnCommand{
+		tt.item = &AlterColumnCommand{
 			Column: Column{
 				ColumnName:    "replacement_cost",
 				ColumnType:    "TEXT",
@@ -542,7 +470,7 @@ func Test_AlterColumnCommand(t *testing.T) {
 		t.Parallel()
 		var tt TT
 		tt.dialect = sq.DialectPostgres
-		tt.item = AlterColumnCommand{
+		tt.item = &AlterColumnCommand{
 			Column: Column{
 				ColumnName: "replacement_cost",
 			},
@@ -564,7 +492,7 @@ func Test_AlterColumnCommand(t *testing.T) {
 		t.Parallel()
 		var tt TT
 		tt.dialect = "abcdefg"
-		tt.item = AlterColumnCommand{
+		tt.item = &AlterColumnCommand{
 			Column: Column{
 				ColumnName: "replacement_cost",
 				ColumnType: "TEXT",

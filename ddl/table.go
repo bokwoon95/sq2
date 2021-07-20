@@ -1,6 +1,7 @@
 package ddl
 
 import (
+	"bytes"
 	"fmt"
 	"strconv"
 	"strings"
@@ -406,6 +407,10 @@ type CreateTableCommand struct {
 	CreateIndexCommands []CreateIndexCommand // mysql-only
 }
 
+func (cmd CreateTableCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
+	return nil
+}
+
 type AlterTableCommand struct {
 	AlterIfExists bool
 	// Columns
@@ -424,8 +429,16 @@ type AlterTableCommand struct {
 	RenameIndexCommands []RenameIndexCommand
 }
 
+func (cmd AlterTableCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
+	return nil
+}
+
 type RenameTableCommand struct {
 	TableSchemas  []string
 	TableNames    []string
 	RenameToNames []string
+}
+
+func (cmd RenameTableCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
+	return nil
 }
