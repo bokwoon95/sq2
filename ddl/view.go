@@ -44,10 +44,10 @@ func (view *View) AppendIndex(index Index) (indexPosition int) {
 }
 
 func (view *View) RefreshIndexCache() {
+	if view.indexCache == nil && len(view.Indexes) > 0 {
+		view.indexCache = make(map[string]int)
+	}
 	for i, index := range view.Indexes {
-		if view.indexCache == nil {
-			view.indexCache = make(map[string]int)
-		}
 		view.indexCache[index.IndexName] = i
 	}
 }
@@ -85,10 +85,10 @@ func (view *View) AppendTrigger(trigger Trigger) (triggerPosition int) {
 }
 
 func (view *View) RefreshTriggerCache() {
+	if view.triggerCache == nil && len(view.Triggers) > 0 {
+		view.triggerCache = make(map[[3]string]int)
+	}
 	for i, trigger := range view.Triggers {
-		if view.triggerCache == nil {
-			view.triggerCache = make(map[[3]string]int)
-		}
 		key := [3]string{trigger.TableSchema, trigger.TableName, trigger.TriggerName}
 		view.triggerCache[key] = i
 	}
