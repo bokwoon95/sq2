@@ -1,5 +1,12 @@
 package ddl
 
+import (
+	"bytes"
+	"fmt"
+
+	"github.com/bokwoon95/sq"
+)
+
 type Schema struct {
 	SchemaName    string
 	Tables        []Table
@@ -121,4 +128,32 @@ func (s *Schema) RefreshFunctionCache() {
 	for i, function := range s.Functions {
 		s.functionCache[function.FunctionName] = append(s.functionCache[function.FunctionName], i)
 	}
+}
+
+type CreateSchemaCommand struct {
+	CreateIfNotExists bool
+	SchemaName        string
+}
+
+func (cmd *CreateSchemaCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
+	if dialect == sq.DialectSQLite {
+		return fmt.Errorf("sqlite does not support CREATE SCHEMA")
+	}
+	buf.WriteString("CREATE SCHEMA ")
+	if cmd.CreateIfNotExists {
+		buf.WriteString("IF NOT EXISTS ")
+	}
+	buf.WriteString(cmd.SchemaName + ";")
+	return nil
+}
+
+type DropSchemaCommand struct {
+	DropIfExists bool
+	SchemaName   string
+	DropCascade  bool
+}
+
+type RenameSchemaCommand struct {
+	SchemaName   string
+	RenameToName string
 }

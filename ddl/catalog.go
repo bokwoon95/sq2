@@ -2,6 +2,7 @@ package ddl
 
 import (
 	"fmt"
+	"io"
 	"io/fs"
 
 	"github.com/bokwoon95/sq"
@@ -198,4 +199,62 @@ func WithFunctionFiles(fsys fs.FS, filenames ...string) CatalogOption {
 		}
 		return nil
 	}
+}
+
+func (c *Catalog) Commands() MigrationCommands {
+	m := MigrationCommands{Dialect: c.Dialect}
+	for _, schema := range c.Schemas {
+		if schema.SchemaName != "" {
+			createSchemaCmd := &CreateSchemaCommand{
+				CreateIfNotExists: true,
+				SchemaName:        schema.SchemaName,
+			}
+			m.SchemaCommands = append(m.SchemaCommands, createSchemaCmd)
+		}
+		for _, table := range schema.Tables {
+			createTableCmd := &CreateTableCommand{
+				CreateIfNotExists:  true,
+				IncludeConstraints: true,
+				Table:              table,
+			}
+			for _, constraint := range table.Constraints {
+				if constraint.ConstraintType == FOREIGN_KEY {
+					m.ForeignKeyCommands = append(m.ForeignKeyCommands, &AddConstraintCommand{Constraint: constraint})
+				}
+			}
+			for _, index := range table.Indexes {
+				createIndexCmd := &CreateIndexCommand{Index: index}
+				if c.Dialect == sq.DialectMySQL {
+					createTableCmd.CreateIndexCommands = append(createTableCmd.CreateIndexCommands, *createIndexCmd)
+				} else {
+					createIndexCmd.CreateIfNotExists = true
+					m.TableCommands = append(m.TableCommands, createIndexCmd)
+				}
+			}
+			for _, trigger := range table.Triggers {
+				createTriggerCmd := &CreateTriggerCommand{Trigger: trigger}
+				m.TriggerCommands = append(m.TriggerCommands, createTriggerCmd)
+			}
+			m.TableCommands = append(m.TableCommands, createTableCmd)
+		}
+		for _, view := range schema.Views {
+			createViewCmd := &CreateViewCommand{View: view}
+			if c.Dialect == sq.DialectMySQL || (c.Dialect == sq.DialectPostgres && !view.IsMaterialized) {
+				createViewCmd.CreateOrReplace = true
+			}
+			if c.Dialect == sq.DialectSQLite || (c.Dialect == sq.DialectPostgres && view.IsMaterialized) {
+				createViewCmd.CreateIfNotExists = true
+			}
+			m.ViewCommands = append(m.ViewCommands, createViewCmd)
+		}
+		for _, function := range schema.Functions {
+			createFunctionCmd := &CreateFunctionCommand{Function: function}
+			m.FunctionCommands = append(m.FunctionCommands, createFunctionCmd)
+		}
+	}
+	return m
+}
+
+func (c *Catalog) WriteStructs(w io.Writer) error {
+	return nil
 }

@@ -26,7 +26,7 @@ type CreateIndexCommand struct {
 	Index              Index
 }
 
-func (cmd CreateIndexCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
+func (cmd *CreateIndexCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
 	if dialect != sq.DialectMySQL {
 		buf.WriteString("CREATE ")
 	}
