@@ -179,7 +179,6 @@ func (cmd AlterConstraintCommand) AppendSQL(dialect string, buf *bytes.Buffer, a
 		return fmt.Errorf("sqlite does not support ALTER CONSTRAINT")
 	}
 	if !cmd.AlterDeferrable {
-		buf.WriteString("SELECT 1;")
 		return nil
 	}
 	buf.WriteString("ALTER CONSTRAINT " + sq.QuoteIdentifier(dialect, cmd.ConstraintName))
