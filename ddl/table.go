@@ -1,5 +1,13 @@
 package ddl
 
+import (
+	"fmt"
+	"strconv"
+	"strings"
+
+	"github.com/bokwoon95/sq"
+)
+
 type Table struct {
 	TableSchema      string       `json:",omitempty"`
 	TableName        string       `json:",omitempty"`
@@ -149,4 +157,244 @@ func (tbl *Table) RefreshTriggerCache() {
 	for i, trigger := range tbl.Triggers {
 		tbl.triggerCache[trigger.TriggerName] = i
 	}
+}
+
+func (tbl *Table) LoadIndexConfig(tableSchema, tableName string, columns []string, config string) error {
+	indexName, modifiers, modifierPositions, err := tokenizeValue(config)
+	if err != nil {
+		return err
+	}
+	if n, ok := modifierPositions["cols"]; ok {
+		columns = strings.Split(modifiers[n][1], ",")
+	}
+	if indexName == "." {
+		indexName = ""
+	}
+	if indexName == "" && len(columns) > 0 {
+		indexName = generateName(INDEX, tableName, columns...)
+	}
+	var index Index
+	if n := tbl.CachedIndexPosition(indexName); n >= 0 {
+		index = tbl.Indexes[n]
+		defer func() { tbl.Indexes[n] = index }()
+	} else {
+		index = Index{
+			TableSchema: tbl.TableSchema,
+			TableName:   tbl.TableName,
+			IndexName:   indexName,
+			Columns:     columns,
+		}
+		defer func() { tbl.AppendIndex(index) }()
+	}
+	for _, modifier := range modifiers {
+		switch modifier[0] {
+		case "cols":
+			continue
+		case "unique":
+			index.IsUnique = true
+		case "using":
+			index.IndexType = strings.ToUpper(modifier[1])
+		case "where":
+			index.Predicate = modifier[1]
+		case "include":
+			index.IncludeColumns = strings.Split(modifier[1], ",")
+		default:
+			return fmt.Errorf("invalid modifier 'index.%s'", modifier[0])
+		}
+	}
+	return nil
+}
+
+func (tbl *Table) LoadConstraintConfig(constraintType, tableSchema, tableName string, columns []string, config string) error {
+	value, modifiers, modifierPositions, err := tokenizeValue(config)
+	if err != nil {
+		return err
+	}
+	var constraintName string
+	if constraintType == PRIMARY_KEY || constraintType == UNIQUE || constraintType == CHECK {
+		constraintName = value
+	}
+	if constraintType == FOREIGN_KEY {
+		if n, ok := modifierPositions["name"]; ok {
+			constraintName = modifiers[n][1]
+		}
+	}
+	if n, ok := modifierPositions["cols"]; ok {
+		columns = strings.Split(modifiers[n][1], ",")
+	}
+	if constraintName == "." {
+		constraintName = ""
+	}
+	if constraintName == "" && len(columns) > 0 {
+		constraintName = generateName(constraintType, tableName, columns...)
+	}
+	var constraint Constraint
+	if n := tbl.CachedConstraintPosition(constraintName); n >= 0 {
+		constraint = tbl.Constraints[n]
+		constraint.ConstraintType = constraintType
+		defer func() { tbl.Constraints[n] = constraint }()
+	} else {
+		constraint = Constraint{
+			TableSchema:    tableSchema,
+			TableName:      tableName,
+			ConstraintName: constraintName,
+			ConstraintType: constraintType,
+			Columns:        columns,
+		}
+		defer func() { tbl.AppendConstraint(constraint) }()
+	}
+	if constraintType == FOREIGN_KEY {
+		switch parts := strings.SplitN(value, ".", 3); len(parts) {
+		case 1:
+			constraint.ReferencesTable = parts[0]
+		case 2:
+			constraint.ReferencesTable = parts[0]
+			constraint.ReferencesColumns = strings.Split(parts[1], ",")
+		case 3:
+			constraint.ReferencesSchema = parts[0]
+			constraint.ReferencesTable = parts[1]
+			constraint.ReferencesColumns = strings.Split(parts[2], ",")
+		}
+	}
+	for _, modifier := range modifiers {
+		switch modifier[0] {
+		case "name", "cols":
+			continue
+		case "onupdate":
+			switch modifier[1] {
+			case "cascade":
+				constraint.UpdateRule = CASCADE
+			case "restrict":
+				constraint.UpdateRule = RESTRICT
+			case "noaction":
+				constraint.UpdateRule = NO_ACTION
+			case "setnull":
+				constraint.UpdateRule = SET_NULL
+			case "setdefault":
+				constraint.UpdateRule = SET_DEFAULT
+			default:
+				return fmt.Errorf("unknown value '%s' for 'references.onupdate' modifier", modifier[1])
+			}
+		case "ondelete":
+			switch modifier[1] {
+			case "cascade":
+				constraint.DeleteRule = CASCADE
+			case "restrict":
+				constraint.DeleteRule = RESTRICT
+			case "noaction":
+				constraint.DeleteRule = NO_ACTION
+			case "setnull":
+				constraint.DeleteRule = SET_NULL
+			case "setdefault":
+				constraint.DeleteRule = SET_DEFAULT
+			default:
+				return fmt.Errorf("unknown value '%s' for 'references.ondelete' modifier", modifier[1])
+			}
+		case "check":
+			constraint.CheckExpr = modifier[1]
+		case "deferrable":
+			constraint.IsDeferrable = true
+		case "deferred":
+			constraint.IsInitiallyDeferred = true
+		default:
+			return fmt.Errorf("invalid modifier 'check.%s'", modifier[0])
+		}
+	}
+	return nil
+}
+
+func (tbl *Table) LoadColumnConfig(dialect, columnName, columnType, config string) error {
+	qualifiedColumn := tbl.TableSchema + "." + tbl.TableName + "." + columnName
+	if tbl.TableSchema == "" {
+		qualifiedColumn = qualifiedColumn[1:]
+	}
+	modifiers, _, err := tokenizeModifiers(config)
+	if err != nil {
+		return fmt.Errorf("%s: %s", qualifiedColumn, err.Error())
+	}
+	var col Column
+	if n := tbl.CachedColumnPosition(columnName); n >= 0 {
+		col = tbl.Columns[n]
+		defer func() { tbl.Columns[n] = col }()
+	} else {
+		col = Column{
+			TableSchema: tbl.TableSchema,
+			TableName:   tbl.TableName,
+			ColumnName:  columnName,
+			ColumnType:  columnType,
+		}
+		defer func() { tbl.AppendColumn(col) }()
+	}
+	for _, modifier := range modifiers {
+		switch modifier[0] {
+		case "type":
+			col.ColumnType = modifier[1]
+		case "autoincrement":
+			col.Autoincrement = true
+		case "identity":
+			col.Identity = BY_DEFAULT_AS_IDENTITY
+		case "alwaysidentity":
+			col.Identity = ALWAYS_AS_IDENTITY
+		case "notnull":
+			col.IsNotNull = true
+		case "onupdatecurrenttimestamp":
+			col.OnUpdateCurrentTimestamp = true
+		case "generated":
+			col.GeneratedExpr = modifier[1]
+		case "stored":
+			col.GeneratedExprStored = true
+		case "virtual":
+			col.GeneratedExprStored = false
+		case "collate":
+			col.CollationName = modifier[1]
+		case "default":
+			if len(modifier[1]) >= 2 && modifier[1][0] == '\'' && modifier[1][len(modifier[1])-1] == '\'' {
+				col.ColumnDefault = modifier[1]
+			} else if strings.EqualFold(modifier[1], "TRUE") ||
+				strings.EqualFold(modifier[1], "FALSE") ||
+				strings.EqualFold(modifier[1], "CURRENT_DATE") ||
+				strings.EqualFold(modifier[1], "CURRENT_TIME") ||
+				strings.EqualFold(modifier[1], "CURRENT_TIMESTAMP") {
+				col.ColumnDefault = modifier[1]
+			} else if _, err := strconv.ParseInt(modifier[1], 10, 64); err == nil {
+				col.ColumnDefault = modifier[1]
+			} else if _, err := strconv.ParseFloat(modifier[1], 64); err == nil {
+				col.ColumnDefault = modifier[1]
+			} else if dialect == sq.DialectPostgres {
+				col.ColumnDefault = modifier[1]
+			} else {
+				col.ColumnDefault = "(" + modifier[1] + ")"
+			}
+		case "ignore":
+			col.Ignore = true
+		case "primarykey":
+			err = tbl.LoadConstraintConfig(PRIMARY_KEY, col.TableSchema, col.TableName, []string{col.ColumnName}, modifier[1])
+			if err != nil {
+				return fmt.Errorf("%s: %s", qualifiedColumn, err.Error())
+			}
+		case "references":
+			err = tbl.LoadConstraintConfig(FOREIGN_KEY, col.TableSchema, col.TableName, []string{col.ColumnName}, modifier[1])
+			if err != nil {
+				return fmt.Errorf("%s: %s", qualifiedColumn, err.Error())
+			}
+		case "unique":
+			err = tbl.LoadConstraintConfig(UNIQUE, col.TableSchema, col.TableName, []string{col.ColumnName}, modifier[1])
+			if err != nil {
+				return fmt.Errorf("%s: %s", qualifiedColumn, err.Error())
+			}
+		case "check":
+			err = tbl.LoadConstraintConfig(CHECK, col.TableSchema, col.TableName, []string{col.ColumnName}, modifier[1])
+			if err != nil {
+				return fmt.Errorf("%s: %s", qualifiedColumn, err.Error())
+			}
+		case "index":
+			err = tbl.LoadIndexConfig(col.TableSchema, col.TableName, []string{col.ColumnName}, modifier[1])
+			if err != nil {
+				return fmt.Errorf("%s: %s", qualifiedColumn, err.Error())
+			}
+		default:
+			return fmt.Errorf("%s: unknown modifier '%s'", qualifiedColumn, modifier[0])
+		}
+	}
+	return nil
 }
