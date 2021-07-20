@@ -31,7 +31,7 @@ func Test_CreateIndexCommnd(t *testing.T) {
 		t.Parallel()
 		var tt TT
 		tt.dialect = sq.DialectPostgres
-		tt.item = CreateIndexCommand{
+		tt.item = &CreateIndexCommand{
 			CreateConcurrently: true,
 			CreateIfNotExists:  true,
 			Index: Index{
@@ -56,7 +56,7 @@ func Test_CreateIndexCommnd(t *testing.T) {
 		t.Parallel()
 		var tt TT
 		tt.dialect = sq.DialectSQLite
-		tt.item = CreateIndexCommand{
+		tt.item = &CreateIndexCommand{
 			Index: Index{
 				TableSchema: "my_schema",
 				TableName:   "my_table",
@@ -74,7 +74,7 @@ func Test_CreateIndexCommnd(t *testing.T) {
 		t.Parallel()
 		var tt TT
 		tt.dialect = sq.DialectMySQL
-		tt.item = CreateIndexCommand{
+		tt.item = &CreateIndexCommand{
 			Index: Index{
 				TableSchema: "my_table",
 				TableName:   "my_table",
@@ -91,7 +91,7 @@ func Test_CreateIndexCommnd(t *testing.T) {
 		t.Parallel()
 		var tt TT
 		tt.dialect = sq.DialectMySQL
-		tt.item = CreateIndexCommand{
+		tt.item = &CreateIndexCommand{
 			CreateConcurrently: true,
 			Index: Index{
 				TableName: "my_table",
@@ -109,7 +109,7 @@ func Test_CreateIndexCommnd(t *testing.T) {
 		t.Parallel()
 		var tt TT
 		tt.dialect = sq.DialectSQLite
-		tt.item = CreateIndexCommand{
+		tt.item = &CreateIndexCommand{
 			Index: Index{
 				TableName: "my_table",
 				IndexName: "my_index",
@@ -127,7 +127,7 @@ func Test_CreateIndexCommnd(t *testing.T) {
 		t.Parallel()
 		var tt TT
 		tt.dialect = sq.DialectMySQL
-		tt.item = CreateIndexCommand{
+		tt.item = &CreateIndexCommand{
 			Index: Index{
 				TableName:      "my_table",
 				IndexName:      "my_index",
@@ -145,7 +145,7 @@ func Test_CreateIndexCommnd(t *testing.T) {
 		t.Parallel()
 		var tt TT
 		tt.dialect = sq.DialectMySQL
-		tt.item = CreateIndexCommand{
+		tt.item = &CreateIndexCommand{
 			Index: Index{
 				TableName: "my_table",
 				IndexName: "my_index",
