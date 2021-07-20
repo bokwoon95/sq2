@@ -409,7 +409,7 @@ type CreateTableCommand struct {
 
 func (cmd *CreateTableCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
 	if cmd == nil {
-		buf.WriteString("SELECT 1")
+		buf.WriteString("SELECT 1;")
 		return nil
 	}
 	if cmd.Table.TableName == "" {
@@ -444,7 +444,7 @@ func (cmd *CreateTableCommand) AppendSQL(dialect string, buf *bytes.Buffer, args
 		}
 		if cmd.Table.VirtualTable != "" {
 			// we only recognize columns for FTS5 tables for now, because I
-			// have no idea how the other virtual tables work.
+			// have no idea whether other virtual tables do the same.
 			if !strings.EqualFold(cmd.Table.VirtualTable, "FTS5") {
 				continue
 			}
@@ -461,6 +461,66 @@ func (cmd *CreateTableCommand) AppendSQL(dialect string, buf *bytes.Buffer, args
 			return fmt.Errorf("column #%d: %w", i+1, err)
 		}
 	}
+	if len(cmd.Table.VirtualTableArgs) > 0 && cmd.Table.VirtualTable == "" {
+		return fmt.Errorf("virtual table arguments present without a virtual table module")
+	}
+	if cmd.Table.VirtualTable != "" && dialect == sq.DialectSQLite && len(cmd.Table.VirtualTableArgs) > 0 {
+		for _, arg := range cmd.Table.VirtualTableArgs {
+			if !columnWritten {
+				columnWritten = true
+				buf.WriteString("\n    ")
+			} else {
+				buf.WriteString("\n    ,")
+			}
+			buf.WriteString(arg)
+		}
+	}
+	var newlineWritten bool
+	if cmd.IncludeConstraints {
+		for i, constraint := range cmd.Table.Constraints {
+			if dialect == sq.DialectSQLite && constraint.ConstraintType == PRIMARY_KEY && len(constraint.Columns) == 1 {
+				// SQLite PRIMARY KEY is always be defined inline with the column,
+				// so we don't have to do it here.
+				continue
+			}
+			if dialect != sq.DialectSQLite && constraint.ConstraintType == FOREIGN_KEY {
+				// FOREIGN KEYs are always defined after all tables have been
+				// created, to avoid referencing non-yet-created tables. SQLite
+				// is the exception because constraints cannot be defined
+				// outside of CREATE TABLE. However, SQLite foreign keys can be
+				// created even if the referencing tables do not yet exist, so
+				// it's not an issue.
+				// http://sqlite.1065341.n5.nabble.com/Circular-foreign-keys-td14977.html
+				continue
+			}
+			if !newlineWritten {
+				buf.WriteString("\n")
+				newlineWritten = true
+			}
+			buf.WriteString("\n    ,CONSTRAINT ")
+			err := writeConstraintDefinition(dialect, buf, constraint)
+			if err != nil {
+				return fmt.Errorf("constraint #%d: %w", i+1, err)
+			}
+		}
+	}
+	if len(cmd.CreateIndexCommands) > 0 {
+		if dialect != sq.DialectMySQL {
+			return fmt.Errorf("%s does not allow defining indexes inside CREATE TABLE", dialect)
+		}
+		for i, createIndexCmd := range cmd.CreateIndexCommands {
+			if !newlineWritten {
+				buf.WriteString("\n")
+				newlineWritten = true
+			}
+			buf.WriteString("\n    ,")
+			err := createIndexCmd.AppendSQL(dialect, buf, args, params)
+			if err != nil {
+				return fmt.Errorf("index #%d: %w", i+1, err)
+			}
+		}
+	}
+	buf.WriteString("\n);")
 	return nil
 }
 
