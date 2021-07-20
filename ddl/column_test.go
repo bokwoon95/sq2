@@ -530,7 +530,7 @@ func Test_DropColumnCommand(t *testing.T) {
 		t.Parallel()
 		var tt TT
 		tt.dialect = sq.DialectPostgres
-		tt.item = DropColumnCommand{
+		tt.item = &DropColumnCommand{
 			ColumnName: "bad column name",
 		}
 		tt.wantQuery = `DROP COLUMN "bad column name"`
@@ -541,7 +541,7 @@ func Test_DropColumnCommand(t *testing.T) {
 		t.Parallel()
 		var tt TT
 		tt.dialect = sq.DialectSQLite
-		tt.item = DropColumnCommand{
+		tt.item = &DropColumnCommand{
 			ColumnName: "actor_id",
 		}
 		tt.wantQuery = "DROP COLUMN actor_id"
@@ -552,7 +552,7 @@ func Test_DropColumnCommand(t *testing.T) {
 		t.Parallel()
 		var tt TT
 		tt.dialect = sq.DialectSQLite
-		tt.item = DropColumnCommand{
+		tt.item = &DropColumnCommand{
 			DropIfExists: true,
 			ColumnName:   "actor_id",
 		}
@@ -566,7 +566,7 @@ func Test_DropColumnCommand(t *testing.T) {
 		t.Parallel()
 		var tt TT
 		tt.dialect = sq.DialectSQLite
-		tt.item = DropColumnCommand{
+		tt.item = &DropColumnCommand{
 			ColumnName:  "actor_id",
 			DropCascade: true,
 		}
@@ -580,7 +580,7 @@ func Test_DropColumnCommand(t *testing.T) {
 		t.Parallel()
 		var tt TT
 		tt.dialect = sq.DialectPostgres
-		tt.item = DropColumnCommand{
+		tt.item = &DropColumnCommand{
 			DropIfExists: true,
 			ColumnName:   "actor_id",
 			DropCascade:  true,
@@ -615,7 +615,7 @@ func Test_RenameColumnCommand(t *testing.T) {
 		t.Parallel()
 		var tt TT
 		tt.dialect = sq.DialectPostgres
-		tt.item = RenameColumnCommand{
+		tt.item = &RenameColumnCommand{
 			ColumnName:   "actor_id",
 			RenameToName: "id",
 		}
@@ -627,7 +627,7 @@ func Test_RenameColumnCommand(t *testing.T) {
 		t.Parallel()
 		var tt TT
 		tt.dialect = sq.DialectPostgres
-		tt.item = RenameColumnCommand{
+		tt.item = &RenameColumnCommand{
 			ColumnName:   "bad column name",
 			RenameToName: "w0rs3 COLumn naME",
 		}
