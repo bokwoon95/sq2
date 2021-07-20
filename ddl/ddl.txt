@@ -11,14 +11,23 @@ step 1:
 Column | Constraint | Index | Trigger | Function | Table | View
 v.go | t.go
 Schema
-MigrationCommands
 Catalog
-step 3:
-type MigrationCommands struct
-func (c *Catalog) Commands() MigrationCommands
-func (c *Catalog) WriteStructs(w io.Writer) error
-func (m *MigrationCommands) WriteSQL(w io.Writer) error
-func (m *MigrationCommands) Exec(db sq.DB) error
+MigrationCommands
+
+ddl.go
+column_ddl.go | constraint_ddl.go | index_ddl.go
+trigger.go
+trigger_ddl.go
+function.go
+function_ddl.go
+table.go
+table_ddl.go
+view.go
+view_ddl.go
+v.go | t.go
+schema.go
+catalog.go
+migration_commands.go
 
 if the user eventually wants to expose the sq.Query produced by a DDLView, I
 can add a public .Query field to V. Make a new constructor called NewV(dialect
