@@ -407,7 +407,60 @@ type CreateTableCommand struct {
 	CreateIndexCommands []CreateIndexCommand // mysql-only
 }
 
-func (cmd CreateTableCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
+func (cmd *CreateTableCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
+	if cmd == nil {
+		buf.WriteString("SELECT 1")
+		return nil
+	}
+	if cmd.Table.TableName == "" {
+		return fmt.Errorf("CREATE TABLE: table has no name")
+	}
+	if len(cmd.Table.Columns) == 0 {
+		return fmt.Errorf("CREATE TABLE: table %s has no columns", cmd.Table.TableName)
+	}
+	if cmd.Table.VirtualTable != "" {
+		if dialect != sq.DialectSQLite {
+			return fmt.Errorf("CREATE TABLE: only SQLite has VIRTUAL TABLE support (table=%s)", cmd.Table.TableName)
+		}
+		buf.WriteString("CREATE VIRTUAL TABLE ")
+	} else {
+		buf.WriteString("CREATE TABLE ")
+	}
+	if cmd.CreateIfNotExists {
+		buf.WriteString("IF NOT EXISTS ")
+	}
+	if cmd.Table.TableSchema != "" {
+		buf.WriteString(sq.QuoteIdentifier(dialect, cmd.Table.TableSchema) + ".")
+	}
+	buf.WriteString(sq.QuoteIdentifier(dialect, cmd.Table.TableName))
+	if cmd.Table.VirtualTable != "" {
+		buf.WriteString(" USING " + cmd.Table.VirtualTable)
+	}
+	buf.WriteString(" (")
+	var columnWritten bool
+	for i, column := range cmd.Table.Columns {
+		if column.Ignore {
+			continue
+		}
+		if cmd.Table.VirtualTable != "" {
+			// we only recognize columns for FTS5 tables for now, because I
+			// have no idea how the other virtual tables work.
+			if !strings.EqualFold(cmd.Table.VirtualTable, "FTS5") {
+				continue
+			}
+			column = Column{ColumnName: column.ColumnName}
+		}
+		if !columnWritten {
+			columnWritten = true
+			buf.WriteString("\n    ")
+		} else {
+			buf.WriteString("\n    ,")
+		}
+		err := writeColumnDefinition(dialect, buf, column)
+		if err != nil {
+			return fmt.Errorf("column #%d: %w", i+1, err)
+		}
+	}
 	return nil
 }
 
@@ -429,7 +482,7 @@ type AlterTableCommand struct {
 	RenameIndexCommands []RenameIndexCommand
 }
 
-func (cmd AlterTableCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
+func (cmd *AlterTableCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
 	return nil
 }
 
@@ -439,6 +492,6 @@ type RenameTableCommand struct {
 	RenameToNames []string
 }
 
-func (cmd RenameTableCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
+func (cmd *RenameTableCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
 	return nil
 }
