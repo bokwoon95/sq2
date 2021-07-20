@@ -8,7 +8,7 @@ t.go
 catalog.go
 
 step 1:
-Column | Constraint | Index | Trigger | Function | View | Table
+Column | Constraint | Index | Trigger | Function | Table | View
 v.go | t.go
 Schema
 Catalog
