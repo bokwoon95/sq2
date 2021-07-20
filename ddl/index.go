@@ -43,7 +43,10 @@ func (cmd CreateIndexCommand) AppendSQL(dialect string, buf *bytes.Buffer, args 
 		}
 		buf.WriteString("CONCURRENTLY ")
 	}
-	if cmd.CreateIfNotExists && dialect != sq.DialectMySQL {
+	if cmd.CreateIfNotExists {
+		if dialect == sq.DialectMySQL {
+			return fmt.Errorf("mysql index creation does not support IF NOT EXISTS")
+		}
 		buf.WriteString("IF NOT EXISTS ")
 	}
 	buf.WriteString(sq.QuoteIdentifier(dialect, cmd.Index.IndexName))
@@ -138,10 +141,10 @@ func (cmd DropIndexCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *[
 
 type RenameIndexCommand struct {
 	AlterIfExists bool
-	TableSchema        string
-	TableName          string
-	IndexName          string
-	RenameToName       string
+	TableSchema   string
+	TableName     string
+	IndexName     string
+	RenameToName  string
 }
 
 func (cmd RenameIndexCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
