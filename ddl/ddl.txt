@@ -8,24 +8,11 @@ t.go
 catalog.go
 
 step 1:
-Column | Constraint | Index | Trigger | Function
-t
-Table
-v
-View
-    As a compromise, ddl.Table will no longer implement sq.Table because I do
-    not want any value receivers on ddl.Table (and I want sq.Table methods to
-    be declared on values, not pointers). If a person wants to introspect and
-    create their own table, they can populate a TableInfo and FieldInfo and use
-    those directly as sq.Tables and sq.Fields.
+Column | Constraint | Index | Trigger | Function | View | Table
+v.go | t.go
 Schema
 Catalog
 step 2:
-func (view *View) LoadDDLView(ddlView DDLView) error
-func (tbl *Table) LoadIndexConfig(table sq.Table) error
-func (tbl *Table) LoadConstraintConfig(table sq.Table) error
-func (tbl *Table) LoadColumnConfig(table sq.Table) error
-func (tbl *Table) LoadTable(table sq.Table) error
 func (c *Catalog) LoadDB(db sq.DB) error
 func (c *Catalog) LoadTable(table sq.Table)
 func (c *Catalog) LoadDDLView(ddlView DDLView)
