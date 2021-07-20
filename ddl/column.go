@@ -3,7 +3,6 @@ package ddl
 import (
 	"bytes"
 	"fmt"
-	"sort"
 	"strings"
 
 	"github.com/bokwoon95/sq"
@@ -31,28 +30,6 @@ type Column struct {
 	Ignore                   bool   `json:",omitempty"`
 }
 
-func (c Column) GetName() string { return c.ColumnName }
-
-func (c Column) GetAlias() string { return c.ColumnAlias }
-
-func (c Column) AppendSQLExclude(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int, excludedTableQualifiers []string) error {
-	tableQualifier := c.TableAlias
-	if tableQualifier == "" {
-		tableQualifier = c.TableName
-	}
-	if tableQualifier != "" {
-		i := sort.SearchStrings(excludedTableQualifiers, tableQualifier)
-		if i < len(excludedTableQualifiers) && excludedTableQualifiers[i] == tableQualifier {
-			tableQualifier = ""
-		}
-	}
-	if tableQualifier != "" {
-		buf.WriteString(sq.QuoteIdentifier(dialect, tableQualifier) + ".")
-	}
-	buf.WriteString(sq.QuoteIdentifier(dialect, c.ColumnName))
-	return nil
-}
-
 type AddColumnCommand struct {
 	AddIfNotExists   bool
 	Column           Column
@@ -61,7 +38,7 @@ type AddColumnCommand struct {
 	ReferencesColumn string
 }
 
-func (cmd AddColumnCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
+func (cmd *AddColumnCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
 	buf.WriteString("ADD COLUMN ")
 	if cmd.AddIfNotExists {
 		if dialect != sq.DialectPostgres {
@@ -180,7 +157,7 @@ type AlterColumnCommand struct {
 	UsingExpr            string
 }
 
-func (cmd AlterColumnCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
+func (cmd *AlterColumnCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
 	switch dialect {
 	case sq.DialectSQLite:
 		return fmt.Errorf("sqlite does not support altering columns after table creation")
