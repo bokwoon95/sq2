@@ -201,8 +201,8 @@ func WithFunctionFiles(fsys fs.FS, filenames ...string) CatalogOption {
 	}
 }
 
-func (c *Catalog) Commands() MigrationCommands {
-	m := MigrationCommands{Dialect: c.Dialect}
+func (c *Catalog) Commands() *MigrationCommands {
+	m := &MigrationCommands{Dialect: c.Dialect}
 	for _, schema := range c.Schemas {
 		if schema.SchemaName != "" {
 			createSchemaCmd := &CreateSchemaCommand{
@@ -217,18 +217,31 @@ func (c *Catalog) Commands() MigrationCommands {
 				IncludeConstraints: true,
 				Table:              table,
 			}
+			alterTableCmd := &AlterTableCommand{
+				TableSchema: table.TableSchema,
+				TableName:   table.TableName,
+			}
+			if c.Dialect == sq.DialectPostgres {
+				alterTableCmd.AlterIfExists = true
+			}
+			var hasForeignKey bool
 			for _, constraint := range table.Constraints {
-				if constraint.ConstraintType == FOREIGN_KEY {
-					m.ForeignKeyCommands = append(m.ForeignKeyCommands, &AddConstraintCommand{Constraint: constraint})
+				if constraint.ConstraintType == FOREIGN_KEY && c.Dialect != sq.DialectSQLite {
+					hasForeignKey = true
+					alterTableCmd.AddConstraintCommands = append(alterTableCmd.AddConstraintCommands, AddConstraintCommand{Constraint: constraint})
 				}
 			}
+			if hasForeignKey {
+				m.ForeignKeyCommands = append(m.ForeignKeyCommands, alterTableCmd)
+			}
+			var indexCmds []Command
 			for _, index := range table.Indexes {
 				createIndexCmd := &CreateIndexCommand{Index: index}
 				if c.Dialect == sq.DialectMySQL {
 					createTableCmd.CreateIndexCommands = append(createTableCmd.CreateIndexCommands, *createIndexCmd)
 				} else {
 					createIndexCmd.CreateIfNotExists = true
-					m.TableCommands = append(m.TableCommands, createIndexCmd)
+					indexCmds = append(indexCmds, createIndexCmd)
 				}
 			}
 			for _, trigger := range table.Triggers {
@@ -236,6 +249,7 @@ func (c *Catalog) Commands() MigrationCommands {
 				m.TriggerCommands = append(m.TriggerCommands, createTriggerCmd)
 			}
 			m.TableCommands = append(m.TableCommands, createTableCmd)
+			m.TableCommands = append(m.TableCommands, indexCmds...)
 		}
 		for _, view := range schema.Views {
 			createViewCmd := &CreateViewCommand{View: view}

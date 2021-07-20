@@ -177,7 +177,7 @@ func (cmd *AlterColumnCommand) AppendSQL(dialect string, buf *bytes.Buffer, args
 			if !written {
 				written = true
 			} else {
-				buf.WriteString("\n,")
+				buf.WriteString("\n    ,")
 			}
 			buf.WriteString("ALTER COLUMN " + sq.QuoteIdentifier(dialect, cmd.Column.ColumnName))
 		}

@@ -497,7 +497,11 @@ func (cmd *CreateTableCommand) AppendSQL(dialect string, buf *bytes.Buffer, args
 				buf.WriteString("\n")
 				newlineWritten = true
 			}
-			buf.WriteString("\n    ,CONSTRAINT ")
+			if dialect == sq.DialectSQLite || (dialect == sq.DialectMySQL && constraint.ConstraintType == PRIMARY_KEY) {
+				buf.WriteString("\n    ,")
+			} else {
+				buf.WriteString("\n    ,CONSTRAINT " + sq.QuoteIdentifier(dialect, constraint.ConstraintName) + " ")
+			}
 			err := writeConstraintDefinition(dialect, buf, constraint)
 			if err != nil {
 				return fmt.Errorf("constraint #%d: %w", i+1, err)
@@ -584,9 +588,9 @@ func (cmd *AlterTableCommand) AppendSQL(dialect string, buf *bytes.Buffer, args 
 	writeNewLine := func() {
 		if !firstLineWritten {
 			firstLineWritten = true
-			buf.WriteString("\n")
+			buf.WriteString("\n    ")
 		} else {
-			buf.WriteString("\n,")
+			buf.WriteString("\n    ,")
 		}
 	}
 	for _, addColumnCmd := range cmd.AddColumnCommands {

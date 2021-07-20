@@ -249,7 +249,7 @@ func (view *View) LoadDDLView(dialect string, ddlView DDLView) (err error) {
 	}
 	v := &V{
 		dialect: dialect,
-		view:    &View{ViewSchema: view.ViewSchema, ViewName: view.ViewName},
+		view:    view,
 	}
 	for i := 0; i < ddlViewValue.NumField(); i++ {
 		field, ok := ddlViewValue.Field(i).Interface().(sq.Field)
