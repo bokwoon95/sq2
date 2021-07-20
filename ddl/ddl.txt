@@ -9,7 +9,10 @@ catalog.go
 
 step 1:
 Column | Constraint | Index | Trigger | Function
-v | View | t | Table
+t
+Table
+v
+View
     As a compromise, ddl.Table will no longer implement sq.Table because I do
     not want any value receivers on ddl.Table (and I want sq.Table methods to
     be declared on values, not pointers). If a person wants to introspect and

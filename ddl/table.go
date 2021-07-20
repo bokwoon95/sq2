@@ -419,9 +419,6 @@ func (tbl *Table) LoadTable(dialect string, table sq.SchemaTable) (err error) {
 	if tableType.Kind() != reflect.Struct {
 		return fmt.Errorf("table is not a struct")
 	}
-	if tableValue.NumField() == 0 {
-		return fmt.Errorf("table is empty struct")
-	}
 	tbl.TableSchema, tbl.TableName = table.GetSchema(), table.GetName()
 	if tbl.TableName == "" {
 		return fmt.Errorf("table name is empty")
