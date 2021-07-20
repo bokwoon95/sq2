@@ -49,26 +49,26 @@ func popBraceToken(s string) (token, remainder string, err error) {
 	return token, remainder, nil
 }
 
-func tokenizeValue(s string) (value string, modifiers [][2]string, modifierIndex map[string]int, err error) {
+func tokenizeValue(s string) (value string, modifiers [][2]string, modifierPositions map[string]int, err error) {
 	value, remainder, err := popBraceToken(s)
 	if err != nil {
-		return "", nil, modifierIndex, err
+		return "", nil, modifierPositions, err
 	}
-	modifiers, modifierIndex, err = tokenizeModifiers(remainder)
+	modifiers, modifierPositions, err = tokenizeModifiers(remainder)
 	if err != nil {
-		return "", nil, modifierIndex, err
+		return "", nil, modifierPositions, err
 	}
-	return value, modifiers, modifierIndex, nil
+	return value, modifiers, modifierPositions, nil
 }
 
-func tokenizeModifiers(s string) (modifiers [][2]string, modifierIndex map[string]int, err error) {
-	modifierIndex = make(map[string]int)
-	var i int
+func tokenizeModifiers(s string) (modifiers [][2]string, modifierPositions map[string]int, err error) {
+	modifierPositions = make(map[string]int)
+	var n int
 	token, remainder := "", s
 	for remainder != "" {
 		token, remainder, err = popBraceToken(remainder)
 		if err != nil {
-			return nil, modifierIndex, err
+			return nil, modifierPositions, err
 		}
 		key, value := token, ""
 		if j := strings.Index(token, "="); j >= 0 {
@@ -78,10 +78,10 @@ func tokenizeModifiers(s string) (modifiers [][2]string, modifierIndex map[strin
 			}
 		}
 		modifiers = append(modifiers, [2]string{key, value})
-		modifierIndex[key] = i
-		i++
+		modifierPositions[key] = n
+		n++
 	}
-	return modifiers, modifierIndex, nil
+	return modifiers, modifierPositions, nil
 }
 
 func popIdentifierToken(dialect, s string) (word, rest string) {
