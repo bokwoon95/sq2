@@ -526,32 +526,193 @@ func (cmd *CreateTableCommand) AppendSQL(dialect string, buf *bytes.Buffer, args
 
 type AlterTableCommand struct {
 	AlterIfExists bool
+	TableSchema   string
+	TableName     string
 	// Columns
 	AddColumnCommands    []AddColumnCommand
 	AlterColumnCommands  []AlterColumnCommand
-	DropColumnCommands   []DropColumnCommand
 	RenameColumnCommands []RenameColumnCommand
+	DropColumnCommands   []DropColumnCommand
 	// Constraints
 	AddConstraintCommands    []AddConstraintCommand
 	AlterConstraintCommands  []AlterConstraintCommand
-	DropConstraintCommands   []DropConstraintCommand
 	RenameConstraintCommands []RenameConstraintCommand
+	DropConstraintCommands   []DropConstraintCommand
 	// Indexes (mysql-only)
 	CreateIndexCommands []CreateIndexCommand
-	DropIndexCommands   []DropIndexCommand
 	RenameIndexCommands []RenameIndexCommand
+	DropIndexCommands   []DropIndexCommand
 }
 
 func (cmd *AlterTableCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
+	buf.WriteString("ALTER TABLE ")
+	if cmd.AlterIfExists {
+		if dialect != sq.DialectPostgres {
+			return fmt.Errorf("%s does not support ALTER TABLE IF EXISTS", dialect)
+		}
+		buf.WriteString("IF EXISTS ")
+	}
+	if cmd.TableSchema != "" {
+		buf.WriteString(sq.QuoteIdentifier(dialect, cmd.TableSchema) + ".")
+	}
+	buf.WriteString(sq.QuoteIdentifier(dialect, cmd.TableName))
+	if dialect == sq.DialectSQLite {
+		columnCmdCount := len(cmd.AddColumnCommands) + len(cmd.AlterColumnCommands) + len(cmd.DropColumnCommands)
+		indexCmdCount := len(cmd.CreateIndexCommands) + len(cmd.DropIndexCommands)
+		if columnCmdCount > 1 {
+			return fmt.Errorf("sqlite ALTER TABLE only supports one column modification")
+		}
+		if indexCmdCount > 0 {
+			return fmt.Errorf("sqlite ALTER TABLE does not support indexes")
+		}
+	} else if dialect == sq.DialectPostgres {
+		renameCmdCount := len(cmd.RenameColumnCommands) + len(cmd.RenameConstraintCommands)
+		cmdCount := len(cmd.AddColumnCommands) + len(cmd.DropColumnCommands) + len(cmd.AlterColumnCommands) +
+			len(cmd.AddConstraintCommands) + len(cmd.DropConstraintCommands) + len(cmd.AlterConstraintCommands)
+		indexCmdCount := len(cmd.RenameIndexCommands) + len(cmd.DropIndexCommands) + len(cmd.CreateIndexCommands)
+		if renameCmdCount > 1 {
+			return fmt.Errorf("postgres ALTER TABLE only supports one RENAME COLUMN or RENAME CONSTRAINT")
+		}
+		if renameCmdCount == 1 && cmdCount > 1 {
+			return fmt.Errorf("postgres ALTER TABLE does not support mixing RENAME commands with other commands")
+		}
+		if indexCmdCount > 0 {
+			return fmt.Errorf("postgres ALTER TABLE does not support indexes")
+		}
+	}
+	var firstLineWritten bool
+	writeNewLine := func() {
+		if !firstLineWritten {
+			firstLineWritten = true
+			buf.WriteString("\n")
+		} else {
+			buf.WriteString("\n,")
+		}
+	}
+	for _, addColumnCmd := range cmd.AddColumnCommands {
+		writeNewLine()
+		err := addColumnCmd.AppendSQL(dialect, buf, args, params)
+		if err != nil {
+			return fmt.Errorf("ALTER TABLE ADD COLUMN %s: %w", addColumnCmd.Column.ColumnName, err)
+		}
+	}
+	for _, alterColumnCmd := range cmd.AlterColumnCommands {
+		writeNewLine()
+		err := alterColumnCmd.AppendSQL(dialect, buf, args, params)
+		if err != nil {
+			return fmt.Errorf("ALTER TABLE ALTER COLUMN %s: %w", alterColumnCmd.Column.ColumnName, err)
+		}
+	}
+	for _, renameColumnCmd := range cmd.RenameColumnCommands {
+		writeNewLine()
+		err := renameColumnCmd.AppendSQL(dialect, buf, args, params)
+		if err != nil {
+			return fmt.Errorf("ALTER TABLE RENAME COLUMN %s: %w", renameColumnCmd.ColumnName, err)
+		}
+	}
+	for _, dropColumnCmd := range cmd.DropColumnCommands {
+		writeNewLine()
+		err := dropColumnCmd.AppendSQL(dialect, buf, args, params)
+		if err != nil {
+			return fmt.Errorf("ALTER TABLE DROP COLUMN %s: %w", dropColumnCmd.ColumnName, err)
+		}
+	}
+	for _, renameConstraintCmd := range cmd.RenameConstraintCommands {
+		writeNewLine()
+		err := renameConstraintCmd.AppendSQL(dialect, buf, args, params)
+		if err != nil {
+			return fmt.Errorf("ALTER TABLE RENAME CONSTRAINT %s: %w", renameConstraintCmd.ConstraintName, err)
+		}
+	}
+	// DROP CONSTRAINT comes before ADD CONSTRAINT because that's the only way
+	// MySQL can rename constraints: by dropping and re-adding them in the same
+	// command.
+	for _, dropConstraintCmd := range cmd.DropConstraintCommands {
+		writeNewLine()
+		err := dropConstraintCmd.AppendSQL(dialect, buf, args, params)
+		if err != nil {
+			return fmt.Errorf("ALTER TABLE DROP CONSTRAINT %s: %w", dropConstraintCmd.ConstraintName, err)
+		}
+	}
+	for _, addConstraintCmd := range cmd.AddConstraintCommands {
+		writeNewLine()
+		err := addConstraintCmd.AppendSQL(dialect, buf, args, params)
+		if err != nil {
+			return fmt.Errorf("ALTER TABLE ADD CONSTRAINT %s: %w", addConstraintCmd.Constraint.ConstraintName, err)
+		}
+	}
+	for _, alterConstraintCmd := range cmd.AlterConstraintCommands {
+		writeNewLine()
+		err := alterConstraintCmd.AppendSQL(dialect, buf, args, params)
+		if err != nil {
+			return fmt.Errorf("ALTER TABLE ALTER CONSTRAINT %s: %w", alterConstraintCmd.ConstraintName, err)
+		}
+	}
+	for _, createIndexCmd := range cmd.CreateIndexCommands {
+		writeNewLine()
+		err := createIndexCmd.AppendSQL(dialect, buf, args, params)
+		if err != nil {
+			return fmt.Errorf("ALTER TABLE INDEX %s: %w", createIndexCmd.Index.IndexName, err)
+		}
+	}
+	for _, renameIndexCmd := range cmd.RenameIndexCommands {
+		writeNewLine()
+		err := renameIndexCmd.AppendSQL(dialect, buf, args, params)
+		if err != nil {
+			return fmt.Errorf("ALTER TABLE RENAME INDEX %s: %w", renameIndexCmd.IndexName, err)
+		}
+	}
+	for _, dropIndexCmd := range cmd.DropIndexCommands {
+		writeNewLine()
+		err := dropIndexCmd.AppendSQL(dialect, buf, args, params)
+		if err != nil {
+			return fmt.Errorf("ALTER TABLE DROP INDEX %s: %w", dropIndexCmd.IndexName, err)
+		}
+	}
+	buf.WriteString("\n;")
 	return nil
 }
 
 type RenameTableCommand struct {
-	TableSchemas  []string
-	TableNames    []string
-	RenameToNames []string
+	AlterIfExists   bool
+	TableSchemas    []string
+	TableNames      []string
+	RenameToSchemas []string
+	RenameToNames   []string
 }
 
 func (cmd *RenameTableCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
+	if len(cmd.TableNames) > 1 && dialect != sq.DialectMySQL {
+		return fmt.Errorf("%s does not support renaming multiple tables in one command", dialect)
+	}
+	if dialect == sq.DialectMySQL {
+		buf.WriteString("RENAME TABLE ")
+		for i, tableSchema := range cmd.TableSchemas {
+			if i > 0 {
+				buf.WriteString(", ")
+			}
+			if tableSchema != "" {
+				buf.WriteString(sq.QuoteIdentifier(dialect, tableSchema) + ".")
+			}
+			buf.WriteString(sq.QuoteIdentifier(dialect, cmd.TableNames[i]) + " RENAME TO ")
+			if renameToSchema := cmd.RenameToSchemas[i]; renameToSchema != "" {
+				buf.WriteString(sq.QuoteIdentifier(dialect, renameToSchema) + ".")
+			}
+			buf.WriteString(sq.QuoteIdentifier(dialect, cmd.RenameToNames[i]))
+		}
+	} else {
+		buf.WriteString("ALTER TABLE ")
+		if cmd.AlterIfExists {
+			if dialect != sq.DialectPostgres {
+				return fmt.Errorf("%s does not support ALTER TABLE IF EXISTS", dialect)
+			}
+			buf.WriteString("IF EXISTS ")
+		}
+		if tableSchema := cmd.TableSchemas[0]; tableSchema != "" {
+			buf.WriteString(sq.QuoteIdentifier(dialect, tableSchema) + ".")
+		}
+		buf.WriteString(sq.QuoteIdentifier(dialect, cmd.TableNames[0]) + " RENAME TO " + sq.QuoteIdentifier(dialect, cmd.RenameToNames[0]))
+	}
+	buf.WriteString(";")
 	return nil
 }

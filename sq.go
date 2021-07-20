@@ -192,7 +192,7 @@ func EscapeQuote(str string, quote byte) string {
 }
 
 func QuoteIdentifier(dialect string, identifier string) string {
-	var needsQuoting bool
+	needsQuoting := identifier == ""
 	for i, char := range identifier {
 		if i == 0 && (char >= '0' && char <= '9') {
 			// first character cannot be a number

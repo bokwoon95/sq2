@@ -172,15 +172,14 @@ type AlterConstraintCommand struct {
 }
 
 func (cmd AlterConstraintCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
-	switch dialect {
-	case sq.DialectPostgres:
-		break
-	case sq.DialectMySQL:
+	if dialect == sq.DialectMySQL {
 		return fmt.Errorf("mysql ALTER CONSTRAINT not supported by this library")
-	default:
-		return fmt.Errorf("%s does not support ALTER CONSTRAINT", dialect)
+	}
+	if dialect == sq.DialectSQLite {
+		return fmt.Errorf("sqlite does not support ALTER CONSTRAINT")
 	}
 	if !cmd.AlterDeferrable {
+		buf.WriteString("SELECT 1;")
 		return nil
 	}
 	buf.WriteString("ALTER CONSTRAINT " + sq.QuoteIdentifier(dialect, cmd.ConstraintName))
