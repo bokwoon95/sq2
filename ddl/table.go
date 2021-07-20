@@ -512,9 +512,8 @@ func (tbl *Table) LoadTable(dialect string, table sq.SchemaTable) (err error) {
 			}
 		}
 	}()
-	// ddlTable, ok := table.(DDLTable)
-	// if !ok {
-	// 	return nil
-	// }
+	if ddlTable, ok := table.(DDLTable); ok {
+		ddlTable.DDL(dialect, &T{dialect: dialect, tbl: tbl})
+	}
 	return nil
 }
