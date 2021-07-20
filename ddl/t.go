@@ -451,7 +451,9 @@ func getColumnNamesAndExprs(dialect, tableName string, fields []sq.Field) (colum
 		}
 		var expr string
 		columnName := field.GetName()
-		if columnName == "" {
+		if _, ok := field.(sq.FieldLiteral); ok {
+			expr, columnName = columnName, ""
+		} else if columnName == "" {
 			buf.Reset()
 			args = args[:0]
 			err = field.AppendSQLExclude(dialect, buf, &args, make(map[string][]int), []string{tableName})
