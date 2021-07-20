@@ -411,7 +411,7 @@ func Test_AlterConstraintCommnd(t *testing.T) {
 		tt.item = AlterConstraintCommand{
 			ConstraintName: "city_country_id_fkey",
 		}
-		tt.wantQuery = "SELECT 1;"
+		tt.wantQuery = ""
 		assert(t, tt)
 	})
 
