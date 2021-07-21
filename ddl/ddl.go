@@ -137,7 +137,8 @@ func defaultColumnType(dialect string, field sq.Field) (columnType string) {
 	return "VARCHAR(255)"
 }
 
-func isExpression(s string) bool {
+// for outgoing values to the db
+func needsExpressionBrackets(s string) bool {
 	if len(s) >= 2 && s[0] == '\'' && s[len(s)-1] == '\'' {
 		return false
 	} else if strings.EqualFold(s, "TRUE") ||
@@ -150,6 +151,35 @@ func isExpression(s string) bool {
 		return false
 	} else if _, err := strconv.ParseFloat(s, 64); err == nil {
 		return false
+	} else if len(s) >= 2 && s[0] == '(' && s[len(s)-1] == ')' {
+		return false
 	}
 	return true
+}
+
+// for incoming values from the db
+func toExpr(dialect, s string) string {
+	if len(s) >= 2 && s[0] == '\'' && s[len(s)-1] == '\'' {
+		return s
+	} else if strings.EqualFold(s, "TRUE") ||
+		strings.EqualFold(s, "FALSE") ||
+		strings.EqualFold(s, "CURRENT_DATE") ||
+		strings.EqualFold(s, "CURRENT_TIME") ||
+		strings.EqualFold(s, "CURRENT_TIMESTAMP") {
+		return s
+	} else if _, err := strconv.ParseInt(s, 10, 64); err == nil {
+		return s
+	} else if _, err := strconv.ParseFloat(s, 64); err == nil {
+		return s
+	} else if len(s) >= 2 && s[0] == '(' && s[len(s)-1] == ')' {
+		return s
+	}
+	switch dialect {
+	case sq.DialectMySQL:
+		return `'` + sq.EscapeQuote(s, '\'') + `'`
+	case sq.DialectPostgres:
+		return s
+	default:
+		return "(" + s + ")"
+	}
 }
