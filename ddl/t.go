@@ -712,6 +712,15 @@ func (tbl *Table) LoadTable(dialect string, table sq.SchemaTable) (err error) {
 		}
 	}
 	defer func() {
+		if strings.EqualFold(tbl.VirtualTable, "FTS5") {
+			var columnNames []string
+			for _, column := range tbl.Columns {
+				if strings.EqualFold(column.ColumnType, "TEXT") {
+					columnNames = append(columnNames, column.ColumnName)
+				}
+			}
+			tbl.VirtualTableArgs = append(columnNames, tbl.VirtualTableArgs...)
+		}
 		for _, constraint := range tbl.Constraints {
 			if len(constraint.Columns) != 1 {
 				continue

@@ -402,9 +402,6 @@ func (cmd *CreateTableCommand) AppendSQL(dialect string, buf *bytes.Buffer, args
 	if cmd.Table.TableName == "" {
 		return fmt.Errorf("CREATE TABLE: table has no name")
 	}
-	if len(cmd.Table.Columns) == 0 {
-		return fmt.Errorf("CREATE TABLE: table %s has no columns", cmd.Table.TableName)
-	}
 	if cmd.Table.VirtualTable != "" {
 		if dialect != sq.DialectSQLite {
 			return fmt.Errorf("CREATE TABLE: only SQLite has VIRTUAL TABLE support (table=%s)", cmd.Table.TableName)
@@ -430,12 +427,7 @@ func (cmd *CreateTableCommand) AppendSQL(dialect string, buf *bytes.Buffer, args
 			continue
 		}
 		if cmd.Table.VirtualTable != "" {
-			// we only recognize columns for FTS5 tables for now, because I
-			// have no idea whether other virtual tables do the same.
-			if !strings.EqualFold(cmd.Table.VirtualTable, "FTS5") {
-				continue
-			}
-			column = Column{ColumnName: column.ColumnName}
+			continue
 		}
 		if !columnWritten {
 			columnWritten = true
