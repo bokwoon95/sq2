@@ -199,8 +199,78 @@ func mapColumns(catalog *Catalog, rows *sql.Rows) error {
 	return nil
 }
 
+func mapConstraints(catalog *Catalog, rows *sql.Rows) error {
+	var constraint Constraint
+	var rawColumns, rawExprs, rawReferencesColumns, rawOperators string
+	err := rows.Scan(
+		&constraint.TableSchema,
+		&constraint.TableName,
+		&constraint.ConstraintName,
+		&constraint.ConstraintType,
+		&rawColumns,
+		&rawExprs,
+		&constraint.ReferencesSchema,
+		&constraint.ReferencesTable,
+		&rawReferencesColumns,
+		&constraint.UpdateRule,
+		&constraint.DeleteRule,
+		&constraint.MatchOption,
+		&constraint.CheckExpr,
+		&rawOperators,
+		&constraint.IndexType,
+		&constraint.Predicate,
+		&constraint.IsDeferrable,
+		&constraint.IsInitiallyDeferred,
+	)
+	if err != nil {
+		return fmt.Errorf("scanning constraint %s %s: %w", constraint.TableName, constraint.ConstraintName, err)
+	}
+	if rawColumns != "" {
+		constraint.Columns = strings.Split(rawColumns, ",")
+	}
+	if rawExprs != "" {
+		constraint.Exprs = strings.Split(rawExprs, ",")
+	}
+	if rawReferencesColumns != "" {
+		constraint.ReferencesColumns = strings.Split(rawReferencesColumns, ",")
+	}
+	if rawOperators != "" {
+		constraint.Operators = strings.Split(rawOperators, ",")
+	}
+	if last := len(constraint.CheckExpr) - 1; len(constraint.CheckExpr) > 2 && constraint.CheckExpr[0] == '(' && constraint.CheckExpr[last] == ')' {
+		constraint.CheckExpr = constraint.CheckExpr[1:last]
+	}
+	var schema Schema
+	if n := catalog.CachedSchemaPosition(constraint.TableSchema); n >= 0 {
+		schema = catalog.Schemas[n]
+		defer func() { catalog.Schemas[n] = schema }()
+	} else {
+		schema.SchemaName = constraint.TableSchema
+		defer func() { catalog.AppendSchema(schema) }()
+	}
+	var tbl Table
+	if n := schema.CachedTablePosition(constraint.TableName); n >= 0 {
+		tbl = schema.Tables[n]
+		defer func() { schema.Tables[n] = tbl }()
+	} else {
+		tbl.TableSchema = constraint.TableSchema
+		tbl.TableName = constraint.TableName
+		defer func() { schema.AppendTable(tbl) }()
+	}
+	if n := tbl.CachedConstraintPosition(constraint.ConstraintName); n >= 0 {
+		tbl.Constraints[n] = constraint
+	} else {
+		tbl.AppendConstraint(constraint)
+	}
+	return nil
+}
+
 func introspectPostgres(ctx context.Context, db sq.DB, catalog *Catalog) error {
 	err := introspectQuery(ctx, db, catalog, "sql/postgres_columns.sql", nil, mapColumns)
+	if err != nil {
+		return err
+	}
+	err = introspectQuery(ctx, db, catalog, "sql/postgres_constraints.sql", nil, mapConstraints)
 	if err != nil {
 		return err
 	}
