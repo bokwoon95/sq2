@@ -88,7 +88,32 @@ func normalizeColumn(dialect string, column *Column, columnType2 string) {
 	}
 }
 
-func columnRowMapper(catalog *Catalog, rows *sql.Rows) error {
+func mapTables(catalog *Catalog, rows *sql.Rows) error {
+	var tbl Table
+	err := rows.Scan(
+		&tbl.TableSchema,
+		&tbl.TableName,
+	)
+	if err != nil {
+		return fmt.Errorf("scanning table %s: %w", tbl.TableName, err)
+	}
+	var schema Schema
+	if n := catalog.CachedSchemaPosition(tbl.TableSchema); n >= 0 {
+		schema = catalog.Schemas[n]
+		defer func() { catalog.Schemas[n] = schema }()
+	} else {
+		schema.SchemaName = tbl.TableSchema
+		defer func() { catalog.AppendSchema(schema) }()
+	}
+	if n := schema.CachedTablePosition(tbl.TableName); n >= 0 {
+		schema.Tables[n] = tbl
+	} else {
+		schema.AppendTable(tbl)
+	}
+	return nil
+}
+
+func mapColumns(catalog *Catalog, rows *sql.Rows) error {
 	var column Column
 	var columnType2 string
 	err := rows.Scan(
@@ -138,7 +163,7 @@ func columnRowMapper(catalog *Catalog, rows *sql.Rows) error {
 }
 
 func introspectPostgres(ctx context.Context, db sq.DB, catalog *Catalog) error {
-	err := introspectQuery(ctx, db, catalog, "sql/postgres-column.sql", nil, columnRowMapper)
+	err := introspectQuery(ctx, db, catalog, "sql/postgres_columns.sql", nil, mapColumns)
 	if err != nil {
 		return err
 	}
@@ -146,7 +171,7 @@ func introspectPostgres(ctx context.Context, db sq.DB, catalog *Catalog) error {
 }
 
 func introspectSQLite(ctx context.Context, db sq.DB, catalog *Catalog) error {
-	err := introspectQuery(ctx, db, catalog, "sql/postgres-column.sql", nil, columnRowMapper)
+	err := introspectQuery(ctx, db, catalog, "sql/sqlite_tables.sql", nil, mapTables)
 	if err != nil {
 		return err
 	}
