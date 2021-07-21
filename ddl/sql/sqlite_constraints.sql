@@ -49,11 +49,11 @@ SELECT
     ,$1 AS table_name
     ,'' AS constraint_name
     ,'FOREIGN KEY' AS constraint_type
-    ,group_concat(column_name) AS columns
+    ,COALESCE(group_concat(column_name), '') AS columns
     ,'' AS exprs
     ,'' AS references_schema
     ,references_table
-    ,group_concat(references_column) AS references_columns
+    ,COALESCE(group_concat(references_column), '') AS references_columns
     ,update_rule
     ,delete_rule
     ,'' AS match_option
@@ -88,7 +88,7 @@ SELECT
     ,$1 AS table_name
     ,'' AS constraint_name
     ,'UNIQUE' AS constraint_type
-    ,group_concat(column_name) AS columns
+    ,COALESCE(group_concat(column_name), '') AS columns
     ,'' AS exprs
     ,'' AS references_schema
     ,'' AS references_table

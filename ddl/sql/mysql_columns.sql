@@ -20,3 +20,4 @@ FROM
 WHERE
     columns.table_schema NOT IN ('mysql', 'performance_schema', 'sys')
     AND tables.table_type = 'BASE TABLE'
+;

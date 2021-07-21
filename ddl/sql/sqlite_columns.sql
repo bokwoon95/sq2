@@ -23,3 +23,4 @@ SELECT
 FROM
     pragma_table_xinfo($1) AS ti
     LEFT JOIN generated_columns AS gc ON gc.name = ti.name
+;
