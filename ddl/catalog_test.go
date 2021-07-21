@@ -8,7 +8,7 @@ import (
 )
 
 func Test_CatalogCommands(t *testing.T) {
-	const dialect = sq.DialectSQLite
+	const dialect = sq.DialectPostgres
 	var functions []Function
 	if dialect == sq.DialectPostgres {
 		functions = append(functions, Function{
