@@ -90,7 +90,7 @@ func normalizeColumn(dialect string, column *Column, columnType2 string) {
 		}
 	case sq.DialectMySQL:
 		if column.GeneratedExpr != "" {
-			column.GeneratedExpr = strings.ReplaceAll(column.GeneratedExpr, "\\'", "'")
+			column.GeneratedExpr = strings.ReplaceAll(column.GeneratedExpr, `\'`, `'`)
 		}
 		column.ColumnType = strings.ToUpper(columnType2)
 	}
@@ -257,6 +257,7 @@ func mapIndexes(catalog *Catalog, rows *sql.Rows) error {
 	var index Index
 	var numKeyColumns int
 	var rawColumns, rawExprs string
+	var isPartial bool
 	err := rows.Scan(
 		&index.TableSchema,
 		&index.TableName,
@@ -267,6 +268,7 @@ func mapIndexes(catalog *Catalog, rows *sql.Rows) error {
 		&rawColumns,
 		&rawExprs,
 		&index.Predicate,
+		&isPartial,
 	)
 	if err != nil {
 		return fmt.Errorf("scanning table %s index %s: %w", index.TableName, index.IndexName, err)
@@ -274,12 +276,21 @@ func mapIndexes(catalog *Catalog, rows *sql.Rows) error {
 	if rawColumns != "" {
 		index.Columns = strings.Split(rawColumns, ",")
 	}
+	index.Exprs = make([]string, len(index.Columns))
 	if rawExprs != "" {
+		if catalog.Dialect == sq.DialectMySQL {
+			rawExprs = strings.TrimSpace(strings.ReplaceAll(rawExprs, `\'`, `'`))
+		}
 		exprs := splitArgs(rawExprs)
-		index.Exprs = make([]string, len(index.Columns))
 		for i, column := range index.Columns {
 			if column == "" && len(exprs) > 0 {
-				index.Exprs[i], exprs = "("+strings.TrimSpace(exprs[0])+")", exprs[1:]
+				index.Exprs[i] = "(" + strings.TrimSpace(exprs[0]) + ")"
+				if catalog.Dialect == sq.DialectPostgres {
+					exprs = exprs[1:]
+				}
+			}
+			if catalog.Dialect == sq.DialectMySQL {
+				exprs = exprs[1:]
 			}
 		}
 	}
@@ -339,6 +350,10 @@ func introspectSQLite(ctx context.Context, db sq.DB, catalog *Catalog) error {
 	if err != nil {
 		return err
 	}
+	err = introspectQuery(ctx, db, catalog, "sql/sqlite_indexes.sql", argslist, mapIndexes)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -348,6 +363,10 @@ func introspectMySQL(ctx context.Context, db sq.DB, catalog *Catalog) error {
 		return err
 	}
 	err = introspectQuery(ctx, db, catalog, "sql/mysql_constraints.sql", nil, mapConstraints)
+	if err != nil {
+		return err
+	}
+	err = introspectQuery(ctx, db, catalog, "sql/mysql_indexes.sql", nil, mapIndexes)
 	if err != nil {
 		return err
 	}
