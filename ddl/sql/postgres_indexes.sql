@@ -34,6 +34,7 @@ SELECT
     ,string_agg(column_name, ',' ORDER BY seq_in_index) AS columns
     ,exprs
     ,predicate
+    ,predicate <> '' AS is_partial
 FROM
     index_columns
 GROUP BY
