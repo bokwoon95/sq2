@@ -12,21 +12,22 @@ SELECT
     ,column_name                             -- ColumnName
     ,data_type AS column_type_1              -- ColumnType
     ,udt_name AS column_type_2               -- ColumnType
-    ,numeric_precision                       -- ColumnType
-    ,numeric_scale                           -- ColumnType
+    ,COALESCE(numeric_precision, 0)          -- ColumnType
+    ,COALESCE(numeric_scale, 0)              -- ColumnType
     -- N.A.                                  -- IsAutoincrement
-    ,is_identity                             -- IsIdentity
+    ,COALESCE(identity_generation::TEXT, '') AS identity -- Identity
     ,NOT is_nullable::BOOLEAN AS is_notnull  -- IsNotNull
     -- N.A.                                  -- OnUpdateCurrentTimestamp
-    ,generation_expression AS generated_expr -- GeneratedExpr
-    ,is_generated = 'ALWAYS' AS is_generated -- GeneratedExpr.Valid
-    ,CASE is_generated WHEN 'ALWAYS' THEN TRUE ELSE NULL END AS generated_expr_stored -- GeneratedExprStored
-    ,collation_name                          -- CollationName
-    ,column_default                          -- ColumnDefault
+    ,COALESCE(generation_expression, '') AS generated_expr -- GeneratedExpr
+    ,CASE is_generated WHEN 'ALWAYS' THEN TRUE ELSE FALSE END AS generated_expr_stored -- GeneratedExprStored
+    ,COALESCE(collation_name, '')            -- CollationName
+    ,COALESCE(column_default, '')            -- ColumnDefault
 FROM
     information_schema.columns
+    JOIN information_schema.tables USING (table_schema, table_name)
 WHERE
-    table_schema = 'public'
+    tables.table_type = 'BASE TABLE'
+    AND table_schema NOT IN ('pg_catalog', 'information_schema')
     AND table_name = 'actor'
 ;
 
