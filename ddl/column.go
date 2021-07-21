@@ -13,10 +13,10 @@ type Column struct {
 	TableName                string `json:",omitempty"`
 	ColumnName               string `json:",omitempty"`
 	ColumnType               string `json:",omitempty"`
-	Precision                int    `json:",omitempty"`
-	Scale                    int    `json:",omitempty"`
+	NumericPrecision         int    `json:",omitempty"`
+	NumericScale             int    `json:",omitempty"`
 	Identity                 string `json:",omitempty"`
-	Autoincrement            bool   `json:",omitempty"`
+	IsAutoincrement          bool   `json:",omitempty"`
 	IsNotNull                bool   `json:",omitempty"`
 	IsUnique                 bool   `json:",omitempty"`
 	IsPrimaryKey             bool   `json:",omitempty"`
@@ -92,7 +92,7 @@ func writeColumnDefinition(dialect string, buf *bytes.Buffer, column Column) err
 	if column.IsNotNull {
 		buf.WriteString(" NOT NULL")
 	}
-	if column.ColumnDefault != "" && !column.Autoincrement && column.Identity == "" && column.GeneratedExpr == "" {
+	if column.ColumnDefault != "" && !column.IsAutoincrement && column.Identity == "" && column.GeneratedExpr == "" {
 		buf.WriteString(" DEFAULT " + column.ColumnDefault)
 	}
 	if column.IsPrimaryKey && dialect == sq.DialectSQLite {
@@ -100,13 +100,13 @@ func writeColumnDefinition(dialect string, buf *bytes.Buffer, column Column) err
 		// dialects will define primary key constraints separately
 		buf.WriteString(" PRIMARY KEY")
 	}
-	if column.Autoincrement && dialect != sq.DialectMySQL && dialect != sq.DialectSQLite {
+	if column.IsAutoincrement && dialect != sq.DialectMySQL && dialect != sq.DialectSQLite {
 		return fmt.Errorf("%s does not support autoincrement columns", dialect)
 	}
 	if column.Identity != "" && (dialect == sq.DialectMySQL || dialect == sq.DialectSQLite) {
 		return fmt.Errorf("%s does not support identity columns", dialect)
 	}
-	if column.Autoincrement {
+	if column.IsAutoincrement {
 		switch dialect {
 		case sq.DialectMySQL:
 			buf.WriteString(" AUTO_INCREMENT")

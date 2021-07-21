@@ -157,7 +157,7 @@ func (t *TColumn) Default(format string, values ...interface{}) *TColumn {
 }
 
 func (t *TColumn) Autoincrement() *TColumn {
-	t.tbl.Columns[t.columnPosition].Autoincrement = true
+	t.tbl.Columns[t.columnPosition].IsAutoincrement = true
 	return t
 }
 

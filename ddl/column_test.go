@@ -68,7 +68,7 @@ func Test_AddColumnCommand(t *testing.T) {
 			Column: Column{
 				ColumnName:    "actor_id",
 				ColumnType:    "INT",
-				Autoincrement: true,
+				IsAutoincrement: true,
 			},
 		}
 		tt.dialect = sq.DialectPostgres
@@ -259,7 +259,7 @@ func Test_AddColumnCommand(t *testing.T) {
 			Column: Column{
 				ColumnName:    "actor_id",
 				ColumnType:    "INT",
-				Autoincrement: true,
+				IsAutoincrement: true,
 			},
 		}
 		tt.dialect = sq.DialectSQLite
@@ -340,7 +340,7 @@ func Test_AddColumnCommand(t *testing.T) {
 			Column: Column{
 				ColumnName:    "actor_id",
 				ColumnType:    "INT",
-				Autoincrement: true,
+				IsAutoincrement: true,
 			},
 		}
 		tt.dialect = sq.DialectMySQL
