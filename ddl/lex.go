@@ -144,10 +144,10 @@ func popIdentifierTokens(dialect, s string, count int) (tokens []string, remaind
 
 func splitArgs(s string) []string {
 	var args []string
-	var splitAt, skipCharAt, arrayLevel int
+	var splitAt, skipCharAt, arrayLevel, bracketLevel int
 	var insideString bool
 	for {
-		splitAt, skipCharAt, arrayLevel = -1, -1, 0
+		splitAt, skipCharAt, arrayLevel, bracketLevel = -1, -1, 0, 0
 		insideString = false
 		for i, char := range s {
 			// do we unconditionally skip the current char?
@@ -163,6 +163,18 @@ func splitArgs(s string) []string {
 				// does the current char start a new array literal?
 				case '[':
 					arrayLevel++
+				}
+				continue
+			}
+			// are we currently inside a bracket expression?
+			if bracketLevel > 0 {
+				switch char {
+				// does the current char close a bracket expression?
+				case ')':
+					bracketLevel--
+				// does the current char start a new bracket expression?
+				case '(':
+					bracketLevel++
 				}
 				continue
 			}
@@ -185,6 +197,11 @@ func splitArgs(s string) []string {
 			// does the current char mark the start of a new array literal?
 			if char == '[' {
 				arrayLevel++
+				continue
+			}
+			// does the current char mark the start of a new bracket expression?
+			if char == '(' {
+				bracketLevel++
 				continue
 			}
 			// does the current char mark the start of a new string?

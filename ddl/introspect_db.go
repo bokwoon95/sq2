@@ -61,44 +61,71 @@ func normalizeColumn(dialect string, column *Column, columnType2 string) {
 	if column.ColumnDefault != "" && isExpression(column.ColumnDefault) && dialect != sq.DialectPostgres {
 		column.ColumnDefault = "(" + column.ColumnDefault + ")"
 	}
-	switch dialect {
-	case sq.DialectPostgres:
-		if (strings.EqualFold(column.ColumnType, "NUMERIC") || strings.EqualFold(column.ColumnType, "DECIMAL")) && (column.NumericPrecision > 0 || column.NumericScale > 0) {
-			column.ColumnType = fmt.Sprintf("%s(%d,%d)", column.ColumnType, column.NumericPrecision, column.NumericScale)
-		}
-		if strings.EqualFold(column.Identity, "BY DEFAULT") {
-			column.Identity = BY_DEFAULT_AS_IDENTITY
-		} else if strings.EqualFold(column.Identity, "ALWAYS") {
-			column.Identity = ALWAYS_AS_IDENTITY
-		} else {
-			column.Identity = ""
-		}
-		if strings.EqualFold(column.ColumnType, "TIMESTAMP WITH TIME ZONE") {
-			column.ColumnType = "TIMESTAMPTZ"
-		} else if strings.EqualFold(column.ColumnType, "USER-DEFINED") {
-			column.ColumnType = columnType2
-		} else if strings.EqualFold(column.ColumnType, "ARRAY") {
-			column.ColumnType = "[]" + columnType2[1:]
-		} else {
-			column.ColumnType = strings.ToUpper(column.ColumnType)
-		}
-		if len(column.GeneratedExpr) > 2 {
-			last := len(column.GeneratedExpr) - 1
-			if column.GeneratedExpr[0] == '(' && column.GeneratedExpr[last] == ')' {
-				column.GeneratedExpr = column.GeneratedExpr[1:last]
-			}
+	if (strings.EqualFold(column.ColumnType, "NUMERIC") || strings.EqualFold(column.ColumnType, "DECIMAL")) && (column.NumericPrecision > 0 || column.NumericScale > 0) {
+		column.ColumnType = fmt.Sprintf("%s(%d,%d)", column.ColumnType, column.NumericPrecision, column.NumericScale)
+	}
+	if strings.EqualFold(column.Identity, "BY DEFAULT") {
+		column.Identity = BY_DEFAULT_AS_IDENTITY
+	} else if strings.EqualFold(column.Identity, "ALWAYS") {
+		column.Identity = ALWAYS_AS_IDENTITY
+	} else {
+		column.Identity = ""
+	}
+	if strings.EqualFold(column.ColumnType, "TIMESTAMP WITH TIME ZONE") {
+		column.ColumnType = "TIMESTAMPTZ"
+	} else if strings.EqualFold(column.ColumnType, "USER-DEFINED") {
+		column.ColumnType = columnType2
+	} else if strings.EqualFold(column.ColumnType, "ARRAY") {
+		column.ColumnType = "[]" + columnType2[1:]
+	} else {
+		column.ColumnType = strings.ToUpper(column.ColumnType)
+	}
+	if len(column.GeneratedExpr) > 2 {
+		last := len(column.GeneratedExpr) - 1
+		if column.GeneratedExpr[0] == '(' && column.GeneratedExpr[last] == ')' {
+			column.GeneratedExpr = column.GeneratedExpr[1:last]
 		}
 	}
 }
 
 func mapTables(catalog *Catalog, rows *sql.Rows) error {
 	var tbl Table
+	var sql string
 	err := rows.Scan(
 		&tbl.TableSchema,
 		&tbl.TableName,
+		&sql,
 	)
 	if err != nil {
 		return fmt.Errorf("scanning table %s: %w", tbl.TableName, err)
+	}
+	if catalog.Dialect == sq.DialectSQLite && sql != "" {
+		tokens, remainder := popIdentifierTokens(catalog.Dialect, sql, 3)
+		if len(tokens) == 3 &&
+			strings.EqualFold(tokens[0], "CREATE") &&
+			strings.EqualFold(tokens[1], "VIRTUAL") &&
+			strings.EqualFold(tokens[2], "TABLE") {
+			var token string
+			var foundUsing bool
+			for remainder != "" && !foundUsing {
+				token, remainder = popIdentifierToken(catalog.Dialect, remainder)
+				if strings.EqualFold(token, "USING") {
+					foundUsing = true
+					break
+				}
+			}
+			if foundUsing {
+				tbl.VirtualTable, remainder = popIdentifierToken(catalog.Dialect, remainder)
+				i := strings.IndexByte(remainder, '(')
+				j := strings.LastIndexByte(remainder, ')')
+				if i >= 0 && j >= i {
+					tbl.VirtualTableArgs = splitArgs(remainder[i+1 : j])
+					for k, arg := range tbl.VirtualTableArgs {
+						tbl.VirtualTableArgs[k] = strings.TrimSpace(arg)
+					}
+				}
+			}
+		}
 	}
 	var schema Schema
 	if n := catalog.CachedSchemaPosition(tbl.TableSchema); n >= 0 {
