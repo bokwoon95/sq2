@@ -1,18 +1,8 @@
-ddl.go | lex.go
-column.go | constraint.go | index.go
-trigger.go | trigger_migration.go | function.go | function_migration.go
-view.go | view_migration.go
-table.go | table_migration.go
-schema.go
-t.go
-catalog.go
-
-step 1:
-Column | Constraint | Index | Trigger | Function | Table | View
-v.go | t.go
-Schema
-Catalog
-MigrationCommands
+next up:
+*_triggers.sql
+*_views.sql
+*_functions.sql
+TODO: postgres exclude constraints
 
 ddl.go
 column_ddl.go | constraint_ddl.go | index_ddl.go

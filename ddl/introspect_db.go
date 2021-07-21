@@ -1,6 +1,7 @@
 package ddl
 
 import (
+	"bytes"
 	"context"
 	"database/sql"
 	"embed"
@@ -315,6 +316,54 @@ func mapIndexes(catalog *Catalog, rows *sql.Rows) error {
 	return nil
 }
 
+func mapTriggers(catalog *Catalog, rows *sql.Rows) error {
+	var trigger Trigger
+	var actionTiming, eventManipulation string
+	err := rows.Scan(
+		&trigger.TableSchema,
+		&trigger.TableName,
+		&trigger.TriggerName,
+		&trigger.SQL,
+		&actionTiming,
+		&eventManipulation,
+	)
+	if err != nil {
+		return fmt.Errorf("scanning table %s trigger %s: %w", trigger.TableName, trigger.TriggerName, err)
+	}
+	if catalog.Dialect == sq.DialectMySQL {
+		buf := bufpool.Get().(*bytes.Buffer)
+		defer func() {
+			buf.Reset()
+			bufpool.Put(buf)
+		}()
+		buf.WriteString("CREATE TRIGGER " + sq.QuoteIdentifier(catalog.Dialect, trigger.TriggerName) + " " + actionTiming + " " + eventManipulation + " ON ")
+		if trigger.TableSchema != "" {
+			buf.WriteString(sq.QuoteIdentifier(catalog.Dialect, trigger.TableSchema) + ".")
+		}
+		buf.WriteString(sq.QuoteIdentifier(catalog.Dialect, trigger.TableName) + " FOR EACH ROW " + trigger.SQL)
+		trigger.SQL = buf.String()
+	}
+	var schema Schema
+	if n := catalog.CachedSchemaPosition(trigger.TableSchema); n >= 0 {
+		schema = catalog.Schemas[n]
+		defer func() { catalog.Schemas[n] = schema }()
+	} else {
+		schema.SchemaName = trigger.TableSchema
+		defer func() { catalog.AppendSchema(schema) }()
+	}
+	var tbl Table
+	if n := schema.CachedTablePosition(trigger.TableName); n >= 0 {
+		tbl = schema.Tables[n]
+		defer func() { schema.Tables[n] = tbl }()
+	} else {
+		tbl.TableSchema = trigger.TableSchema
+		tbl.TableName = trigger.TableName
+		defer func() { schema.AppendTable(tbl) }()
+	}
+	tbl.AppendTrigger(trigger)
+	return nil
+}
+
 func introspectPostgres(ctx context.Context, db sq.DB, catalog *Catalog) error {
 	err := introspectQuery(ctx, db, catalog, "sql/postgres_columns.sql", nil, mapColumns)
 	if err != nil {
@@ -325,6 +374,10 @@ func introspectPostgres(ctx context.Context, db sq.DB, catalog *Catalog) error {
 		return err
 	}
 	err = introspectQuery(ctx, db, catalog, "sql/postgres_indexes.sql", nil, mapIndexes)
+	if err != nil {
+		return err
+	}
+	err = introspectQuery(ctx, db, catalog, "sql/postgres_triggers.sql", nil, mapTriggers)
 	if err != nil {
 		return err
 	}
@@ -354,6 +407,10 @@ func introspectSQLite(ctx context.Context, db sq.DB, catalog *Catalog) error {
 	if err != nil {
 		return err
 	}
+	err = introspectQuery(ctx, db, catalog, "sql/sqlite_triggers.sql", nil, mapTriggers)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -367,6 +424,10 @@ func introspectMySQL(ctx context.Context, db sq.DB, catalog *Catalog) error {
 		return err
 	}
 	err = introspectQuery(ctx, db, catalog, "sql/mysql_indexes.sql", nil, mapIndexes)
+	if err != nil {
+		return err
+	}
+	err = introspectQuery(ctx, db, catalog, "sql/mysql_triggers.sql", nil, mapTriggers)
 	if err != nil {
 		return err
 	}
