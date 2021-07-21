@@ -19,22 +19,42 @@ func introspectQuery(ctx context.Context, db sq.DB, catalog *Catalog, queryfile 
 	if err != nil {
 		return fmt.Errorf("reading %s: %w", queryfile, err)
 	}
-	rows, err := db.QueryContext(ctx, string(b))
+	stmt, err := db.PrepareContext(ctx, string(b))
 	if err != nil {
-		return fmt.Errorf("executing %s: %w", queryfile, err)
+		return fmt.Errorf("preparing %s: %w", queryfile, err)
 	}
-	defer rows.Close()
-	for rows.Next() {
-		err = rowmapper(catalog, rows)
+	defer stmt.Close()
+	if len(argslist) == 0 {
+		argslist = append(argslist, nil)
+	}
+	for _, args := range argslist {
+		err = func() error {
+			rows, err := stmt.QueryContext(ctx, args...)
+			if err != nil {
+				return fmt.Errorf("executing %s: %w", queryfile, err)
+			}
+			defer rows.Close()
+			for rows.Next() {
+				err = rowmapper(catalog, rows)
+				if err != nil {
+					return err
+				}
+			}
+			err = rows.Close()
+			if err != nil {
+				return err
+			}
+			err = rows.Err()
+			if err != nil {
+				return err
+			}
+			return nil
+		}()
 		if err != nil {
 			return err
 		}
 	}
-	err = rows.Close()
-	if err != nil {
-		return err
-	}
-	return rows.Err()
+	return nil
 }
 
 func normalizeColumn(dialect string, column *Column, columnType2 string) {
