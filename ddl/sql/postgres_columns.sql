@@ -18,6 +18,6 @@ FROM
     information_schema.columns
     JOIN information_schema.tables USING (table_schema, table_name)
 WHERE
-    tables.table_type = 'BASE TABLE'
-    AND table_schema NOT IN ('pg_catalog', 'information_schema')
+    columns.table_schema NOT IN ('pg_catalog', 'information_schema')
+    AND tables.table_type = 'BASE TABLE'
 ;

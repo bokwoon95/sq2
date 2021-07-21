@@ -58,8 +58,8 @@ func introspectQuery(ctx context.Context, db sq.DB, catalog *Catalog, queryfile 
 }
 
 func normalizeColumn(dialect string, column *Column, columnType2 string) {
-	if column.ColumnDefault != "" && isExpression(column.ColumnDefault) && dialect != sq.DialectPostgres {
-		column.ColumnDefault = "(" + column.ColumnDefault + ")"
+	if column.ColumnDefault != "" {
+		column.ColumnDefault = toExpr(dialect, column.ColumnDefault)
 	}
 	if (strings.EqualFold(column.ColumnType, "NUMERIC") || strings.EqualFold(column.ColumnType, "DECIMAL")) && (column.NumericPrecision > 0 || column.NumericScale > 0) {
 		column.ColumnType = fmt.Sprintf("%s(%d,%d)", column.ColumnType, column.NumericPrecision, column.NumericScale)
@@ -71,36 +71,43 @@ func normalizeColumn(dialect string, column *Column, columnType2 string) {
 	} else {
 		column.Identity = ""
 	}
-	if strings.EqualFold(column.ColumnType, "TIMESTAMP WITH TIME ZONE") {
-		column.ColumnType = "TIMESTAMPTZ"
-	} else if strings.EqualFold(column.ColumnType, "USER-DEFINED") {
-		column.ColumnType = columnType2
-	} else if strings.EqualFold(column.ColumnType, "ARRAY") {
-		column.ColumnType = "[]" + columnType2[1:]
-	} else {
-		column.ColumnType = strings.ToUpper(column.ColumnType)
-	}
 	if len(column.GeneratedExpr) > 2 {
 		last := len(column.GeneratedExpr) - 1
 		if column.GeneratedExpr[0] == '(' && column.GeneratedExpr[last] == ')' {
 			column.GeneratedExpr = column.GeneratedExpr[1:last]
 		}
 	}
+	switch dialect {
+	case sq.DialectPostgres:
+		if strings.EqualFold(column.ColumnType, "TIMESTAMP WITH TIME ZONE") {
+			column.ColumnType = "TIMESTAMPTZ"
+		} else if strings.EqualFold(column.ColumnType, "USER-DEFINED") {
+			column.ColumnType = columnType2
+		} else if strings.EqualFold(column.ColumnType, "ARRAY") {
+			column.ColumnType = "[]" + columnType2[1:]
+		} else {
+			column.ColumnType = strings.ToUpper(column.ColumnType)
+		}
+	case sq.DialectMySQL:
+		if column.GeneratedExpr != "" {
+			column.GeneratedExpr = strings.ReplaceAll(column.GeneratedExpr, "\\'", "'")
+		}
+		column.ColumnType = strings.ToUpper(columnType2)
+	}
 }
 
 func mapTables(catalog *Catalog, rows *sql.Rows) error {
 	var tbl Table
-	var sql string
 	err := rows.Scan(
 		&tbl.TableSchema,
 		&tbl.TableName,
-		&sql,
+		&tbl.SQL,
 	)
 	if err != nil {
 		return fmt.Errorf("scanning table %s: %w", tbl.TableName, err)
 	}
-	if catalog.Dialect == sq.DialectSQLite && sql != "" {
-		tokens, remainder := popIdentifierTokens(catalog.Dialect, sql, 3)
+	if catalog.Dialect == sq.DialectSQLite && tbl.SQL != "" {
+		tokens, remainder := popIdentifierTokens(catalog.Dialect, tbl.SQL, 3)
 		if len(tokens) == 3 &&
 			strings.EqualFold(tokens[0], "CREATE") &&
 			strings.EqualFold(tokens[1], "VIRTUAL") &&
@@ -212,6 +219,14 @@ func introspectSQLite(ctx context.Context, db sq.DB, catalog *Catalog) error {
 		}
 	}
 	err = introspectQuery(ctx, db, catalog, "sql/sqlite_columns.sql", argslist, mapColumns)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func introspectMySQL(ctx context.Context, db sq.DB, catalog *Catalog) error {
+	err := introspectQuery(ctx, db, catalog, "sql/mysql_columns.sql", nil, mapColumns)
 	if err != nil {
 		return err
 	}

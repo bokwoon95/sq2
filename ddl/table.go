@@ -17,6 +17,7 @@ type Table struct {
 	Triggers         []Trigger    `json:",omitempty"`
 	VirtualTable     string       `json:",omitempty"`
 	VirtualTableArgs []string     `json:",omitempty"`
+	SQL              string       `json:",omitempty"`
 	columnCache      map[string]int
 	constraintCache  map[string]int
 	indexCache       map[string]int
@@ -348,7 +349,7 @@ func (tbl *Table) LoadColumnConfig(dialect, columnName, columnType, config strin
 		case "collate":
 			col.CollationName = modifier[1]
 		case "default":
-			if isExpression(modifier[1]) && dialect != sq.DialectPostgres {
+			if needsExpressionBrackets(modifier[1]) && dialect != sq.DialectPostgres {
 				col.ColumnDefault = "(" + modifier[1] + ")"
 			} else {
 				col.ColumnDefault = modifier[1]

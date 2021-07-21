@@ -84,12 +84,12 @@ CREATE TABLE db.language (
 
 CREATE TABLE db.film (
     film_id INT AUTO_INCREMENT
-    ,title VARCHAR(255) NOT NULL
+    ,title VARCHAR(255) NOT NULL DEFAULT '1 + 2 % 3'
     ,description TEXT
     ,release_year INT
     ,language_id INT NOT NULL
     ,original_language_id INT
-    ,rental_duration INT NOT NULL DEFAULT 3
+    ,rental_duration INT NOT NULL DEFAULT (1 + 2 % 3)
     ,rental_rate DECIMAL(4,2) NOT NULL DEFAULT 4.99
     ,length INT
     ,replacement_cost DECIMAL(5,2) NOT NULL DEFAULT 19.99
