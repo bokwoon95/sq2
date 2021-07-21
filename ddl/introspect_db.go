@@ -14,14 +14,14 @@ import (
 //go:embed sql
 var sqlFS embed.FS
 
-func runQuery(ctx context.Context, db sq.DB, catalog *Catalog, filename string, rowmapper func(*Catalog, *sql.Rows) error) error {
-	b, err := fs.ReadFile(sqlFS, filename)
+func introspectQuery(ctx context.Context, db sq.DB, catalog *Catalog, queryfile string, argslist [][]interface{}, rowmapper func(*Catalog, *sql.Rows) error) error {
+	b, err := fs.ReadFile(sqlFS, queryfile)
 	if err != nil {
-		return fmt.Errorf("reading %s: %w", filename, err)
+		return fmt.Errorf("reading %s: %w", queryfile, err)
 	}
 	rows, err := db.QueryContext(ctx, string(b))
 	if err != nil {
-		return fmt.Errorf("executing %s: %w", filename, err)
+		return fmt.Errorf("executing %s: %w", queryfile, err)
 	}
 	defer rows.Close()
 	for rows.Next() {
@@ -118,7 +118,15 @@ func columnRowMapper(catalog *Catalog, rows *sql.Rows) error {
 }
 
 func introspectPostgres(ctx context.Context, db sq.DB, catalog *Catalog) error {
-	err := runQuery(ctx, db, catalog, "sql/postgres-column.sql", columnRowMapper)
+	err := introspectQuery(ctx, db, catalog, "sql/postgres-column.sql", nil, columnRowMapper)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func introspectSQLite(ctx context.Context, db sq.DB, catalog *Catalog) error {
+	err := introspectQuery(ctx, db, catalog, "sql/postgres-column.sql", nil, columnRowMapper)
 	if err != nil {
 		return err
 	}

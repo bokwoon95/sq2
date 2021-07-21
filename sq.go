@@ -121,6 +121,7 @@ type Predicate interface {
 type DB interface {
 	QueryContext(ctx context.Context, query string, args ...interface{}) (*sql.Rows, error)
 	ExecContext(ctx context.Context, query string, args ...interface{}) (sql.Result, error)
+	PrepareContext(ctx context.Context, query string) (*sql.Stmt, error)
 }
 
 func isExplodableSlice(value interface{}) bool {
