@@ -1,8 +1,9 @@
 next up:
-*_triggers.sql
 *_views.sql
 *_functions.sql
 TODO: postgres exclude constraints
+TODO: materialized views + triggers + indexes
+TODO: covering indexes
 
 ddl.go
 column_ddl.go | constraint_ddl.go | index_ddl.go
