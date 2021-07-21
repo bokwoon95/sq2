@@ -60,8 +60,8 @@ func introspectQuery(ctx context.Context, db sq.DB, catalog *Catalog, queryfile 
 func normalizeColumn(dialect string, column *Column, columnType2 string) {
 	switch dialect {
 	case sq.DialectPostgres:
-		if (strings.EqualFold(column.ColumnType, "NUMERIC") || strings.EqualFold(column.ColumnType, "DECIMAL")) && (column.Precision > 0 || column.Scale > 0) {
-			column.ColumnType = fmt.Sprintf("%s(%d,%d)", column.ColumnType, column.Precision, column.Scale)
+		if (strings.EqualFold(column.ColumnType, "NUMERIC") || strings.EqualFold(column.ColumnType, "DECIMAL")) && (column.NumericPrecision > 0 || column.NumericScale > 0) {
+			column.ColumnType = fmt.Sprintf("%s(%d,%d)", column.ColumnType, column.NumericPrecision, column.NumericScale)
 		}
 		if strings.EqualFold(column.Identity, "BY DEFAULT") {
 			column.Identity = BY_DEFAULT_AS_IDENTITY
@@ -122,9 +122,9 @@ func mapColumns(catalog *Catalog, rows *sql.Rows) error {
 		&column.ColumnName,
 		&column.ColumnType,
 		&columnType2,
-		&column.Precision,
-		&column.Scale,
-		&column.Autoincrement,
+		&column.NumericPrecision,
+		&column.NumericScale,
+		&column.IsAutoincrement,
 		&column.Identity,
 		&column.IsNotNull,
 		&column.OnUpdateCurrentTimestamp,
@@ -172,6 +172,16 @@ func introspectPostgres(ctx context.Context, db sq.DB, catalog *Catalog) error {
 
 func introspectSQLite(ctx context.Context, db sq.DB, catalog *Catalog) error {
 	err := introspectQuery(ctx, db, catalog, "sql/sqlite_tables.sql", nil, mapTables)
+	if err != nil {
+		return err
+	}
+	var argslist [][]interface{}
+	for _, schema := range catalog.Schemas {
+		for _, tbl := range schema.Tables {
+			argslist = append(argslist, []interface{}{tbl.TableName})
+		}
+	}
+	err = introspectQuery(ctx, db, catalog, "sql/sqlite_columns.sql", argslist, mapColumns)
 	if err != nil {
 		return err
 	}

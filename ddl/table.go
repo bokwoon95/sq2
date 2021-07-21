@@ -331,7 +331,7 @@ func (tbl *Table) LoadColumnConfig(dialect, columnName, columnType, config strin
 		case "type":
 			col.ColumnType = modifier[1]
 		case "autoincrement":
-			col.Autoincrement = true
+			col.IsAutoincrement = true
 		case "identity":
 			col.Identity = BY_DEFAULT_AS_IDENTITY
 		case "alwaysidentity":

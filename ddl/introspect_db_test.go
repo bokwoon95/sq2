@@ -28,7 +28,7 @@ func Test_introspect_postgres(t *testing.T) {
 }
 
 func Test_introspect_sqlite(t *testing.T) {
-	db, err := sql.Open("sqlite3", "db.sqlite3")
+	db, err := sql.Open("sqlite3", "/Users/bokwoon/Documents/sq2/db.sqlite3")
 	if err != nil {
 		t.Fatal(testcallers(), err)
 	}
