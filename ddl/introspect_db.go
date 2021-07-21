@@ -253,12 +253,67 @@ func mapConstraints(catalog *Catalog, rows *sql.Rows) error {
 	return nil
 }
 
+func mapIndexes(catalog *Catalog, rows *sql.Rows) error {
+	var index Index
+	var numKeyColumns int
+	var rawColumns, rawExprs string
+	err := rows.Scan(
+		&index.TableSchema,
+		&index.TableName,
+		&index.IndexName,
+		&index.IndexType,
+		&index.IsUnique,
+		&numKeyColumns,
+		&rawColumns,
+		&rawExprs,
+		&index.Predicate,
+	)
+	if err != nil {
+		return fmt.Errorf("scanning table %s index %s: %w", index.TableName, index.IndexName, err)
+	}
+	if rawColumns != "" {
+		index.Columns = strings.Split(rawColumns, ",")
+	}
+	if rawExprs != "" {
+		exprs := splitArgs(rawExprs)
+		index.Exprs = make([]string, len(index.Columns))
+		for i, column := range index.Columns {
+			if column == "" && len(exprs) > 0 {
+				index.Exprs[i], exprs = "("+strings.TrimSpace(exprs[0])+")", exprs[1:]
+			}
+		}
+	}
+	var schema Schema
+	if n := catalog.CachedSchemaPosition(index.TableSchema); n >= 0 {
+		schema = catalog.Schemas[n]
+		defer func() { catalog.Schemas[n] = schema }()
+	} else {
+		schema.SchemaName = index.TableSchema
+		defer func() { catalog.AppendSchema(schema) }()
+	}
+	var tbl Table
+	if n := schema.CachedTablePosition(index.TableName); n >= 0 {
+		tbl = schema.Tables[n]
+		defer func() { schema.Tables[n] = tbl }()
+	} else {
+		tbl.TableSchema = index.TableSchema
+		tbl.TableName = index.TableName
+		defer func() { schema.AppendTable(tbl) }()
+	}
+	tbl.AppendIndex(index)
+	return nil
+}
+
 func introspectPostgres(ctx context.Context, db sq.DB, catalog *Catalog) error {
 	err := introspectQuery(ctx, db, catalog, "sql/postgres_columns.sql", nil, mapColumns)
 	if err != nil {
 		return err
 	}
 	err = introspectQuery(ctx, db, catalog, "sql/postgres_constraints.sql", nil, mapConstraints)
+	if err != nil {
+		return err
+	}
+	err = introspectQuery(ctx, db, catalog, "sql/postgres_indexes.sql", nil, mapIndexes)
 	if err != nil {
 		return err
 	}
