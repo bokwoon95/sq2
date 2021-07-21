@@ -3,6 +3,26 @@ SELECT
     ,table_name
     ,constraint_name
     ,constraint_type
+    ,columns
+    ,exprs
+    ,references_schema
+    ,references_table
+    ,references_columns
+    ,update_rule
+    ,delete_rule
+    ,match_option
+    ,check_expr
+    ,operators
+    ,index_type
+    ,predicate
+    ,is_deferrable
+    ,is_initially_deferred
+FROM (
+SELECT
+    table_schema
+    ,table_name
+    ,constraint_name
+    ,constraint_type
     ,string_agg(column_name,',') AS columns
     ,'' AS exprs
     ,'' AS references_schema
@@ -130,4 +150,5 @@ FROM
 WHERE
     pg_constraint.contype = 'c'
     AND table_namespace.nspname NOT IN ('pg_catalog', 'information_schema')
+) AS tmp
 ;

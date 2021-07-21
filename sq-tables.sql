@@ -171,7 +171,7 @@ CREATE TABLE customer (
 
     ,CONSTRAINT customer_email_first_name_last_name_key UNIQUE (email, first_name, last_name)
     ,CONSTRAINT customer_email_key UNIQUE (email)
-    ,CONSTRAINT customer_address_id_fkey FOREIGN KEY (address_id) REFERENCES address ON UPDATE CASCADE ON DELETE RESTRICT
+    ,CONSTRAINT customer_address_id_fkey FOREIGN KEY (address_id) REFERENCES address (address_id) ON UPDATE CASCADE ON DELETE RESTRICT
 );
 
 CREATE INDEX customer_store_id_idx ON customer (store_id);
@@ -186,8 +186,8 @@ CREATE TABLE inventory (
     ,store_id INT NOT NULL
     ,last_update DATETIME NOT NULL DEFAULT (DATETIME('now'))
 
-    ,CONSTRAINT inventory_film_id_fkey FOREIGN KEY (film_id) REFERENCES film ON UPDATE CASCADE ON DELETE RESTRICT
-    ,CONSTRAINT inventory_store_id_fkey FOREIGN KEY (store_id) REFERENCES store ON UPDATE CASCADE ON DELETE RESTRICT
+    ,CONSTRAINT inventory_film_id_fkey FOREIGN KEY (film_id) REFERENCES film (film_id) ON UPDATE CASCADE ON DELETE RESTRICT
+    ,CONSTRAINT inventory_store_id_fkey FOREIGN KEY (store_id) REFERENCES store (store_id) ON UPDATE CASCADE ON DELETE RESTRICT
 );
 
 CREATE INDEX inventory_store_id_film_id_idx ON inventory (store_id, film_id);
