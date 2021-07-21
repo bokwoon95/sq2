@@ -6,6 +6,6 @@ FROM
 WHERE
     "type" = 'table'
     AND tbl_name <> 'sqlite_sequence'
-    AND sql NOT LIKE 'CREATE VIRTUAL TABLE%'
+    -- AND sql NOT LIKE 'CREATE VIRTUAL TABLE%'
     AND sql NOT LIKE 'CREATE TABLE ''%'
 ;
