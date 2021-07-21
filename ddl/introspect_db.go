@@ -142,11 +142,7 @@ func mapTables(catalog *Catalog, rows *sql.Rows) error {
 		schema.SchemaName = tbl.TableSchema
 		defer func() { catalog.AppendSchema(schema) }()
 	}
-	if n := schema.CachedTablePosition(tbl.TableName); n >= 0 {
-		schema.Tables[n] = tbl
-	} else {
-		schema.AppendTable(tbl)
-	}
+	schema.AppendTable(tbl)
 	return nil
 }
 
@@ -171,7 +167,7 @@ func mapColumns(catalog *Catalog, rows *sql.Rows) error {
 		&column.ColumnDefault,
 	)
 	if err != nil {
-		return fmt.Errorf("scanning column %s.%s: %w", column.TableName, column.ColumnName, err)
+		return fmt.Errorf("scanning table %s column %s: %w", column.TableName, column.ColumnName, err)
 	}
 	normalizeColumn(catalog.Dialect, &column, columnType2)
 	var schema Schema
@@ -191,11 +187,7 @@ func mapColumns(catalog *Catalog, rows *sql.Rows) error {
 		tbl.TableName = column.TableName
 		defer func() { schema.AppendTable(tbl) }()
 	}
-	if n := tbl.CachedColumnPosition(column.ColumnName); n >= 0 {
-		tbl.Columns[n] = column
-	} else {
-		tbl.AppendColumn(column)
-	}
+	tbl.AppendColumn(column)
 	return nil
 }
 
@@ -223,7 +215,7 @@ func mapConstraints(catalog *Catalog, rows *sql.Rows) error {
 		&constraint.IsInitiallyDeferred,
 	)
 	if err != nil {
-		return fmt.Errorf("scanning constraint %s %s: %w", constraint.TableName, constraint.ConstraintName, err)
+		return fmt.Errorf("scanning table %s constraint %s: %w", constraint.TableName, constraint.ConstraintName, err)
 	}
 	if rawColumns != "" {
 		constraint.Columns = strings.Split(rawColumns, ",")
@@ -257,11 +249,7 @@ func mapConstraints(catalog *Catalog, rows *sql.Rows) error {
 		tbl.TableName = constraint.TableName
 		defer func() { schema.AppendTable(tbl) }()
 	}
-	if n := tbl.CachedConstraintPosition(constraint.ConstraintName); n >= 0 {
-		tbl.Constraints[n] = constraint
-	} else {
-		tbl.AppendConstraint(constraint)
-	}
+	tbl.AppendConstraint(constraint)
 	return nil
 }
 
@@ -289,6 +277,10 @@ func introspectSQLite(ctx context.Context, db sq.DB, catalog *Catalog) error {
 		}
 	}
 	err = introspectQuery(ctx, db, catalog, "sql/sqlite_columns.sql", argslist, mapColumns)
+	if err != nil {
+		return err
+	}
+	err = introspectQuery(ctx, db, catalog, "sql/sqlite_constraints.sql", argslist, mapConstraints)
 	if err != nil {
 		return err
 	}

@@ -7,4 +7,3 @@ FROM
 WHERE
     table_type = 'BASE TABLE'
     AND table_schema NOT IN ('pg_catalog', 'information_schema')
-;
