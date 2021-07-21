@@ -6,8 +6,10 @@ SELECT
     ,udt_name AS column_type_2
     ,COALESCE(numeric_precision, 0)
     ,COALESCE(numeric_scale, 0)
+    ,FALSE AS autoincrement
     ,COALESCE(identity_generation::TEXT, '') AS identity
     ,NOT is_nullable::BOOLEAN AS is_notnull
+    ,FALSE AS on_update_current_timestamp
     ,COALESCE(generation_expression, '') AS generated_expr
     ,CASE is_generated WHEN 'ALWAYS' THEN TRUE ELSE FALSE END AS generated_expr_stored
     ,COALESCE(collation_name, '')

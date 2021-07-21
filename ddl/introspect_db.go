@@ -37,7 +37,38 @@ func runQuery(ctx context.Context, db sq.DB, catalog *Catalog, filename string, 
 	return rows.Err()
 }
 
-func postgresColumnRowMapper(catalog *Catalog, rows *sql.Rows) error {
+func normalizeColumn(dialect string, column *Column, columnType2 string) {
+	switch dialect {
+	case sq.DialectPostgres:
+		if (strings.EqualFold(column.ColumnType, "NUMERIC") || strings.EqualFold(column.ColumnType, "DECIMAL")) && (column.Precision > 0 || column.Scale > 0) {
+			column.ColumnType = fmt.Sprintf("%s(%d,%d)", column.ColumnType, column.Precision, column.Scale)
+		}
+		if strings.EqualFold(column.Identity, "BY DEFAULT") {
+			column.Identity = BY_DEFAULT_AS_IDENTITY
+		} else if strings.EqualFold(column.Identity, "ALWAYS") {
+			column.Identity = ALWAYS_AS_IDENTITY
+		} else {
+			column.Identity = ""
+		}
+		if strings.EqualFold(column.ColumnType, "TIMESTAMP WITH TIME ZONE") {
+			column.ColumnType = "TIMESTAMPTZ"
+		} else if strings.EqualFold(column.ColumnType, "USER-DEFINED") {
+			column.ColumnType = columnType2
+		} else if strings.EqualFold(column.ColumnType, "ARRAY") {
+			column.ColumnType = "[]" + columnType2[1:]
+		} else {
+			column.ColumnType = strings.ToUpper(column.ColumnType)
+		}
+		if len(column.GeneratedExpr) > 2 {
+			last := len(column.GeneratedExpr) - 1
+			if column.GeneratedExpr[0] == '(' && column.GeneratedExpr[last] == ')' {
+				column.GeneratedExpr = column.GeneratedExpr[1:last]
+			}
+		}
+	}
+}
+
+func columnRowMapper(catalog *Catalog, rows *sql.Rows) error {
 	var column Column
 	var columnType2 string
 	err := rows.Scan(
@@ -48,8 +79,10 @@ func postgresColumnRowMapper(catalog *Catalog, rows *sql.Rows) error {
 		&columnType2,
 		&column.Precision,
 		&column.Scale,
-		&column.Identity, // BY DEFAULT | ALWAYS
+		&column.Autoincrement,
+		&column.Identity,
 		&column.IsNotNull,
+		&column.OnUpdateCurrentTimestamp,
 		&column.GeneratedExpr,
 		&column.GeneratedExprStored,
 		&column.CollationName,
@@ -58,18 +91,7 @@ func postgresColumnRowMapper(catalog *Catalog, rows *sql.Rows) error {
 	if err != nil {
 		return fmt.Errorf("scanning column %s.%s: %w", column.TableName, column.ColumnName, err)
 	}
-	if strings.EqualFold(column.Identity, "BY DEFAULT") {
-		column.Identity = BY_DEFAULT_AS_IDENTITY
-	} else if strings.EqualFold(column.Identity, "ALWAYS") {
-		column.Identity = ALWAYS_AS_IDENTITY
-	} else {
-		column.Identity = ""
-	}
-	if i := strings.IndexByte(column.ColumnType, ' '); i >= 0 {
-		column.ColumnType = strings.ToUpper(columnType2)
-	} else {
-		column.ColumnType = strings.ToUpper(column.ColumnType)
-	}
+	normalizeColumn(catalog.Dialect, &column, columnType2)
 	var schema Schema
 	if n := catalog.CachedSchemaPosition(column.TableSchema); n >= 0 {
 		schema = catalog.Schemas[n]
@@ -96,7 +118,7 @@ func postgresColumnRowMapper(catalog *Catalog, rows *sql.Rows) error {
 }
 
 func introspectPostgres(ctx context.Context, db sq.DB, catalog *Catalog) error {
-	err := runQuery(ctx, db, catalog, "sql/postgres-columns.sql", postgresColumnRowMapper)
+	err := runQuery(ctx, db, catalog, "sql/postgres-column.sql", columnRowMapper)
 	if err != nil {
 		return err
 	}
