@@ -292,5 +292,9 @@ func introspectMySQL(ctx context.Context, db sq.DB, catalog *Catalog) error {
 	if err != nil {
 		return err
 	}
+	err = introspectQuery(ctx, db, catalog, "sql/mysql_constraints.sql", nil, mapConstraints)
+	if err != nil {
+		return err
+	}
 	return nil
 }

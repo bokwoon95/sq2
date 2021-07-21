@@ -20,3 +20,4 @@ FROM
 WHERE
     columns.table_schema NOT IN ('pg_catalog', 'information_schema')
     AND tables.table_type = 'BASE TABLE'
+;
