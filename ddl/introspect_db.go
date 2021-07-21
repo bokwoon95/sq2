@@ -364,6 +364,44 @@ func mapTriggers(catalog *Catalog, rows *sql.Rows) error {
 	return nil
 }
 
+func mapViews(catalog *Catalog, rows *sql.Rows) error {
+	var view View
+	err := rows.Scan(
+		&view.ViewSchema,
+		&view.ViewName,
+		&view.IsMaterialized,
+		&view.SQL,
+	)
+	if err != nil {
+		return fmt.Errorf("scanning view %s: %w", view.ViewName, err)
+	}
+	view.SQL = strings.TrimSpace(view.SQL)
+	if last := len(view.SQL) - 1; view.SQL[last] == ';' {
+		view.SQL = view.SQL[:last]
+	}
+	if catalog.Dialect == sq.DialectSQLite {
+		var token string
+		remainder := view.SQL
+		for remainder != "" {
+			token, remainder = popIdentifierToken(catalog.Dialect, remainder)
+			if strings.EqualFold(token, "AS") {
+				break
+			}
+		}
+		view.SQL = strings.TrimSpace(remainder)
+	}
+	var schema Schema
+	if n := catalog.CachedSchemaPosition(view.ViewSchema); n >= 0 {
+		schema = catalog.Schemas[n]
+		defer func() { catalog.Schemas[n] = schema }()
+	} else {
+		schema.SchemaName = view.ViewSchema
+		defer func() { catalog.AppendSchema(schema) }()
+	}
+	schema.AppendView(view)
+	return nil
+}
+
 func introspectPostgres(ctx context.Context, db sq.DB, catalog *Catalog) error {
 	err := introspectQuery(ctx, db, catalog, "sql/postgres_columns.sql", nil, mapColumns)
 	if err != nil {
@@ -378,6 +416,10 @@ func introspectPostgres(ctx context.Context, db sq.DB, catalog *Catalog) error {
 		return err
 	}
 	err = introspectQuery(ctx, db, catalog, "sql/postgres_triggers.sql", nil, mapTriggers)
+	if err != nil {
+		return err
+	}
+	err = introspectQuery(ctx, db, catalog, "sql/postgres_views.sql", nil, mapViews)
 	if err != nil {
 		return err
 	}
@@ -411,6 +453,10 @@ func introspectSQLite(ctx context.Context, db sq.DB, catalog *Catalog) error {
 	if err != nil {
 		return err
 	}
+	err = introspectQuery(ctx, db, catalog, "sql/sqlite_views.sql", nil, mapViews)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -428,6 +474,10 @@ func introspectMySQL(ctx context.Context, db sq.DB, catalog *Catalog) error {
 		return err
 	}
 	err = introspectQuery(ctx, db, catalog, "sql/mysql_triggers.sql", nil, mapTriggers)
+	if err != nil {
+		return err
+	}
+	err = introspectQuery(ctx, db, catalog, "sql/mysql_views.sql", nil, mapViews)
 	if err != nil {
 		return err
 	}
