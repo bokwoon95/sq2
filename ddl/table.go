@@ -3,7 +3,6 @@ package ddl
 import (
 	"bytes"
 	"fmt"
-	"strconv"
 	"strings"
 
 	"github.com/bokwoon95/sq"
@@ -349,22 +348,10 @@ func (tbl *Table) LoadColumnConfig(dialect, columnName, columnType, config strin
 		case "collate":
 			col.CollationName = modifier[1]
 		case "default":
-			if len(modifier[1]) >= 2 && modifier[1][0] == '\'' && modifier[1][len(modifier[1])-1] == '\'' {
-				col.ColumnDefault = modifier[1]
-			} else if strings.EqualFold(modifier[1], "TRUE") ||
-				strings.EqualFold(modifier[1], "FALSE") ||
-				strings.EqualFold(modifier[1], "CURRENT_DATE") ||
-				strings.EqualFold(modifier[1], "CURRENT_TIME") ||
-				strings.EqualFold(modifier[1], "CURRENT_TIMESTAMP") {
-				col.ColumnDefault = modifier[1]
-			} else if _, err := strconv.ParseInt(modifier[1], 10, 64); err == nil {
-				col.ColumnDefault = modifier[1]
-			} else if _, err := strconv.ParseFloat(modifier[1], 64); err == nil {
-				col.ColumnDefault = modifier[1]
-			} else if dialect == sq.DialectPostgres {
-				col.ColumnDefault = modifier[1]
-			} else {
+			if isExpression(modifier[1]) && dialect != sq.DialectPostgres {
 				col.ColumnDefault = "(" + modifier[1] + ")"
+			} else {
+				col.ColumnDefault = modifier[1]
 			}
 		case "ignore":
 			col.Ignore = true

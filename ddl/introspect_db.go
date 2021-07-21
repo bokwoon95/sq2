@@ -58,6 +58,9 @@ func introspectQuery(ctx context.Context, db sq.DB, catalog *Catalog, queryfile 
 }
 
 func normalizeColumn(dialect string, column *Column, columnType2 string) {
+	if column.ColumnDefault != "" && isExpression(column.ColumnDefault) && dialect != sq.DialectPostgres {
+		column.ColumnDefault = "(" + column.ColumnDefault + ")"
+	}
 	switch dialect {
 	case sq.DialectPostgres:
 		if (strings.EqualFold(column.ColumnType, "NUMERIC") || strings.EqualFold(column.ColumnType, "DECIMAL")) && (column.NumericPrecision > 0 || column.NumericScale > 0) {

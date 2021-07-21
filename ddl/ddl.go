@@ -2,6 +2,7 @@ package ddl
 
 import (
 	"bytes"
+	"strconv"
 	"strings"
 	"sync"
 
@@ -134,4 +135,21 @@ func defaultColumnType(dialect string, field sq.Field) (columnType string) {
 		}
 	}
 	return "VARCHAR(255)"
+}
+
+func isExpression(s string) bool {
+	if len(s) >= 2 && s[0] == '\'' && s[len(s)-1] == '\'' {
+		return false
+	} else if strings.EqualFold(s, "TRUE") ||
+		strings.EqualFold(s, "FALSE") ||
+		strings.EqualFold(s, "CURRENT_DATE") ||
+		strings.EqualFold(s, "CURRENT_TIME") ||
+		strings.EqualFold(s, "CURRENT_TIMESTAMP") {
+		return false
+	} else if _, err := strconv.ParseInt(s, 10, 64); err == nil {
+		return false
+	} else if _, err := strconv.ParseFloat(s, 64); err == nil {
+		return false
+	}
+	return true
 }
