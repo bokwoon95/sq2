@@ -11,9 +11,7 @@ import (
 type Column struct {
 	TableSchema              string `json:",omitempty"`
 	TableName                string `json:",omitempty"`
-	TableAlias               string `json:",omitempty"`
 	ColumnName               string `json:",omitempty"`
-	ColumnAlias              string `json:",omitempty"`
 	ColumnType               string `json:",omitempty"`
 	Precision                int    `json:",omitempty"`
 	Scale                    int    `json:",omitempty"`
