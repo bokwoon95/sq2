@@ -101,12 +101,13 @@ CREATE VIRTUAL TABLE IF NOT EXISTS film_text USING fts5 (
 );
 
 CREATE TABLE IF NOT EXISTS film_actor (
-    actor_id INT NOT NULL
-    ,film_id INT NOT NULL
+    film_id INT NOT NULL
+    ,actor_id INT NOT NULL
     ,last_update DATETIME NOT NULL DEFAULT (DATETIME('now'))
 
-    ,FOREIGN KEY (actor_id) REFERENCES actor (actor_id) ON UPDATE CASCADE ON DELETE RESTRICT
+    ,PRIMARY KEY (film_id, actor_id)
     ,FOREIGN KEY (film_id) REFERENCES film (film_id) ON UPDATE CASCADE ON DELETE RESTRICT
+    ,FOREIGN KEY (actor_id) REFERENCES actor (actor_id) ON UPDATE CASCADE ON DELETE RESTRICT
 );
 
 CREATE TABLE IF NOT EXISTS film_actor_review (
@@ -128,6 +129,7 @@ CREATE TABLE IF NOT EXISTS film_category (
     ,category_id INT NOT NULL
     ,last_update DATETIME NOT NULL DEFAULT (DATETIME('now'))
 
+    ,PRIMARY KEY (film_id, category_id)
     ,FOREIGN KEY (film_id) REFERENCES film (film_id) ON UPDATE CASCADE ON DELETE RESTRICT
     ,FOREIGN KEY (category_id) REFERENCES category (category_id) ON UPDATE CASCADE ON DELETE RESTRICT
 );

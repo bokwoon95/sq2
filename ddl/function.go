@@ -15,7 +15,7 @@ type Function struct {
 	ArgNames       []string `json:",omitempty"`
 	ArgTypes       []string `json:",omitempty"`
 	SQL            string   `json:",omitempty"`
-	IsDependent    bool     `json:",omitempty"`
+	IsIndependent    bool     `json:",omitempty"`
 }
 
 func (fun *Function) populateFunctionInfo(dialect string) error {
