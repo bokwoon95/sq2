@@ -8,7 +8,6 @@ import (
 	"github.com/bokwoon95/sq"
 )
 
-// TODO: functions should be dependent by default
 type MigrationCommands struct {
 	Dialect                     string
 	SchemaCommands              []Command
