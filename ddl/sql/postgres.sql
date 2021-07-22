@@ -1,10 +1,11 @@
-DROP VIEW IF EXISTS staff_list;
-DROP VIEW IF EXISTS sales_by_store;
-DROP VIEW IF EXISTS sales_by_film_category;
-DROP VIEW IF EXISTS nicer_but_slower_film_list;
-DROP VIEW IF EXISTS film_list;
-DROP VIEW IF EXISTS customer_list;
-DROP VIEW IF EXISTS actor_info;
+DROP FUNCTION IF EXISTS refresh_full_address() CASCADE;
+DROP VIEW IF EXISTS staff_list CASCADE;
+DROP VIEW IF EXISTS sales_by_store CASCADE;
+DROP VIEW IF EXISTS sales_by_film_category CASCADE;
+DROP VIEW IF EXISTS nicer_but_slower_film_list CASCADE;
+DROP VIEW IF EXISTS film_list CASCADE;
+DROP VIEW IF EXISTS customer_list CASCADE;
+DROP VIEW IF EXISTS actor_info CASCADE;
 DROP TABLE IF EXISTS payment CASCADE;
 DROP TABLE IF EXISTS rental CASCADE;
 DROP TABLE IF EXISTS inventory CASCADE;
@@ -380,6 +381,25 @@ FROM
     JOIN country AS co ON co.country_id = ci.country_id
 ;
 
+CREATE MATERIALIZED VIEW IF NOT EXISTS full_address AS
+SELECT
+    country.country_id
+    ,city.city_id
+    ,address.address_id
+    ,country.country
+    ,city.city
+    ,address.address
+    ,address.address2
+    ,address.district
+    ,address.postal_code
+    ,address.phone
+    ,address.last_update
+FROM
+    address
+    JOIN city ON city.city_id = address.city_id
+    JOIN country ON country.country_id = city.country_id
+;
+
 CREATE INDEX IF NOT EXISTS actor_last_name_idx ON actor (last_name);
 
 CREATE INDEX IF NOT EXISTS city_country_id_idx ON city (country_id);
@@ -425,6 +445,13 @@ CREATE INDEX IF NOT EXISTS rental_staff_id_idx ON rental (staff_id);
 CREATE INDEX IF NOT EXISTS payment_customer_id_idx ON payment (customer_id);
 
 CREATE INDEX IF NOT EXISTS payment_staff_id_idx ON payment (staff_id);
+
+CREATE UNIQUE INDEX IF NOT EXISTS full_address_country_id_city_id_address_id_idx ON full_address (country_id, city_id, address_id) INCLUDE (country, city, address, address2);
+
+CREATE FUNCTION refresh_full_address() RETURNS trigger AS $$ BEGIN
+    REFRESH MATERIALIZED VIEW CONCURRENTLY full_address;
+    RETURN NULL;
+END; $$ LANGUAGE plpgsql;
 
 CREATE TRIGGER actor_last_update_before_update_trg BEFORE UPDATE ON actor
 FOR EACH ROW EXECUTE PROCEDURE last_update_trg();
@@ -473,6 +500,15 @@ FOR EACH ROW EXECUTE PROCEDURE last_update_trg();
 
 CREATE TRIGGER rental_last_update_before_update_trg BEFORE UPDATE ON rental
 FOR EACH ROW EXECUTE PROCEDURE last_update_trg();
+
+CREATE TRIGGER address_refresh_full_address AFTER INSERT OR UPDATE OR DELETE OR TRUNCATE ON address
+FOR EACH STATEMENT EXECUTE PROCEDURE refresh_full_address();
+
+CREATE TRIGGER city_refresh_full_address AFTER INSERT OR UPDATE OR DELETE OR TRUNCATE ON city
+FOR EACH STATEMENT EXECUTE PROCEDURE refresh_full_address();
+
+CREATE TRIGGER country_refresh_full_address AFTER INSERT OR UPDATE OR DELETE OR TRUNCATE ON country
+FOR EACH STATEMENT EXECUTE PROCEDURE refresh_full_address();
 
 ALTER TABLE IF EXISTS city
     ADD CONSTRAINT city_country_id_fkey FOREIGN KEY (country_id) REFERENCES country ON UPDATE CASCADE ON DELETE RESTRICT

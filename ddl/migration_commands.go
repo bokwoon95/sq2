@@ -8,18 +8,19 @@ import (
 	"github.com/bokwoon95/sq"
 )
 
+// TODO: functions should be dependent by default
 type MigrationCommands struct {
-	Dialect                   string
-	SchemaCommands            []Command
-	ExtensionCommands         []Command
-	EnumCommands              []Command
-	FunctionCommands          []Command
-	TableCommands             []Command
-	ViewCommands              []Command
-	IndexCommands             []Command
-	DependentFunctionCommands []Command
-	TriggerCommands           []Command
-	ForeignKeyCommands        []Command
+	Dialect                     string
+	SchemaCommands              []Command
+	ExtensionCommands           []Command
+	EnumCommands                []Command
+	IndependentFunctionCommands []Command
+	TableCommands               []Command
+	ViewCommands                []Command
+	IndexCommands               []Command
+	FunctionCommands            []Command
+	TriggerCommands             []Command
+	ForeignKeyCommands          []Command
 }
 
 func (c *Catalog) Commands() *MigrationCommands {
@@ -55,14 +56,13 @@ func (c *Catalog) Commands() *MigrationCommands {
 			if hasForeignKey {
 				m.ForeignKeyCommands = append(m.ForeignKeyCommands, alterTableCmd)
 			}
-			var indexCmds []Command
 			for _, index := range table.Indexes {
 				createIndexCmd := &CreateIndexCommand{Index: index}
 				if c.Dialect == sq.DialectMySQL {
 					createTableCmd.CreateIndexCommands = append(createTableCmd.CreateIndexCommands, *createIndexCmd)
 				} else {
 					createIndexCmd.CreateIfNotExists = true
-					indexCmds = append(indexCmds, createIndexCmd)
+					m.IndexCommands = append(m.IndexCommands, createIndexCmd)
 				}
 			}
 			for _, trigger := range table.Triggers {
@@ -70,7 +70,6 @@ func (c *Catalog) Commands() *MigrationCommands {
 				m.TriggerCommands = append(m.TriggerCommands, createTriggerCmd)
 			}
 			m.TableCommands = append(m.TableCommands, createTableCmd)
-			m.TableCommands = append(m.TableCommands, indexCmds...)
 		}
 		for _, view := range schema.Views {
 			createViewCmd := &CreateViewCommand{View: view}
@@ -84,7 +83,11 @@ func (c *Catalog) Commands() *MigrationCommands {
 		}
 		for _, function := range schema.Functions {
 			createFunctionCmd := &CreateFunctionCommand{Function: function}
-			m.FunctionCommands = append(m.FunctionCommands, createFunctionCmd)
+			if function.IsIndependent {
+				m.IndependentFunctionCommands = append(m.IndependentFunctionCommands, createFunctionCmd)
+			} else {
+				m.FunctionCommands = append(m.FunctionCommands, createFunctionCmd)
+			}
 		}
 	}
 	return m
@@ -94,9 +97,11 @@ func (m *MigrationCommands) WriteSQL(w io.Writer) error {
 	var written bool
 	for _, cmds := range [][]Command{
 		m.SchemaCommands,
-		m.FunctionCommands,
+		m.IndependentFunctionCommands,
 		m.TableCommands,
 		m.ViewCommands,
+		m.IndexCommands,
+		m.FunctionCommands,
 		m.TriggerCommands,
 		m.ForeignKeyCommands,
 	} {
@@ -129,9 +134,10 @@ func (m *MigrationCommands) Exec(db sq.DB) error {
 func (m *MigrationCommands) ExecContext(ctx context.Context, db sq.DB) error {
 	for _, cmds := range [][]Command{
 		m.SchemaCommands,
-		m.FunctionCommands,
+		m.IndependentFunctionCommands,
 		m.TableCommands,
 		m.ViewCommands,
+		m.IndexCommands,
 		m.TriggerCommands,
 		m.ForeignKeyCommands,
 	} {
