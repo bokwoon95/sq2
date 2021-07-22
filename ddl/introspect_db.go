@@ -457,6 +457,40 @@ func introspectSQLite(ctx context.Context, db sq.DB, catalog *Catalog) error {
 	if err != nil {
 		return err
 	}
+	var updatedColumn bool
+	// TODO: omfg if I had a slice of pointers instead, I wouldn't have to do
+	// this cascading writeback crap at all. The question is how likely would
+	// the user have to write code like this. If often, I'd rather they deal
+	// with pointers instead and take the performance hit.
+	for i, schema := range catalog.Schemas {
+		updatedColumn = false
+		for j, tbl := range schema.Tables {
+			tbl.RefreshColumnCache()
+			for _, constraint := range tbl.Constraints {
+				if len(constraint.Columns) != 1 {
+					continue
+				}
+				n := tbl.CachedColumnPosition(constraint.Columns[0])
+				if n < 0 {
+					continue
+				}
+				switch constraint.ConstraintType {
+				case PRIMARY_KEY:
+					updatedColumn = true
+					tbl.Columns[n].IsPrimaryKey = true
+				case UNIQUE:
+					updatedColumn = true
+					tbl.Columns[n].IsUnique = true
+				}
+			}
+			if updatedColumn {
+				schema.Tables[j] = tbl
+			}
+		}
+		if updatedColumn {
+			catalog.Schemas[i] = schema
+		}
+	}
 	return nil
 }
 
