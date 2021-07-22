@@ -9,13 +9,15 @@ import (
 )
 
 type MigrationCommands struct {
-	Dialect            string
-	SchemaCommands     []Command
-	FunctionCommands   []Command
-	TableCommands      []Command
-	ViewCommands       []Command
-	TriggerCommands    []Command
-	ForeignKeyCommands []Command
+	Dialect                   string
+	SchemaCommands            []Command
+	ExtensionCommands         []Command
+	FunctionCommands          []Command
+	TableCommands             []Command
+	ViewCommands              []Command
+	DependentFunctionCommands []Command
+	TriggerCommands           []Command
+	ForeignKeyCommands        []Command
 }
 
 func (c *Catalog) Commands() *MigrationCommands {
