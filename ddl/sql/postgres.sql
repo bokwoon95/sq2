@@ -415,7 +415,7 @@ CREATE INDEX IF NOT EXISTS film_actor_film_id_idx ON film_actor (film_id);
 
 CREATE INDEX IF NOT EXISTS film_actor_review_review_title ON film_actor_review (review_title text_pattern_ops);
 
-CREATE INDEX IF NOT EXISTS film_actor_review_review_body ON film_actor_review (review_title COLLATE "C");
+CREATE INDEX IF NOT EXISTS film_actor_review_review_body ON film_actor_review (review_body COLLATE "C");
 
 CREATE INDEX IF NOT EXISTS film_actor_review_misc ON film_actor_review (film_id, (SUBSTR(review_body, 2, 10)), (review_title || ' abcd'), ((metadata->>'score')::INT)) INCLUDE (actor_id, last_update) WHERE last_delete IS NULL;
 
@@ -501,13 +501,13 @@ FOR EACH ROW EXECUTE PROCEDURE last_update_trg();
 CREATE TRIGGER rental_last_update_before_update_trg BEFORE UPDATE ON rental
 FOR EACH ROW EXECUTE PROCEDURE last_update_trg();
 
-CREATE TRIGGER address_refresh_full_address AFTER INSERT OR UPDATE OR DELETE OR TRUNCATE ON address
+CREATE TRIGGER address_refresh_full_address_trg AFTER INSERT OR UPDATE OR DELETE OR TRUNCATE ON address
 FOR EACH STATEMENT EXECUTE PROCEDURE refresh_full_address();
 
-CREATE TRIGGER city_refresh_full_address AFTER INSERT OR UPDATE OR DELETE OR TRUNCATE ON city
+CREATE TRIGGER city_refresh_full_address_trg AFTER INSERT OR UPDATE OR DELETE OR TRUNCATE ON city
 FOR EACH STATEMENT EXECUTE PROCEDURE refresh_full_address();
 
-CREATE TRIGGER country_refresh_full_address AFTER INSERT OR UPDATE OR DELETE OR TRUNCATE ON country
+CREATE TRIGGER country_refresh_full_address_trg AFTER INSERT OR UPDATE OR DELETE OR TRUNCATE ON country
 FOR EACH STATEMENT EXECUTE PROCEDURE refresh_full_address();
 
 ALTER TABLE IF EXISTS city

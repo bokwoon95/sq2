@@ -1,12 +1,4 @@
 next up:
-FEATURE: postgres exclude constraints (rental inventory id cannot have overlapping ranges)
-FEATURE: materialized views + triggers + indexes ✓
-FEATURE: INSTEAD OF triggers ✓
-FEATURE: covering indexes
-FEATURE: composite primary keys and foreign keys and unique keys
-FEATURE: unique indexes
-Try to integrate these into the main schema, rather than in a dummy table.
-
 bah gawd. extensions. enums.
 
 (*Function).populateFunctionInfo needs to detect return type, since databases
