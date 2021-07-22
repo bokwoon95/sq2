@@ -155,14 +155,22 @@ func (cmd CreateViewCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *
 }
 
 type DropViewCommand struct {
-	DropIfExists bool
-	ViewSchemas  []string
-	ViewNames    []string
-	DropCascade  bool
+	DropIfExists   bool
+	IsMaterialized bool
+	ViewSchemas    []string
+	ViewNames      []string
+	DropCascade    bool
 }
 
 func (cmd DropViewCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
-	buf.WriteString("DROP VIEW ")
+	buf.WriteString("DROP ")
+	if cmd.IsMaterialized {
+		if dialect != sq.DialectPostgres {
+			return fmt.Errorf("%s does not support (dropping) materialized views", dialect)
+		}
+		buf.WriteString("MATERIALIZED ")
+	}
+	buf.WriteString("VIEW ")
 	if cmd.DropIfExists {
 		buf.WriteString("IF EXISTS ")
 	}
