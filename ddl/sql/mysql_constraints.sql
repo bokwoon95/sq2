@@ -42,8 +42,7 @@ FROM
     JOIN information_schema.key_column_usage AS kcu USING (constraint_schema, constraint_name, table_name)
     LEFT JOIN information_schema.referential_constraints AS rc USING (constraint_schema, constraint_name)
 WHERE
-    tc.table_schema NOT IN ('mysql', 'performance_schema', 'sys')
-    AND tc.constraint_type IN ('PRIMARY KEY', 'FOREIGN KEY', 'UNIQUE')
+    tc.constraint_type IN ('PRIMARY KEY', 'FOREIGN KEY', 'UNIQUE')
 GROUP BY
     tc.table_schema
     ,tc.table_name
@@ -77,7 +76,7 @@ SELECT
 FROM
     information_schema.table_constraints AS tc
     JOIN information_schema.check_constraints AS cc USING (constraint_schema, constraint_name)
-WHERE
-    tc.table_schema NOT IN ('mysql', 'performance_schema', 'sys')
 ) AS tmp
+WHERE
+    table_schema NOT IN ('mysql', 'performance_schema', 'sys')
 ;

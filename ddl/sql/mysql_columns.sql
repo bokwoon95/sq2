@@ -18,6 +18,6 @@ FROM
     information_schema.columns
     JOIN information_schema.tables USING (table_schema, table_name)
 WHERE
-    columns.table_schema NOT IN ('mysql', 'performance_schema', 'sys')
-    AND tables.table_type = 'BASE TABLE'
+    tables.table_type = 'BASE TABLE'
+    AND columns.table_schema NOT IN ('mysql', 'performance_schema', 'sys')
 ;
