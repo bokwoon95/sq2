@@ -6,5 +6,6 @@ FROM
     information_schema.tables
 WHERE
     table_type = 'BASE TABLE'
-    AND table_schema NOT IN ('pg_catalog', 'information_schema')
+    AND table_schema <> 'information_schema'
+    AND table_schema NOT LIKE 'pg_%'
 ;

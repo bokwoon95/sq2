@@ -21,5 +21,6 @@ FROM
     pg_catalog.pg_matviews
 ) AS tmp
 WHERE
-    view_schema NOT IN ('pg_catalog', 'information_schema')
+    view_schema <> 'information_schema'
+    AND view_schema NOT LIKE 'pg_%'
 ;

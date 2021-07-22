@@ -149,6 +149,7 @@ FROM
     JOIN pg_catalog.pg_namespace AS constraint_namespace ON constraint_namespace.oid = pg_constraint.connamespace
 WHERE
     pg_constraint.contype = 'c'
-    AND table_namespace.nspname NOT IN ('pg_catalog', 'information_schema')
+    AND table_namespace.nspname <> 'information_schema'
+    AND table_namespace.nspname NOT LIKE 'pg_%'
 ) AS tmp
 ;

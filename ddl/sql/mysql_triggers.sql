@@ -8,5 +8,5 @@ SELECT
 FROM
     information_schema.triggers
 WHERE
-    event_object_schema NOT IN ('mysql', 'performance_schema', 'sys')
+    event_object_schema NOT IN ('mysql', 'information_schema', 'performance_schema', 'sys')
 ;

@@ -78,5 +78,5 @@ FROM
     JOIN information_schema.check_constraints AS cc USING (constraint_schema, constraint_name)
 ) AS tmp
 WHERE
-    table_schema NOT IN ('mysql', 'performance_schema', 'sys')
+    table_schema NOT IN ('mysql', 'information_schema', 'performance_schema', 'sys')
 ;

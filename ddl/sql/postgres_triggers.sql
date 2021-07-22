@@ -10,6 +10,7 @@ FROM
     JOIN pg_catalog.pg_class AS table_info ON table_info.oid = pg_trigger.tgrelid
     JOIN pg_catalog.pg_namespace AS table_namespace ON table_namespace.oid = table_info.relnamespace
 WHERE
-    table_namespace.nspname NOT IN ('pg_catalog', 'information_schema', 'pg_toast')
-    AND NOT pg_trigger.tgisinternal
+    NOT pg_trigger.tgisinternal
+    AND table_namespace.nspname <> 'information_schema'
+    AND table_namespace.nspname NOT LIKE 'pg_%'
 ;
