@@ -1,10 +1,10 @@
-DROP VIEW IF EXISTS staff_list;
-DROP VIEW IF EXISTS sales_by_store;
-DROP VIEW IF EXISTS sales_by_film_category;
-DROP VIEW IF EXISTS nicer_but_slower_film_list;
-DROP VIEW IF EXISTS film_list;
-DROP VIEW IF EXISTS customer_list;
-DROP VIEW IF EXISTS actor_info;
+DROP VIEW IF EXISTS public.staff_list;
+DROP VIEW IF EXISTS public.sales_by_store;
+DROP VIEW IF EXISTS public.sales_by_film_category;
+DROP VIEW IF EXISTS public.nicer_but_slower_film_list;
+DROP VIEW IF EXISTS public.film_list;
+DROP VIEW IF EXISTS public.customer_list;
+DROP VIEW IF EXISTS public.actor_info;
 DROP TABLE IF EXISTS public.dummy_table_2 CASCADE;
 DROP TABLE IF EXISTS public.dummy_table CASCADE;
 DROP TABLE IF EXISTS public.payment CASCADE;
@@ -139,7 +139,7 @@ CREATE INDEX IF NOT EXISTS film_actor_film_id_idx ON public.film_actor (film_id)
 CREATE TABLE IF NOT EXISTS public.film_actor_review (
     film_id INT
     ,actor_id INT
-    ,review_title TEXT NOT NULL DEFAULT '' COLLATE "C"-- collate "C", collate nocase, collate latin1_swedish_ci
+    ,review_title TEXT NOT NULL DEFAULT '' COLLATE "C" -- collate "C", collate nocase, collate latin1_swedish_ci
     ,review_body TEXT NOT NULL DEFAULT ''
     ,metadata JSON DEFAULT '{}'
     ,last_update TIMESTAMPTZ NOT NULL DEFAULT NOW()
@@ -234,8 +234,7 @@ CREATE TABLE IF NOT EXISTS public.rental (
     ,last_update TIMESTAMPTZ NOT NULL DEFAULT NOW()
 
     ,CONSTRAINT rental_rental_id_pkey PRIMARY KEY (rental_id)
-    ,CONSTRAINT rental_range_excl EXCLUDE USING GIST (int4range(inventory_id, inventory_id, '[]') WITH =, tstzrange(rental_date, return_date, '[]') WITH &&)
-    -- I don't want to `CREATE EXTENSION btree_gist` 🙄, so workaround is to convert INT into a range as described here https://dba.stackexchange.com/a/222615
+    ,CONSTRAINT rental_range_excl EXCLUDE USING GIST (inventory_id WITH =, tstzrange(rental_date, return_date, '[]') WITH &&)
 );
 
 CREATE UNIQUE INDEX IF NOT EXISTS rental_rental_date_inventory_id_customer_id_idx ON public.rental (rental_date, inventory_id, customer_id);
