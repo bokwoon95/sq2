@@ -7,7 +7,7 @@ FEATURE: composite primary keys and foreign keys and unique keys
 FEATURE: unique indexes
 Try to integrate these into the main schema, rather than in a dummy table.
 
-bah gawd. extensions.
+bah gawd. extensions. enums.
 
 (*Function).populateFunctionInfo needs to detect return type, since databases
 can give us that information

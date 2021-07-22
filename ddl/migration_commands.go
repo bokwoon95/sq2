@@ -12,9 +12,11 @@ type MigrationCommands struct {
 	Dialect                   string
 	SchemaCommands            []Command
 	ExtensionCommands         []Command
+	EnumCommands              []Command
 	FunctionCommands          []Command
 	TableCommands             []Command
 	ViewCommands              []Command
+	IndexCommands             []Command
 	DependentFunctionCommands []Command
 	TriggerCommands           []Command
 	ForeignKeyCommands        []Command
