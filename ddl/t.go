@@ -101,7 +101,9 @@ func sprintf(dialect string, format string, values []interface{}, excludedTableQ
 }
 
 func (t *T) Sprintf(format string, values ...interface{}) string {
-	expr, err := sprintf(t.dialect, format, values, nil)
+	expr, err := sprintf(t.dialect, format, values, []string{t.tbl.TableName})
+	// TODO: is excluding the table name okay here? What if I use a Sprintf in a
+	// trigger?
 	if err != nil {
 		panicErr(fmt.Errorf("Sprintf: %w", err))
 	}

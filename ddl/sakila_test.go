@@ -801,7 +801,7 @@ func json_array_agg(value interface{}) sq.CustomField {
 	return sq.FieldfDialect(map[string]string{
 		"default":        "jsonb_agg({})",
 		sq.DialectSQLite: "json_group_array({})",
-		sq.DialectMySQL:  "jsonb_arrayagg({})",
+		sq.DialectMySQL:  "json_arrayagg({})",
 	}, value)
 }
 
