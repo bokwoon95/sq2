@@ -1,11 +1,20 @@
 next up:
-*_functions.sql
 FEATURE: postgres exclude constraints
 FEATURE: materialized views + triggers + indexes
+FEATURE: INSTEAD OF triggers
 FEATURE: covering indexes
 FEATURE: composite primary keys and foreign keys and unique keys
 FEATURE: unique indexes
 Try to integrate these into the main schema, rather than in a dummy table.
+
+(*Function).populateFunctionInfo needs to detect return type, since databases
+can give us that information
+
+All commands need to exclude the semicolon. The semicolon will be inserted by
+(*MigrationCommands).WriteSQL. For MySQL triggers and MySQL
+functions/pocedures, (*MigrationCommands).WriteSQL will write in the
+appropriate `DELIMITER ;;` command before and after the
+triggers/functions/procedures have been defined.
 
 Also: TYPEs, DOMAINs, ENUMs. aaargh.
 I don't need to add these now because the sakila database doesn't use them (I'm
