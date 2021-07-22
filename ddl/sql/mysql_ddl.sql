@@ -13,6 +13,7 @@ DROP TABLE IF EXISTS customer CASCADE;
 DROP TABLE IF EXISTS store CASCADE;
 DROP TABLE IF EXISTS staff CASCADE;
 DROP TABLE IF EXISTS film_category CASCADE;
+DROP TABLE IF EXISTS film_actor_review CASCADE;
 DROP TABLE IF EXISTS film_actor CASCADE;
 DROP TABLE IF EXISTS film_text CASCADE;
 DROP TABLE IF EXISTS film CASCADE;
@@ -116,18 +117,35 @@ CREATE TABLE IF NOT EXISTS film_text (
 );
 
 CREATE TABLE IF NOT EXISTS film_actor (
-    actor_id INT NOT NULL
-    ,film_id INT NOT NULL
+    film_id INT NOT NULL
+    ,actor_id INT NOT NULL
     ,last_update TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 
-    ,UNIQUE INDEX film_actor_actor_id_film_id_idx (actor_id, film_id)
+    ,PRIMARY KEY (film_id, actor_id)
+    ,UNIQUE INDEX film_actor_film_id_actor_id_idx (film_id, actor_id)
     ,INDEX film_actor_film_id_idx (film_id)
+);
+
+CREATE TABLE IF NOT EXISTS film_actor_review (
+    film_id INT
+    ,actor_id INT
+    ,review_title VARCHAR(50) NOT NULL DEFAULT '' COLLATE latin1_swedish_ci -- collate "C", collate nocase, collate latin1_swedish_ci
+    ,review_body VARCHAR(255) NOT NULL DEFAULT ''
+    ,metadata JSON
+    ,last_update TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    ,last_delete TIMESTAMP
+
+    ,PRIMARY KEY (film_id, actor_id)
+    ,CONSTRAINT film_actor_review_check CHECK (LENGTH(review_body) > LENGTH(review_title))
+    ,INDEX film_actor_review_misc (film_id, (SUBSTR(review_body, 2, 10)), (CONCAT(review_title, ' abcd')), (CAST(metadata->>'$.score' AS SIGNED)))
 );
 
 CREATE TABLE IF NOT EXISTS film_category (
     film_id INT NOT NULL
     ,category_id INT NOT NULL
     ,last_update TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+
+    ,PRIMARY KEY (film_id, category_id)
 );
 
 CREATE TABLE IF NOT EXISTS staff (
@@ -417,6 +435,10 @@ ALTER TABLE film
 ALTER TABLE film_actor
     ADD CONSTRAINT film_actor_actor_id_fkey FOREIGN KEY (actor_id) REFERENCES actor (actor_id) ON UPDATE CASCADE ON DELETE RESTRICT
     ,ADD CONSTRAINT film_actor_film_id_fkey FOREIGN KEY (film_id) REFERENCES film (film_id) ON UPDATE CASCADE ON DELETE RESTRICT
+;
+
+ALTER TABLE film_actor_review
+    ADD CONSTRAINT film_actor_review_film_id_actor_id_fkey FOREIGN KEY (film_id, actor_id) REFERENCES film_actor (film_id, actor_id) ON UPDATE CASCADE ON DELETE RESTRICT
 ;
 
 ALTER TABLE film_category
