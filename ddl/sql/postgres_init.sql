@@ -399,7 +399,22 @@ ORDER BY
     ,ci.city
 ;
 
-CREATE OR REPLACE VIEW public.staff_list AS SELECT s.staff_id AS id, s.first_name || ' ' || s.last_name AS name, a.address, a.postal_code AS "zip code", a.phone, ci.city, co.country, s.store_id AS sid FROM public.staff AS s JOIN public.address AS a ON a.address_id = s.address_id JOIN public.city AS ci ON ci.city_id = a.city_id JOIN public.country AS co ON co.country_id = ci.country_id;
+CREATE OR REPLACE VIEW public.staff_list AS
+SELECT
+    s.staff_id AS id
+    ,s.first_name || ' ' || s.last_name AS name
+    ,a.address
+    ,a.postal_code AS "zip code"
+    ,a.phone
+    ,ci.city
+    ,co.country
+    ,s.store_id AS sid
+FROM
+    public.staff AS s
+    JOIN public.address AS a ON a.address_id = s.address_id
+    JOIN public.city AS ci ON ci.city_id = a.city_id
+    JOIN public.country AS co ON co.country_id = ci.country_id
+;
 
 CREATE OR REPLACE FUNCTION last_update_trg() RETURNS trigger AS $$ BEGIN
     NEW.last_update = NOW();
