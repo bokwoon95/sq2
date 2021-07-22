@@ -18,6 +18,7 @@ type Table struct {
 	VirtualTable     string       `json:",omitempty"`
 	VirtualTableArgs []string     `json:",omitempty"`
 	SQL              string       `json:",omitempty"`
+	Ignore           bool         `json:",omitempty"`
 	columnCache      map[string]int
 	constraintCache  map[string]int
 	indexCache       map[string]int

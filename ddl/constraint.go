@@ -27,6 +27,7 @@ type Constraint struct {
 	Predicate           string   `json:",omitempty"`
 	IsDeferrable        bool     `json:",omitempty"`
 	IsInitiallyDeferred bool     `json:",omitempty"`
+	Ignore              bool     `json:",omitempty"`
 }
 
 type AddConstraintCommand struct {
