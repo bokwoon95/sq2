@@ -124,7 +124,7 @@ CREATE TABLE IF NOT EXISTS film_actor_review (
     ,actor_id INT
     ,review_title TEXT NOT NULL DEFAULT '' COLLATE "C" -- collate "C", collate nocase, collate latin1_swedish_ci
     ,review_body TEXT NOT NULL DEFAULT ''
-    ,metadata JSONB DEFAULT '{}'
+    ,metadata JSONB
     ,last_update TIMESTAMPTZ NOT NULL DEFAULT NOW()
     ,last_delete TIMESTAMPTZ
 
@@ -173,7 +173,6 @@ CREATE TABLE IF NOT EXISTS customer (
     ,email TEXT
     ,address_id INT NOT NULL
     ,active BOOLEAN NOT NULL DEFAULT TRUE
-    ,data JSONB
     ,create_date TIMESTAMPTZ NOT NULL DEFAULT NOW()
     ,last_update TIMESTAMPTZ DEFAULT NOW()
 

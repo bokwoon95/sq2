@@ -295,9 +295,10 @@ func (tbl FILM) DDL(dialect string, t *T) {
 	case sq.DialectSQLite:
 		New := func(field sq.Field) sq.Field { return sq.Literal("NEW." + field.GetName()) }
 		Old := func(field sq.Field) sq.Field { return sq.Literal("OLD." + field.GetName()) }
+		NameOnly := func(field sq.Field) sq.Field { return sq.Literal(field.GetName()) }
 		table := sq.Param("table", tbl)
 		ftsTable := sq.Param("ftsTable", FILM_TEXT)
-		ftsFields := sq.Param("ftsFields", sq.Fields{sq.Literal("ROWID"), FILM_TEXT.TITLE, FILM_TEXT.DESCRIPTION})
+		ftsFields := sq.Param("ftsFields", sq.Fields{sq.Literal("ROWID"), NameOnly(FILM_TEXT.TITLE), NameOnly(FILM_TEXT.DESCRIPTION)})
 		insertValues := sq.Param("insertValues", sq.Fields{New(tbl.FILM_ID), New(tbl.TITLE), New(tbl.DESCRIPTION)})
 		deleteValues := sq.Param("deleteValues", sq.Fields{Old(tbl.FILM_ID), Old(tbl.TITLE), Old(tbl.DESCRIPTION)})
 		t.Column(tbl.FULLTEXT).Ignore()
