@@ -1,9 +1,19 @@
 next up:
-*_views.sql
 *_functions.sql
 TODO: postgres exclude constraints
 TODO: materialized views + triggers + indexes
 TODO: covering indexes
+
+forget about offering users the options to slot in their own predicates.
+WithDB's behavior is fixed, take it or leave it. Instead, offer them a way to
+write their own CatalogOption function, leveraging the existing IntrospectQuery
+and MapColumns/MapTables/etc if necessary.
+
+omfg both postgres and mysql support functions AND stored procedures, so now
+I'd have to figure out how that looks from the user-definition side (in Go
+files) and the database-definition side (reading from the db).
+ALSO: functions may be user-defined aggregate functions or user-defined window
+functions. guh.
 
 ddl.go
 column_ddl.go | constraint_ddl.go | index_ddl.go

@@ -87,6 +87,8 @@ LOOP:
 				if len(tokens) == 0 {
 					return fmt.Errorf("argument #%d ('%s', %#v) is invalid", i+1, arg, tokens)
 				}
+				// TODO: some argTypes may be split into multiple words, like
+				// TIMESTAMP WITH TIME ZONE (how troublesome!)
 				fun.ArgTypes[i] = tokens[len(tokens)-1]
 				tokens = tokens[:len(tokens)-1]
 				for _, token := range tokens {
