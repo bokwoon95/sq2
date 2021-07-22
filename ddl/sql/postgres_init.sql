@@ -14,6 +14,7 @@ DROP TABLE IF EXISTS public.customer CASCADE;
 DROP TABLE IF EXISTS public.store CASCADE;
 DROP TABLE IF EXISTS public.staff CASCADE;
 DROP TABLE IF EXISTS public.film_category CASCADE;
+DROP TABLE IF EXISTS public.film_actor_review CASCADE;
 DROP TABLE IF EXISTS public.film_actor CASCADE;
 DROP TABLE IF EXISTS public.film CASCADE;
 DROP TABLE IF EXISTS public.language CASCADE;
@@ -23,6 +24,8 @@ DROP TABLE IF EXISTS public.country CASCADE;
 DROP TABLE IF EXISTS public.category CASCADE;
 DROP TABLE IF EXISTS public.actor CASCADE;
 DROP FUNCTION IF EXISTS public.last_update_trg();
+
+CREATE EXTENSION IF NOT EXISTS btree_gist;
 
 CREATE OR REPLACE FUNCTION last_update_trg() RETURNS trigger AS $$ BEGIN
     NEW.last_update = NOW();
@@ -122,23 +125,42 @@ CREATE INDEX IF NOT EXISTS film_original_language_id_idx ON public.film (origina
 CREATE INDEX IF NOT EXISTS film_fulltext_idx ON public.film USING GIST (fulltext);
 
 CREATE TABLE IF NOT EXISTS public.film_actor (
-    actor_id INT NOT NULL
-    ,film_id INT NOT NULL
+    film_id INT NOT NULL
+    ,actor_id INT NOT NULL
     ,last_update TIMESTAMPTZ NOT NULL DEFAULT NOW()
 
-    ,CONSTRAINT film_actor_actor_id_film_id_pkey PRIMARY KEY (actor_id, film_id)
+    ,CONSTRAINT film_actor_film_id_actor_id_pkey PRIMARY KEY (film_id, actor_id)
 );
 
-CREATE UNIQUE INDEX IF NOT EXISTS film_actor_actor_id_film_id_idx ON public.film_actor (actor_id, film_id);
+CREATE UNIQUE INDEX IF NOT EXISTS film_actor_actor_id_film_id_idx ON public.film_actor (film_id, actor_id);
 
 CREATE INDEX IF NOT EXISTS film_actor_film_id_idx ON public.film_actor (film_id);
+
+CREATE TABLE IF NOT EXISTS public.film_actor_review (
+    film_id INT
+    ,actor_id INT
+    ,review_title TEXT NOT NULL DEFAULT '' COLLATE "C"-- collate "C", collate nocase, collate latin1_swedish_ci
+    ,review_body TEXT NOT NULL DEFAULT ''
+    ,metadata JSON DEFAULT '{}'
+    ,last_update TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    ,last_delete TIMESTAMPTZ
+
+    ,CONSTRAINT film_actor_review_film_id_actor_id_pkey PRIMARY KEY (film_id, actor_id)
+    ,CONSTRAINT film_actor_review_check CHECK (LENGTH(review_body) > LENGTH(review_title))
+);
+
+CREATE INDEX IF NOT EXISTS film_actor_review_review_title ON public.film_actor_review (review_title text_pattern_ops);
+
+CREATE INDEX IF NOT EXISTS film_actor_review_review_body ON public.film_actor_review (review_title COLLATE "C");
+
+CREATE INDEX IF NOT EXISTS film_actor_review_misc ON public.film_actor_review (film_id, (SUBSTR(review_body, 2, 10)), (review_title || ' abcd'), ((metadata->>'score')::INT)) INCLUDE (actor_id, last_update) WHERE last_delete IS NULL;
 
 CREATE TABLE IF NOT EXISTS public.film_category (
     film_id INT NOT NULL
     ,category_id INT NOT NULL
     ,last_update TIMESTAMPTZ NOT NULL DEFAULT NOW()
 
-    ,CONSTRAINT film_category_film_id_category_id_pkey PRIMARY KEY (film_id, category_id)
+    ,CONSTRAINT film_category_film_id_category_id_key UNIQUE (film_id, category_id)
 );
 
 CREATE TABLE IF NOT EXISTS public.staff (
@@ -212,6 +234,8 @@ CREATE TABLE IF NOT EXISTS public.rental (
     ,last_update TIMESTAMPTZ NOT NULL DEFAULT NOW()
 
     ,CONSTRAINT rental_rental_id_pkey PRIMARY KEY (rental_id)
+    ,CONSTRAINT rental_range_excl EXCLUDE USING GIST (int4range(inventory_id, inventory_id, '[]') WITH =, tstzrange(rental_date, return_date, '[]') WITH &&)
+    -- I don't want to `CREATE EXTENSION btree_gist` 🙄, so workaround is to convert INT into a range as described here https://dba.stackexchange.com/a/222615
 );
 
 CREATE UNIQUE INDEX IF NOT EXISTS rental_rental_date_inventory_id_customer_id_idx ON public.rental (rental_date, inventory_id, customer_id);
@@ -236,30 +260,6 @@ CREATE TABLE IF NOT EXISTS public.payment (
 CREATE INDEX IF NOT EXISTS payment_customer_id_idx ON public.payment (customer_id);
 
 CREATE INDEX IF NOT EXISTS payment_staff_id_idx ON public.payment (staff_id);
-
-CREATE TABLE IF NOT EXISTS public.dummy_table (
-    id1 INT GENERATED ALWAYS AS IDENTITY
-    ,id2 TEXT
-    ,score INT
-    ,color TEXT DEFAULT 'red' COLLATE "C"
-    ,data JSONB
-
-    ,CONSTRAINT dummy_table_id1_id2_pkey PRIMARY KEY (id1, id2)
-    ,CONSTRAINT dummy_table_score_color_key UNIQUE (score, color)
-    ,CONSTRAINT dummy_table_score_positive_check CHECK (score > 0)
-    ,CONSTRAINT dummy_table_score_id1_greater_than_check CHECK (score > id1)
-);
-
-CREATE INDEX IF NOT EXISTS dummy_table_complex_expr_idx ON public.dummy_table (score, (SUBSTR(color, 1, 2)), (color || ' abcd'), ((data->>'age')::INT)) WHERE color = 'red';
-
-CREATE INDEX IF NOT EXISTS dummy_table_id2_idx ON public.dummy_table (id2 COLLATE "C");
-
-CREATE INDEX IF NOT EXISTS dummy_table_color_idx ON public.dummy_table (color text_pattern_ops);
-
-CREATE TABLE IF NOT EXISTS public.dummy_table_2 (
-    id1 INT
-    ,id2 TEXT
-);
 
 CREATE OR REPLACE VIEW public.actor_info AS
 SELECT
@@ -454,6 +454,9 @@ FOR EACH ROW EXECUTE PROCEDURE tsvector_update_trigger(fulltext, 'pg_catalog.eng
 CREATE TRIGGER film_actor_last_update_before_update_trg BEFORE UPDATE ON public.film_actor
 FOR EACH ROW EXECUTE PROCEDURE last_update_trg();
 
+CREATE TRIGGER film_actor_review_last_update_before_update_trg BEFORE UPDATE ON public.film_actor_review
+FOR EACH ROW EXECUTE PROCEDURE last_update_trg();
+
 CREATE TRIGGER film_category_last_update_before_update_trg BEFORE UPDATE ON public.film_category
 FOR EACH ROW EXECUTE PROCEDURE last_update_trg();
 
@@ -490,6 +493,10 @@ ALTER TABLE IF EXISTS public.film_actor
     ,ADD CONSTRAINT film_actor_film_id_fkey FOREIGN KEY (film_id) REFERENCES film (film_id) ON UPDATE CASCADE ON DELETE RESTRICT
 ;
 
+ALTER TABLE IF EXISTS public.film_actor_review
+    ADD CONSTRAINT film_actor_review_film_id_actor_id_fkey FOREIGN KEY (film_id, actor_id) REFERENCES film_actor (film_id, actor_id) ON UPDATE CASCADE ON DELETE RESTRICT
+;
+
 ALTER TABLE IF EXISTS public.film_category
     ADD CONSTRAINT film_category_film_id_fkey FOREIGN KEY (film_id) REFERENCES film (film_id) ON UPDATE CASCADE ON DELETE RESTRICT
     ,ADD CONSTRAINT film_category_category_id_fkey FOREIGN KEY (category_id) REFERENCES category (category_id) ON UPDATE CASCADE ON DELETE RESTRICT
@@ -524,8 +531,4 @@ ALTER TABLE IF EXISTS public.payment
     ADD CONSTRAINT payment_customer_id_fkey FOREIGN KEY (customer_id) REFERENCES customer (customer_id) ON UPDATE CASCADE ON DELETE RESTRICT
     ,ADD CONSTRAINT payment_staff_id_fkey FOREIGN KEY (staff_id) REFERENCES staff (staff_id) ON UPDATE CASCADE ON DELETE RESTRICT
     ,ADD CONSTRAINT payment_rental_id_fkey FOREIGN KEY (rental_id) REFERENCES rental (rental_id) ON UPDATE CASCADE ON DELETE RESTRICT
-;
-
-ALTER TABLE IF EXISTS public.dummy_table_2
-    ADD CONSTRAINT dummy_table_2_id1_id2_fkey FOREIGN KEY (id1, id2) REFERENCES dummy_table (id1, id2) ON UPDATE CASCADE ON DELETE RESTRICT
 ;

@@ -1059,11 +1059,13 @@ func (view NICER_BUT_SLOWER_FILM_LIST) DDL(dialect string, v *V) {
 					" || ' '" +
 					" || UPPER(SUBSTRING({2}, 1, 1))" +
 					" || LOWER(SUBSTRING({2}, 2))",
-				sq.DialectMySQL: "CONCAT(UPPER(SUBSTRING({1}, 1, 1))" +
+				sq.DialectMySQL: "CONCAT(" +
+					"UPPER(SUBSTRING({1}, 1, 1))" +
 					", LOWER(SUBSTRING({1}, 2))" +
 					", ' '" +
 					", UPPER(SUBSTRING({2}, 1, 1))" +
-					", LOWER(SUBSTRING({2}, 2)))",
+					", LOWER(SUBSTRING({2}, 2))" +
+					")",
 			}, ACTOR.FIRST_NAME, ACTOR.LAST_NAME)).As("actors"),
 		),
 	)

@@ -4,17 +4,19 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
+	"strings"
 
 	"github.com/bokwoon95/sq"
 )
 
 type Catalog struct {
-	Dialect       string   `json:",omitempty"`
-	CatalogName   string   `json:",omitempty"`
-	VersionString string   `json:",omitempty"`
-	VersionNum    [2]int   `json:",omitempty"`
-	DefaultSchema string   `json:",omitempty"`
-	Schemas       []Schema `json:",omitempty"`
+	Dialect       string      `json:",omitempty"`
+	CatalogName   string      `json:",omitempty"`
+	VersionString string      `json:",omitempty"`
+	VersionNum    [2]int      `json:",omitempty"`
+	DefaultSchema string      `json:",omitempty"`
+	Extensions    [][2]string `json:",omitempty"`
+	Schemas       []Schema    `json:",omitempty"`
 	schemaCache   map[string]int
 }
 
@@ -136,6 +138,20 @@ func NewCatalog(dialect string, opts ...CatalogOption) (Catalog, error) {
 
 func WithDB(db sq.DB) CatalogOption {
 	return func(c *Catalog) error {
+		return nil
+	}
+}
+
+func WithExtensions(extensions ...string) CatalogOption {
+	return func(c *Catalog) error {
+		for _, extension := range extensions {
+			ext := [2]string{extension, ""}
+			if i := strings.IndexByte(extension, '@'); i >= 0 {
+				ext[0], ext[1] = extension[:i], strings.TrimSpace(extension[i+1:])
+			}
+			ext[0] = strings.TrimSpace(ext[0])
+			c.Extensions = append(c.Extensions, ext)
+		}
 		return nil
 	}
 }
