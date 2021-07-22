@@ -5,8 +5,6 @@ DROP VIEW IF EXISTS nicer_but_slower_film_list;
 DROP VIEW IF EXISTS film_list;
 DROP VIEW IF EXISTS customer_list;
 DROP VIEW IF EXISTS actor_info;
-DROP TABLE IF EXISTS dummy_table_2;
-DROP TABLE IF EXISTS dummy_table;
 DROP TABLE IF EXISTS payment;
 DROP TABLE IF EXISTS rental;
 DROP TABLE IF EXISTS inventory;
@@ -15,6 +13,7 @@ DROP TABLE IF EXISTS store;
 DROP TABLE IF EXISTS staff;
 DROP TABLE IF EXISTS film_category;
 DROP TABLE IF EXISTS film_actor;
+DROP TABLE IF EXISTS film_actor_review;
 DROP TABLE IF EXISTS film_text;
 DROP TABLE IF EXISTS film;
 DROP TABLE IF EXISTS language;
@@ -108,6 +107,20 @@ CREATE TABLE IF NOT EXISTS film_actor (
 
     ,FOREIGN KEY (actor_id) REFERENCES actor (actor_id) ON UPDATE CASCADE ON DELETE RESTRICT
     ,FOREIGN KEY (film_id) REFERENCES film (film_id) ON UPDATE CASCADE ON DELETE RESTRICT
+);
+
+CREATE TABLE IF NOT EXISTS film_actor_review (
+    film_id INT
+    ,actor_id INT
+    ,review_title TEXT NOT NULL DEFAULT '' COLLATE nocase
+    ,review_body TEXT NOT NULL DEFAULT ''
+    ,metadata JSONB
+    ,last_update TIMESTAMPTZ NOT NULL DEFAULT (DATETIME('now'))
+    ,last_delete TIMESTAMPTZ
+
+    ,PRIMARY KEY (film_id, actor_id)
+    ,FOREIGN KEY (film_id, actor_id) REFERENCES film_actor (film_id, actor_id) ON UPDATE CASCADE ON DELETE RESTRICT
+    ,CHECK (LENGTH(review_body) > LENGTH(review_title))
 );
 
 CREATE TABLE IF NOT EXISTS film_category (
@@ -379,6 +392,8 @@ CREATE INDEX IF NOT EXISTS film_original_language_id_idx ON film (original_langu
 
 CREATE UNIQUE INDEX IF NOT EXISTS film_actor_actor_id_film_id_idx ON film_actor (actor_id, film_id);
 
+CREATE INDEX IF NOT EXISTS film_actor_review_misc ON film_actor_review (film_id, (SUBSTR(review_body, 2, 10)), (review_title || ' abcd'), (CAST(JSON_EXTRACT(metadata, '$.score') AS INT))) WHERE last_delete IS NULL;
+
 CREATE UNIQUE INDEX IF NOT EXISTS store_manager_staff_id_idx ON store (manager_staff_id);
 
 CREATE INDEX IF NOT EXISTS customer_store_id_idx ON customer (store_id);
@@ -446,6 +461,10 @@ END;
 
 CREATE TRIGGER film_actor_last_update_after_update_trg AFTER UPDATE ON film_actor BEGIN
     UPDATE film_actor SET last_update = DATETIME('now') WHERE ROWID = NEW.ROWID;
+END;
+
+CREATE TRIGGER film_actor_review_last_update_after_update_trg AFTER UPDATE ON film_actor_review BEGIN
+    UPDATE film_actor_review SET last_update = DATETIME('now') WHERE ROWID = NEW.ROWID;
 END;
 
 CREATE TRIGGER film_category_last_update_after_update_trg AFTER UPDATE ON film_category BEGIN
