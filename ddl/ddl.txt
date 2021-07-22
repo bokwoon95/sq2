@@ -1,8 +1,16 @@
 next up:
 *_functions.sql
-TODO: postgres exclude constraints
-TODO: materialized views + triggers + indexes
-TODO: covering indexes
+FEATURE: postgres exclude constraints
+FEATURE: materialized views + triggers + indexes
+FEATURE: covering indexes
+FEATURE: composite primary keys and foreign keys and unique keys
+FEATURE: unique indexes
+Try to integrate these into the main schema, rather than in a dummy table.
+
+Also: TYPEs, DOMAINs, ENUMs. aaargh.
+I don't need to add these now because the sakila database doesn't use them (I'm
+going to strip it out from the postgres schema too). Kick the can down the
+road, when the problem is more well-defined.
 
 forget about offering users the options to slot in their own predicates.
 WithDB's behavior is fixed, take it or leave it. Instead, offer them a way to
