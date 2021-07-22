@@ -19,5 +19,5 @@ FROM
     JOIN information_schema.tables USING (table_schema, table_name)
 WHERE
     tables.table_type = 'BASE TABLE'
-    AND columns.table_schema NOT IN ('mysql', 'performance_schema', 'sys')
+    AND columns.table_schema NOT IN ('mysql', 'information_schema', 'performance_schema', 'sys')
 ;

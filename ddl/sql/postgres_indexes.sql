@@ -22,7 +22,8 @@ WITH index_columns AS (
             pg_attribute.attrelid = pg_index.indrelid
             AND pg_attribute.attnum = columns.column_oid
     WHERE
-        table_namespace.nspname NOT IN ('pg_catalog', 'information_schema', 'pg_toast')
+        table_namespace.nspname <> 'information_schema'
+        AND table_namespace.nspname NOT LIKE 'pg_%'
 )
 SELECT
     table_schema

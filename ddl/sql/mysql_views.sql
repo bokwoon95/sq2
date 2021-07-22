@@ -6,5 +6,5 @@ SELECT
 FROM
     information_schema.views
 WHERE
-    table_schema NOT IN ('mysql', 'performance_schema', 'sys')
+    table_schema NOT IN ('mysql', 'information_schema', 'performance_schema', 'sys')
 ;

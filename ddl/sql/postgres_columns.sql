@@ -18,6 +18,7 @@ FROM
     information_schema.columns
     JOIN information_schema.tables USING (table_schema, table_name)
 WHERE
-    columns.table_schema NOT IN ('pg_catalog', 'information_schema')
-    AND tables.table_type = 'BASE TABLE'
+    tables.table_type = 'BASE TABLE'
+    AND columns.table_schema <> 'information_schema'
+    AND columns.table_schema NOT LIKE 'pg_%'
 ;

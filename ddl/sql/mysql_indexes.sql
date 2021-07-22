@@ -11,8 +11,8 @@ WITH indexed_columns AS (
     FROM
         information_schema.statistics
     WHERE
-        statistics.table_schema NOT IN ('mysql', 'performance_schema', 'sys')
-        AND statistics.index_name <> 'PRIMARY'
+        statistics.index_name <> 'PRIMARY'
+        AND statistics.table_schema NOT IN ('mysql', 'information_schema', 'performance_schema', 'sys')
 )
 SELECT
     table_schema

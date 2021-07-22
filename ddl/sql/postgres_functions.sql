@@ -5,7 +5,8 @@ SELECT
     ,pg_get_function_arguments(pg_proc.oid) AS raw_args
 FROM
     pg_proc
-    JOIN pg_namespace on pg_proc.pronamespace = pg_namespace.oid
+    JOIN pg_namespace ON pg_proc.pronamespace = pg_namespace.oid
 WHERE
-    pg_namespace.nspname not in ('pg_catalog', 'information_schema')
+    pg_namespace.nspname <> 'information_schema'
+    AND pg_namespace.nspname NOT LIKE 'pg_%'
 ;
