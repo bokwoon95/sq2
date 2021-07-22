@@ -38,6 +38,57 @@ schema.go
 catalog.go
 migration_commands.go
 
+add dialect modifier
+add ignore modifier
+UUIDField can be used with some media table like in devlab
+
+type MigrationOption int
+
+const (
+    CreateMissing  MigrationOption = 0b1
+    UpdateExisting MigrationOption = 0b10
+    DropExtraneous MigrationOption = 0b100
+    DropCascade    MigrationOption = 0b1000
+)
+
+// pass a tx in explicitly to run everything in a transaction
+
+// simple use case
+ddl.AutoMigrate(dialect, db, ddl.CreateMissing|ddl.UpdateExisting, WithTables(), ...)
+
+// clearing db before use
+ddl.AutoMigrate(dialect, db, ddl.DropExtraneous|ddl.DropCascade)
+ddl.AutoMigrate(dialect, db, ddl.CreateMissing, WithTables(), ...)
+
+// logging before executing
+gotCatalog, err := NewCatalog(dialect, WithDB(db))
+if err != nil {
+}
+wantCatalog, err := NewCatalog(dialect, WithTables(), ...)
+if err != nil {
+}
+migration, err := Migrate(ddl.CreateMissing|ddl.UpdateExisting, gotCatalog, wantCatalog)
+if err != nil {
+}
+migration.WriteSQL(os.Stdout)
+migration.ExecContext(ctx, db)
+
+// generating migrations
+gotCatalog, err := NewCatalog(dialect, WithDB(db))
+if err != nil {
+}
+wantCatalog, err := NewCatalog(dialect, WithTables(), ...)
+if err != nil {
+}
+upMigration, err := Migrate(ddl.CreateMissing|ddl.UpdateExisting, gotCatalog, wantCatalog)
+if err != nil {
+}
+downMigration, err := Migrate(ddl.DropExtraneous|ddl.UpdateExisting, wantCatalog, gotCatalog)
+if err != nil {
+}
+upMigration.WriteSQL(f1)
+downMigration.WriteSQL(f2)
+
 if the user eventually wants to expose the sq.Query produced by a DDLView, I
 can add a public .Query field to V. Make a new constructor called NewV(dialect
 string, view *View, wantColumns []string) to keep the fields private but allow

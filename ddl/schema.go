@@ -8,10 +8,11 @@ import (
 )
 
 type Schema struct {
-	SchemaName    string
-	Tables        []Table
-	Views         []View
-	Functions     []Function
+	SchemaName    string     `json:",omitempty"`
+	Tables        []Table    `json:",omitempty"`
+	Views         []View     `json:",omitempty"`
+	Functions     []Function `json:",omitempty"`
+	Ignore        bool       `json:",omitempty"`
 	tableCache    map[string]int
 	viewCache     map[string]int
 	functionCache map[string][]int

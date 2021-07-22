@@ -13,6 +13,7 @@ type Trigger struct {
 	TableName   string
 	TriggerName string
 	SQL         string
+	Ignore      bool `json:",omitempty"`
 }
 
 func (trg *Trigger) populateTriggerInfo(dialect string) error {

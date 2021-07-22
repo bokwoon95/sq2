@@ -18,6 +18,7 @@ type Index struct {
 	Exprs          []string `json:",omitempty"`
 	IncludeColumns []string `json:",omitempty"`
 	Predicate      string   `json:",omitempty"`
+	Ignore         bool     `json:",omitempty"`
 }
 
 type CreateIndexCommand struct {
