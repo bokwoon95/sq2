@@ -64,7 +64,7 @@ LOOP:
 			fun.ArgNames = make([]string, len(args))
 			fun.ArgTypes = make([]string, len(args))
 			for i, arg := range args {
-				tokens, _ := popIdentifierTokens(dialect, arg, 4)
+				tokens, _ := popIdentifierTokens(dialect, arg, -1)
 				if len(tokens) == 0 {
 					return fmt.Errorf("argument #%d ('%s') is invalid", i+1, arg)
 				}
