@@ -57,6 +57,9 @@ LOOP:
 			}
 			rawArgs := strings.TrimSpace(remainder[i+1 : j])
 			if rawArgs == "" {
+				if token, tmp := popIdentifierToken(dialect, remainder[j+1:]); strings.EqualFold(token, "RETURNS") {
+					fun.ReturnType, _ = popIdentifierToken(dialect, tmp)
+				}
 				break LOOP
 			}
 			args := splitArgs(rawArgs)
@@ -111,7 +114,7 @@ LOOP:
 				// error. else you can run the loop below.
 				fun.ArgTypes[i] = tokens[len(tokens)-1]
 				tokens = tokens[:len(tokens)-1]
-				for j, token := range tokens {
+				for _, token := range tokens {
 					if strings.EqualFold(token, "IN") ||
 						strings.EqualFold(token, "OUT") ||
 						strings.EqualFold(token, "INOUT") ||
@@ -120,11 +123,13 @@ LOOP:
 					} else {
 						fun.ArgNames[i] = token
 					}
-					_ = j
 				}
 				if j := strings.IndexByte(fun.ArgTypes[i], '='); j >= 0 {
 					fun.ArgTypes[i] = fun.ArgTypes[i][:j]
 				}
+			}
+			if token, tmp := popIdentifierToken(dialect, remainder[j+1:]); strings.EqualFold(token, "RETURNS") {
+				fun.ReturnType, _ = popIdentifierToken(dialect, tmp)
 			}
 			break LOOP
 		}

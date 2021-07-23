@@ -15,6 +15,7 @@ func Test_Function(t *testing.T) {
 		wantArgModes       []string
 		wantArgNames       []string
 		wantArgTypes       []string
+		wantReturnType     string
 	}
 
 	assert := func(t *testing.T, tt TT) {
@@ -44,14 +45,18 @@ func Test_Function(t *testing.T) {
 		if diff := testdiff(tt.item.ArgTypes, tt.wantArgTypes); diff != "" {
 			t.Error(testcallers(), diff)
 		}
+		if diff := testdiff(tt.item.ReturnType, tt.wantReturnType); diff != "" {
+			t.Error(testcallers(), diff)
+		}
 	}
 
 	t.Run("(dialect == postgres)", func(t *testing.T) {
 		t.Parallel()
 		var tt TT
 		tt.dialect = sq.DialectPostgres
-		tt.item.SQL = `CREATE FUNCTION one() RETURNS integer`
+		tt.item.SQL = `CREATE FUNCTION one() RETURNS integer AS $$ lorem ipsum $$ LANGUAGE plpgsql`
 		tt.wantFunctionName = "one"
+		tt.wantReturnType = "integer"
 		assert(t, tt)
 	})
 
@@ -61,6 +66,7 @@ func Test_Function(t *testing.T) {
 		tt.dialect = sq.DialectPostgres
 		tt.item.SQL = `CREATE FUNCTION one(     ) RETURNS integer`
 		tt.wantFunctionName = "one"
+		tt.wantReturnType = "integer"
 		assert(t, tt)
 	})
 
@@ -68,12 +74,13 @@ func Test_Function(t *testing.T) {
 		t.Parallel()
 		var tt TT
 		tt.dialect = sq.DialectPostgres
-		tt.item.SQL = `CREATE FUNCTION app.tf1 (integer, in numeric = 3.14) RETURNS integer`
+		tt.item.SQL = `CREATE FUNCTION app.tf1 (integer, in numeric = 3.14) RETURNS integer LANGUAGE sql AS $$ lorem ipsum $$`
 		tt.wantFunctionSchema = "app"
 		tt.wantFunctionName = "tf1"
 		tt.wantArgModes = []string{"", "in"}
 		tt.wantArgNames = []string{"", ""}
 		tt.wantArgTypes = []string{"integer", "numeric"}
+		tt.wantReturnType = "integer"
 		assert(t, tt)
 	})
 
@@ -81,11 +88,12 @@ func Test_Function(t *testing.T) {
 		t.Parallel()
 		var tt TT
 		tt.dialect = sq.DialectPostgres
-		tt.item.SQL = `CREATE OR REPLACE FUNCTION double_salary(emp) RETURNS numeric`
+		tt.item.SQL = `CREATE OR REPLACE FUNCTION double_salary(emp) RETURNS numeric AS $$ lorem ipsum $$ LANGUAGE sql`
 		tt.wantFunctionName = "double_salary"
 		tt.wantArgModes = []string{""}
 		tt.wantArgNames = []string{""}
 		tt.wantArgTypes = []string{"emp"}
+		tt.wantReturnType = "numeric"
 		assert(t, tt)
 	})
 
@@ -98,6 +106,7 @@ func Test_Function(t *testing.T) {
 		tt.wantArgModes = []string{"", "", "OUT", "OUT"}
 		tt.wantArgNames = []string{"", "y", "sum", "product"}
 		tt.wantArgTypes = []string{"int", "int", "int", "int"}
+		tt.wantReturnType = ""
 		assert(t, tt)
 	})
 
@@ -105,11 +114,12 @@ func Test_Function(t *testing.T) {
 		t.Parallel()
 		var tt TT
 		tt.dialect = sq.DialectPostgres
-		tt.item.SQL = `CREATE FUNCTION make_array(anyelement, anyelement) RETURNS anyarray`
+		tt.item.SQL = `CREATE FUNCTION make_array(anyelement, anyelement) RETURNS anyarray AS LANGUAGE plpgsql $$ lorem ipsum $$`
 		tt.wantFunctionName = "make_array"
 		tt.wantArgModes = []string{"", ""}
 		tt.wantArgNames = []string{"", ""}
 		tt.wantArgTypes = []string{"anyelement", "anyelement"}
+		tt.wantReturnType = "anyarray"
 		assert(t, tt)
 	})
 
@@ -119,11 +129,12 @@ func Test_Function(t *testing.T) {
 		tt.dialect = sq.DialectPostgres
 		tt.item.SQL = `
 CREATE OR REPLACE FUNCTION years_compare( IN year1 integer DEFAULT NULL,
-                                          year2 IN integer DEFAULT NULL )`
+                                          year2 IN integer DEFAULT NULL ) RETURNS BOOLEAN AS $$ lorem ipsum $$ language SQL`
 		tt.wantFunctionName = "years_compare"
 		tt.wantArgModes = []string{"IN", "IN"}
 		tt.wantArgNames = []string{"year1", "year2"}
 		tt.wantArgTypes = []string{"integer", "integer"}
+		tt.wantReturnType = "BOOLEAN"
 		assert(t, tt)
 	})
 
@@ -131,11 +142,12 @@ CREATE OR REPLACE FUNCTION years_compare( IN year1 integer DEFAULT NULL,
 		t.Parallel()
 		var tt TT
 		tt.dialect = sq.DialectPostgres
-		tt.item.SQL = `create function foo(bar varchar , baz varchar='qux') returns varchar`
+		tt.item.SQL = `create function foo(bar varchar , baz varchar='qux') returns varchar AS $$ lorem ipsum $$ language sql`
 		tt.wantFunctionName = "foo"
 		tt.wantArgModes = []string{"", ""}
 		tt.wantArgNames = []string{"bar", "baz"}
 		tt.wantArgTypes = []string{"varchar", "varchar"}
+		tt.wantReturnType = "varchar"
 		assert(t, tt)
 	})
 
@@ -143,11 +155,12 @@ CREATE OR REPLACE FUNCTION years_compare( IN year1 integer DEFAULT NULL,
 		t.Parallel()
 		var tt TT
 		tt.dialect = sq.DialectPostgres
-		tt.item.SQL = `CREATE FUNCTION get_count_of_earners(salary_val IN decimal, alphabets []TEXT='{"a", "b", "c"}', names VARIADIC [][]text = ARRAY[ARRAY['a', 'b'], ARRAY['c', 'd']]) RETURNS integer`
+		tt.item.SQL = `CREATE FUNCTION get_count_of_earners(salary_val IN decimal, alphabets []TEXT='{"a", "b", "c"}', names VARIADIC [][]text = ARRAY[ARRAY['a', 'b'], ARRAY['c', 'd']]) RETURNS integer AS $$ lorem ipsum $$ language plpgsql`
 		tt.wantFunctionName = "get_count_of_earners"
 		tt.wantArgModes = []string{"IN", "", "VARIADIC"}
 		tt.wantArgNames = []string{"salary_val", "alphabets", "names"}
 		tt.wantArgTypes = []string{"decimal", "[]TEXT", "[][]text"}
+		tt.wantReturnType = "integer"
 		assert(t, tt)
 	})
 
