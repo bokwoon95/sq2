@@ -8,8 +8,16 @@ import (
 	"github.com/bokwoon95/sq"
 )
 
+/*
+type Enumer interface {
+	fmt.Stringer
+	driver.Valuer
+	sql.Scanner
+}
+*/
+
 // sq.EnumField could be generic on a type, then you can use EqEnum[T
-// fmt.Stringer](EnumField[T], T) Predicate 🤔
+// Enumer](EnumField[T], T) Predicate 🤔
 type Enum struct {
 	EnumSchema string   `json:",omitempty"`
 	EnumName   string   `json:",omitempty"`

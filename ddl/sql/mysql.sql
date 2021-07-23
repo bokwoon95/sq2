@@ -72,9 +72,11 @@ CREATE TABLE IF NOT EXISTS address (
     ,postal_code VARCHAR(10)
     ,phone VARCHAR(20) NOT NULL
     ,last_update TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    -- ,location GEOMETRY SRID 0 NOT NULL
 
     ,PRIMARY KEY (address_id)
     ,INDEX address_city_id_idx (city_id)
+    -- ,SPATIAL INDEX address_location_idx (location)
 );
 
 CREATE TABLE IF NOT EXISTS language (
@@ -204,7 +206,7 @@ CREATE TABLE IF NOT EXISTS inventory (
 );
 
 CREATE TABLE IF NOT EXISTS rental (
-    rental_id INT AUTO_INCREMENT
+    rental_id INT UNSIGNED AUTO_INCREMENT
     ,rental_date DATETIME NOT NULL
     ,inventory_id INT NOT NULL
     ,customer_id INT NOT NULL
@@ -220,10 +222,10 @@ CREATE TABLE IF NOT EXISTS rental (
 );
 
 CREATE TABLE IF NOT EXISTS payment (
-    payment_id INT AUTO_INCREMENT
+    payment_id INT UNSIGNED AUTO_INCREMENT
     ,customer_id INT NOT NULL
     ,staff_id INT NOT NULL
-    ,rental_id INT
+    ,rental_id INT UNSIGNED
     ,amount DECIMAL(5,2) NOT NULL
     ,payment_date TIMESTAMP NOT NULL
 
