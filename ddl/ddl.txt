@@ -1,9 +1,6 @@
 next up:
 bah gawd. extensions. enums.
 
-(*Function).populateFunctionInfo needs to detect return type, since databases
-can give us that information
-
 All commands need to exclude the semicolon. The semicolon will be inserted by
 (*MigrationCommands).WriteSQL. For MySQL triggers and MySQL
 functions/pocedures, (*MigrationCommands).WriteSQL will write in the
@@ -25,6 +22,12 @@ I'd have to figure out how that looks from the user-definition side (in Go
 files) and the database-definition side (reading from the db).
 ALSO: functions may be user-defined aggregate functions or user-defined window
 functions. guh.
+
+need a special function just for generating tables + views from the database,
+because in those cases you don't want the overhead of introspecting the
+functions (which there are quite a lot of in the postgres public schema). In
+those cases it will only generate a Catalog with the requisite information for
+structs+DDL impl.
 
 ddl.go
 column_ddl.go | constraint_ddl.go | index_ddl.go
