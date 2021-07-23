@@ -16,9 +16,9 @@ func Test_View(t *testing.T) {
 				t.Error(testcallers(), diff)
 			}
 		}
-		view.AppendIndex(Index{IndexName: "A"})
-		view.AppendIndex(Index{IndexName: "B"})
-		view.AppendIndex(Index{IndexName: "C"})
+		view.AppendIndex(&Index{IndexName: "A"})
+		view.AppendIndex(&Index{IndexName: "B"})
+		view.AppendIndex(&Index{IndexName: "C"})
 		assertPosition("A", 0)
 		assertPosition("B", 1)
 		assertPosition("C", 2)
@@ -42,9 +42,9 @@ func Test_View(t *testing.T) {
 				t.Error(testcallers(), diff)
 			}
 		}
-		view.AppendTrigger(Trigger{TableSchema: "A", TableName: "B", TriggerName: "C"})
-		view.AppendTrigger(Trigger{TableSchema: "D", TableName: "E", TriggerName: "F"})
-		view.AppendTrigger(Trigger{TableSchema: "G", TableName: "H", TriggerName: "I"})
+		view.AppendTrigger(&Trigger{TableSchema: "A", TableName: "B", TriggerName: "C"})
+		view.AppendTrigger(&Trigger{TableSchema: "D", TableName: "E", TriggerName: "F"})
+		view.AppendTrigger(&Trigger{TableSchema: "G", TableName: "H", TriggerName: "I"})
 		assertPosition("A", "B", "C", 0)
 		assertPosition("D", "E", "F", 1)
 		assertPosition("G", "H", "I", 2)

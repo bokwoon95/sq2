@@ -104,7 +104,7 @@ func (v *V) Trigger(sql string) {
 	if n := v.view.CachedTriggerPosition(trigger.TableSchema, trigger.TableName, trigger.TriggerName); n >= 0 {
 		v.view.Triggers[n].SQL = trigger.SQL
 	} else {
-		v.view.AppendTrigger(trigger)
+		v.view.AppendTrigger(&trigger)
 	}
 }
 
@@ -121,7 +121,7 @@ func (v *V) TriggerFile(fsys fs.FS, name string) {
 	if n := v.view.CachedTriggerPosition(trigger.TableSchema, trigger.TableName, trigger.TriggerName); n >= 0 {
 		v.view.Triggers[n].SQL = trigger.SQL
 	} else {
-		v.view.AppendTrigger(trigger)
+		v.view.AppendTrigger(&trigger)
 	}
 }
 
@@ -217,7 +217,7 @@ func (v *VIndex) Include(fields ...sq.Field) *VIndex {
 
 func (v *VIndex) Config(config func(index *Index)) {
 	index := v.view.Indexes[v.indexPosition]
-	config(&index)
+	config(index)
 	index.TableSchema = v.view.ViewSchema
 	index.TableName = v.view.ViewName
 	index.IndexName = v.indexName
