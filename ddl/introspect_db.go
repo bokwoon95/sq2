@@ -135,13 +135,12 @@ func mapTables(catalog *Catalog, rows *sql.Rows) error {
 			}
 		}
 	}
-	var schema Schema
+	var schema *Schema
 	if n := catalog.CachedSchemaPosition(tbl.TableSchema); n >= 0 {
 		schema = catalog.Schemas[n]
-		defer func() { catalog.Schemas[n] = schema }()
 	} else {
-		schema.SchemaName = tbl.TableSchema
-		defer func() { catalog.AppendSchema(schema) }()
+		schema = &Schema{SchemaName: tbl.TableSchema}
+		catalog.AppendSchema(schema)
 	}
 	schema.AppendTable(&tbl)
 	return nil
@@ -171,13 +170,12 @@ func mapColumns(catalog *Catalog, rows *sql.Rows) error {
 		return fmt.Errorf("scanning table %s column %s: %w", column.TableName, column.ColumnName, err)
 	}
 	normalizeColumn(catalog.Dialect, &column, columnType2)
-	var schema Schema
+	var schema *Schema
 	if n := catalog.CachedSchemaPosition(column.TableSchema); n >= 0 {
 		schema = catalog.Schemas[n]
-		defer func() { catalog.Schemas[n] = schema }()
 	} else {
-		schema.SchemaName = column.TableSchema
-		defer func() { catalog.AppendSchema(schema) }()
+		schema = &Schema{SchemaName: column.TableSchema}
+		catalog.AppendSchema(schema)
 	}
 	var tbl *Table
 	if n := schema.CachedTablePosition(column.TableName); n >= 0 {
@@ -234,13 +232,12 @@ func mapConstraints(catalog *Catalog, rows *sql.Rows) error {
 	if last := len(constraint.CheckExpr) - 1; len(constraint.CheckExpr) > 2 && constraint.CheckExpr[0] == '(' && constraint.CheckExpr[last] == ')' {
 		constraint.CheckExpr = constraint.CheckExpr[1:last]
 	}
-	var schema Schema
+	var schema *Schema
 	if n := catalog.CachedSchemaPosition(constraint.TableSchema); n >= 0 {
 		schema = catalog.Schemas[n]
-		defer func() { catalog.Schemas[n] = schema }()
 	} else {
-		schema.SchemaName = constraint.TableSchema
-		defer func() { catalog.AppendSchema(schema) }()
+		schema = &Schema{SchemaName: constraint.TableSchema}
+		catalog.AppendSchema(schema)
 	}
 	var tbl *Table
 	if n := schema.CachedTablePosition(constraint.TableName); n >= 0 {
@@ -300,13 +297,12 @@ func mapIndexes(catalog *Catalog, rows *sql.Rows) error {
 	if catalog.Dialect == sq.DialectPostgres {
 		index.Columns, index.IncludeColumns = index.Columns[:numKeyColumns], index.Columns[numKeyColumns:]
 	}
-	var schema Schema
+	var schema *Schema
 	if n := catalog.CachedSchemaPosition(index.TableSchema); n >= 0 {
 		schema = catalog.Schemas[n]
-		defer func() { catalog.Schemas[n] = schema }()
 	} else {
-		schema.SchemaName = index.TableSchema
-		defer func() { catalog.AppendSchema(schema) }()
+		schema = &Schema{SchemaName: index.TableSchema}
+		catalog.AppendSchema(schema)
 	}
 	// TODO: for postgres, the index may belong to a materialized view instead.
 	// need to figure out how to tell the difference.
@@ -351,13 +347,12 @@ func mapTriggers(catalog *Catalog, rows *sql.Rows) error {
 		buf.WriteString(sq.QuoteIdentifier(catalog.Dialect, trigger.TableName) + " FOR EACH ROW " + trigger.SQL)
 		trigger.SQL = buf.String()
 	}
-	var schema Schema
+	var schema *Schema
 	if n := catalog.CachedSchemaPosition(trigger.TableSchema); n >= 0 {
 		schema = catalog.Schemas[n]
-		defer func() { catalog.Schemas[n] = schema }()
 	} else {
-		schema.SchemaName = trigger.TableSchema
-		defer func() { catalog.AppendSchema(schema) }()
+		schema = &Schema{SchemaName: trigger.TableSchema}
+		catalog.AppendSchema(schema)
 	}
 	var tbl *Table
 	if n := schema.CachedTablePosition(trigger.TableName); n >= 0 {
@@ -399,13 +394,12 @@ func mapViews(catalog *Catalog, rows *sql.Rows) error {
 		}
 		view.SQL = strings.TrimSpace(remainder)
 	}
-	var schema Schema
+	var schema *Schema
 	if n := catalog.CachedSchemaPosition(view.ViewSchema); n >= 0 {
 		schema = catalog.Schemas[n]
-		defer func() { catalog.Schemas[n] = schema }()
 	} else {
-		schema.SchemaName = view.ViewSchema
-		defer func() { catalog.AppendSchema(schema) }()
+		schema = &Schema{SchemaName: view.ViewSchema}
+		catalog.AppendSchema(schema)
 	}
 	schema.AppendView(&view)
 	return nil

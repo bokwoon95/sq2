@@ -16,7 +16,7 @@ type Catalog struct {
 	VersionNum    [2]int      `json:",omitempty"`
 	DefaultSchema string      `json:",omitempty"`
 	Extensions    [][2]string `json:",omitempty"`
-	Schemas       []Schema    `json:",omitempty"`
+	Schemas       []*Schema   `json:",omitempty"`
 	schemaCache   map[string]int
 }
 
@@ -32,7 +32,7 @@ func (c *Catalog) CachedSchemaPosition(schemaName string) (schemaPosition int) {
 	return schemaPosition
 }
 
-func (c *Catalog) AppendSchema(schema Schema) (schemaPosition int) {
+func (c *Catalog) AppendSchema(schema *Schema) (schemaPosition int) {
 	c.Schemas = append(c.Schemas, schema)
 	if c.schemaCache == nil {
 		c.schemaCache = make(map[string]int)
@@ -59,13 +59,12 @@ func (c *Catalog) loadTable(table sq.SchemaTable) error {
 	if tableName == "" {
 		return fmt.Errorf("table name is empty")
 	}
-	var schema Schema
+	var schema *Schema
 	if n := c.CachedSchemaPosition(tableSchema); n >= 0 {
 		schema = c.Schemas[n]
-		defer func() { c.Schemas[n] = schema }()
 	} else {
-		schema.SchemaName = tableSchema
-		defer func() { c.AppendSchema(schema) }()
+		schema = &Schema{SchemaName: tableSchema}
+		c.AppendSchema(schema)
 	}
 	var tbl *Table
 	if n := schema.CachedTablePosition(tableName); n >= 0 {
@@ -88,13 +87,12 @@ func (c *Catalog) loadDDLView(ddlView DDLView) error {
 	if viewName == "" {
 		return fmt.Errorf("table name is empty")
 	}
-	var schema Schema
+	var schema *Schema
 	if n := c.CachedSchemaPosition(viewSchema); n >= 0 {
 		schema = c.Schemas[n]
-		defer func() { c.Schemas[n] = schema }()
 	} else {
-		schema.SchemaName = viewSchema
-		defer func() { c.AppendSchema(schema) }()
+		schema = &Schema{SchemaName: viewSchema}
+		c.AppendSchema(schema)
 	}
 	var view *View
 	if n := schema.CachedViewPosition(viewName); n >= 0 {
@@ -113,13 +111,12 @@ func (c *Catalog) loadFunction(function Function) error {
 	if function.FunctionName == "" {
 		return fmt.Errorf("function name cannot be empty")
 	}
-	var schema Schema
+	var schema *Schema
 	if n := c.CachedSchemaPosition(function.FunctionSchema); n >= 0 {
 		schema = c.Schemas[n]
-		defer func() { c.Schemas[n] = schema }()
 	} else {
-		schema.SchemaName = function.FunctionSchema
-		defer func() { c.AppendSchema(schema) }()
+		schema = &Schema{SchemaName: function.FunctionSchema}
+		c.AppendSchema(schema)
 	}
 	schema.Functions = append(schema.Functions, &function)
 	return nil
