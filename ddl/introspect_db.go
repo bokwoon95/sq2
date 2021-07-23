@@ -306,6 +306,8 @@ func mapIndexes(catalog *Catalog, rows *sql.Rows) error {
 		schema.SchemaName = index.TableSchema
 		defer func() { catalog.AppendSchema(schema) }()
 	}
+	// TODO: for postgres, the index may belong to a materialized view instead.
+	// need to figure out how to tell the difference.
 	var tbl Table
 	if n := schema.CachedTablePosition(index.TableName); n >= 0 {
 		tbl = schema.Tables[n]
