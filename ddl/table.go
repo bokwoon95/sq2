@@ -329,22 +329,35 @@ func (tbl *Table) LoadColumnConfig(dialect, columnName, columnType, config strin
 		switch modifier[0] {
 		case "type":
 			col.ColumnType = modifier[1]
-		case "autoincrement": // only mysql, sqlite
-			col.IsAutoincrement = true
-		case "identity": // only postgres
-			col.Identity = BY_DEFAULT_AS_IDENTITY
+		case "autoincrement":
+			if dialect == sq.DialectMySQL || dialect == sq.DialectSQLite {
+				col.IsAutoincrement = true
+			}
+		case "identity":
+			if dialect == sq.DialectPostgres {
+				col.Identity = BY_DEFAULT_AS_IDENTITY
+			}
 		case "alwaysidentity":
-			col.Identity = ALWAYS_AS_IDENTITY
+			if dialect == sq.DialectPostgres {
+				col.Identity = ALWAYS_AS_IDENTITY
+			}
 		case "notnull":
 			col.IsNotNull = true
-		case "onupdatecurrenttimestamp": // only mysql
-			col.OnUpdateCurrentTimestamp = true
+		case "onupdatecurrenttimestamp":
+			if dialect == sq.DialectMySQL || dialect == sq.DialectSQLite {
+				col.OnUpdateCurrentTimestamp = true
+			}
 		case "generated":
 			col.GeneratedExpr = modifier[1]
+			if dialect == sq.DialectPostgres {
+				col.GeneratedExprStored = true
+			}
 		case "stored":
 			col.GeneratedExprStored = true
 		case "virtual":
-			col.GeneratedExprStored = false
+			if dialect != sq.DialectPostgres {
+				col.GeneratedExprStored = false
+			}
 		case "collate":
 			col.CollationName = modifier[1]
 		case "default":
