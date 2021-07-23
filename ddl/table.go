@@ -324,19 +324,20 @@ func (tbl *Table) LoadColumnConfig(dialect, columnName, columnType, config strin
 		}
 		tbl.AppendColumn(col)
 	}
+	// TODO: modifiers should be dialect-aware
 	for _, modifier := range modifiers {
 		switch modifier[0] {
 		case "type":
 			col.ColumnType = modifier[1]
-		case "autoincrement":
+		case "autoincrement": // only mysql, sqlite
 			col.IsAutoincrement = true
-		case "identity":
+		case "identity": // only postgres
 			col.Identity = BY_DEFAULT_AS_IDENTITY
 		case "alwaysidentity":
 			col.Identity = ALWAYS_AS_IDENTITY
 		case "notnull":
 			col.IsNotNull = true
-		case "onupdatecurrenttimestamp":
+		case "onupdatecurrenttimestamp": // only mysql
 			col.OnUpdateCurrentTimestamp = true
 		case "generated":
 			col.GeneratedExpr = modifier[1]
@@ -475,7 +476,7 @@ func (cmd *CreateTableCommand) AppendSQL(dialect string, buf *bytes.Buffer, args
 				buf.WriteString("\n")
 				newlineWritten = true
 			}
-			if dialect == sq.DialectSQLite || (dialect == sq.DialectMySQL && constraint.ConstraintType == PRIMARY_KEY) {
+			if constraint.ConstraintName == "" || (dialect == sq.DialectMySQL && constraint.ConstraintType == PRIMARY_KEY) {
 				buf.WriteString("\n    ,")
 			} else {
 				buf.WriteString("\n    ,CONSTRAINT " + sq.QuoteIdentifier(dialect, constraint.ConstraintName) + " ")

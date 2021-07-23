@@ -3,6 +3,7 @@ package ddl
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"os"
 	"testing"
 
@@ -22,6 +23,12 @@ func Test_introspect_postgres(t *testing.T) {
 	if err != nil {
 		t.Fatal(testcallers(), err)
 	}
+	enc := json.NewEncoder(os.Stdout)
+	enc.SetIndent("", "  ")
+	enc.Encode(catalog)
+	if err != nil {
+		t.Fatal(testcallers(), err)
+	}
 	err = catalog.Commands().WriteSQL(os.Stdout)
 	if err != nil {
 		t.Fatal(testcallers(), err)
@@ -38,6 +45,12 @@ func Test_introspect_sqlite(t *testing.T) {
 	if err != nil {
 		t.Fatal(testcallers(), err)
 	}
+	enc := json.NewEncoder(os.Stdout)
+	enc.SetIndent("", "  ")
+	enc.Encode(catalog)
+	if err != nil {
+		t.Fatal(testcallers(), err)
+	}
 	err = catalog.Commands().WriteSQL(os.Stdout)
 	if err != nil {
 		t.Fatal(testcallers(), err)
@@ -51,6 +64,12 @@ func Test_introspect_mysql(t *testing.T) {
 	}
 	catalog := Catalog{Dialect: sq.DialectMySQL}
 	err = introspectMySQL(context.Background(), db, &catalog)
+	if err != nil {
+		t.Fatal(testcallers(), err)
+	}
+	enc := json.NewEncoder(os.Stdout)
+	enc.SetIndent("", "  ")
+	enc.Encode(catalog)
 	if err != nil {
 		t.Fatal(testcallers(), err)
 	}

@@ -3,10 +3,12 @@ WITH indexed_columns AS (
         $1 AS table_name
         ,il.name AS index_name
         ,il."unique" AS is_unique
-        ,il.partial AS is_partial
         ,CASE ii.cid WHEN -1 THEN '' WHEN -2 THEN '' ELSE ii.name END AS column_name
+        ,ii.seqno
+        ,m.sql
     FROM
         pragma_index_list($1) AS il
+        JOIN sqlite_schema AS m ON m."type" = 'index' AND m.tbl_name = $1 AND m.name = il.name
         CROSS JOIN pragma_index_info(il.name) AS ii
     WHERE
         il.origin = 'c'
@@ -24,12 +26,12 @@ SELECT
     ,group_concat(column_name) AS columns
     ,'' AS exprs
     ,'' AS predicate
-    ,is_partial
+    ,sql
 FROM
     indexed_columns
 GROUP BY
     table_name
     ,index_name
     ,is_unique
-    ,is_partial
+    ,sql
 ;

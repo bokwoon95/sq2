@@ -78,6 +78,20 @@ func (c *Catalog) Commands() *MigrationCommands {
 			if c.Dialect == sq.DialectSQLite || (c.Dialect == sq.DialectPostgres && view.IsMaterialized) {
 				createViewCmd.CreateIfNotExists = true
 			}
+			if c.Dialect != sq.DialectPostgres {
+				continue
+			}
+			for _, index := range view.Indexes {
+				createIndexCmd := &CreateIndexCommand{
+					CreateIfNotExists: true,
+					Index:             *index,
+				}
+				m.IndexCommands = append(m.IndexCommands, createIndexCmd)
+			}
+			for _, trigger := range view.Triggers {
+				createTriggerCmd := &CreateTriggerCommand{Trigger: *trigger}
+				m.IndexCommands = append(m.IndexCommands, createTriggerCmd)
+			}
 			m.ViewCommands = append(m.ViewCommands, createViewCmd)
 		}
 		for _, function := range schema.Functions {

@@ -135,6 +135,9 @@ func mapTables(catalog *Catalog, rows *sql.Rows) error {
 			}
 		}
 	}
+	// TODO: also find the check constraints
+	// TODO: also find the autoincrement status
+	// TODO: also find GENERATED ALWAYS columns
 	var schema *Schema
 	if n := catalog.CachedSchemaPosition(tbl.TableSchema); n >= 0 {
 		schema = catalog.Schemas[n]
@@ -239,17 +242,9 @@ func mapConstraints(catalog *Catalog, rows *sql.Rows) error {
 		schema = &Schema{SchemaName: constraint.TableSchema}
 		catalog.AppendSchema(schema)
 	}
-	var tbl *Table
 	if n := schema.CachedTablePosition(constraint.TableName); n >= 0 {
-		tbl = schema.Tables[n]
-	} else {
-		tbl = &Table{
-			TableSchema: constraint.TableSchema,
-			TableName:   constraint.TableName,
-		}
-		schema.AppendTable(tbl)
+		schema.Tables[n].AppendConstraint(&constraint)
 	}
-	tbl.AppendConstraint(&constraint)
 	return nil
 }
 
@@ -257,7 +252,6 @@ func mapIndexes(catalog *Catalog, rows *sql.Rows) error {
 	var index Index
 	var numKeyColumns int
 	var rawColumns, rawExprs string
-	var isPartial bool
 	err := rows.Scan(
 		&index.TableSchema,
 		&index.TableName,
@@ -268,7 +262,7 @@ func mapIndexes(catalog *Catalog, rows *sql.Rows) error {
 		&rawColumns,
 		&rawExprs,
 		&index.Predicate,
-		&isPartial,
+		&index.SQL,
 	)
 	if err != nil {
 		return fmt.Errorf("scanning table %s index %s: %w", index.TableName, index.IndexName, err)
@@ -276,7 +270,30 @@ func mapIndexes(catalog *Catalog, rows *sql.Rows) error {
 	if rawColumns != "" {
 		index.Columns = strings.Split(rawColumns, ",")
 	}
+	if catalog.Dialect == sq.DialectPostgres {
+		index.Columns, index.IncludeColumns = index.Columns[:numKeyColumns], index.Columns[numKeyColumns:]
+	}
 	index.Exprs = make([]string, len(index.Columns))
+	if catalog.Dialect == sq.DialectSQLite && index.SQL != "" {
+		start := strings.IndexByte(index.SQL, '(')
+		end := strings.LastIndexByte(index.SQL, ')')
+		if start >= 0 && end > start && end < len(index.SQL) {
+			args := splitArgs(index.SQL[start+1 : end])
+			for i, column := range index.Columns {
+				args[i] = strings.TrimSpace(args[i])
+				if column != "" {
+					if i >= len(args) || args[i] != column {
+						return fmt.Errorf("column mismatch: sqlite reported table %s column #%d to be %s, I got %s instead. My splitArgs function is faulty.", index.TableName, i+1, column, args[i])
+					}
+					continue
+				}
+				index.Exprs[i] = args[i]
+			}
+		}
+		if token, remainder := popIdentifierToken(sq.DialectSQLite, index.SQL[end+1:]); strings.EqualFold(token, "WHERE") {
+			index.Predicate = strings.TrimSpace(remainder)
+		}
+	}
 	if rawExprs != "" {
 		if catalog.Dialect == sq.DialectMySQL {
 			rawExprs = strings.TrimSpace(strings.ReplaceAll(rawExprs, `\'`, `'`))
@@ -294,9 +311,6 @@ func mapIndexes(catalog *Catalog, rows *sql.Rows) error {
 			}
 		}
 	}
-	if catalog.Dialect == sq.DialectPostgres {
-		index.Columns, index.IncludeColumns = index.Columns[:numKeyColumns], index.Columns[numKeyColumns:]
-	}
 	var schema *Schema
 	if n := catalog.CachedSchemaPosition(index.TableSchema); n >= 0 {
 		schema = catalog.Schemas[n]
@@ -304,19 +318,11 @@ func mapIndexes(catalog *Catalog, rows *sql.Rows) error {
 		schema = &Schema{SchemaName: index.TableSchema}
 		catalog.AppendSchema(schema)
 	}
-	// TODO: for postgres, the index may belong to a materialized view instead.
-	// need to figure out how to tell the difference.
-	var tbl *Table
 	if n := schema.CachedTablePosition(index.TableName); n >= 0 {
-		tbl = schema.Tables[n]
-	} else {
-		tbl = &Table{
-			TableSchema: index.TableSchema,
-			TableName:   index.TableName,
-		}
-		schema.AppendTable(tbl)
+		schema.Tables[n].AppendIndex(&index)
+	} else if n := schema.CachedViewPosition(index.TableName); n >= 0 {
+		schema.Views[n].AppendIndex(&index)
 	}
-	tbl.AppendIndex(&index)
 	return nil
 }
 
@@ -354,17 +360,9 @@ func mapTriggers(catalog *Catalog, rows *sql.Rows) error {
 		schema = &Schema{SchemaName: trigger.TableSchema}
 		catalog.AppendSchema(schema)
 	}
-	var tbl *Table
 	if n := schema.CachedTablePosition(trigger.TableName); n >= 0 {
-		tbl = schema.Tables[n]
-	} else {
-		tbl = &Table{
-			TableSchema: trigger.TableSchema,
-			TableName:   trigger.TableName,
-		}
-		schema.AppendTable(tbl)
+		schema.Tables[n].AppendTrigger(&trigger)
 	}
-	tbl.AppendTrigger(&trigger)
 	return nil
 }
 
@@ -410,6 +408,13 @@ func introspectPostgres(ctx context.Context, db sq.DB, catalog *Catalog) error {
 	if err != nil {
 		return err
 	}
+	// NOTE: introspecting views must come before indexes and triggers so that
+	// we can figure out if a index or trigger belongs to a table or
+	// materialized view
+	err = introspectQuery(ctx, db, catalog, "sql/postgres_views.sql", nil, mapViews)
+	if err != nil {
+		return err
+	}
 	err = introspectQuery(ctx, db, catalog, "sql/postgres_constraints.sql", nil, mapConstraints)
 	if err != nil {
 		return err
@@ -419,10 +424,6 @@ func introspectPostgres(ctx context.Context, db sq.DB, catalog *Catalog) error {
 		return err
 	}
 	err = introspectQuery(ctx, db, catalog, "sql/postgres_triggers.sql", nil, mapTriggers)
-	if err != nil {
-		return err
-	}
-	err = introspectQuery(ctx, db, catalog, "sql/postgres_views.sql", nil, mapViews)
 	if err != nil {
 		return err
 	}

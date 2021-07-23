@@ -24,7 +24,7 @@ SELECT
     ,group_concat(column_name ORDER BY seq_in_index) AS columns
     ,group_concat(expr ORDER BY seq_in_index) AS exprs
     ,'' AS predicate
-    ,FALSE AS is_partial
+    ,'' AS "sql"
 FROM
     indexed_columns
 GROUP BY
