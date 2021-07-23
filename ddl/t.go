@@ -70,7 +70,7 @@ func (t *TColumn) Type(columnType string) *TColumn {
 
 func (t *TColumn) Config(config func(c *Column)) {
 	column := t.tbl.Columns[t.columnPosition]
-	config(&column)
+	config(column)
 	column.TableSchema = t.tbl.TableSchema
 	column.TableName = t.tbl.TableName
 	column.ColumnName = t.columnName
@@ -241,7 +241,7 @@ func createOrUpdateConstraint(tbl *Table, constraintType, constraintName string,
 		constraint.CheckExpr = checkExpr
 		tbl.Constraints[constraintPosition] = constraint
 	} else {
-		constraintPosition = tbl.AppendConstraint(Constraint{
+		constraintPosition = tbl.AppendConstraint(&Constraint{
 			TableSchema:    tbl.TableSchema,
 			TableName:      tbl.TableName,
 			ConstraintName: constraintName,
@@ -377,7 +377,7 @@ func (t *T) NameForeignKey(constraintName string, fields ...sq.Field) *TConstrai
 
 func (t *TConstraint) Config(config func(constraint *Constraint)) {
 	constraint := t.tbl.Constraints[t.constraintPosition]
-	config(&constraint)
+	config(constraint)
 	constraint.TableSchema = t.tbl.TableSchema
 	constraint.TableName = t.tbl.TableName
 	constraint.ConstraintName = t.constraintName
@@ -489,7 +489,7 @@ func (tbl *Table) createOrUpdateIndex(indexName string, columns []string, exprs 
 		index.Exprs = exprs
 		tbl.Indexes[indexPosition] = index
 	} else {
-		indexPosition = tbl.AppendIndex(Index{
+		indexPosition = tbl.AppendIndex(&Index{
 			TableSchema: tbl.TableSchema,
 			TableName:   tbl.TableName,
 			IndexName:   indexName,
@@ -565,7 +565,7 @@ func (t *TIndex) Include(fields ...sq.Field) *TIndex {
 
 func (t *TIndex) Config(config func(index *Index)) {
 	index := t.tbl.Indexes[t.indexPosition]
-	config(&index)
+	config(index)
 	index.TableSchema = t.tbl.TableSchema
 	index.TableName = t.tbl.TableName
 	index.IndexName = t.indexName
@@ -594,7 +594,7 @@ func (t *T) Trigger(sql string) {
 	if n := t.tbl.CachedTriggerPosition(trigger.TriggerName); n >= 0 {
 		t.tbl.Triggers[n].SQL = trigger.SQL
 	} else {
-		t.tbl.AppendTrigger(trigger)
+		t.tbl.AppendTrigger(&trigger)
 	}
 }
 
@@ -617,7 +617,7 @@ func (t *T) TriggerFile(fsys fs.FS, name string) {
 	if n := t.tbl.CachedTriggerPosition(trigger.TriggerName); n >= 0 {
 		t.tbl.Triggers[n].SQL = trigger.SQL
 	} else {
-		t.tbl.AppendTrigger(trigger)
+		t.tbl.AppendTrigger(&trigger)
 	}
 }
 

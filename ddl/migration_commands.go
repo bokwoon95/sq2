@@ -49,14 +49,14 @@ func (c *Catalog) Commands() *MigrationCommands {
 			for _, constraint := range table.Constraints {
 				if constraint.ConstraintType == FOREIGN_KEY && c.Dialect != sq.DialectSQLite {
 					hasForeignKey = true
-					alterTableCmd.AddConstraintCommands = append(alterTableCmd.AddConstraintCommands, AddConstraintCommand{Constraint: constraint})
+					alterTableCmd.AddConstraintCommands = append(alterTableCmd.AddConstraintCommands, AddConstraintCommand{Constraint: *constraint})
 				}
 			}
 			if hasForeignKey {
 				m.ForeignKeyCommands = append(m.ForeignKeyCommands, alterTableCmd)
 			}
 			for _, index := range table.Indexes {
-				createIndexCmd := &CreateIndexCommand{Index: index}
+				createIndexCmd := &CreateIndexCommand{Index: *index}
 				if c.Dialect == sq.DialectMySQL {
 					createTableCmd.CreateIndexCommands = append(createTableCmd.CreateIndexCommands, *createIndexCmd)
 				} else {
@@ -65,7 +65,7 @@ func (c *Catalog) Commands() *MigrationCommands {
 				}
 			}
 			for _, trigger := range table.Triggers {
-				createTriggerCmd := &CreateTriggerCommand{Trigger: trigger}
+				createTriggerCmd := &CreateTriggerCommand{Trigger: *trigger}
 				m.TriggerCommands = append(m.TriggerCommands, createTriggerCmd)
 			}
 			m.TableCommands = append(m.TableCommands, createTableCmd)

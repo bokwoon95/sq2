@@ -188,7 +188,7 @@ func mapColumns(catalog *Catalog, rows *sql.Rows) error {
 		tbl.TableName = column.TableName
 		defer func() { schema.AppendTable(tbl) }()
 	}
-	tbl.AppendColumn(column)
+	tbl.AppendColumn(&column)
 	return nil
 }
 
@@ -250,7 +250,7 @@ func mapConstraints(catalog *Catalog, rows *sql.Rows) error {
 		tbl.TableName = constraint.TableName
 		defer func() { schema.AppendTable(tbl) }()
 	}
-	tbl.AppendConstraint(constraint)
+	tbl.AppendConstraint(&constraint)
 	return nil
 }
 
@@ -317,7 +317,7 @@ func mapIndexes(catalog *Catalog, rows *sql.Rows) error {
 		tbl.TableName = index.TableName
 		defer func() { schema.AppendTable(tbl) }()
 	}
-	tbl.AppendIndex(index)
+	tbl.AppendIndex(&index)
 	return nil
 }
 
@@ -365,7 +365,7 @@ func mapTriggers(catalog *Catalog, rows *sql.Rows) error {
 		tbl.TableName = trigger.TableName
 		defer func() { schema.AppendTable(tbl) }()
 	}
-	tbl.AppendTrigger(trigger)
+	tbl.AppendTrigger(&trigger)
 	return nil
 }
 
