@@ -92,6 +92,23 @@ LOOP:
 				}
 				// TODO: some argTypes may be split into multiple words, like
 				// TIMESTAMP WITH TIME ZONE (how troublesome!)
+				// known types:
+				// TIMESTAMP WITH TIME ZONE
+				// name TIMESTAMP WITH TIME ZONE
+				// IN TIMESTAMP WITH TIME ZONE
+				// IN name TIMESTAMP WITH TIME ZONE
+				// name IN TIMESTAMP WITH TIME ZONE
+				// unknown types:
+				// emp
+				// name emp
+				// IN emp
+				// IN name emp
+				// name IN emp
+				// start from the back and try to figure out if it is a known
+				// type (that may span multiple tokens). if unknown type, then
+				// just take the last token as the type. then look at the
+				// number of tokens left: 0, 1 or 2? anything more, raise an
+				// error. else you can run the loop below.
 				fun.ArgTypes[i] = tokens[len(tokens)-1]
 				tokens = tokens[:len(tokens)-1]
 				for j, token := range tokens {
