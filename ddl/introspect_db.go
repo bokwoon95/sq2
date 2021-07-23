@@ -295,6 +295,9 @@ func mapIndexes(catalog *Catalog, rows *sql.Rows) error {
 			}
 		}
 	}
+	if catalog.Dialect == sq.DialectPostgres {
+		index.Columns, index.IncludeColumns = index.Columns[:numKeyColumns], index.Columns[numKeyColumns:]
+	}
 	var schema Schema
 	if n := catalog.CachedSchemaPosition(index.TableSchema); n >= 0 {
 		schema = catalog.Schemas[n]

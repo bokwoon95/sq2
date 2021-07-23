@@ -86,7 +86,7 @@ func (tbl CATEGORY) DDL(dialect string, t *T) {
 END;`, tbl))
 	case sq.DialectPostgres:
 		t.Column(tbl.CATEGORY_ID).Type("INT").Identity()
-		t.Column(tbl.LAST_UPDATE).Type("TIMESTAMPTZ").Default("NOW()")
+		t.Column(tbl.LAST_UPDATE).Type("TIMESTAMP WITH TIME ZONE").Default("NOW()")
 		t.Trigger(t.Sprintf(`CREATE TRIGGER category_last_update_before_update_trg BEFORE UPDATE ON {1}
 FOR EACH ROW EXECUTE PROCEDURE last_update_trg();`, tbl))
 	case sq.DialectMySQL:
