@@ -36,7 +36,7 @@ func (c *Catalog) Commands() *MigrationCommands {
 			createTableCmd := &CreateTableCommand{
 				CreateIfNotExists:  true,
 				IncludeConstraints: true,
-				Table:              table,
+				Table:              *table,
 			}
 			alterTableCmd := &AlterTableCommand{
 				TableSchema: table.TableSchema,
@@ -71,7 +71,7 @@ func (c *Catalog) Commands() *MigrationCommands {
 			m.TableCommands = append(m.TableCommands, createTableCmd)
 		}
 		for _, view := range schema.Views {
-			createViewCmd := &CreateViewCommand{View: view}
+			createViewCmd := &CreateViewCommand{View: *view}
 			if c.Dialect == sq.DialectMySQL || (c.Dialect == sq.DialectPostgres && !view.IsMaterialized) {
 				createViewCmd.CreateOrReplace = true
 			}
@@ -81,7 +81,7 @@ func (c *Catalog) Commands() *MigrationCommands {
 			m.ViewCommands = append(m.ViewCommands, createViewCmd)
 		}
 		for _, function := range schema.Functions {
-			createFunctionCmd := &CreateFunctionCommand{Function: function}
+			createFunctionCmd := &CreateFunctionCommand{Function: *function}
 			if function.IsIndependent {
 				m.IndependentFunctionCommands = append(m.IndependentFunctionCommands, createFunctionCmd)
 			} else {

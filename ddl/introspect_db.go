@@ -143,7 +143,7 @@ func mapTables(catalog *Catalog, rows *sql.Rows) error {
 		schema.SchemaName = tbl.TableSchema
 		defer func() { catalog.AppendSchema(schema) }()
 	}
-	schema.AppendTable(tbl)
+	schema.AppendTable(&tbl)
 	return nil
 }
 
@@ -179,14 +179,15 @@ func mapColumns(catalog *Catalog, rows *sql.Rows) error {
 		schema.SchemaName = column.TableSchema
 		defer func() { catalog.AppendSchema(schema) }()
 	}
-	var tbl Table
+	var tbl *Table
 	if n := schema.CachedTablePosition(column.TableName); n >= 0 {
 		tbl = schema.Tables[n]
-		defer func() { schema.Tables[n] = tbl }()
 	} else {
-		tbl.TableSchema = column.TableSchema
-		tbl.TableName = column.TableName
-		defer func() { schema.AppendTable(tbl) }()
+		tbl = &Table{
+			TableSchema: column.TableSchema,
+			TableName:   column.TableName,
+		}
+		schema.AppendTable(tbl)
 	}
 	tbl.AppendColumn(&column)
 	return nil
@@ -241,14 +242,15 @@ func mapConstraints(catalog *Catalog, rows *sql.Rows) error {
 		schema.SchemaName = constraint.TableSchema
 		defer func() { catalog.AppendSchema(schema) }()
 	}
-	var tbl Table
+	var tbl *Table
 	if n := schema.CachedTablePosition(constraint.TableName); n >= 0 {
 		tbl = schema.Tables[n]
-		defer func() { schema.Tables[n] = tbl }()
 	} else {
-		tbl.TableSchema = constraint.TableSchema
-		tbl.TableName = constraint.TableName
-		defer func() { schema.AppendTable(tbl) }()
+		tbl = &Table{
+			TableSchema: constraint.TableSchema,
+			TableName:   constraint.TableName,
+		}
+		schema.AppendTable(tbl)
 	}
 	tbl.AppendConstraint(&constraint)
 	return nil
@@ -308,14 +310,15 @@ func mapIndexes(catalog *Catalog, rows *sql.Rows) error {
 	}
 	// TODO: for postgres, the index may belong to a materialized view instead.
 	// need to figure out how to tell the difference.
-	var tbl Table
+	var tbl *Table
 	if n := schema.CachedTablePosition(index.TableName); n >= 0 {
 		tbl = schema.Tables[n]
-		defer func() { schema.Tables[n] = tbl }()
 	} else {
-		tbl.TableSchema = index.TableSchema
-		tbl.TableName = index.TableName
-		defer func() { schema.AppendTable(tbl) }()
+		tbl = &Table{
+			TableSchema: index.TableSchema,
+			TableName:   index.TableName,
+		}
+		schema.AppendTable(tbl)
 	}
 	tbl.AppendIndex(&index)
 	return nil
@@ -356,14 +359,15 @@ func mapTriggers(catalog *Catalog, rows *sql.Rows) error {
 		schema.SchemaName = trigger.TableSchema
 		defer func() { catalog.AppendSchema(schema) }()
 	}
-	var tbl Table
+	var tbl *Table
 	if n := schema.CachedTablePosition(trigger.TableName); n >= 0 {
 		tbl = schema.Tables[n]
-		defer func() { schema.Tables[n] = tbl }()
 	} else {
-		tbl.TableSchema = trigger.TableSchema
-		tbl.TableName = trigger.TableName
-		defer func() { schema.AppendTable(tbl) }()
+		tbl = &Table{
+			TableSchema: trigger.TableSchema,
+			TableName:   trigger.TableName,
+		}
+		schema.AppendTable(tbl)
 	}
 	tbl.AppendTrigger(&trigger)
 	return nil
@@ -403,7 +407,7 @@ func mapViews(catalog *Catalog, rows *sql.Rows) error {
 		schema.SchemaName = view.ViewSchema
 		defer func() { catalog.AppendSchema(schema) }()
 	}
-	schema.AppendView(view)
+	schema.AppendView(&view)
 	return nil
 }
 

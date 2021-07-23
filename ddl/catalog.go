@@ -67,14 +67,15 @@ func (c *Catalog) loadTable(table sq.SchemaTable) error {
 		schema.SchemaName = tableSchema
 		defer func() { c.AppendSchema(schema) }()
 	}
-	var tbl Table
+	var tbl *Table
 	if n := schema.CachedTablePosition(tableName); n >= 0 {
 		tbl = schema.Tables[n]
-		defer func() { schema.Tables[n] = tbl }()
 	} else {
-		tbl.TableSchema = tableSchema
-		tbl.TableName = tableName
-		defer func() { schema.AppendTable(tbl) }()
+		tbl = &Table{
+			TableSchema: tableSchema,
+			TableName:   tableName,
+		}
+		schema.AppendTable(tbl)
 	}
 	return tbl.LoadTable(c.Dialect, table)
 }
@@ -95,14 +96,15 @@ func (c *Catalog) loadDDLView(ddlView DDLView) error {
 		schema.SchemaName = viewSchema
 		defer func() { c.AppendSchema(schema) }()
 	}
-	var view View
+	var view *View
 	if n := schema.CachedViewPosition(viewName); n >= 0 {
 		view = schema.Views[n]
-		defer func() { schema.Views[n] = view }()
 	} else {
-		view.ViewSchema = viewSchema
-		view.ViewName = viewName
-		defer func() { schema.AppendView(view) }()
+		view = &View{
+			ViewSchema: viewSchema,
+			ViewName:   viewName,
+		}
+		schema.AppendView(view)
 	}
 	return view.LoadDDLView(c.Dialect, ddlView)
 }
@@ -119,7 +121,7 @@ func (c *Catalog) loadFunction(function Function) error {
 		schema.SchemaName = function.FunctionSchema
 		defer func() { c.AppendSchema(schema) }()
 	}
-	schema.Functions = append(schema.Functions, function)
+	schema.Functions = append(schema.Functions, &function)
 	return nil
 }
 
