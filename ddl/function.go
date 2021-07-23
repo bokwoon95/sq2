@@ -14,6 +14,7 @@ type Function struct {
 	ArgModes       []string `json:",omitempty"`
 	ArgNames       []string `json:",omitempty"`
 	ArgTypes       []string `json:",omitempty"`
+	ReturnType     string   `json:",omitempty"`
 	SQL            string   `json:",omitempty"`
 	IsIndependent  bool     `json:",omitempty"`
 	Ignore         bool     `json:",omitempty"`
@@ -93,7 +94,7 @@ LOOP:
 				// TIMESTAMP WITH TIME ZONE (how troublesome!)
 				fun.ArgTypes[i] = tokens[len(tokens)-1]
 				tokens = tokens[:len(tokens)-1]
-				for _, token := range tokens {
+				for j, token := range tokens {
 					if strings.EqualFold(token, "IN") ||
 						strings.EqualFold(token, "OUT") ||
 						strings.EqualFold(token, "INOUT") ||
@@ -102,6 +103,7 @@ LOOP:
 					} else {
 						fun.ArgNames[i] = token
 					}
+					_ = j
 				}
 				if j := strings.IndexByte(fun.ArgTypes[i], '='); j >= 0 {
 					fun.ArgTypes[i] = fun.ArgTypes[i][:j]
