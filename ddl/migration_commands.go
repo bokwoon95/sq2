@@ -33,6 +33,9 @@ func (c *Catalog) Commands() *MigrationCommands {
 			m.SchemaCommands = append(m.SchemaCommands, createSchemaCmd)
 		}
 		for _, table := range schema.Tables {
+			if table.Ignore {
+				continue
+			}
 			createTableCmd := &CreateTableCommand{
 				CreateIfNotExists:  true,
 				IncludeConstraints: true,
@@ -56,6 +59,9 @@ func (c *Catalog) Commands() *MigrationCommands {
 				m.ForeignKeyCommands = append(m.ForeignKeyCommands, alterTableCmd)
 			}
 			for _, index := range table.Indexes {
+				if index.Ignore {
+					continue
+				}
 				createIndexCmd := &CreateIndexCommand{Index: *index}
 				if c.Dialect == sq.DialectMySQL {
 					createTableCmd.CreateIndexCommands = append(createTableCmd.CreateIndexCommands, *createIndexCmd)
@@ -65,12 +71,18 @@ func (c *Catalog) Commands() *MigrationCommands {
 				}
 			}
 			for _, trigger := range table.Triggers {
+				if trigger.Ignore {
+					continue
+				}
 				createTriggerCmd := &CreateTriggerCommand{Trigger: *trigger}
 				m.TriggerCommands = append(m.TriggerCommands, createTriggerCmd)
 			}
 			m.TableCommands = append(m.TableCommands, createTableCmd)
 		}
 		for _, view := range schema.Views {
+			if view.Ignore {
+				continue
+			}
 			createViewCmd := &CreateViewCommand{View: *view}
 			if c.Dialect == sq.DialectMySQL || (c.Dialect == sq.DialectPostgres && !view.IsMaterialized) {
 				createViewCmd.CreateOrReplace = true
@@ -78,23 +90,31 @@ func (c *Catalog) Commands() *MigrationCommands {
 			if c.Dialect == sq.DialectSQLite || (c.Dialect == sq.DialectPostgres && view.IsMaterialized) {
 				createViewCmd.CreateIfNotExists = true
 			}
-			if c.Dialect != sq.DialectPostgres {
-				continue
-			}
-			for _, index := range view.Indexes {
-				createIndexCmd := &CreateIndexCommand{
-					CreateIfNotExists: true,
-					Index:             *index,
+			if c.Dialect == sq.DialectPostgres {
+				for _, index := range view.Indexes {
+					if index.Ignore {
+						continue
+					}
+					createIndexCmd := &CreateIndexCommand{
+						CreateIfNotExists: true,
+						Index:             *index,
+					}
+					m.IndexCommands = append(m.IndexCommands, createIndexCmd)
 				}
-				m.IndexCommands = append(m.IndexCommands, createIndexCmd)
-			}
-			for _, trigger := range view.Triggers {
-				createTriggerCmd := &CreateTriggerCommand{Trigger: *trigger}
-				m.IndexCommands = append(m.IndexCommands, createTriggerCmd)
+				for _, trigger := range view.Triggers {
+					if trigger.Ignore {
+						continue
+					}
+					createTriggerCmd := &CreateTriggerCommand{Trigger: *trigger}
+					m.IndexCommands = append(m.IndexCommands, createTriggerCmd)
+				}
 			}
 			m.ViewCommands = append(m.ViewCommands, createViewCmd)
 		}
 		for _, function := range schema.Functions {
+			if function.Ignore {
+				continue
+			}
 			createFunctionCmd := &CreateFunctionCommand{Function: *function}
 			if function.IsIndependent {
 				m.IndependentFunctionCommands = append(m.IndependentFunctionCommands, createFunctionCmd)

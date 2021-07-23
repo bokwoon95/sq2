@@ -27,6 +27,10 @@ type T struct {
 	tbl     *Table
 }
 
+func (t *T) Ignore() {
+	t.tbl.Ignore = true
+}
+
 func (t *T) VirtualTable(moduleName string, moduleArgs ...string) {
 	t.tbl.VirtualTable = moduleName
 	t.tbl.VirtualTableArgs = moduleArgs

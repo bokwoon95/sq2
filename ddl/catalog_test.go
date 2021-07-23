@@ -1,6 +1,7 @@
 package ddl
 
 import (
+	"encoding/json"
 	"os"
 	"testing"
 
@@ -49,15 +50,13 @@ END; $$ LANGUAGE plpgsql;`,
 	if err != nil {
 		t.Fatal(testcallers(), err)
 	}
+	enc := json.NewEncoder(os.Stdout)
+	enc.SetIndent("", "  ")
+	err = enc.Encode(catalog)
 	err = catalog.Commands().WriteSQL(os.Stdout)
 	if err != nil {
 		t.Fatal(testcallers(), err)
 	}
-	// b, err := json.MarshalIndent(catalog, "", "  ")
-	// if err != nil {
-	// 	t.Fatal(testcallers(), err)
-	// }
-	// os.Stdout.Write(b)
 }
 
 func Test_catalog_postgres(t *testing.T) {
@@ -102,15 +101,13 @@ END; $$ LANGUAGE plpgsql;`,
 	if err != nil {
 		t.Fatal(testcallers(), err)
 	}
+	enc := json.NewEncoder(os.Stdout)
+	enc.SetIndent("", "  ")
+	err = enc.Encode(catalog)
 	err = catalog.Commands().WriteSQL(os.Stdout)
 	if err != nil {
 		t.Fatal(testcallers(), err)
 	}
-	// b, err := json.MarshalIndent(catalog, "", "  ")
-	// if err != nil {
-	// 	t.Fatal(testcallers(), err)
-	// }
-	// os.Stdout.Write(b)
 }
 
 func Test_catalog_mysql(t *testing.T) {
@@ -155,13 +152,11 @@ END; $$ LANGUAGE plpgsql;`,
 	if err != nil {
 		t.Fatal(testcallers(), err)
 	}
+	enc := json.NewEncoder(os.Stdout)
+	enc.SetIndent("", "  ")
+	err = enc.Encode(catalog)
 	err = catalog.Commands().WriteSQL(os.Stdout)
 	if err != nil {
 		t.Fatal(testcallers(), err)
 	}
-	// b, err := json.MarshalIndent(catalog, "", "  ")
-	// if err != nil {
-	// 	t.Fatal(testcallers(), err)
-	// }
-	// os.Stdout.Write(b)
 }

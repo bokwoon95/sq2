@@ -378,7 +378,7 @@ func (tbl FILM_TEXT) DDL(dialect string, t *T) {
 		t.VirtualTable("fts5", `content='film'`, `content_rowid='film_id'`)
 		t.Column(tbl.FILM_ID).Ignore()
 	case sq.DialectPostgres:
-		break // no-op, postgres does not need a separate film_text table for full text search
+		t.Ignore()
 	case sq.DialectMySQL:
 		t.Column(tbl.FILM_ID).Type("INT").NotNull().PrimaryKey()
 		t.Column(tbl.TITLE).Type("VARCHAR(255)").NotNull()
