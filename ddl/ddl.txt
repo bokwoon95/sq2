@@ -29,22 +29,12 @@ functions (which there are quite a lot of in the postgres public schema). In
 those cases it will only generate a Catalog with the requisite information for
 structs+DDL impl.
 
-migrate: fug, how does golang-migrate read in entire sql files without parsing
-out the individual statements? pgx seems to implement reading sql files.
-go-mysql-driver seems to have a multiline mode that can be enabled. I think I
-saw multi sql statements being executed by mattn/go-sqlite3 without any
-problem. does this mean my bases are covered?
-
 ddl.go
-column_ddl.go | constraint_ddl.go | index_ddl.go
+column.go | constraint.go | index.go
 trigger.go
-trigger_ddl.go
 function.go
-function_ddl.go
 table.go
-table_ddl.go
 view.go
-view_ddl.go
 v.go | t.go
 schema.go
 catalog.go

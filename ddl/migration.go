@@ -8,6 +8,15 @@ import (
 	"github.com/bokwoon95/sq"
 )
 
+type MigrationOption int
+
+const (
+	CreateMissing  MigrationOption = 0b1
+	UpdateExisting MigrationOption = 0b10
+	DropExtraneous MigrationOption = 0b100
+	DropCascade    MigrationOption = 0b1000
+)
+
 type MigrationCommands struct {
 	Dialect                     string
 	SchemaCommands              []Command
@@ -20,6 +29,77 @@ type MigrationCommands struct {
 	FunctionCommands            []Command
 	TriggerCommands             []Command
 	ForeignKeyCommands          []Command
+}
+
+func AutoMigrate(dialect string, db sq.DB, migrationOption MigrationOption, CatalogOptions ...CatalogOption) error {
+	return nil
+}
+
+func Migrate(migrationOption MigrationOption, wantCatalog, gotCatalog Catalog) (MigrationCommands, error) {
+	var m MigrationCommands
+	return m, nil
+}
+
+func (m *MigrationCommands) WriteSQL(w io.Writer) error {
+	var written bool
+	for _, cmds := range [][]Command{
+		m.SchemaCommands,
+		m.IndependentFunctionCommands,
+		m.TableCommands,
+		m.ViewCommands,
+		m.IndexCommands,
+		m.FunctionCommands,
+		m.TriggerCommands,
+		m.ForeignKeyCommands,
+	} {
+		for _, cmd := range cmds {
+			query, args, _, err := sq.ToSQL(m.Dialect, cmd)
+			if err != nil {
+				return fmt.Errorf("command: %s: %w", query, err)
+			}
+			if len(args) > 0 {
+				query, err = sq.Sprintf(m.Dialect, query, args)
+				if err != nil {
+					return fmt.Errorf("command: %s: %w", query, err)
+				}
+			}
+			if !written {
+				written = true
+			} else {
+				io.WriteString(w, "\n\n")
+			}
+			io.WriteString(w, query)
+		}
+	}
+	return nil
+}
+
+func (m *MigrationCommands) Exec(db sq.DB) error {
+	return m.ExecContext(context.Background(), db)
+}
+
+func (m *MigrationCommands) ExecContext(ctx context.Context, db sq.DB) error {
+	for _, cmds := range [][]Command{
+		m.SchemaCommands,
+		m.IndependentFunctionCommands,
+		m.TableCommands,
+		m.ViewCommands,
+		m.IndexCommands,
+		m.TriggerCommands,
+		m.ForeignKeyCommands,
+	} {
+		for _, cmd := range cmds {
+			query, args, _, err := sq.ToSQL(m.Dialect, cmd)
+			if err != nil {
+				return fmt.Errorf("command: %s: %w", query, err)
+			}
+			_, err = db.ExecContext(ctx, query, args...)
+			if err != nil {
+				return fmt.Errorf("command: %s: %w", query, err)
+			}
+		}
+	}
+	return nil
 }
 
 func (c *Catalog) Commands() *MigrationCommands {
@@ -124,66 +204,4 @@ func (c *Catalog) Commands() *MigrationCommands {
 		}
 	}
 	return m
-}
-
-func (m *MigrationCommands) WriteSQL(w io.Writer) error {
-	var written bool
-	for _, cmds := range [][]Command{
-		m.SchemaCommands,
-		m.IndependentFunctionCommands,
-		m.TableCommands,
-		m.ViewCommands,
-		m.IndexCommands,
-		m.FunctionCommands,
-		m.TriggerCommands,
-		m.ForeignKeyCommands,
-	} {
-		for _, cmd := range cmds {
-			query, args, _, err := sq.ToSQL(m.Dialect, cmd)
-			if err != nil {
-				return fmt.Errorf("command: %s: %w", query, err)
-			}
-			if len(args) > 0 {
-				query, err = sq.Sprintf(m.Dialect, query, args)
-				if err != nil {
-					return fmt.Errorf("command: %s: %w", query, err)
-				}
-			}
-			if !written {
-				written = true
-			} else {
-				io.WriteString(w, "\n\n")
-			}
-			io.WriteString(w, query)
-		}
-	}
-	return nil
-}
-
-func (m *MigrationCommands) Exec(db sq.DB) error {
-	return m.ExecContext(context.Background(), db)
-}
-
-func (m *MigrationCommands) ExecContext(ctx context.Context, db sq.DB) error {
-	for _, cmds := range [][]Command{
-		m.SchemaCommands,
-		m.IndependentFunctionCommands,
-		m.TableCommands,
-		m.ViewCommands,
-		m.IndexCommands,
-		m.TriggerCommands,
-		m.ForeignKeyCommands,
-	} {
-		for _, cmd := range cmds {
-			query, args, _, err := sq.ToSQL(m.Dialect, cmd)
-			if err != nil {
-				return fmt.Errorf("command: %s: %w", query, err)
-			}
-			_, err = db.ExecContext(ctx, query, args...)
-			if err != nil {
-				return fmt.Errorf("command: %s: %w", query, err)
-			}
-		}
-	}
-	return nil
 }
