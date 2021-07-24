@@ -65,6 +65,13 @@ const (
 
 // pass a tx in explicitly to run everything in a transaction
 
+to opt of of the implicit transactions, sql files must look like xxxxx.no_auto_transaction.up.sql
+or maybe instead of hardcoding it, users can pass in a custom function that
+takes in the environment and returns true or false whether auto transaction
+wrapping should be disabled. a default function can be provided that returns
+true of false depending on whether the file ends up no_auto_transaction.up.sql,
+but the user can easily substitute one for their own.
+
 // simple use case
 ddl.AutoMigrate(dialect, db, ddl.CreateMissing|ddl.UpdateExisting, WithTables(), ...)
 
