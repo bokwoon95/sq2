@@ -84,14 +84,13 @@ func tokenizeModifiers(s string) (modifiers [][2]string, modifierPositions map[s
 	return modifiers, modifierPositions, nil
 }
 
-func popIdentifierToken(dialect, s string) (word, rest string) {
+func popIdentifierToken(dialect, s string) (word, rest string, splitAt int) {
 	s = strings.TrimLeft(s, " \t\n\v\f\r\u0085\u00A0")
 	if s == "" {
-		return "", ""
+		return "", "", -1
 	}
 	var openingQuote rune
 	var insideIdentifier bool
-	var splitAt int
 	for i := 0; i < len(s); {
 		r, size := utf8.DecodeRuneInString(s[i:])
 		i += size
@@ -127,19 +126,20 @@ func popIdentifierToken(dialect, s string) (word, rest string) {
 			break
 		}
 	}
-	return s[:splitAt], s[splitAt:]
+	return s[:splitAt], s[splitAt:], splitAt
 }
 
-func popIdentifierTokens(dialect, s string, count int) (tokens []string, remainder string) {
+func popIdentifierTokens(dialect, s string, count int) (tokens []string, remainder string, splitAt int) {
+	splitAt = -1
 	token, remainder := "", s
 	for i := 0; (count < 0 || i < count) && remainder != ""; i++ {
-		token, remainder = popIdentifierToken(dialect, remainder)
+		token, remainder, splitAt = popIdentifierToken(dialect, remainder)
 		if token == "" && remainder == "" {
 			break
 		}
 		tokens = append(tokens, token)
 	}
-	return tokens, remainder
+	return tokens, remainder, splitAt
 }
 
 func splitArgs(s string) []string {

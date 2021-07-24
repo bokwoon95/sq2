@@ -108,7 +108,7 @@ func mapTables(catalog *Catalog, rows *sql.Rows) error {
 		return fmt.Errorf("scanning table %s: %w", tbl.TableName, err)
 	}
 	if catalog.Dialect == sq.DialectSQLite && tbl.SQL != "" {
-		tokens, remainder := popIdentifierTokens(catalog.Dialect, tbl.SQL, 3)
+		tokens, remainder, _ := popIdentifierTokens(catalog.Dialect, tbl.SQL, 3)
 		if len(tokens) == 3 &&
 			strings.EqualFold(tokens[0], "CREATE") &&
 			strings.EqualFold(tokens[1], "VIRTUAL") &&
@@ -116,14 +116,14 @@ func mapTables(catalog *Catalog, rows *sql.Rows) error {
 			var token string
 			var foundUsing bool
 			for remainder != "" && !foundUsing {
-				token, remainder = popIdentifierToken(catalog.Dialect, remainder)
+				token, remainder, _ = popIdentifierToken(catalog.Dialect, remainder)
 				if strings.EqualFold(token, "USING") {
 					foundUsing = true
 					break
 				}
 			}
 			if foundUsing {
-				tbl.VirtualTable, remainder = popIdentifierToken(catalog.Dialect, remainder)
+				tbl.VirtualTable, remainder, _ = popIdentifierToken(catalog.Dialect, remainder)
 				i := strings.IndexByte(remainder, '(')
 				j := strings.LastIndexByte(remainder, ')')
 				if i >= 0 && j >= i {
@@ -290,7 +290,7 @@ func mapIndexes(catalog *Catalog, rows *sql.Rows) error {
 				index.Exprs[i] = args[i]
 			}
 		}
-		if token, remainder := popIdentifierToken(sq.DialectSQLite, index.SQL[end+1:]); strings.EqualFold(token, "WHERE") {
+		if token, remainder, _ := popIdentifierToken(sq.DialectSQLite, index.SQL[end+1:]); strings.EqualFold(token, "WHERE") {
 			index.Predicate = strings.TrimSpace(remainder)
 		}
 	}
@@ -385,7 +385,7 @@ func mapViews(catalog *Catalog, rows *sql.Rows) error {
 		var token string
 		remainder := view.SQL
 		for remainder != "" {
-			token, remainder = popIdentifierToken(catalog.Dialect, remainder)
+			token, remainder, _ = popIdentifierToken(catalog.Dialect, remainder)
 			if strings.EqualFold(token, "AS") {
 				break
 			}

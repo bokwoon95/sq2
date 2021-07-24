@@ -33,13 +33,13 @@ LOOP:
 	for remainder != "" {
 		switch state {
 		case PRE_FUNCTION:
-			token, remainder = popIdentifierToken(dialect, remainder)
+			token, remainder, _ = popIdentifierToken(dialect, remainder)
 			if strings.EqualFold(token, "FUNCTION") {
 				state = FUNCTION
 			}
 			continue
 		case FUNCTION:
-			fun.FunctionName, _ = popIdentifierToken(dialect, remainder)
+			fun.FunctionName, _, _ = popIdentifierToken(dialect, remainder)
 			if i := strings.IndexByte(fun.FunctionName, '.'); i >= 0 {
 				fun.FunctionSchema, fun.FunctionName = fun.FunctionName[:i], fun.FunctionName[i+1:]
 			}
@@ -56,8 +56,8 @@ LOOP:
 			}
 			rawArgs := strings.TrimSpace(remainder[i+1 : j])
 			if rawArgs == "" {
-				if token, tmp := popIdentifierToken(dialect, remainder[j+1:]); strings.EqualFold(token, "RETURNS") {
-					fun.ReturnType, _ = popIdentifierToken(dialect, tmp)
+				if token, tmp, _ := popIdentifierToken(dialect, remainder[j+1:]); strings.EqualFold(token, "RETURNS") {
+					fun.ReturnType, _, _ = popIdentifierToken(dialect, tmp)
 				}
 				break LOOP
 			}
@@ -66,7 +66,7 @@ LOOP:
 			fun.ArgNames = make([]string, len(args))
 			fun.ArgTypes = make([]string, len(args))
 			for i, arg := range args {
-				tokens, _ := popIdentifierTokens(dialect, arg, -1)
+				tokens, _, _ := popIdentifierTokens(dialect, arg, -1)
 				if len(tokens) == 0 {
 					return fmt.Errorf("argument #%d ('%s') is invalid", i+1, arg)
 				}
@@ -142,8 +142,8 @@ LOOP:
 					fun.ArgTypes[i] = fun.ArgTypes[i][:j]
 				}
 			}
-			if token, tmp := popIdentifierToken(dialect, remainder[j+1:]); strings.EqualFold(token, "RETURNS") {
-				fun.ReturnType, _ = popIdentifierToken(dialect, tmp)
+			if token, tmp, _ := popIdentifierToken(dialect, remainder[j+1:]); strings.EqualFold(token, "RETURNS") {
+				fun.ReturnType, _, _ = popIdentifierToken(dialect, tmp)
 			}
 			break LOOP
 		}

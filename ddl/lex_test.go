@@ -166,7 +166,7 @@ func Test_popWords(t *testing.T) {
 	}
 
 	assert := func(t *testing.T, tt TT) {
-		gotWords, gotRest := popIdentifierTokens(tt.dialect, tt.s, tt.num)
+		gotWords, gotRest, _ := popIdentifierTokens(tt.dialect, tt.s, tt.num)
 		if diff := testdiff(gotWords, tt.wantWords); diff != "" {
 			t.Error(testcallers(), diff)
 		}
@@ -177,7 +177,7 @@ func Test_popWords(t *testing.T) {
 
 	t.Run("empty (popWord)", func(t *testing.T) {
 		t.Parallel()
-		gotWord, gotRest := popIdentifierToken("", "")
+		gotWord, gotRest, _ := popIdentifierToken("", "")
 		if diff := testdiff(gotWord, ""); diff != "" {
 			t.Error(testcallers(), diff)
 		}

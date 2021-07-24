@@ -29,14 +29,14 @@ LOOP:
 	for rest != "" {
 		switch state {
 		case PRE_TRIGGER:
-			word, rest = popIdentifierToken(dialect, rest)
+			word, rest, _ = popIdentifierToken(dialect, rest)
 			if strings.EqualFold(word, "TRIGGER") {
 				state = TRIGGER
 			}
 			continue
 		case TRIGGER:
 			if dialect == sq.DialectSQLite {
-				words, tmp := popIdentifierTokens(dialect, rest, 3)
+				words, tmp, _ := popIdentifierTokens(dialect, rest, 3)
 				if len(words) == 3 &&
 					strings.EqualFold(words[0], "IF") &&
 					strings.EqualFold(words[1], "NOT") &&
@@ -44,17 +44,17 @@ LOOP:
 					rest = tmp
 				}
 			}
-			trg.TriggerName, rest = popIdentifierToken(dialect, rest)
+			trg.TriggerName, rest, _ = popIdentifierToken(dialect, rest)
 			state = PRE_ON
 			continue
 		case PRE_ON:
-			word, rest = popIdentifierToken(dialect, rest)
+			word, rest, _ = popIdentifierToken(dialect, rest)
 			if strings.EqualFold(word, "ON") {
 				state = ON
 			}
 			continue
 		case ON:
-			trg.TableName, rest = popIdentifierToken(dialect, rest)
+			trg.TableName, rest, _ = popIdentifierToken(dialect, rest)
 			if i := strings.IndexByte(trg.TableName, '.'); i >= 0 {
 				trg.TableSchema, trg.TableName = trg.TableName[:i], trg.TableName[i+1:]
 			}
