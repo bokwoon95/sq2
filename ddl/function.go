@@ -1,7 +1,6 @@
 package ddl
 
 import (
-	"bytes"
 	"fmt"
 	"strings"
 
@@ -112,6 +111,21 @@ LOOP:
 				// just take the last token as the type. then look at the
 				// number of tokens left: 0, 1 or 2? anything more, raise an
 				// error. else you can run the loop below.
+				// try to find a recognized type
+				typeIndex := len(tokens) - 1
+				for j, token := range tokens {
+					if strings.EqualFold(token, "BIT") ||
+						strings.EqualFold(token, "CHARACTER") ||
+						strings.EqualFold(token, "DOUBLE") ||
+						strings.EqualFold(token, "INTERVAL") ||
+						strings.EqualFold(token, "NUMERIC") ||
+						strings.EqualFold(token, "TIME") ||
+						strings.EqualFold(token, "TIMESTAMP") {
+						typeIndex = j
+						break
+					}
+				}
+				_ = typeIndex
 				fun.ArgTypes[i] = tokens[len(tokens)-1]
 				tokens = tokens[:len(tokens)-1]
 				for _, token := range tokens {
@@ -137,66 +151,5 @@ LOOP:
 	if fun.SQL != "" && fun.FunctionName == "" {
 		return fmt.Errorf("could not find function name, did you write the function correctly?")
 	}
-	return nil
-}
-
-type CreateFunctionCommand struct {
-	Function Function
-}
-
-func (cmd CreateFunctionCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
-	if dialect == sq.DialectSQLite {
-		return fmt.Errorf("sqlite does not support functions")
-	}
-	buf.WriteString(cmd.Function.SQL)
-	return nil
-}
-
-type DropFunctionCommand struct {
-	DropIfExists bool
-	Function     Function
-	DropCascade  bool
-}
-
-func (cmd DropFunctionCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
-	if dialect == sq.DialectSQLite {
-		return fmt.Errorf("sqlite does not support functions")
-	}
-	buf.WriteString("DROP FUNCTION ")
-	if cmd.DropIfExists {
-		buf.WriteString("IF EXISTS ")
-	}
-	if cmd.Function.FunctionSchema != "" {
-		buf.WriteString(sq.QuoteIdentifier(dialect, cmd.Function.FunctionSchema) + ".")
-	}
-	buf.WriteString(sq.QuoteIdentifier(dialect, cmd.Function.FunctionName))
-	if dialect == sq.DialectPostgres {
-		buf.WriteString("(" + strings.Join(cmd.Function.ArgTypes, ", ") + ")")
-	}
-	if cmd.DropCascade {
-		buf.WriteString(" CASCADE")
-	}
-	buf.WriteString(";")
-	return nil
-}
-
-type RenameFunctionCommand struct {
-	Function     Function
-	RenameToName string
-}
-
-func (cmd RenameFunctionCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
-	if dialect == sq.DialectSQLite || dialect == sq.DialectMySQL {
-		return fmt.Errorf("%s does not support renaming functions", dialect)
-	}
-	buf.WriteString("ALTER FUNCTION ")
-	if cmd.Function.FunctionSchema != "" {
-		buf.WriteString(sq.QuoteIdentifier(dialect, cmd.Function.FunctionSchema) + ".")
-	}
-	buf.WriteString(sq.QuoteIdentifier(dialect, cmd.Function.FunctionName))
-	if dialect == sq.DialectPostgres {
-		buf.WriteString("(" + strings.Join(cmd.Function.ArgTypes, ", ") + ")")
-	}
-	buf.WriteString(" RENAME TO " + sq.QuoteIdentifier(dialect, cmd.RenameToName) + ";")
 	return nil
 }

@@ -183,3 +183,45 @@ func toExpr(dialect, s string) string {
 		return "(" + s + ")"
 	}
 }
+
+type Column struct {
+	TableSchema              string `json:",omitempty"`
+	TableName                string `json:",omitempty"`
+	ColumnName               string `json:",omitempty"`
+	ColumnType               string `json:",omitempty"`
+	NumericPrecision         int    `json:",omitempty"`
+	NumericScale             int    `json:",omitempty"`
+	Identity                 string `json:",omitempty"`
+	IsAutoincrement          bool   `json:",omitempty"`
+	IsNotNull                bool   `json:",omitempty"`
+	IsUnique                 bool   `json:",omitempty"`
+	IsPrimaryKey             bool   `json:",omitempty"`
+	OnUpdateCurrentTimestamp bool   `json:",omitempty"`
+	GeneratedExpr            string `json:",omitempty"`
+	GeneratedExprStored      bool   `json:",omitempty"`
+	CollationName            string `json:",omitempty"`
+	ColumnDefault            string `json:",omitempty"`
+	Ignore                   bool   `json:",omitempty"`
+}
+
+type Constraint struct {
+	TableSchema         string   `json:",omitempty"`
+	TableName           string   `json:",omitempty"`
+	ConstraintName      string   `json:",omitempty"`
+	ConstraintType      string   `json:",omitempty"`
+	Columns             []string `json:",omitempty"`
+	Exprs               []string `json:",omitempty"`
+	ReferencesSchema    string   `json:",omitempty"`
+	ReferencesTable     string   `json:",omitempty"`
+	ReferencesColumns   []string `json:",omitempty"`
+	UpdateRule          string   `json:",omitempty"`
+	DeleteRule          string   `json:",omitempty"`
+	MatchOption         string   `json:",omitempty"`
+	CheckExpr           string   `json:",omitempty"`
+	Operators           []string `json:",omitempty"`
+	IndexType           string   `json:",omitempty"`
+	Predicate           string   `json:",omitempty"`
+	IsDeferrable        bool     `json:",omitempty"`
+	IsInitiallyDeferred bool     `json:",omitempty"`
+	Ignore              bool     `json:",omitempty"`
+}
