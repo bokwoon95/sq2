@@ -44,7 +44,7 @@ func BufferPrintf(dialect string, buf *bytes.Buffer, args *[]interface{}, params
 	// instead of looping over each rune in the format string, we jump straight
 	// to each occurrence of '{'.
 	for i := strings.IndexByte(format, '{'); i >= 0; i = strings.IndexByte(format, '{') {
-		if i+2 <= len(format) && format[i:i+2] == "{{" {
+		if i+1 <= len(format) && format[i+1] == '{' {
 			// To use a literal '{' in the format string, escape it by adding a
 			// second curly brace after it i.e. '{{'. We treat all '{{' as '{'.
 			buf.WriteString(format[:i])
