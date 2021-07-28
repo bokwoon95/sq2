@@ -144,7 +144,7 @@ func (cmd *CreateSchemaCommand) AppendSQL(dialect string, buf *bytes.Buffer, arg
 	if cmd.CreateIfNotExists {
 		buf.WriteString("IF NOT EXISTS ")
 	}
-	buf.WriteString(cmd.SchemaName + ";")
+	buf.WriteString(cmd.SchemaName)
 	return nil
 }
 
