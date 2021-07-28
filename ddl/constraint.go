@@ -8,6 +8,28 @@ import (
 	"github.com/bokwoon95/sq"
 )
 
+type Constraint struct {
+	TableSchema         string   `json:",omitempty"`
+	TableName           string   `json:",omitempty"`
+	ConstraintName      string   `json:",omitempty"`
+	ConstraintType      string   `json:",omitempty"`
+	Columns             []string `json:",omitempty"`
+	Exprs               []string `json:",omitempty"`
+	ReferencesSchema    string   `json:",omitempty"`
+	ReferencesTable     string   `json:",omitempty"`
+	ReferencesColumns   []string `json:",omitempty"`
+	UpdateRule          string   `json:",omitempty"`
+	DeleteRule          string   `json:",omitempty"`
+	MatchOption         string   `json:",omitempty"`
+	CheckExpr           string   `json:",omitempty"`
+	Operators           []string `json:",omitempty"`
+	IndexType           string   `json:",omitempty"`
+	Predicate           string   `json:",omitempty"`
+	IsDeferrable        bool     `json:",omitempty"`
+	IsInitiallyDeferred bool     `json:",omitempty"`
+	Ignore              bool     `json:",omitempty"`
+}
+
 type AddConstraintCommand struct {
 	Constraint Constraint
 	IndexName  string

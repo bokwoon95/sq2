@@ -8,6 +8,20 @@ import (
 	"github.com/bokwoon95/sq"
 )
 
+type Index struct {
+	TableSchema    string   `json:",omitempty"`
+	TableName      string   `json:",omitempty"`
+	IndexName      string   `json:",omitempty"`
+	IndexType      string   `json:",omitempty"`
+	IsUnique       bool     `json:",omitempty"`
+	Columns        []string `json:",omitempty"`
+	Exprs          []string `json:",omitempty"`
+	IncludeColumns []string `json:",omitempty"`
+	Predicate      string   `json:",omitempty"`
+	SQL            string   `json:",omitempty"`
+	Ignore         bool     `json:",omitempty"`
+}
+
 type CreateIndexCommand struct {
 	CreateConcurrently bool
 	CreateIfNotExists  bool

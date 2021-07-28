@@ -8,6 +8,26 @@ import (
 	"github.com/bokwoon95/sq"
 )
 
+type Column struct {
+	TableSchema              string `json:",omitempty"`
+	TableName                string `json:",omitempty"`
+	ColumnName               string `json:",omitempty"`
+	ColumnType               string `json:",omitempty"`
+	NumericPrecision         int    `json:",omitempty"`
+	NumericScale             int    `json:",omitempty"`
+	Identity                 string `json:",omitempty"`
+	IsAutoincrement          bool   `json:",omitempty"`
+	IsNotNull                bool   `json:",omitempty"`
+	IsUnique                 bool   `json:",omitempty"`
+	IsPrimaryKey             bool   `json:",omitempty"`
+	OnUpdateCurrentTimestamp bool   `json:",omitempty"`
+	GeneratedExpr            string `json:",omitempty"`
+	GeneratedExprStored      bool   `json:",omitempty"`
+	CollationName            string `json:",omitempty"`
+	ColumnDefault            string `json:",omitempty"`
+	Ignore                   bool   `json:",omitempty"`
+}
+
 type AddColumnCommand struct {
 	AddIfNotExists   bool
 	Column           Column

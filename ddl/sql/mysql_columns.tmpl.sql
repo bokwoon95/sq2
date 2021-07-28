@@ -31,4 +31,4 @@ WHERE
     -- to the end of the args so that it doesn't mess with any ordinal params.
     -- available params: {tableSchema}, {tableName}, {columnName}, {columnType1}, {columnType2}
 
--- MySQLColumns()
+-- ddl.MySQLColumns()

@@ -3,6 +3,15 @@ WithDB's behavior is fixed, take it or leave it. Instead, offer them a way to
 write their own CatalogOption function, leveraging the existing IntrospectQuery
 and MapColumns/MapTables/etc if necessary.
 
+type CatalogIntrospector interface {
+    GetColumns(sq.DB) ([]Column, error)
+    GetConstraints(sq.DB) ([]Constraint, error)
+    GetIndexes(sq.DB) ([]Index, error)
+    GetTables(sq.DB) ([]Table, error)
+    GetTriggers(sq.DB) ([]Trigger, error)
+    GetViews(sq.DB) ([]View, error)
+}
+
 omfg both postgres and mysql support functions AND stored procedures, so now
 I'd have to figure out how that looks from the user-definition side (in Go
 files) and the database-definition side (reading from the db).
