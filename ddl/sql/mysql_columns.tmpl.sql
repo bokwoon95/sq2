@@ -19,14 +19,16 @@ FROM
     JOIN information_schema.tables USING (table_schema, table_name)
 WHERE
     tables.table_type = 'BASE TABLE'
-    {{- if not .OverrideDefaultPredicate }}
+    {{- if not .IncludeSystemSchemas }}
     AND columns.table_schema NOT IN ('mysql', 'information_schema', 'performance_schema', 'sys')
-    {{- end if }}
-    {{- if NOT .CustomPredicate }}
+    {{- end }}
+    {{- if not .CustomPredicate }}
     AND {{ .CustomPredicate }}
-    {{- end if }}
+    {{- end }}
     -- user provides something like "{schema} NOT IN ({1}, {2})", "schema_migrations", "schema_versions"
     -- alternatively: "{schema} NOT IN ({})", []string{"schema_migrations", "schema_versions"}
     -- sq.Param("schema", sq.Literal("columns.table_schema")) will be appended
     -- to the end of the args so that it doesn't mess with any ordinal params.
-;
+    -- available params: {tableSchema}, {tableName}, {columnName}, {columnType1}, {columnType2}
+
+-- MySQLColumns()

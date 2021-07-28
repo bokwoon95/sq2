@@ -1,14 +1,3 @@
-All commands need to exclude the semicolon. The semicolon will be inserted by
-(*MigrationCommands).WriteSQL. For MySQL triggers and MySQL
-functions/pocedures, (*MigrationCommands).WriteSQL will write in the
-appropriate `DELIMITER ;;` command before and after the
-triggers/functions/procedures have been defined.
-
-Also: TYPEs, DOMAINs, ENUMs. aaargh.
-I don't need to add these now because the sakila database doesn't use them (I'm
-going to strip it out from the postgres schema too). Kick the can down the
-road, when the problem is more well-defined.
-
 forget about offering users the options to slot in their own predicates.
 WithDB's behavior is fixed, take it or leave it. Instead, offer them a way to
 write their own CatalogOption function, leveraging the existing IntrospectQuery
@@ -40,9 +29,20 @@ migration_commands.go
 next up:
 bah gawd. extensions. enums.
 
+Also: TYPEs, DOMAINs, ENUMs. aaargh.
+I don't need to add these now because the sakila database doesn't use them (I'm
+going to strip it out from the postgres schema too). Kick the can down the
+road, when the problem is more well-defined.
+
 add dialect modifier
 add ignore modifier
 UUIDField can be used with some media table like in devlab
+
+All commands need to exclude the semicolon. The semicolon will be inserted by
+(*MigrationCommands).WriteSQL. For MySQL triggers and MySQL
+functions/pocedures, (*MigrationCommands).WriteSQL will write in the
+appropriate `DELIMITER ;;` command before and after the
+triggers/functions/procedures have been defined.
 
 type MigrationOption int
 
