@@ -3,14 +3,51 @@ WithDB's behavior is fixed, take it or leave it. Instead, offer them a way to
 write their own CatalogOption function, leveraging the existing IntrospectQuery
 and MapColumns/MapTables/etc if necessary.
 
-type CatalogIntrospector interface {
-    GetColumns(sq.DB) ([]Column, error)
-    GetConstraints(sq.DB) ([]Constraint, error)
-    GetIndexes(sq.DB) ([]Index, error)
-    GetTables(sq.DB) ([]Table, error)
-    GetTriggers(sq.DB) ([]Trigger, error)
-    GetViews(sq.DB) ([]View, error)
+or should templateData be part of the underlying object instead? This would
+allow you to extend existing introspector implementations with your own data.
+type ddl.DB = interface{
+    QueryContext(ctx context.Context, query string, args ...interface{}) (*sql.Rows, error)
+    ExecContext(ctx context.Context, query string, args ...interface{}) (sql.Result, error)
+    PrepareContext(ctx context.Context, query string) (*sql.Stmt, error)
 }
+type DBIntrospector interface {
+    GetDefaultSchema(db ddl.DB) (defaultSchema string, error)
+    GetVersion(db ddl.DB) (versionString string, versionNum [2]int, error)
+    GetExtensions(db ddl.DB) (extensions [][2]string, error)
+    GetSchemas(db ddl.DB) ([]Schema, error)
+    GetTables(db ddl.DB) ([]Table, error)
+    GetColumns(db ddl.DB) ([]Column, error)
+    GetConstraints(db ddl.DB) ([]Constraint, error)
+    GetIndexes(db ddl.DB) ([]Index, error)
+    GetTriggers(db ddl.DB) ([]Trigger, error)
+    GetViews(db ddl.DB) ([]View, error)
+    GetFunctions(db ddl.DB) ([]Function, error)
+}
+WithDB(ddl.DB)
+WithDBIntrospector(dbIntrospector DBIntrospector)
+introspect_sqlite.go
+- type SQLiteIntrospector struct
+- SQLiteIntrospector is the special kid because before it can introspect columns, it must populate its internal list of tables so that it can run the introspection query over and over for each table.
+introspect_postgres.go
+- type PostgresIntrospector struct
+introspect_mysql.go
+- type MySQLIntrospector struct
+
+we *could* decouple the ddl and introspect* packages. That means ddl will no longer be able to choose the introspector for you based on the dialect. Instead the user must always pass in a DB connection and an introspector.
+
+catalog := ddl.NewCatalog(WithDB(db, introspect_sqlite.NewIntrospector()))
+
+catalog := ddl.NewCatalog(ddl.WithDialect(), ddl.WithTables(), ddl.WithDDLViews())
+
+- OR -
+
+catalog := ddl.NewCatalog(dialect, WithDB(db))
+
+catalog := ddl.NewCatalog(dialect, WithDBAndIntrospector(db, dbIntrospector))
+
+catalog := ddl.NewCatalog(dialect, ddl.WithTables(), ddl.WithDDLViews())
+
+ughh I really hate having to repeat the dialect twice first as the dialect string and second as the introspector though.
 
 omfg both postgres and mysql support functions AND stored procedures, so now
 I'd have to figure out how that looks from the user-definition side (in Go
