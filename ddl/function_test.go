@@ -168,7 +168,7 @@ CREATE OR REPLACE FUNCTION years_compare( IN year1 integer DEFAULT NULL,
 		t.Parallel()
 		var tt TT
 		tt.dialect = sq.DialectMySQL
-		tt.item.SQL = `CREATE FUNCTION hello (s CHAR(20)) RETURNS CHAR(50) DETERMINISTIC RETURN CONCAT('Hello, ',s,'!');`
+		tt.item.SQL = `CREATE FUNCTION hello (s CHAR(20)) RETURNS CHAR(50) DETERMINISTIC RETURN CONCAT('Hello, ',s,'!')`
 		assert(t, tt)
 	})
 
@@ -176,7 +176,7 @@ CREATE OR REPLACE FUNCTION years_compare( IN year1 integer DEFAULT NULL,
 		t.Parallel()
 		var tt TT
 		tt.dialect = sq.DialectPostgres
-		tt.item.SQL = `CREATE FUNCTION temp;`
+		tt.item.SQL = `CREATE FUNCTION temp`
 		err := tt.item.populateFunctionInfo(tt.dialect)
 		if err == nil {
 			t.Fatal(testcallers(), "expected error but got nil")
@@ -187,7 +187,7 @@ CREATE OR REPLACE FUNCTION years_compare( IN year1 integer DEFAULT NULL,
 		t.Parallel()
 		var tt TT
 		tt.dialect = sq.DialectPostgres
-		tt.item.SQL = `CREATE FUNCTION temp(;`
+		tt.item.SQL = `CREATE FUNCTION temp(`
 		err := tt.item.populateFunctionInfo(tt.dialect)
 		if err == nil {
 			t.Fatal(testcallers(), "expected error but got nil")
@@ -198,7 +198,7 @@ CREATE OR REPLACE FUNCTION years_compare( IN year1 integer DEFAULT NULL,
 		t.Parallel()
 		var tt TT
 		tt.dialect = sq.DialectPostgres
-		tt.item.SQL = `CREATE FUNCTION temp(,,,);`
+		tt.item.SQL = `CREATE FUNCTION temp(,,,)`
 		err := tt.item.populateFunctionInfo(tt.dialect)
 		if err == nil {
 			t.Fatal(testcallers(), "expected error but got nil")
@@ -209,7 +209,7 @@ CREATE OR REPLACE FUNCTION years_compare( IN year1 integer DEFAULT NULL,
 		t.Parallel()
 		var tt TT
 		tt.dialect = sq.DialectPostgres
-		tt.item.SQL = `CREATE FUNCTION temp(   DEFAULT 'test',='test');`
+		tt.item.SQL = `CREATE FUNCTION temp(   DEFAULT 'test',='test')`
 		err := tt.item.populateFunctionInfo(tt.dialect)
 		if err == nil {
 			t.Fatal(testcallers(), "expected error but got nil")
@@ -220,7 +220,7 @@ CREATE OR REPLACE FUNCTION years_compare( IN year1 integer DEFAULT NULL,
 		t.Parallel()
 		var tt TT
 		tt.dialect = sq.DialectPostgres
-		tt.item.SQL = `CREATE temp();`
+		tt.item.SQL = `CREATE temp()`
 		err := tt.item.populateFunctionInfo(tt.dialect)
 		if err == nil {
 			t.Fatal(testcallers(), "expected error but got nil")
@@ -264,7 +264,7 @@ func Test_DropFunctionCommand(t *testing.T) {
 			},
 			DropCascade: true,
 		}
-		tt.wantQuery = `DROP FUNCTION IF EXISTS public.my_function(TEXT, INT) CASCADE;`
+		tt.wantQuery = `DROP FUNCTION IF EXISTS public.my_function(TEXT, INT) CASCADE`
 		assert(t, tt)
 	})
 
@@ -314,7 +314,7 @@ func Test_RenameFunctionCommand(t *testing.T) {
 			},
 			RenameToName: "my_new_function",
 		}
-		tt.wantQuery = `ALTER FUNCTION public.my_function() RENAME TO my_new_function;`
+		tt.wantQuery = `ALTER FUNCTION public.my_function() RENAME TO my_new_function`
 		assert(t, tt)
 	})
 

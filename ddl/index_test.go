@@ -48,7 +48,7 @@ func Test_CreateIndexCommnd(t *testing.T) {
 		}
 		tt.wantQuery = `CREATE UNIQUE INDEX CONCURRENTLY IF NOT EXISTS` +
 			` "some index name" ON "some table schema"."some table name" USING HASH ("column a", UPPER(column_b))` +
-			` INCLUDE (column_c, "column d") WHERE column_e IS NOT NULL;`
+			` INCLUDE (column_c, "column d") WHERE column_e IS NOT NULL`
 		assert(t, tt)
 	})
 
@@ -66,7 +66,7 @@ func Test_CreateIndexCommnd(t *testing.T) {
 				Predicate:   "column_e IS NOT NULL",
 			},
 		}
-		tt.wantQuery = `CREATE INDEX my_index ON my_schema.my_table ("column a", UPPER(column_b)) WHERE column_e IS NOT NULL;`
+		tt.wantQuery = `CREATE INDEX my_index ON my_schema.my_table ("column a", UPPER(column_b)) WHERE column_e IS NOT NULL`
 		assert(t, tt)
 	})
 
@@ -193,7 +193,7 @@ func Test_DropIndexCommnd(t *testing.T) {
 			IndexName:        "some index name",
 			DropCascade:      true,
 		}
-		tt.wantQuery = `DROP INDEX CONCURRENTLY IF EXISTS "some table schema"."some index name" CASCADE;`
+		tt.wantQuery = `DROP INDEX CONCURRENTLY IF EXISTS "some table schema"."some index name" CASCADE`
 		assert(t, tt)
 	})
 
@@ -291,7 +291,7 @@ func Test_RenameIndexCommnd(t *testing.T) {
 			IndexName:     "old index name",
 			RenameToName:  "new index name",
 		}
-		tt.wantQuery = `ALTER INDEX IF EXISTS "some table schema"."old index name" RENAME TO "new index name";`
+		tt.wantQuery = `ALTER INDEX IF EXISTS "some table schema"."old index name" RENAME TO "new index name"`
 		assert(t, tt)
 	})
 

@@ -82,9 +82,6 @@ func (cmd *CreateIndexCommand) AppendSQL(dialect string, buf *bytes.Buffer, args
 		}
 		buf.WriteString(" WHERE " + cmd.Index.Predicate)
 	}
-	if dialect != sq.DialectMySQL {
-		buf.WriteString(";")
-	}
 	return nil
 }
 
@@ -121,9 +118,6 @@ func (cmd DropIndexCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *[
 		}
 		buf.WriteString(" CASCADE")
 	}
-	if dialect != sq.DialectMySQL {
-		buf.WriteString(";")
-	}
 	return nil
 }
 
@@ -149,7 +143,7 @@ func (cmd RenameIndexCommand) AppendSQL(dialect string, buf *bytes.Buffer, args 
 		if cmd.TableSchema != "" {
 			buf.WriteString(sq.QuoteIdentifier(dialect, cmd.TableSchema) + ".")
 		}
-		buf.WriteString(sq.QuoteIdentifier(dialect, cmd.IndexName) + " RENAME TO " + sq.QuoteIdentifier(dialect, cmd.RenameToName) + ";")
+		buf.WriteString(sq.QuoteIdentifier(dialect, cmd.IndexName) + " RENAME TO " + sq.QuoteIdentifier(dialect, cmd.RenameToName))
 	}
 	return nil
 }

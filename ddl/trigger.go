@@ -105,7 +105,6 @@ func (cmd DropTriggerCommand) AppendSQL(dialect string, buf *bytes.Buffer, args 
 		}
 		buf.WriteString(sq.QuoteIdentifier(dialect, cmd.TriggerName))
 	}
-	buf.WriteString(";")
 	return nil
 }
 
@@ -124,6 +123,6 @@ func (cmd RenameTriggerCommand) AppendSQL(dialect string, buf *bytes.Buffer, arg
 	if cmd.TableSchema != "" {
 		buf.WriteString(sq.QuoteIdentifier(dialect, cmd.TableSchema) + ".")
 	}
-	buf.WriteString(sq.QuoteIdentifier(dialect, cmd.TableName) + " RENAME TO " + sq.QuoteIdentifier(dialect, cmd.RenameToName) + ";")
+	buf.WriteString(sq.QuoteIdentifier(dialect, cmd.TableName) + " RENAME TO " + sq.QuoteIdentifier(dialect, cmd.RenameToName))
 	return nil
 }

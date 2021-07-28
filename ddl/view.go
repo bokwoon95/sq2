@@ -193,7 +193,6 @@ func (cmd DropViewCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *[]
 		}
 		buf.WriteString(" CASCADE")
 	}
-	buf.WriteString(";")
 	return nil
 }
 

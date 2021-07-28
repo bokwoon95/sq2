@@ -191,7 +191,6 @@ func (cmd DropFunctionCommand) AppendSQL(dialect string, buf *bytes.Buffer, args
 	if cmd.DropCascade {
 		buf.WriteString(" CASCADE")
 	}
-	buf.WriteString(";")
 	return nil
 }
 
@@ -212,6 +211,6 @@ func (cmd RenameFunctionCommand) AppendSQL(dialect string, buf *bytes.Buffer, ar
 	if dialect == sq.DialectPostgres {
 		buf.WriteString("(" + strings.Join(cmd.Function.ArgTypes, ", ") + ")")
 	}
-	buf.WriteString(" RENAME TO " + sq.QuoteIdentifier(dialect, cmd.RenameToName) + ";")
+	buf.WriteString(" RENAME TO " + sq.QuoteIdentifier(dialect, cmd.RenameToName))
 	return nil
 }

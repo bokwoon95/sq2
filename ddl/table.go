@@ -409,7 +409,7 @@ type CreateTableCommand struct {
 
 func (cmd *CreateTableCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
 	if cmd == nil {
-		buf.WriteString("SELECT 1;")
+		buf.WriteString("SELECT 1")
 		return nil
 	}
 	if cmd.Table.TableName == "" {
@@ -516,7 +516,7 @@ func (cmd *CreateTableCommand) AppendSQL(dialect string, buf *bytes.Buffer, args
 			}
 		}
 	}
-	buf.WriteString("\n);")
+	buf.WriteString("\n)")
 	return nil
 }
 
@@ -665,7 +665,7 @@ func (cmd *AlterTableCommand) AppendSQL(dialect string, buf *bytes.Buffer, args 
 			return fmt.Errorf("ALTER TABLE DROP INDEX %s: %w", dropIndexCmd.IndexName, err)
 		}
 	}
-	buf.WriteString("\n;")
+	buf.WriteString("\n")
 	return nil
 }
 
@@ -709,6 +709,5 @@ func (cmd *RenameTableCommand) AppendSQL(dialect string, buf *bytes.Buffer, args
 		}
 		buf.WriteString(sq.QuoteIdentifier(dialect, cmd.TableNames[0]) + " RENAME TO " + sq.QuoteIdentifier(dialect, cmd.RenameToNames[0]))
 	}
-	buf.WriteString(";")
 	return nil
 }
