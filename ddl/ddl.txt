@@ -3,6 +3,16 @@ WithDB's behavior is fixed, take it or leave it. Instead, offer them a way to
 write their own CatalogOption function, leveraging the existing IntrospectQuery
 and MapColumns/MapTables/etc if necessary.
 
+type PostgresIntrospector struct {
+    IncludeSystemSchemas bool
+    IncludeSchemas []string
+    ExcludeSchemas []string
+    IncludeTables [][2]string
+    ExcludeTables [][2]string
+    IncludeViews [][2]string
+    ExcludeViews [][2]string
+}
+
 or should templateData be part of the underlying object instead? This would
 allow you to extend existing introspector implementations with your own data.
 type ddl.DB = interface{
@@ -13,15 +23,15 @@ type ddl.DB = interface{
 type DBIntrospector interface {
     GetDefaultSchema(db ddl.DB) (defaultSchema string, error)
     GetVersion(db ddl.DB) (versionString string, versionNum [2]int, error)
-    GetExtensions(db ddl.DB) (extensions [][2]string, error)
-    GetSchemas(db ddl.DB) ([]Schema, error)
-    GetTables(db ddl.DB) ([]Table, error)
-    GetColumns(db ddl.DB) ([]Column, error)
-    GetConstraints(db ddl.DB) ([]Constraint, error)
-    GetIndexes(db ddl.DB) ([]Index, error)
-    GetTriggers(db ddl.DB) ([]Trigger, error)
-    GetViews(db ddl.DB) ([]View, error)
-    GetFunctions(db ddl.DB) ([]Function, error)
+    GetExtensions(db ddl.DB) (extensions [][2]string, supported bool, err error)
+    GetSchemas(db ddl.DB) (schemas []Schema, supported bool, error)
+    GetTables(db ddl.DB) (tbls []Table, supported bool, error)
+    GetColumns(db ddl.DB) (columns []Column, supported bool, error)
+    GetConstraints(db ddl.DB) (constraints []Constraint, supported bool, error)
+    GetIndexes(db ddl.DB) (indexes []Index, supported bool, err error)
+    GetTriggers(db ddl.DB) (triggers []Trigger, supported bool, err error)
+    GetViews(db ddl.DB) (views []View, supported bool, err error)
+    GetFunctions(db ddl.DB) (functions []Function, supported bool, err error)
 }
 WithDB(ddl.DB)
 WithDBIntrospector(dbIntrospector DBIntrospector)
