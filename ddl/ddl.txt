@@ -43,7 +43,7 @@ catalog := ddl.NewCatalog(ddl.WithDialect(), ddl.WithTables(), ddl.WithDDLViews(
 
 catalog := ddl.NewCatalog(dialect, WithDB(db))
 
-catalog := ddl.NewCatalog(dialect, WithDBAndIntrospector(db, dbIntrospector))
+catalog := ddl.NewCatalog(dialect, WithDBAndIntrospector(db, dbIntrospector)) // they can write their own option that uses their introspector
 
 catalog := ddl.NewCatalog(dialect, ddl.WithTables(), ddl.WithDDLViews())
 

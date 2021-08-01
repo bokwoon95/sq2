@@ -25,6 +25,12 @@ WHERE
     {{- if not .CustomPredicate }}
     AND {{ .CustomPredicate }}
     {{- end }}
+    {{- if not .IncludeTables }}
+    AND {{ includeTables .IncludeTables "columns.table_schema" "columns.table_name" }}
+    {{- end }}
+    {{- if not .ExcludeTables }}
+    AND {{ include .IncludeTables "columns.table_schema" "columns.table_name" }}
+    {{- end }}
     -- user provides something like "{schema} NOT IN ({1}, {2})", "schema_migrations", "schema_versions"
     -- alternatively: "{schema} NOT IN ({})", []string{"schema_migrations", "schema_versions"}
     -- sq.Param("schema", sq.Literal("columns.table_schema")) will be appended
