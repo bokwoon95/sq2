@@ -27,7 +27,7 @@ FROM (
         JOIN pg_catalog.pg_namespace AS index_namespace ON index_namespace.oid = index_info.relnamespace
         JOIN pg_catalog.pg_namespace AS table_namespace ON table_namespace.oid = table_info.relnamespace
         JOIN pg_catalog.pg_am ON pg_am.oid = index_info.relam
-        CROSS JOIN LATERAL unnest(pg_index.indkey) WITH ORDINALITY AS columns(column_oid, seq_in_index)
+        CROSS JOIN unnest(pg_index.indkey) WITH ORDINALITY AS columns(column_oid, seq_in_index)
         LEFT JOIN pg_catalog.pg_attribute ON pg_attribute.attrelid = pg_index.indrelid AND pg_attribute.attnum = columns.column_oid
     WHERE
         TRUE

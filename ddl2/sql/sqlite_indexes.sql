@@ -15,8 +15,8 @@ FROM (
     FROM
         (SELECT tbl_name FROM sqlite_schema WHERE "type" = 'table' AND tbl_name <> 'sqlite_sequence' AND sql NOT LIKE 'CREATE TABLE ''%') AS tables
         CROSS JOIN pragma_index_list(tables.tbl_name) AS il
-        JOIN sqlite_schema AS m ON m."type" = 'index' AND m.tbl_name = tables.tbl_name AND m.name = il.name
         CROSS JOIN pragma_index_info(il.name) AS ii
+        JOIN sqlite_schema AS m ON m."type" = 'index' AND m.tbl_name = tables.tbl_name AND m.name = il.name
     WHERE
         il.origin = 'c'
         {{ if .IncludedTables }}AND tables.tbl_name IN ({{ listify .IncludedTables }}){{ end }}
