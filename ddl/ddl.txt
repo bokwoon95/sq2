@@ -4,6 +4,7 @@ write their own CatalogOption function, leveraging the existing IntrospectQuery
 and MapColumns/MapTables/etc if necessary.
 
 type PostgresIntrospector struct {
+    DB ddl.DB
     IncludeSystemSchemas bool
     IncludeSchemas []string
     ExcludeSchemas []string
@@ -21,20 +22,20 @@ type ddl.DB = interface{
     PrepareContext(ctx context.Context, query string) (*sql.Stmt, error)
 }
 type DBIntrospector interface {
-    GetDefaultSchema(db ddl.DB) (defaultSchema string, error)
-    GetVersion(db ddl.DB) (versionString string, versionNum [2]int, error)
-    GetExtensions(db ddl.DB) (extensions [][2]string, supported bool, err error)
-    GetSchemas(db ddl.DB) (schemas []Schema, supported bool, error)
-    GetTables(db ddl.DB) (tbls []Table, supported bool, error)
-    GetColumns(db ddl.DB) (columns []Column, supported bool, error)
-    GetConstraints(db ddl.DB) (constraints []Constraint, supported bool, error)
-    GetIndexes(db ddl.DB) (indexes []Index, supported bool, err error)
-    GetTriggers(db ddl.DB) (triggers []Trigger, supported bool, err error)
-    GetViews(db ddl.DB) (views []View, supported bool, err error)
-    GetFunctions(db ddl.DB) (functions []Function, supported bool, err error)
+    GetDefaultSchema() (defaultSchema string, error)
+    GetVersion() (versionString string, versionNum [2]int, error)
+    GetExtensions() (extensions [][2]string, supported bool, err error)
+    GetSchemas() (schemas []Schema, supported bool, error)
+    GetTables() (tbls []Table, supported bool, error)
+    GetColumns() (columns []Column, supported bool, error)
+    GetConstraints() (constraints []Constraint, supported bool, error)
+    GetIndexes() (indexes []Index, supported bool, err error)
+    GetTriggers() (triggers []Trigger, supported bool, err error)
+    GetViews() (views []View, supported bool, err error)
+    GetFunctions() (functions []Function, supported bool, err error)
 }
 WithDB(ddl.DB)
-WithDBIntrospector(dbIntrospector DBIntrospector)
+WithDBIntrospector(db DB, dbIntrospector DBIntrospector)
 introspect_sqlite.go
 - type SQLiteIntrospector struct
 - SQLiteIntrospector is the special kid because before it can introspect columns, it must populate its internal list of tables so that it can run the introspection query over and over for each table.

@@ -23,11 +23,11 @@ FROM
     LEFT JOIN information_schema.referential_constraints AS rc USING (constraint_schema, constraint_name)
 WHERE
     tc.constraint_type IN ('PRIMARY KEY', 'FOREIGN KEY', 'UNIQUE')
-    {{ if not .IncludeSystemSchemas }}
-    AND tc.table_schema NOT IN ('mysql', 'information_schema', 'performance_schema', 'sys')
-    {{ end }}
-    {{ if not .CustomPredicate }}
-    {{ end }}
+    {{ if not .IncludeSystemSchemas }}AND tc.table_schema NOT IN ('mysql', 'information_schema', 'performance_schema', 'sys'){{ end }}
+    {{ if .IncludedSchemas }}AND tc.table_schema IN ({{ listify .IncludedSchemas }}){{ end }}
+    {{ if .ExcludedSchemas }}AND tc.table_schema NOT IN ({{ listify .ExcludedSchemas }}){{ end }}
+    {{ if .IncludedTables }}AND tc.table_name IN ({{ listify .IncludedTables }}){{ end }}
+    {{ if .ExcludedTables }}AND tc.table_name NOT IN ({{ listify .ExcludedTables }}){{ end }}
 GROUP BY
     tc.table_schema
     ,tc.table_name
@@ -52,7 +52,7 @@ SELECT
     ,'' AS update_rule
     ,'' AS delete_rule
     ,'' AS match_option
-    ,check_clause AS check_expr
+    ,cc.check_clause AS check_expr
     ,'' AS operators
     ,'' AS index_type
     ,'' AS predicate
@@ -61,3 +61,10 @@ SELECT
 FROM
     information_schema.table_constraints AS tc
     JOIN information_schema.check_constraints AS cc USING (constraint_schema, constraint_name)
+WHERE
+    {{ if not .IncludeSystemSchemas }}table_schema NOT IN ('mysql', 'information_schema', 'performance_schema', 'sys'){{ end }}
+    {{ if .IncludedSchemas }}AND tc.table_schema IN ({{ listify .IncludedSchemas }}){{ end }}
+    {{ if .ExcludedSchemas }}AND tc.table_schema NOT IN ({{ listify .ExcludedSchemas }}){{ end }}
+    {{ if .IncludedTables }}AND tc.table_name IN ({{ listify .IncludedTables }}){{ end }}
+    {{ if .ExcludedTables }}AND tc.table_name NOT IN ({{ listify .ExcludedTables }}){{ end }}
+;

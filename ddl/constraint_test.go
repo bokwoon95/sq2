@@ -140,7 +140,7 @@ func Test_AddConstraintCommnd(t *testing.T) {
 				IndexType:      "GIST",
 				Columns:        []string{"email", ""},
 				Exprs:          []string{"", "LOWER(email)"},
-				Operators:      []string{"ILIKE", "="},
+				ExclusionOperators:      []string{"ILIKE", "="},
 				Predicate:      "LENGTH(email) > 3",
 				IsDeferrable:   true,
 			},
@@ -239,7 +239,7 @@ func Test_AddConstraintCommnd(t *testing.T) {
 				IndexType:      "GIST",
 				Columns:        []string{"email", ""},
 				Exprs:          []string{"", "LOWER(email)"},
-				Operators:      []string{"ILIKE", "="},
+				ExclusionOperators:      []string{"ILIKE", "="},
 				Predicate:      "LENGTH(email) > 3",
 				IsDeferrable:   true,
 			},
@@ -260,7 +260,7 @@ func Test_AddConstraintCommnd(t *testing.T) {
 				ConstraintType: EXCLUDE,
 				Columns:        []string{"email", ""},
 				Exprs:          []string{"", "LOWER(email)"},
-				Operators:      []string{"ILIKE", "="},
+				ExclusionOperators:      []string{"ILIKE", "="},
 				Predicate:      "LENGTH(email) > 3",
 				IsDeferrable:   true,
 			},
@@ -282,7 +282,7 @@ func Test_AddConstraintCommnd(t *testing.T) {
 				IndexType:      "GIST",
 				Columns:        []string{""},
 				Exprs:          []string{""},
-				Operators:      []string{"="},
+				ExclusionOperators:      []string{"="},
 			},
 		}
 		_, _, _, err := sq.ToSQL(tt.dialect, tt.item)
@@ -301,7 +301,7 @@ func Test_AddConstraintCommnd(t *testing.T) {
 				ConstraintType: EXCLUDE,
 				IndexType:      "GIST",
 				Columns:        []string{"email"},
-				Operators:      []string{""},
+				ExclusionOperators:      []string{""},
 			},
 		}
 		_, _, _, err := sq.ToSQL(tt.dialect, tt.item)

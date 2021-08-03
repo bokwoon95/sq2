@@ -230,7 +230,7 @@ func mapConstraints(catalog *Catalog, rows *sql.Rows) error {
 		constraint.ReferencesColumns = strings.Split(rawReferencesColumns, ",")
 	}
 	if rawOperators != "" {
-		constraint.Operators = strings.Split(rawOperators, ",")
+		constraint.ExclusionOperators = strings.Split(rawOperators, ",")
 	}
 	if last := len(constraint.CheckExpr) - 1; len(constraint.CheckExpr) > 2 && constraint.CheckExpr[0] == '(' && constraint.CheckExpr[last] == ')' {
 		constraint.CheckExpr = constraint.CheckExpr[1:last]

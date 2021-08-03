@@ -22,7 +22,7 @@ type Constraint struct {
 	DeleteRule          string   `json:",omitempty"`
 	MatchOption         string   `json:",omitempty"`
 	CheckExpr           string   `json:",omitempty"`
-	Operators           []string `json:",omitempty"`
+	ExclusionOperators  []string `json:",omitempty"`
 	IndexType           string   `json:",omitempty"`
 	Predicate           string   `json:",omitempty"`
 	IsDeferrable        bool     `json:",omitempty"`
@@ -129,7 +129,7 @@ func writeConstraintDefinition(dialect string, buf *bytes.Buffer, constraint Con
 				return fmt.Errorf("column #%d: no column name or expression provided", i+1)
 			}
 			buf.WriteString(" WITH ")
-			if operator := constraint.Operators[i]; operator != "" {
+			if operator := constraint.ExclusionOperators[i]; operator != "" {
 				buf.WriteString(operator)
 			} else {
 				return fmt.Errorf("column #%d: no exclusion operator provided", i+1)
