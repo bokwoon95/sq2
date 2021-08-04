@@ -10,7 +10,7 @@ FROM
     JOIN pg_catalog.pg_type ON pg_type.oid = pg_proc.prorettype
 WHERE
     TRUE
-    {{ if not .IncludeSystemSchemas }}AND pg_namespace.nspname <> 'information_schema' AND pg_namespace.nspname NOT LIKE 'pg_%'{{ end }}
-    {{ if .IncludedSchemas }}AND pg_namespace.nspname IN ({{ listify .IncludedSchemas }}){{ end }}
-    {{ if .ExcludedSchemas }}AND pg_namespace.nspname NOT IN ({{ listify .ExcludedSchemas }}){{ end }}
+    {{ if not .IncludeSystemObjects }}AND pg_namespace.nspname <> 'information_schema' AND pg_namespace.nspname NOT LIKE 'pg_%'{{ end }}
+    {{ if .WithSchemas }}AND pg_namespace.nspname IN ({{ listify .WithSchemas }}){{ end }}
+    {{ if .WithoutSchemas }}AND pg_namespace.nspname NOT IN ({{ listify .WithoutSchemas }}){{ end }}
 ;

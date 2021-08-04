@@ -12,19 +12,26 @@ FROM (
         ,CASE ii.cid WHEN -1 THEN '' WHEN -2 THEN '' ELSE ii.name END AS column_name
         ,ii.seqno
         ,m.sql
-    FROM
-        (SELECT tbl_name FROM sqlite_schema WHERE "type" = 'table' AND tbl_name <> 'sqlite_sequence' AND sql NOT LIKE 'CREATE TABLE ''%') AS tables
+    FROM (
+        SELECT
+            tbl_name
+        FROM
+            sqlite_schema
+        WHERE
+            "type" = 'table'
+            {{ if not .IncludeSystemTables }}AND tbl_name NOT LIKE 'sqlite_%' AND sql NOT LIKE 'CREATE TABLE ''%'{{ end }}
+            {{ if .WithTables }}AND tbl_name IN ({{ listify .WithTables }}){{ end }}
+            {{ if .WithoutTables }}AND tbl_name NOT IN ({{ listify .WithoutTables }}){{ end }}
+        ) AS tables
         CROSS JOIN pragma_index_list(tables.tbl_name) AS il
         CROSS JOIN pragma_index_info(il.name) AS ii
         JOIN sqlite_schema AS m ON m."type" = 'index' AND m.tbl_name = tables.tbl_name AND m.name = il.name
     WHERE
         il.origin = 'c'
-        {{ if .IncludedTables }}AND tables.tbl_name IN ({{ listify .IncludedTables }}){{ end }}
-        {{ if .ExcludedTables }}AND tables.tbl_name NOT IN ({{ listify .ExcludedTables }}){{ end }}
     ORDER BY
         il.name
         ,ii.seqno
-) AS indexed_columns
+    ) AS indexed_columns
 GROUP BY
     table_name
     ,index_name

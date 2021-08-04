@@ -20,11 +20,11 @@ FROM (
         information_schema.statistics
     WHERE
         index_name <> 'PRIMARY'
-        {{ if not .IncludeSystemSchemas }}AND table_schema NOT IN ('mysql', 'information_schema', 'performance_schema', 'sys'){{ end }}
-        {{ if .IncludedSchemas }}AND table_schema IN ({{ listify .IncludedSchemas }}){{ end }}
-        {{ if .ExcludedSchemas }}AND table_schema NOT IN ({{ listify .ExcludedSchemas }}){{ end }}
-        {{ if .IncludedTables }}AND table_name IN ({{ listify .IncludedTables }}){{ end }}
-        {{ if .ExcludedTables }}AND table_name NOT IN ({{ listify .ExcludedTables }}){{ end }}
+        {{ if not .IncludeSystemObjects }}AND table_schema NOT IN ('mysql', 'information_schema', 'performance_schema', 'sys'){{ end }}
+        {{ if .WithSchemas }}AND table_schema IN ({{ listify .WithSchemas }}){{ end }}
+        {{ if .WithoutSchemas }}AND table_schema NOT IN ({{ listify .WithoutSchemas }}){{ end }}
+        {{ if .WithTables }}AND table_name IN ({{ listify .WithTables }}){{ end }}
+        {{ if .WithoutTables }}AND table_name NOT IN ({{ listify .WithoutTables }}){{ end }}
 ) AS indexed_columns
 GROUP BY
     table_schema

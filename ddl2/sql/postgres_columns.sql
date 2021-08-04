@@ -9,7 +9,7 @@ SELECT
     ,COALESCE(c.identity_generation::TEXT, '') AS is_identity
     ,NOT c.is_nullable::BOOLEAN AS is_notnull
     ,COALESCE(c.generation_expression, '') AS generated_expr
-    ,CASE c.is_generated WHEN 'ALWAYS' THEN TRUE ELSE FALSE END AS generated_expr_stored
+    ,COALESCE(c.is_generated = 'ALWAYS', FALSE) AS generated_expr_stored
     ,COALESCE(c.collation_name, '') AS collation_name
     ,COALESCE(c.column_default, '') AS column_default
 FROM
@@ -17,9 +17,9 @@ FROM
     JOIN information_schema.tables AS t USING (table_schema, table_name)
 WHERE
     t.table_type = 'BASE TABLE'
-    {{ if not .IncludeSystemSchemas }}AND columns.table_schema <> 'information_schema' AND columns.table_schema NOT LIKE 'pg_%'{{ end }}
-    {{ if .IncludedSchemas }}AND c.table_schema IN ({{ listify .IncludedSchemas }}){{ end }}
-    {{ if .ExcludedSchemas }}AND c.table_schema NOT IN ({{ listify .ExcludedSchemas }}){{ end }}
-    {{ if .IncludedTables }}AND c.table_name IN ({{ listify .IncludedTables }}){{ end }}
-    {{ if .ExcludedTables }}AND c.table_name NOT IN ({{ listify .IncludedTables }}){{ end }}
+    {{ if not .IncludeSystemObjects }}AND columns.table_schema <> 'information_schema' AND columns.table_schema NOT LIKE 'pg_%'{{ end }}
+    {{ if .WithSchemas }}AND c.table_schema IN ({{ listify .WithSchemas }}){{ end }}
+    {{ if .WithoutSchemas }}AND c.table_schema NOT IN ({{ listify .WithoutSchemas }}){{ end }}
+    {{ if .WithTables }}AND c.table_name IN ({{ listify .WithTables }}){{ end }}
+    {{ if .WithoutTables }}AND c.table_name NOT IN ({{ listify .WithTables }}){{ end }}
 ;

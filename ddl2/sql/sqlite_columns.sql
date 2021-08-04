@@ -4,11 +4,16 @@ SELECT
     ,columns."type" AS column_type
     ,columns."notnull" AS is_notnull
     ,COALESCE(columns.dflt_value, '') AS column_default
-FROM
-    (SELECT tbl_name FROM sqlite_schema WHERE "type" = 'table' AND tbl_name <> 'sqlite_sequence' AND sql NOT LIKE 'CREATE TABLE ''%') AS tables
+FROM (
+    SELECT
+        tbl_name
+    FROM
+        sqlite_schema
+    WHERE
+        "type" = 'table'
+        {{ if not .IncludeSystemTables }}AND tbl_name NOT LIKE 'sqlite_%' AND sql NOT LIKE 'CREATE TABLE ''%'{{ end }}
+        {{ if .WithTables }}AND tbl_name IN ({{ listify .WithTables }}){{ end }}
+        {{ if .WithoutTables }}AND tbl_name NOT IN ({{ listify .WithoutTables }}){{ end }}
+    ) AS tables
     CROSS JOIN pragma_table_xinfo(tables.tbl_name) AS columns
-WHERE
-    TRUE
-    {{ if .IncludedTables }}AND tables.tbl_name IN ({{ listify .IncludedTables }}){{ end }}
-    {{ if .ExcludedTables }}AND tables.tbl_name NOT IN ({{ listify .ExcludedTables }}){{ end }}
 ;

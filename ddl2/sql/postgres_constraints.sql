@@ -33,11 +33,11 @@ FROM (
         JOIN information_schema.key_column_usage AS kcu USING (constraint_schema, constraint_name, column_name)
     WHERE
         tc.constraint_type IN ('PRIMARY KEY', 'UNIQUE')
-        {{ if not .IncludeSystemSchemas }}AND tc.table_schema <> 'information_schema' AND tc.table_schema NOT LIKE 'pg_%'{{ end }}
-        {{ if .IncludedSchemas }}AND tc.table_schema IN ({{ listify .IncludedSchemas }}){{ end }}
-        {{ if .ExcludedSchemas }}AND tc.table_schema NOT IN ({{ listify .ExcludedSchemas }}){{ end }}
-        {{ if .IncludedTables }}AND tc.table_name IN ({{ listify .IncludedTables }}){{ end }}
-        {{ if .ExcludedTables }}AND tc.table_name NOT IN ({{ listify .ExcludedTables }}){{ end }}
+        {{ if not .IncludeSystemObjects }}AND tc.table_schema <> 'information_schema' AND tc.table_schema NOT LIKE 'pg_%'{{ end }}
+        {{ if .WithSchemas }}AND tc.table_schema IN ({{ listify .WithSchemas }}){{ end }}
+        {{ if .WithoutSchemas }}AND tc.table_schema NOT IN ({{ listify .WithoutSchemas }}){{ end }}
+        {{ if .WithTables }}AND tc.table_name IN ({{ listify .WithTables }}){{ end }}
+        {{ if .WithoutTables }}AND tc.table_name NOT IN ({{ listify .WithoutTables }}){{ end }}
 ) AS primary_key_unique_columns
 GROUP BY
     table_schema
@@ -90,11 +90,11 @@ FROM (
         LEFT JOIN information_schema.referential_constraints AS rc USING (constraint_schema, constraint_name)
     WHERE
         tc.constraint_type = 'FOREIGN KEY'
-        {{ if not .IncludeSystemSchemas }}AND tc.table_schema <> 'information_schema' AND tc.table_schema NOT LIKE 'pg_%'{{ end }}
-        {{ if .IncludedSchemas }}AND tc.table_schema IN ({{ listify .IncludedSchemas }}){{ end }}
-        {{ if .ExcludedSchemas }}AND tc.table_schema NOT IN ({{ listify .ExcludedSchemas }}){{ end }}
-        {{ if .IncludedTables }}AND tc.table_name IN ({{ listify .IncludedTables }}){{ end }}
-        {{ if .ExcludedTables }}AND tc.table_name NOT IN ({{ listify .ExcludedTables }}){{ end }}
+        {{ if not .IncludeSystemObjects }}AND tc.table_schema <> 'information_schema' AND tc.table_schema NOT LIKE 'pg_%'{{ end }}
+        {{ if .WithSchemas }}AND tc.table_schema IN ({{ listify .WithSchemas }}){{ end }}
+        {{ if .WithoutSchemas }}AND tc.table_schema NOT IN ({{ listify .WithoutSchemas }}){{ end }}
+        {{ if .WithTables }}AND tc.table_name IN ({{ listify .WithTables }}){{ end }}
+        {{ if .WithoutTables }}AND tc.table_name NOT IN ({{ listify .WithoutTables }}){{ end }}
 ) AS foreign_key_columns
 GROUP BY
     table_schema
@@ -135,9 +135,9 @@ FROM
     JOIN pg_catalog.pg_namespace AS constraint_namespace ON constraint_namespace.oid = pg_constraint.connamespace
 WHERE
     pg_constraint.contype = 'c'
-    {{ if not .IncludeSystemSchemas }}AND table_namespace.nspname <> 'information_schema' AND table_namespace.nspname NOT LIKE 'pg_%'{{ end }}
-    {{ if .IncludedSchemas }}AND table_namespace.nspname IN ({{ listify .IncludedSchemas }}){{ end }}
-    {{ if .ExcludedSchemas }}AND table_namespace.nspname NOT IN ({{ listify .ExcludedSchemas }}){{ end }}
-    {{ if .IncludedTables }}AND pg_class.relname IN ({{ listify .IncludedTables }}){{ end }}
-    {{ if .ExcludedTables }}AND pg_class.relname NOT IN ({{ listify .ExcludedTables }}){{ end }}
+    {{ if not .IncludeSystemObjects }}AND table_namespace.nspname <> 'information_schema' AND table_namespace.nspname NOT LIKE 'pg_%'{{ end }}
+    {{ if .WithSchemas }}AND table_namespace.nspname IN ({{ listify .WithSchemas }}){{ end }}
+    {{ if .WithoutSchemas }}AND table_namespace.nspname NOT IN ({{ listify .WithoutSchemas }}){{ end }}
+    {{ if .WithTables }}AND pg_class.relname IN ({{ listify .WithTables }}){{ end }}
+    {{ if .WithoutTables }}AND pg_class.relname NOT IN ({{ listify .WithoutTables }}){{ end }}
 ;

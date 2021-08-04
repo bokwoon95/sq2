@@ -23,11 +23,11 @@ FROM
     LEFT JOIN information_schema.referential_constraints AS rc USING (constraint_schema, constraint_name)
 WHERE
     tc.constraint_type IN ('PRIMARY KEY', 'FOREIGN KEY', 'UNIQUE')
-    {{ if not .IncludeSystemSchemas }}AND tc.table_schema NOT IN ('mysql', 'information_schema', 'performance_schema', 'sys'){{ end }}
-    {{ if .IncludedSchemas }}AND tc.table_schema IN ({{ listify .IncludedSchemas }}){{ end }}
-    {{ if .ExcludedSchemas }}AND tc.table_schema NOT IN ({{ listify .ExcludedSchemas }}){{ end }}
-    {{ if .IncludedTables }}AND tc.table_name IN ({{ listify .IncludedTables }}){{ end }}
-    {{ if .ExcludedTables }}AND tc.table_name NOT IN ({{ listify .ExcludedTables }}){{ end }}
+    {{ if not .IncludeSystemObjects }}AND tc.table_schema NOT IN ('mysql', 'information_schema', 'performance_schema', 'sys'){{ end }}
+    {{ if .WithSchemas }}AND tc.table_schema IN ({{ listify .WithSchemas }}){{ end }}
+    {{ if .WithoutSchemas }}AND tc.table_schema NOT IN ({{ listify .WithoutSchemas }}){{ end }}
+    {{ if .WithTables }}AND tc.table_name IN ({{ listify .WithTables }}){{ end }}
+    {{ if .WithoutTables }}AND tc.table_name NOT IN ({{ listify .WithoutTables }}){{ end }}
 GROUP BY
     tc.table_schema
     ,tc.table_name
@@ -62,9 +62,9 @@ FROM
     information_schema.table_constraints AS tc
     JOIN information_schema.check_constraints AS cc USING (constraint_schema, constraint_name)
 WHERE
-    {{ if not .IncludeSystemSchemas }}table_schema NOT IN ('mysql', 'information_schema', 'performance_schema', 'sys'){{ end }}
-    {{ if .IncludedSchemas }}AND tc.table_schema IN ({{ listify .IncludedSchemas }}){{ end }}
-    {{ if .ExcludedSchemas }}AND tc.table_schema NOT IN ({{ listify .ExcludedSchemas }}){{ end }}
-    {{ if .IncludedTables }}AND tc.table_name IN ({{ listify .IncludedTables }}){{ end }}
-    {{ if .ExcludedTables }}AND tc.table_name NOT IN ({{ listify .ExcludedTables }}){{ end }}
+    {{ if not .IncludeSystemObjects }}table_schema NOT IN ('mysql', 'information_schema', 'performance_schema', 'sys'){{ end }}
+    {{ if .WithSchemas }}AND tc.table_schema IN ({{ listify .WithSchemas }}){{ end }}
+    {{ if .WithoutSchemas }}AND tc.table_schema NOT IN ({{ listify .WithoutSchemas }}){{ end }}
+    {{ if .WithTables }}AND tc.table_name IN ({{ listify .WithTables }}){{ end }}
+    {{ if .WithoutTables }}AND tc.table_name NOT IN ({{ listify .WithoutTables }}){{ end }}
 ;

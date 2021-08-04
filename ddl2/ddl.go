@@ -2,12 +2,16 @@ package ddl2
 
 import (
 	"bytes"
+	"embed"
 	"strconv"
 	"strings"
 	"sync"
 
 	"github.com/bokwoon95/sq"
 )
+
+//go:embed sql
+var sqlDir embed.FS
 
 var (
 	bufpool  = sync.Pool{New: func() interface{} { return new(bytes.Buffer) }}

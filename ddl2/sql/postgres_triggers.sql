@@ -9,9 +9,9 @@ FROM
     JOIN pg_catalog.pg_namespace AS table_namespace ON table_namespace.oid = table_info.relnamespace
 WHERE
     NOT pg_trigger.tgisinternal
-    {{ if not .IncludeSystemSchemas }}AND table_namespace.nspname <> 'information_schema' AND table_namespace.nspname NOT LIKE 'pg_%'{{ end }}
-    {{ if .IncludedSchemas }}AND table_namespace.nspname IN ({{ listify .IncludedSchemas }}){{ end }}
-    {{ if .ExcludedSchemas }}AND table_namespace.nspname NOT IN ({{ listify .ExcludedSchemas }}){{ end }}
-    {{ if .IncludedTables }}AND table_info.relname IN ({{ listify .IncludedTables }}){{ end }}
-    {{ if .ExcludedTables }}AND table_info.relname NOT IN ({{ listify .ExcludedTables }}){{ end }}
+    {{ if not .IncludeSystemObjects }}AND table_namespace.nspname <> 'information_schema' AND table_namespace.nspname NOT LIKE 'pg_%'{{ end }}
+    {{ if .WithSchemas }}AND table_namespace.nspname IN ({{ listify .WithSchemas }}){{ end }}
+    {{ if .WithoutSchemas }}AND table_namespace.nspname NOT IN ({{ listify .WithoutSchemas }}){{ end }}
+    {{ if .WithTables }}AND table_info.relname IN ({{ listify .WithTables }}){{ end }}
+    {{ if .WithoutTables }}AND table_info.relname NOT IN ({{ listify .WithoutTables }}){{ end }}
 ;
