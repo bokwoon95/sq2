@@ -4,7 +4,6 @@ SELECT
     ,tc.constraint_name
     ,tc.constraint_type
     ,group_concat(kcu.column_name ORDER BY kcu.ordinal_position) AS columns
-    ,'' AS exprs
     ,COALESCE(kcu.referenced_table_schema, '') AS references_schema
     ,COALESCE(kcu.referenced_table_name, '') AS references_table
     ,COALESCE(group_concat(kcu.referenced_column_name ORDER BY kcu.ordinal_position), '') AS references_columns
@@ -12,11 +11,6 @@ SELECT
     ,COALESCE(rc.delete_rule, '') AS delete_rule
     ,COALESCE(rc.match_option, '') AS match_option
     ,'' AS check_expr
-    ,'' AS operators
-    ,'' AS index_type
-    ,'' AS predicate
-    ,FALSE AS is_deferrable
-    ,FALSE AS is_initially_deferred
 FROM
     information_schema.table_constraints AS tc
     JOIN information_schema.key_column_usage AS kcu USING (constraint_schema, constraint_name, table_name)
@@ -45,7 +39,6 @@ SELECT
     ,tc.constraint_name
     ,tc.constraint_type
     ,'' AS columns
-    ,'' AS exprs
     ,'' AS references_schema
     ,'' AS references_table
     ,'' AS references_columns
@@ -53,11 +46,6 @@ SELECT
     ,'' AS delete_rule
     ,'' AS match_option
     ,cc.check_clause AS check_expr
-    ,'' AS operators
-    ,'' AS index_type
-    ,'' AS predicate
-    ,FALSE AS is_deferrable
-    ,FALSE AS is_initially_deferred
 FROM
     information_schema.table_constraints AS tc
     JOIN information_schema.check_constraints AS cc USING (constraint_schema, constraint_name)

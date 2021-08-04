@@ -300,26 +300,79 @@ func (dbi *DatabaseIntrospector) GetConstraints(ctx context.Context, settings *I
 	for rows.Next() {
 		var constraint Constraint
 		var rawColumns, rawExprs, rawReferencesColumns, rawOperators string
-		err = rows.Scan(
-			&constraint.TableSchema,
-			&constraint.TableName,
-			&constraint.ConstraintName,
-			&constraint.ConstraintType,
-			&rawColumns,
-			&rawExprs,
-			&constraint.ReferencesSchema,
-			&constraint.ReferencesTable,
-			&rawReferencesColumns,
-			&constraint.UpdateRule,
-			&constraint.DeleteRule,
-			&constraint.MatchOption,
-			&constraint.CheckExpr,
-			&rawOperators,
-			&constraint.IndexType,
-			&constraint.Predicate,
-			&constraint.IsDeferrable,
-			&constraint.IsInitiallyDeferred,
-		)
+		switch dbi.dialect {
+		case sq.DialectSQLite:
+			err = rows.Scan(
+				&constraint.TableName,
+				&constraint.ConstraintType,
+				&rawColumns,
+				&constraint.ReferencesTable,
+				&rawReferencesColumns,
+				&constraint.UpdateRule,
+				&constraint.DeleteRule,
+			)
+			if err != nil {
+				return nil, fmt.Errorf("scanning Constraint: %w", err)
+			}
+		case sq.DialectPostgres:
+			err = rows.Scan(
+				&constraint.TableSchema,
+				&constraint.TableName,
+				&constraint.ConstraintName,
+				&constraint.ConstraintType,
+				&rawColumns,
+				&rawExprs,
+				&constraint.ReferencesSchema,
+				&constraint.ReferencesTable,
+				&rawReferencesColumns,
+				&constraint.UpdateRule,
+				&constraint.DeleteRule,
+				&constraint.MatchOption,
+				&constraint.CheckExpr,
+				&rawOperators,
+				&constraint.IndexType,
+				&constraint.Predicate,
+				&constraint.IsDeferrable,
+				&constraint.IsInitiallyDeferred,
+			)
+			if err != nil {
+				return nil, fmt.Errorf("scanning Constraint: %w", err)
+			}
+		case sq.DialectMySQL:
+			err = rows.Scan(
+				&constraint.TableSchema,
+				&constraint.TableName,
+				&constraint.ConstraintName,
+				&constraint.ConstraintType,
+				&rawColumns,
+				&constraint.ReferencesSchema,
+				&constraint.ReferencesTable,
+				&rawReferencesColumns,
+				&constraint.UpdateRule,
+				&constraint.DeleteRule,
+				&constraint.MatchOption,
+				&constraint.CheckExpr,
+			)
+			if err != nil {
+				return nil, fmt.Errorf("scanning Constraint: %w", err)
+			}
+		}
+		if rawColumns != "" {
+			constraint.Columns = strings.Split(rawColumns, ",")
+		}
+		if rawExprs != "" {
+			constraint.Exprs = strings.Split(rawExprs, ",")
+		}
+		if rawReferencesColumns != "" {
+			constraint.ReferencesColumns = strings.Split(rawReferencesColumns, ",")
+		}
+		if rawOperators != "" {
+			constraint.ExclusionOperators = strings.Split(rawOperators, ",")
+		}
+		if last := len(constraint.CheckExpr) - 1; len(constraint.CheckExpr) > 2 && constraint.CheckExpr[0] == '(' && constraint.CheckExpr[last] == ')' {
+			constraint.CheckExpr = constraint.CheckExpr[1:last]
+		}
+		constraints = append(constraints, constraint)
 	}
 	err = rows.Close()
 	if err != nil {
