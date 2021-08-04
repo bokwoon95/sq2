@@ -135,14 +135,14 @@ func Test_AddConstraintCommnd(t *testing.T) {
 		tt.dialect = sq.DialectPostgres
 		tt.item = AddConstraintCommand{
 			Constraint: Constraint{
-				ConstraintName: "customer_email_excl",
-				ConstraintType: EXCLUDE,
-				IndexType:      "GIST",
-				Columns:        []string{"email", ""},
-				Exprs:          []string{"", "LOWER(email)"},
-				ExclusionOperators:      []string{"ILIKE", "="},
-				Predicate:      "LENGTH(email) > 3",
-				IsDeferrable:   true,
+				ConstraintName:     "customer_email_excl",
+				ConstraintType:     EXCLUDE,
+				IndexType:          "GIST",
+				Columns:            []string{"email", ""},
+				Exprs:              []string{"", "LOWER(email)"},
+				ExclusionOperators: []string{"ILIKE", "="},
+				Predicate:          "LENGTH(email) > 3",
+				IsDeferrable:       true,
 			},
 		}
 		tt.wantQuery = "ADD CONSTRAINT customer_email_excl EXCLUDE USING GIST (email WITH ILIKE, (LOWER(email)) WITH =) WHERE (LENGTH(email) > 3) DEFERRABLE INITIALLY IMMEDIATE"
@@ -234,14 +234,14 @@ func Test_AddConstraintCommnd(t *testing.T) {
 		tt.dialect = sq.DialectMySQL
 		tt.item = AddConstraintCommand{
 			Constraint: Constraint{
-				ConstraintName: "customer_email_excl",
-				ConstraintType: EXCLUDE,
-				IndexType:      "GIST",
-				Columns:        []string{"email", ""},
-				Exprs:          []string{"", "LOWER(email)"},
-				ExclusionOperators:      []string{"ILIKE", "="},
-				Predicate:      "LENGTH(email) > 3",
-				IsDeferrable:   true,
+				ConstraintName:     "customer_email_excl",
+				ConstraintType:     EXCLUDE,
+				IndexType:          "GIST",
+				Columns:            []string{"email", ""},
+				Exprs:              []string{"", "LOWER(email)"},
+				ExclusionOperators: []string{"ILIKE", "="},
+				Predicate:          "LENGTH(email) > 3",
+				IsDeferrable:       true,
 			},
 		}
 		_, _, _, err := sq.ToSQL(tt.dialect, tt.item)
@@ -256,13 +256,13 @@ func Test_AddConstraintCommnd(t *testing.T) {
 		tt.dialect = sq.DialectPostgres
 		tt.item = AddConstraintCommand{
 			Constraint: Constraint{
-				ConstraintName: "customer_email_excl",
-				ConstraintType: EXCLUDE,
-				Columns:        []string{"email", ""},
-				Exprs:          []string{"", "LOWER(email)"},
-				ExclusionOperators:      []string{"ILIKE", "="},
-				Predicate:      "LENGTH(email) > 3",
-				IsDeferrable:   true,
+				ConstraintName:     "customer_email_excl",
+				ConstraintType:     EXCLUDE,
+				Columns:            []string{"email", ""},
+				Exprs:              []string{"", "LOWER(email)"},
+				ExclusionOperators: []string{"ILIKE", "="},
+				Predicate:          "LENGTH(email) > 3",
+				IsDeferrable:       true,
 			},
 		}
 		_, _, _, err := sq.ToSQL(tt.dialect, tt.item)
@@ -277,12 +277,12 @@ func Test_AddConstraintCommnd(t *testing.T) {
 		tt.dialect = sq.DialectPostgres
 		tt.item = AddConstraintCommand{
 			Constraint: Constraint{
-				ConstraintName: "customer_email_excl",
-				ConstraintType: EXCLUDE,
-				IndexType:      "GIST",
-				Columns:        []string{""},
-				Exprs:          []string{""},
-				ExclusionOperators:      []string{"="},
+				ConstraintName:     "customer_email_excl",
+				ConstraintType:     EXCLUDE,
+				IndexType:          "GIST",
+				Columns:            []string{""},
+				Exprs:              []string{""},
+				ExclusionOperators: []string{"="},
 			},
 		}
 		_, _, _, err := sq.ToSQL(tt.dialect, tt.item)
@@ -297,11 +297,11 @@ func Test_AddConstraintCommnd(t *testing.T) {
 		tt.dialect = sq.DialectPostgres
 		tt.item = AddConstraintCommand{
 			Constraint: Constraint{
-				ConstraintName: "customer_email_excl",
-				ConstraintType: EXCLUDE,
-				IndexType:      "GIST",
-				Columns:        []string{"email"},
-				ExclusionOperators:      []string{""},
+				ConstraintName:     "customer_email_excl",
+				ConstraintType:     EXCLUDE,
+				IndexType:          "GIST",
+				Columns:            []string{"email"},
+				ExclusionOperators: []string{""},
 			},
 		}
 		_, _, _, err := sq.ToSQL(tt.dialect, tt.item)

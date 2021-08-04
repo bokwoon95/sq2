@@ -1,0 +1,10 @@
+ddl.go
+column.go | constraint.go | index.go
+fmt.go
+trigger.go | function.go
+table.go
+view.go
+v.go | t.go
+schema.go
+catalog.go
+migration_commands.go

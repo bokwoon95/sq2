@@ -132,6 +132,9 @@ func BufferPrintValue(dialect string, buf *bytes.Buffer, args *[]interface{}, pa
 			params[v.Name] = []int{len(*args)}
 			*args = append(*args, value)
 		}
+		if strings.ContainsAny(v.Name, " \t\n\v\f\r\u0085\u00A0") {
+			return fmt.Errorf("sql.NamedArg name (%s) cannot have whitespace", v.Name)
+		}
 		switch dialect {
 		case DialectSQLServer:
 			buf.WriteString("@" + v.Name)

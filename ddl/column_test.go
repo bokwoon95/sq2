@@ -66,8 +66,8 @@ func Test_AddColumnCommand(t *testing.T) {
 		var tt TT
 		tt.item = &AddColumnCommand{
 			Column: Column{
-				ColumnName:    "actor_id",
-				ColumnType:    "INT",
+				ColumnName:      "actor_id",
+				ColumnType:      "INT",
 				IsAutoincrement: true,
 			},
 		}
@@ -257,8 +257,8 @@ func Test_AddColumnCommand(t *testing.T) {
 		var tt TT
 		tt.item = &AddColumnCommand{
 			Column: Column{
-				ColumnName:    "actor_id",
-				ColumnType:    "INT",
+				ColumnName:      "actor_id",
+				ColumnType:      "INT",
 				IsAutoincrement: true,
 			},
 		}
@@ -338,8 +338,8 @@ func Test_AddColumnCommand(t *testing.T) {
 		var tt TT
 		tt.item = &AddColumnCommand{
 			Column: Column{
-				ColumnName:    "actor_id",
-				ColumnType:    "INT",
+				ColumnName:      "actor_id",
+				ColumnType:      "INT",
 				IsAutoincrement: true,
 			},
 		}
