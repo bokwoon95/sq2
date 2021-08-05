@@ -117,7 +117,7 @@ func (c *Catalog) loadFunction(function Function) error {
 		schema = Schema{SchemaName: function.FunctionSchema}
 		c.AppendSchema(schema)
 	}
-	schema.Functions = append(schema.Functions, &function)
+	schema.Functions = append(schema.Functions, function)
 	return nil
 }
 
