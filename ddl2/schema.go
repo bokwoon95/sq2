@@ -10,7 +10,7 @@ import (
 type Schema struct {
 	SchemaName    string      `json:",omitempty"`
 	Tables        []Table     `json:",omitempty"`
-	Views         []*View     `json:",omitempty"`
+	Views         []View     `json:",omitempty"`
 	Functions     []*Function `json:",omitempty"`
 	Ignore        bool        `json:",omitempty"`
 	tableCache    map[string]int
@@ -67,7 +67,7 @@ func (s *Schema) CachedViewPosition(viewName string) (viewPosition int) {
 	return viewPosition
 }
 
-func (s *Schema) AppendView(view *View) (viewPosition int) {
+func (s *Schema) AppendView(view View) (viewPosition int) {
 	s.Views = append(s.Views, view)
 	if s.viewCache == nil {
 		s.viewCache = make(map[string]int)

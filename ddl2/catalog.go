@@ -93,11 +93,11 @@ func (c *Catalog) loadDDLView(ddlView DDLView) error {
 		schema = Schema{SchemaName: viewSchema}
 		c.AppendSchema(schema)
 	}
-	var view *View
+	var view View
 	if n := schema.CachedViewPosition(viewName); n >= 0 {
 		view = schema.Views[n]
 	} else {
-		view = &View{
+		view = View{
 			ViewSchema: viewSchema,
 			ViewName:   viewName,
 		}
