@@ -12,9 +12,8 @@ import (
 type Catalog struct {
 	Dialect       string      `json:",omitempty"`
 	CatalogName   string      `json:",omitempty"`
-	VersionString string      `json:",omitempty"`
-	VersionNum    [2]int      `json:",omitempty"`
-	DefaultSchema string      `json:",omitempty"`
+	VersionNums   []int       `json:",omitempty"`
+	CurrentSchema string      `json:",omitempty"`
 	Extensions    [][2]string `json:",omitempty"`
 	Schemas       []*Schema   `json:",omitempty"`
 	schemaCache   map[string]int

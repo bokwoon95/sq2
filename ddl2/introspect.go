@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"io/fs"
 	"strconv"
@@ -13,6 +14,8 @@ import (
 
 	"github.com/bokwoon95/sq"
 )
+
+var ErrUnsupportedFeature = errors.New("dialect does not support this feature")
 
 type IntrospectSettings struct {
 	IncludeSystemObjects bool
@@ -24,14 +27,15 @@ type IntrospectSettings struct {
 
 type Introspector interface {
 	GetVersion(context.Context) (versionNums []int, err error)
+	GetCatalogName(context.Context) (catalogName string, err error)
 	GetCurrentSchema(context.Context) (currentSchema string, err error)
+	GetExtensions(context.Context) (extensions [][2]string, err error)
 	GetTables(context.Context, *IntrospectSettings) ([]Table, error)
 	GetColumns(context.Context, *IntrospectSettings) ([]Column, error)
 	GetConstraints(context.Context, *IntrospectSettings) ([]Constraint, error)
 	GetIndexes(context.Context, *IntrospectSettings) ([]Index, error)
 	GetTriggers(context.Context, *IntrospectSettings) ([]Trigger, error)
 	GetViews(context.Context, *IntrospectSettings) ([]View, error)
-	GetExtensions(context.Context, *IntrospectSettings) (extensions [][2]string, err error)
 	GetFunctions(context.Context, *IntrospectSettings) ([]Function, error)
 }
 
@@ -152,6 +156,100 @@ func (dbi *DatabaseIntrospector) GetVersion(ctx context.Context) (versionNums []
 	return versionNums, nil
 }
 
+func (dbi *DatabaseIntrospector) GetCatalogName(ctx context.Context) (catalogName string, err error) {
+	var rows *sql.Rows
+	switch dbi.dialect {
+	case sq.DialectSQLite:
+		return "", nil
+	case sq.DialectPostgres:
+		rows, err = dbi.db.QueryContext(ctx, "SELECT current_database()")
+		if err != nil {
+			return "", err
+		}
+	case sq.DialectMySQL:
+		rows, err = dbi.db.QueryContext(ctx, "SELECT database()")
+		if err != nil {
+			return "", err
+		}
+	default:
+		return "", fmt.Errorf("unsupported dialect: %s", dbi.dialect)
+	}
+	defer rows.Close()
+	for rows.Next() {
+		err = rows.Scan(&catalogName)
+		if err != nil {
+			return "", fmt.Errorf("scanning catalogName: %w", err)
+		}
+		break
+	}
+	err = rows.Close()
+	if err != nil {
+		return "", fmt.Errorf("rows.Close: %w", err)
+	}
+	err = rows.Err()
+	if err != nil {
+		return "", fmt.Errorf("rows.Err: %w", err)
+	}
+	return catalogName, nil
+}
+
+func (dbi *DatabaseIntrospector) GetCurrentSchema(ctx context.Context) (currentSchema string, err error) {
+	var rows *sql.Rows
+	switch dbi.dialect {
+	case sq.DialectSQLite:
+		return "", nil
+	case sq.DialectPostgres:
+		rows, err = dbi.db.QueryContext(ctx, "SELECT current_schema()")
+		if err != nil {
+			return "", err
+		}
+	case sq.DialectMySQL:
+		rows, err = dbi.db.QueryContext(ctx, "SELECT database()")
+		if err != nil {
+			return "", err
+		}
+	default:
+		return "", fmt.Errorf("unsupported dialect: %s", dbi.dialect)
+	}
+	defer rows.Close()
+	for rows.Next() {
+		err = rows.Scan(&currentSchema)
+		if err != nil {
+			return "", fmt.Errorf("scanning currentSchema: %w", err)
+		}
+		break
+	}
+	err = rows.Close()
+	if err != nil {
+		return "", fmt.Errorf("rows.Close: %w", err)
+	}
+	err = rows.Err()
+	if err != nil {
+		return "", fmt.Errorf("rows.Err: %w", err)
+	}
+	return currentSchema, nil
+}
+
+func (dbi *DatabaseIntrospector) GetExtensions(ctx context.Context) (extensions [][2]string, err error) {
+	if dbi.dialect != sq.DialectPostgres {
+		return nil, fmt.Errorf("%w dialect=%s, feature=extensions", ErrUnsupportedFeature, dbi.dialect)
+	}
+	rows, err := dbi.db.QueryContext(ctx, "SELECT extname, extversion FROM pg_catalog.pg_extension")
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var extension [2]string
+		err = rows.Scan(&extension[0], &extension[1])
+		if err != nil {
+			return nil, fmt.Errorf("scanning extension: %w", err)
+		}
+		extensions = append(extensions, extension)
+	}
+	return extensions, nil
+}
+
 func (dbi *DatabaseIntrospector) GetTables(ctx context.Context, settings *IntrospectSettings) ([]Table, error) {
 	var err error
 	var rows *sql.Rows
@@ -227,9 +325,9 @@ func (dbi *DatabaseIntrospector) GetColumns(ctx context.Context, settings *Intro
 	}
 	defer rows.Close()
 	var columns []Column
+	var columnType2 string
 	for rows.Next() {
 		var column Column
-		var columnType2 string
 		switch dbi.dialect {
 		case sq.DialectSQLite:
 			err = rows.Scan(
@@ -343,9 +441,9 @@ func (dbi *DatabaseIntrospector) GetConstraints(ctx context.Context, settings *I
 	}
 	defer rows.Close()
 	var constraints []Constraint
+	var rawColumns, rawExprs, rawReferencesColumns, rawOperators string
 	for rows.Next() {
 		var constraint Constraint
-		var rawColumns, rawExprs, rawReferencesColumns, rawOperators string
 		switch dbi.dialect {
 		case sq.DialectSQLite:
 			err = rows.Scan(
@@ -459,10 +557,10 @@ func (dbi *DatabaseIntrospector) GetIndexes(ctx context.Context, settings *Intro
 	}
 	defer rows.Close()
 	var indexes []Index
+	var numKeyColumns int
+	var rawColumns, rawExprs string
 	for rows.Next() {
 		var index Index
-		var numKeyColumns int
-		var rawColumns, rawExprs string
 		switch dbi.dialect {
 		case sq.DialectSQLite:
 			err = rows.Scan(
@@ -512,7 +610,7 @@ func (dbi *DatabaseIntrospector) GetIndexes(ctx context.Context, settings *Intro
 				&index.Predicate,
 			)
 			if err != nil {
-				return nil, fmt.Errorf("scanning Constraint: %w", err)
+				return nil, fmt.Errorf("scanning Index: %w", err)
 			}
 			if rawColumns != "" {
 				index.Columns = strings.Split(rawColumns, ",")
@@ -537,7 +635,7 @@ func (dbi *DatabaseIntrospector) GetIndexes(ctx context.Context, settings *Intro
 				&rawExprs,
 			)
 			if err != nil {
-				return nil, fmt.Errorf("scanning Constraint: %w", err)
+				return nil, fmt.Errorf("scanning Index: %w", err)
 			}
 			if rawColumns != "" {
 				index.Columns = strings.Split(rawColumns, ",")
@@ -562,4 +660,157 @@ func (dbi *DatabaseIntrospector) GetIndexes(ctx context.Context, settings *Intro
 		return nil, fmt.Errorf("rows.Err: %w", err)
 	}
 	return indexes, nil
+}
+
+func (dbi *DatabaseIntrospector) GetTriggers(ctx context.Context, settings *IntrospectSettings) ([]Trigger, error) {
+	var err error
+	var rows *sql.Rows
+	switch dbi.dialect {
+	case sq.DialectSQLite:
+		rows, err = dbi.queryContext(ctx, sqlDir, "sqlite_triggers.sql", settings)
+		if err != nil {
+			return nil, err
+		}
+	case sq.DialectPostgres:
+		rows, err = dbi.queryContext(ctx, sqlDir, "postgres_triggers.sql", settings)
+		if err != nil {
+			return nil, err
+		}
+	case sq.DialectMySQL:
+		rows, err = dbi.queryContext(ctx, sqlDir, "mysql_triggers.sql", settings)
+		if err != nil {
+			return nil, err
+		}
+	default:
+		return nil, fmt.Errorf("unsupported dialect: %s", dbi.dialect)
+	}
+	defer rows.Close()
+	var triggers []Trigger
+	var actionTiming, eventManipulation string
+	buf := bufpool.Get().(*bytes.Buffer)
+	defer func() {
+		buf.Reset()
+		bufpool.Put(buf)
+	}()
+	for rows.Next() {
+		var trigger Trigger
+		switch dbi.dialect {
+		case sq.DialectSQLite:
+			err = rows.Scan(
+				&trigger.TableName,
+				&trigger.TriggerName,
+				&trigger.SQL,
+			)
+			if err != nil {
+				return nil, fmt.Errorf("scanning Trigger: %w", err)
+			}
+		case sq.DialectPostgres:
+			err = rows.Scan(
+				&trigger.TableSchema,
+				&trigger.TableName,
+				&trigger.TriggerName,
+				&trigger.SQL,
+			)
+			if err != nil {
+				return nil, fmt.Errorf("scanning Trigger: %w", err)
+			}
+		case sq.DialectMySQL:
+			err = rows.Scan(
+				&trigger.TableSchema,
+				&trigger.TableName,
+				&trigger.TriggerName,
+				&trigger.SQL,
+				&actionTiming,
+				&eventManipulation,
+			)
+			if err != nil {
+				return nil, fmt.Errorf("scanning Trigger: %w", err)
+			}
+			buf.Reset()
+			buf.WriteString("CREATE TRIGGER " + sq.QuoteIdentifier(dbi.dialect, trigger.TriggerName) + " " + actionTiming + " " + eventManipulation + " ON ")
+			if trigger.TableSchema != "" {
+				buf.WriteString(sq.QuoteIdentifier(dbi.dialect, trigger.TableSchema) + ".")
+			}
+			buf.WriteString(sq.QuoteIdentifier(dbi.dialect, trigger.TableName) + " FOR EACH ROW " + trigger.SQL)
+			trigger.SQL = buf.String()
+		}
+		triggers = append(triggers, trigger)
+	}
+	err = rows.Close()
+	if err != nil {
+		return nil, fmt.Errorf("rows.Close: %w", err)
+	}
+	err = rows.Err()
+	if err != nil {
+		return nil, fmt.Errorf("rows.Err: %w", err)
+	}
+	return triggers, nil
+}
+
+func (dbi *DatabaseIntrospector) GetViews(ctx context.Context, settings *IntrospectSettings) ([]View, error) {
+	var err error
+	var rows *sql.Rows
+	switch dbi.dialect {
+	case sq.DialectSQLite:
+		rows, err = dbi.queryContext(ctx, sqlDir, "sqlite_views.sql", settings)
+		if err != nil {
+			return nil, err
+		}
+	case sq.DialectPostgres:
+		rows, err = dbi.queryContext(ctx, sqlDir, "postgres_views.sql", settings)
+		if err != nil {
+			return nil, err
+		}
+	case sq.DialectMySQL:
+		rows, err = dbi.queryContext(ctx, sqlDir, "mysql_views.sql", settings)
+		if err != nil {
+			return nil, err
+		}
+	default:
+		return nil, fmt.Errorf("unsupported dialect: %s", dbi.dialect)
+	}
+	defer rows.Close()
+	var views []View
+	for rows.Next() {
+		var view View
+		switch dbi.dialect {
+		case sq.DialectSQLite:
+			err = rows.Scan(
+				&view.ViewName,
+				&view.SQL,
+			)
+			if err != nil {
+				return nil, fmt.Errorf("scanning View: %w", err)
+			}
+		case sq.DialectPostgres:
+			err = rows.Scan(
+				&view.ViewSchema,
+				&view.ViewName,
+				&view.IsMaterialized,
+				&view.SQL,
+			)
+			if err != nil {
+				return nil, fmt.Errorf("scanning View: %w", err)
+			}
+		case sq.DialectMySQL:
+			err = rows.Scan(
+				&view.ViewSchema,
+				&view.ViewName,
+				&view.SQL,
+			)
+			if err != nil {
+				return nil, fmt.Errorf("scanning View: %w", err)
+			}
+		}
+		views = append(views, view)
+	}
+	err = rows.Close()
+	if err != nil {
+		return nil, fmt.Errorf("rows.Close: %w", err)
+	}
+	err = rows.Err()
+	if err != nil {
+		return nil, fmt.Errorf("rows.Err: %w", err)
+	}
+	return views, nil
 }

@@ -9,11 +9,11 @@ import (
 )
 
 type Trigger struct {
-	TableSchema string
-	TableName   string
-	TriggerName string
-	SQL         string
-	Ignore      bool `json:",omitempty"`
+	TableSchema string `json:",omitempty"`
+	TableName   string `json:",omitempty"`
+	TriggerName string `json:",omitempty"`
+	SQL         string `json:",omitempty"`
+	Ignore      bool   `json:",omitempty"`
 }
 
 func (trg *Trigger) populateTriggerInfo(dialect string) error {
