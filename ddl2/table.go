@@ -13,8 +13,8 @@ type Table struct {
 	TableName        string       `json:",omitempty"`
 	Columns          []Column     `json:",omitempty"`
 	Constraints      []Constraint `json:",omitempty"`
-	Indexes          []Index     `json:",omitempty"`
-	Triggers         []Trigger   `json:",omitempty"`
+	Indexes          []Index      `json:",omitempty"`
+	Triggers         []Trigger    `json:",omitempty"`
 	VirtualTable     string       `json:",omitempty"`
 	VirtualTableArgs []string     `json:",omitempty"`
 	SQL              string       `json:",omitempty"`
@@ -178,6 +178,7 @@ func (tbl *Table) LoadIndexConfig(tableSchema, tableName string, columns []strin
 	var index Index
 	if n := tbl.CachedIndexPosition(indexName); n >= 0 {
 		index = tbl.Indexes[n]
+		defer func() { tbl.Indexes[n] = index }()
 	} else {
 		index = Index{
 			TableSchema: tbl.TableSchema,
@@ -185,7 +186,7 @@ func (tbl *Table) LoadIndexConfig(tableSchema, tableName string, columns []strin
 			IndexName:   indexName,
 			Columns:     columns,
 		}
-		tbl.AppendIndex(index)
+		defer func() { tbl.AppendIndex(index) }()
 	}
 	for _, modifier := range modifiers {
 		switch modifier[0] {
@@ -233,6 +234,7 @@ func (tbl *Table) LoadConstraintConfig(constraintType, tableSchema, tableName st
 	if n := tbl.CachedConstraintPosition(constraintName); n >= 0 {
 		constraint = tbl.Constraints[n]
 		constraint.ConstraintType = constraintType
+		defer func() { tbl.Constraints[n] = constraint }()
 	} else {
 		constraint = Constraint{
 			TableSchema:    tableSchema,
@@ -241,7 +243,7 @@ func (tbl *Table) LoadConstraintConfig(constraintType, tableSchema, tableName st
 			ConstraintType: constraintType,
 			Columns:        columns,
 		}
-		tbl.AppendConstraint(constraint)
+		defer func() { tbl.AppendConstraint(constraint) }()
 	}
 	if constraintType == FOREIGN_KEY {
 		switch parts := strings.SplitN(value, ".", 3); len(parts) {
@@ -312,84 +314,84 @@ func (tbl *Table) LoadColumnConfig(dialect, columnName, columnType, config strin
 	if err != nil {
 		return fmt.Errorf("%s: %s", qualifiedColumn, err.Error())
 	}
-	var col Column
+	var column Column
 	if n := tbl.CachedColumnPosition(columnName); n >= 0 {
-		col = tbl.Columns[n]
+		column = tbl.Columns[n]
+		defer func() { tbl.Columns[n] = column }()
 	} else {
-		col = Column{
+		column = Column{
 			TableSchema: tbl.TableSchema,
 			TableName:   tbl.TableName,
 			ColumnName:  columnName,
 			ColumnType:  columnType,
 		}
-		tbl.AppendColumn(col)
+		defer func() { tbl.AppendColumn(column) }()
 	}
-	// TODO: modifiers should be dialect-aware
 	for _, modifier := range modifiers {
 		switch modifier[0] {
 		case "type":
-			col.ColumnType = modifier[1]
+			column.ColumnType = modifier[1]
 		case "autoincrement":
 			if dialect == sq.DialectMySQL || dialect == sq.DialectSQLite {
-				col.IsAutoincrement = true
+				column.IsAutoincrement = true
 			}
 		case "identity":
 			if dialect == sq.DialectPostgres {
-				col.Identity = BY_DEFAULT_AS_IDENTITY
+				column.Identity = BY_DEFAULT_AS_IDENTITY
 			}
 		case "alwaysidentity":
 			if dialect == sq.DialectPostgres {
-				col.Identity = ALWAYS_AS_IDENTITY
+				column.Identity = ALWAYS_AS_IDENTITY
 			}
 		case "notnull":
-			col.IsNotNull = true
+			column.IsNotNull = true
 		case "onupdatecurrenttimestamp":
-			if dialect == sq.DialectMySQL || dialect == sq.DialectSQLite {
-				col.OnUpdateCurrentTimestamp = true
+			if dialect == sq.DialectMySQL {
+				column.OnUpdateCurrentTimestamp = true
 			}
 		case "generated":
-			col.GeneratedExpr = modifier[1]
+			column.GeneratedExpr = modifier[1]
 			if dialect == sq.DialectPostgres {
-				col.GeneratedExprStored = true
+				column.GeneratedExprStored = true
 			}
 		case "stored":
-			col.GeneratedExprStored = true
+			column.GeneratedExprStored = true
 		case "virtual":
 			if dialect != sq.DialectPostgres {
-				col.GeneratedExprStored = false
+				column.GeneratedExprStored = false
 			}
 		case "collate":
-			col.CollationName = modifier[1]
+			column.CollationName = modifier[1]
 		case "default":
 			if needsExpressionBrackets(modifier[1]) && dialect != sq.DialectPostgres {
-				col.ColumnDefault = "(" + modifier[1] + ")"
+				column.ColumnDefault = "(" + modifier[1] + ")"
 			} else {
-				col.ColumnDefault = modifier[1]
+				column.ColumnDefault = modifier[1]
 			}
 		case "ignore":
-			col.Ignore = true
+			column.Ignore = true
 		case "primarykey":
-			err = tbl.LoadConstraintConfig(PRIMARY_KEY, col.TableSchema, col.TableName, []string{col.ColumnName}, modifier[1])
+			err = tbl.LoadConstraintConfig(PRIMARY_KEY, column.TableSchema, column.TableName, []string{column.ColumnName}, modifier[1])
 			if err != nil {
 				return fmt.Errorf("%s: %s", qualifiedColumn, err.Error())
 			}
 		case "references":
-			err = tbl.LoadConstraintConfig(FOREIGN_KEY, col.TableSchema, col.TableName, []string{col.ColumnName}, modifier[1])
+			err = tbl.LoadConstraintConfig(FOREIGN_KEY, column.TableSchema, column.TableName, []string{column.ColumnName}, modifier[1])
 			if err != nil {
 				return fmt.Errorf("%s: %s", qualifiedColumn, err.Error())
 			}
 		case "unique":
-			err = tbl.LoadConstraintConfig(UNIQUE, col.TableSchema, col.TableName, []string{col.ColumnName}, modifier[1])
+			err = tbl.LoadConstraintConfig(UNIQUE, column.TableSchema, column.TableName, []string{column.ColumnName}, modifier[1])
 			if err != nil {
 				return fmt.Errorf("%s: %s", qualifiedColumn, err.Error())
 			}
 		case "check":
-			err = tbl.LoadConstraintConfig(CHECK, col.TableSchema, col.TableName, []string{col.ColumnName}, modifier[1])
+			err = tbl.LoadConstraintConfig(CHECK, column.TableSchema, column.TableName, []string{column.ColumnName}, modifier[1])
 			if err != nil {
 				return fmt.Errorf("%s: %s", qualifiedColumn, err.Error())
 			}
 		case "index":
-			err = tbl.LoadIndexConfig(col.TableSchema, col.TableName, []string{col.ColumnName}, modifier[1])
+			err = tbl.LoadIndexConfig(column.TableSchema, column.TableName, []string{column.ColumnName}, modifier[1])
 			if err != nil {
 				return fmt.Errorf("%s: %s", qualifiedColumn, err.Error())
 			}

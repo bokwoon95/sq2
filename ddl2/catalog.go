@@ -61,19 +61,21 @@ func (c *Catalog) loadTable(table sq.SchemaTable) error {
 	var schema Schema
 	if n := c.CachedSchemaPosition(tableSchema); n >= 0 {
 		schema = c.Schemas[n]
+		defer func() { c.Schemas[n] = schema }()
 	} else {
 		schema = Schema{SchemaName: tableSchema}
-		c.AppendSchema(schema)
+		defer func() { c.AppendSchema(schema) }()
 	}
 	var tbl Table
 	if n := schema.CachedTablePosition(tableName); n >= 0 {
 		tbl = schema.Tables[n]
+		defer func() { schema.Tables[n] = tbl }()
 	} else {
 		tbl = Table{
 			TableSchema: tableSchema,
 			TableName:   tableName,
 		}
-		schema.AppendTable(tbl)
+		defer func() { schema.AppendTable(tbl) }()
 	}
 	return tbl.LoadTable(c.Dialect, table)
 }
@@ -89,19 +91,21 @@ func (c *Catalog) loadDDLView(ddlView DDLView) error {
 	var schema Schema
 	if n := c.CachedSchemaPosition(viewSchema); n >= 0 {
 		schema = c.Schemas[n]
+		defer func() { c.Schemas[n] = schema }()
 	} else {
 		schema = Schema{SchemaName: viewSchema}
-		c.AppendSchema(schema)
+		defer func() { c.AppendSchema(schema) }()
 	}
 	var view View
 	if n := schema.CachedViewPosition(viewName); n >= 0 {
 		view = schema.Views[n]
+		defer func() { schema.Views[n] = view }()
 	} else {
 		view = View{
 			ViewSchema: viewSchema,
 			ViewName:   viewName,
 		}
-		schema.AppendView(view)
+		defer func() { schema.AppendView(view) }()
 	}
 	return view.LoadDDLView(c.Dialect, ddlView)
 }
@@ -113,9 +117,10 @@ func (c *Catalog) loadFunction(function Function) error {
 	var schema Schema
 	if n := c.CachedSchemaPosition(function.FunctionSchema); n >= 0 {
 		schema = c.Schemas[n]
+		defer func() { c.Schemas[n] = schema }()
 	} else {
 		schema = Schema{SchemaName: function.FunctionSchema}
-		c.AppendSchema(schema)
+		defer func() { c.AppendSchema(schema) }()
 	}
 	schema.Functions = append(schema.Functions, function)
 	return nil
