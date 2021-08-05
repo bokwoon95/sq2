@@ -199,13 +199,33 @@ func (dbi *DatabaseIntrospector) GetColumns(ctx context.Context, settings *Intro
 			if err != nil {
 				return nil, fmt.Errorf("scanning Column: %w", err)
 			}
+			if strings.EqualFold(column.ColumnType, "USER-DEFINED") {
+				column.ColumnType = columnType2
+			} else if strings.EqualFold(column.ColumnType, "ARRAY") {
+				column.ColumnType = "[]" + columnType2[1:]
+			} else if (strings.EqualFold(column.ColumnType, "NUMERIC") || strings.EqualFold(column.ColumnType, "DECIMAL")) && (column.NumericPrecision > 0 || column.NumericScale > 0) {
+				column.ColumnType = fmt.Sprintf("%s(%d,%d)", strings.ToUpper(column.ColumnType), column.NumericPrecision, column.NumericScale)
+			} else {
+				column.ColumnType = strings.ToUpper(column.ColumnType)
+			}
+			// remove surrounding brackets
+			if len(column.GeneratedExpr) > 2 {
+				last := len(column.GeneratedExpr) - 1
+				if column.GeneratedExpr[0] == '(' && column.GeneratedExpr[last] == ')' {
+					column.GeneratedExpr = column.GeneratedExpr[1:last]
+				}
+			}
+			if strings.EqualFold(column.Identity, "BY DEFAULT") {
+				column.Identity = BY_DEFAULT_AS_IDENTITY
+			} else if strings.EqualFold(column.Identity, "ALWAYS") {
+				column.Identity = ALWAYS_AS_IDENTITY
+			}
 		case sq.DialectMySQL:
 			err = rows.Scan(
 				&column.TableSchema,
 				&column.TableName,
 				&column.ColumnName,
 				&column.ColumnType,
-				&columnType2,
 				&column.NumericPrecision,
 				&column.NumericScale,
 				&column.IsAutoincrement,
@@ -219,8 +239,11 @@ func (dbi *DatabaseIntrospector) GetColumns(ctx context.Context, settings *Intro
 			if err != nil {
 				return nil, fmt.Errorf("scanning Column: %w", err)
 			}
+			column.ColumnType = strings.ToUpper(column.ColumnType)
+			if column.GeneratedExpr != "" {
+				column.GeneratedExpr = strings.ReplaceAll(column.GeneratedExpr, `\'`, `'`)
+			}
 		}
-		normalizeColumn(dbi.dialect, &column, columnType2)
 		columns = append(columns, column)
 	}
 	err = rows.Close()
@@ -232,45 +255,6 @@ func (dbi *DatabaseIntrospector) GetColumns(ctx context.Context, settings *Intro
 		return nil, fmt.Errorf("rows.Err: %w", err)
 	}
 	return columns, nil
-}
-
-func normalizeColumn(dialect string, column *Column, columnType2 string) {
-	if column.ColumnDefault != "" {
-		column.ColumnDefault = toExpr(dialect, column.ColumnDefault)
-	}
-	if (strings.EqualFold(column.ColumnType, "NUMERIC") || strings.EqualFold(column.ColumnType, "DECIMAL")) && (column.NumericPrecision > 0 || column.NumericScale > 0) {
-		column.ColumnType = fmt.Sprintf("%s(%d,%d)", column.ColumnType, column.NumericPrecision, column.NumericScale)
-	}
-	if strings.EqualFold(column.Identity, "BY DEFAULT") {
-		column.Identity = BY_DEFAULT_AS_IDENTITY
-	} else if strings.EqualFold(column.Identity, "ALWAYS") {
-		column.Identity = ALWAYS_AS_IDENTITY
-	} else {
-		column.Identity = ""
-	}
-	if len(column.GeneratedExpr) > 2 {
-		last := len(column.GeneratedExpr) - 1
-		if column.GeneratedExpr[0] == '(' && column.GeneratedExpr[last] == ')' {
-			column.GeneratedExpr = column.GeneratedExpr[1:last]
-		}
-	}
-	switch dialect {
-	case sq.DialectPostgres:
-		if strings.EqualFold(column.ColumnType, "TIMESTAMP WITH TIME ZONE") {
-			column.ColumnType = "TIMESTAMPTZ"
-		} else if strings.EqualFold(column.ColumnType, "USER-DEFINED") {
-			column.ColumnType = columnType2
-		} else if strings.EqualFold(column.ColumnType, "ARRAY") {
-			column.ColumnType = "[]" + columnType2[1:]
-		} else {
-			column.ColumnType = strings.ToUpper(column.ColumnType)
-		}
-	case sq.DialectMySQL:
-		if column.GeneratedExpr != "" {
-			column.GeneratedExpr = strings.ReplaceAll(column.GeneratedExpr, `\'`, `'`)
-		}
-		column.ColumnType = strings.ToUpper(columnType2)
-	}
 }
 
 func (dbi *DatabaseIntrospector) GetConstraints(ctx context.Context, settings *IntrospectSettings) ([]Constraint, error) {
@@ -338,6 +322,9 @@ func (dbi *DatabaseIntrospector) GetConstraints(ctx context.Context, settings *I
 			if err != nil {
 				return nil, fmt.Errorf("scanning Constraint: %w", err)
 			}
+			if constraint.CheckExpr != "" {
+				constraint.CheckExpr = strings.TrimPrefix(constraint.CheckExpr, "CHECK ")
+			}
 		case sq.DialectMySQL:
 			err = rows.Scan(
 				&constraint.TableSchema,
@@ -369,6 +356,7 @@ func (dbi *DatabaseIntrospector) GetConstraints(ctx context.Context, settings *I
 		if rawOperators != "" {
 			constraint.ExclusionOperators = strings.Split(rawOperators, ",")
 		}
+		// remove surrounding brackets
 		if last := len(constraint.CheckExpr) - 1; len(constraint.CheckExpr) > 2 && constraint.CheckExpr[0] == '(' && constraint.CheckExpr[last] == ')' {
 			constraint.CheckExpr = constraint.CheckExpr[1:last]
 		}
@@ -383,4 +371,133 @@ func (dbi *DatabaseIntrospector) GetConstraints(ctx context.Context, settings *I
 		return nil, fmt.Errorf("rows.Err: %w", err)
 	}
 	return constraints, nil
+}
+
+func (dbi *DatabaseIntrospector) GetIndexes(ctx context.Context, settings *IntrospectSettings) ([]Index, error) {
+	var err error
+	var rows *sql.Rows
+	switch dbi.dialect {
+	case sq.DialectSQLite:
+		rows, err = dbi.queryContext(ctx, sqlDir, "sqlite_indexes.sql", settings)
+		if err != nil {
+			return nil, err
+		}
+	case sq.DialectPostgres:
+		rows, err = dbi.queryContext(ctx, sqlDir, "postgres_indexes.sql", settings)
+		if err != nil {
+			return nil, err
+		}
+	case sq.DialectMySQL:
+		rows, err = dbi.queryContext(ctx, sqlDir, "mysql_indexes.sql", settings)
+		if err != nil {
+			return nil, err
+		}
+	default:
+		return nil, fmt.Errorf("unsupported dialect: %s", dbi.dialect)
+	}
+	defer rows.Close()
+	var indexes []Index
+	for rows.Next() {
+		var index Index
+		var numKeyColumns int
+		var rawColumns, rawExprs string
+		switch dbi.dialect {
+		case sq.DialectSQLite:
+			err = rows.Scan(
+				&index.TableName,
+				&index.IndexName,
+				&index.IsUnique,
+				&rawColumns,
+				&index.SQL,
+			)
+			if err != nil {
+				return nil, fmt.Errorf("scanning Index: %w", err)
+			}
+			if rawColumns != "" {
+				index.Columns = strings.Split(rawColumns, ",")
+			}
+			index.Exprs = make([]string, len(index.Columns))
+			if index.SQL != "" {
+				start := strings.IndexByte(index.SQL, '(')
+				end := strings.LastIndexByte(index.SQL, ')')
+				if start >= 0 && end > start && end < len(index.SQL) {
+					args := splitArgs(index.SQL[start+1 : end])
+					for i, column := range index.Columns {
+						args[i] = strings.TrimSpace(args[i])
+						if column != "" {
+							if i >= len(args) || args[i] != column {
+								return nil, fmt.Errorf("column mismatch: sqlite reported table %s column #%d to be %s, I got %s instead. This means the splitArgs function is faulty and must be escalated", index.TableName, i+1, column, args[i])
+							}
+							continue
+						}
+						index.Exprs[i] = args[i]
+					}
+				}
+				if token, remainder, _ := popIdentifierToken(sq.DialectSQLite, index.SQL[end+1:]); strings.EqualFold(token, "WHERE") {
+					index.Predicate = strings.TrimSpace(remainder)
+				}
+			}
+		case sq.DialectPostgres:
+			err = rows.Scan(
+				&index.TableSchema,
+				&index.TableName,
+				&index.IndexName,
+				&index.IndexType,
+				&index.IsUnique,
+				&numKeyColumns,
+				&rawColumns,
+				&rawExprs,
+				&index.Predicate,
+			)
+			if err != nil {
+				return nil, fmt.Errorf("scanning Constraint: %w", err)
+			}
+			if rawColumns != "" {
+				index.Columns = strings.Split(rawColumns, ",")
+			}
+			index.Exprs = make([]string, len(index.Columns))
+			exprs := splitArgs(rawExprs)
+			for i, column := range index.Columns {
+				if column == "" && len(exprs) > 0 {
+					index.Exprs[i] = "(" + strings.TrimSpace(exprs[0]) + ")"
+					exprs = exprs[1:]
+				}
+			}
+			index.Columns, index.IncludeColumns = index.Columns[:numKeyColumns], index.Columns[numKeyColumns:]
+		case sq.DialectMySQL:
+			err = rows.Scan(
+				&index.TableSchema,
+				&index.TableName,
+				&index.IndexName,
+				&index.IndexType,
+				&index.IsUnique,
+				&rawColumns,
+				&rawExprs,
+			)
+			if err != nil {
+				return nil, fmt.Errorf("scanning Constraint: %w", err)
+			}
+			if rawColumns != "" {
+				index.Columns = strings.Split(rawColumns, ",")
+			}
+			index.Exprs = make([]string, len(index.Columns))
+			exprs := splitArgs(strings.TrimSpace(strings.ReplaceAll(rawExprs, `\'`, `'`)))
+			for i, column := range index.Columns {
+				if column == "" && len(exprs) > 0 {
+					index.Exprs[i] = "(" + strings.TrimSpace(exprs[0]) + ")"
+				}
+				exprs = exprs[1:]
+			}
+		}
+		indexes = append(indexes, index)
+	}
+	err = rows.Close()
+	if err != nil {
+		return nil, fmt.Errorf("rows.Close: %w", err)
+	}
+	err = rows.Err()
+	if err != nil {
+		return nil, fmt.Errorf("rows.Err: %w", err)
+	}
+	return indexes, nil
 }

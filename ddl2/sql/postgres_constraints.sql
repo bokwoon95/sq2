@@ -122,7 +122,7 @@ SELECT
     ,'' AS update_rule
     ,'' AS delete_rule
     ,'' AS match_option
-    ,SUBSTR(pg_get_constraintdef(pg_constraint.oid, TRUE), 7) AS check_expr
+    ,pg_get_constraintdef(pg_constraint.oid, TRUE) AS check_expr
     ,'' AS operators
     ,'' AS index_type
     ,'' AS predicate
