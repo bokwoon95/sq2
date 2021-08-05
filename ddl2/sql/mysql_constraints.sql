@@ -18,10 +18,10 @@ FROM
 WHERE
     tc.constraint_type IN ('PRIMARY KEY', 'FOREIGN KEY', 'UNIQUE')
     {{ if not .IncludeSystemObjects }}AND tc.table_schema NOT IN ('mysql', 'information_schema', 'performance_schema', 'sys'){{ end }}
-    {{ if .WithSchemas }}AND tc.table_schema IN ({{ listify .WithSchemas }}){{ end }}
-    {{ if .WithoutSchemas }}AND tc.table_schema NOT IN ({{ listify .WithoutSchemas }}){{ end }}
-    {{ if .WithTables }}AND tc.table_name IN ({{ listify .WithTables }}){{ end }}
-    {{ if .WithoutTables }}AND tc.table_name NOT IN ({{ listify .WithoutTables }}){{ end }}
+    {{ if .WithSchemas }}AND tc.table_schema IN ({{ printList .WithSchemas }}){{ end }}
+    {{ if .WithoutSchemas }}AND tc.table_schema NOT IN ({{ printList .WithoutSchemas }}){{ end }}
+    {{ if .WithTables }}AND tc.table_name IN ({{ printList .WithTables }}){{ end }}
+    {{ if .WithoutTables }}AND tc.table_name NOT IN ({{ printList .WithoutTables }}){{ end }}
 GROUP BY
     tc.table_schema
     ,tc.table_name
@@ -51,8 +51,8 @@ FROM
     JOIN information_schema.check_constraints AS cc USING (constraint_schema, constraint_name)
 WHERE
     {{ if not .IncludeSystemObjects }}table_schema NOT IN ('mysql', 'information_schema', 'performance_schema', 'sys'){{ end }}
-    {{ if .WithSchemas }}AND tc.table_schema IN ({{ listify .WithSchemas }}){{ end }}
-    {{ if .WithoutSchemas }}AND tc.table_schema NOT IN ({{ listify .WithoutSchemas }}){{ end }}
-    {{ if .WithTables }}AND tc.table_name IN ({{ listify .WithTables }}){{ end }}
-    {{ if .WithoutTables }}AND tc.table_name NOT IN ({{ listify .WithoutTables }}){{ end }}
+    {{ if .WithSchemas }}AND tc.table_schema IN ({{ printList .WithSchemas }}){{ end }}
+    {{ if .WithoutSchemas }}AND tc.table_schema NOT IN ({{ printList .WithoutSchemas }}){{ end }}
+    {{ if .WithTables }}AND tc.table_name IN ({{ printList .WithTables }}){{ end }}
+    {{ if .WithoutTables }}AND tc.table_name NOT IN ({{ printList .WithoutTables }}){{ end }}
 ;

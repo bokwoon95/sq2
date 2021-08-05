@@ -12,8 +12,8 @@ FROM (
     WHERE
         "type" = 'table'
         {{ if not .IncludeSystemTables }}AND tbl_name NOT LIKE 'sqlite_%' AND sql NOT LIKE 'CREATE TABLE ''%'{{ end }}
-        {{ if .WithTables }}AND tbl_name IN ({{ listify .WithTables }}){{ end }}
-        {{ if .WithoutTables }}AND tbl_name NOT IN ({{ listify .WithoutTables }}){{ end }}
+        {{ if .WithTables }}AND tbl_name IN ({{ printList .WithTables }}){{ end }}
+        {{ if .WithoutTables }}AND tbl_name NOT IN ({{ printList .WithoutTables }}){{ end }}
     ) AS tables
     CROSS JOIN pragma_table_xinfo(tables.tbl_name) AS columns
 ;

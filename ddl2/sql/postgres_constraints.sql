@@ -34,10 +34,10 @@ FROM (
     WHERE
         tc.constraint_type IN ('PRIMARY KEY', 'UNIQUE')
         {{ if not .IncludeSystemObjects }}AND tc.table_schema <> 'information_schema' AND tc.table_schema NOT LIKE 'pg_%'{{ end }}
-        {{ if .WithSchemas }}AND tc.table_schema IN ({{ listify .WithSchemas }}){{ end }}
-        {{ if .WithoutSchemas }}AND tc.table_schema NOT IN ({{ listify .WithoutSchemas }}){{ end }}
-        {{ if .WithTables }}AND tc.table_name IN ({{ listify .WithTables }}){{ end }}
-        {{ if .WithoutTables }}AND tc.table_name NOT IN ({{ listify .WithoutTables }}){{ end }}
+        {{ if .WithSchemas }}AND tc.table_schema IN ({{ printList .WithSchemas }}){{ end }}
+        {{ if .WithoutSchemas }}AND tc.table_schema NOT IN ({{ printList .WithoutSchemas }}){{ end }}
+        {{ if .WithTables }}AND tc.table_name IN ({{ printList .WithTables }}){{ end }}
+        {{ if .WithoutTables }}AND tc.table_name NOT IN ({{ printList .WithoutTables }}){{ end }}
 ) AS primary_key_unique_columns
 GROUP BY
     table_schema
@@ -91,10 +91,10 @@ FROM (
     WHERE
         tc.constraint_type = 'FOREIGN KEY'
         {{ if not .IncludeSystemObjects }}AND tc.table_schema <> 'information_schema' AND tc.table_schema NOT LIKE 'pg_%'{{ end }}
-        {{ if .WithSchemas }}AND tc.table_schema IN ({{ listify .WithSchemas }}){{ end }}
-        {{ if .WithoutSchemas }}AND tc.table_schema NOT IN ({{ listify .WithoutSchemas }}){{ end }}
-        {{ if .WithTables }}AND tc.table_name IN ({{ listify .WithTables }}){{ end }}
-        {{ if .WithoutTables }}AND tc.table_name NOT IN ({{ listify .WithoutTables }}){{ end }}
+        {{ if .WithSchemas }}AND tc.table_schema IN ({{ printList .WithSchemas }}){{ end }}
+        {{ if .WithoutSchemas }}AND tc.table_schema NOT IN ({{ printList .WithoutSchemas }}){{ end }}
+        {{ if .WithTables }}AND tc.table_name IN ({{ printList .WithTables }}){{ end }}
+        {{ if .WithoutTables }}AND tc.table_name NOT IN ({{ printList .WithoutTables }}){{ end }}
 ) AS foreign_key_columns
 GROUP BY
     table_schema
@@ -110,7 +110,7 @@ GROUP BY
     ,is_initially_deferred
 UNION ALL
 SELECT
-    table_namespace.nspname AS table_schema
+    pg_namespace.nspname AS table_schema
     ,pg_class.relname AS table_name
     ,pg_constraint.conname AS constraint_name
     ,'CHECK' AS constraint_type
@@ -131,13 +131,12 @@ SELECT
 FROM
     pg_catalog.pg_constraint
     JOIN pg_catalog.pg_class ON pg_class.oid = pg_constraint.conrelid
-    JOIN pg_catalog.pg_namespace AS table_namespace ON table_namespace.oid = pg_class.relnamespace
-    JOIN pg_catalog.pg_namespace AS constraint_namespace ON constraint_namespace.oid = pg_constraint.connamespace
+    JOIN pg_catalog.pg_namespace ON pg_namespace.oid = pg_class.relnamespace
 WHERE
     pg_constraint.contype = 'c'
-    {{ if not .IncludeSystemObjects }}AND table_namespace.nspname <> 'information_schema' AND table_namespace.nspname NOT LIKE 'pg_%'{{ end }}
-    {{ if .WithSchemas }}AND table_namespace.nspname IN ({{ listify .WithSchemas }}){{ end }}
-    {{ if .WithoutSchemas }}AND table_namespace.nspname NOT IN ({{ listify .WithoutSchemas }}){{ end }}
-    {{ if .WithTables }}AND pg_class.relname IN ({{ listify .WithTables }}){{ end }}
-    {{ if .WithoutTables }}AND pg_class.relname NOT IN ({{ listify .WithoutTables }}){{ end }}
+    {{ if not .IncludeSystemObjects }}AND pg_namespace.nspname <> 'information_schema' AND pg_namespace.nspname NOT LIKE 'pg_%'{{ end }}
+    {{ if .WithSchemas }}AND pg_namespace.nspname IN ({{ printList .WithSchemas }}){{ end }}
+    {{ if .WithoutSchemas }}AND pg_namespace.nspname NOT IN ({{ printList .WithoutSchemas }}){{ end }}
+    {{ if .WithTables }}AND pg_class.relname IN ({{ printList .WithTables }}){{ end }}
+    {{ if .WithoutTables }}AND pg_class.relname NOT IN ({{ printList .WithoutTables }}){{ end }}
 ;

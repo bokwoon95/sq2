@@ -11,6 +11,6 @@ FROM
 WHERE
     TRUE
     {{ if not .IncludeSystemObjects }}AND pg_namespace.nspname <> 'information_schema' AND pg_namespace.nspname NOT LIKE 'pg_%'{{ end }}
-    {{ if .WithSchemas }}AND pg_namespace.nspname IN ({{ listify .WithSchemas }}){{ end }}
-    {{ if .WithoutSchemas }}AND pg_namespace.nspname NOT IN ({{ listify .WithoutSchemas }}){{ end }}
+    {{ if .WithSchemas }}AND pg_namespace.nspname IN ({{ printList .WithSchemas }}){{ end }}
+    {{ if .WithoutSchemas }}AND pg_namespace.nspname NOT IN ({{ printList .WithoutSchemas }}){{ end }}
 ;
