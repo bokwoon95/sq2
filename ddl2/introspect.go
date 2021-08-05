@@ -17,7 +17,7 @@ import (
 
 var ErrUnsupportedFeature = errors.New("dialect does not support this feature")
 
-type IntrospectSettings struct {
+type Filter struct {
 	IncludeSystemObjects bool
 	WithSchemas          []string
 	WithoutSchemas       []string
@@ -30,24 +30,24 @@ type Introspector interface {
 	GetCatalogName(context.Context) (catalogName string, err error)
 	GetCurrentSchema(context.Context) (currentSchema string, err error)
 	GetExtensions(context.Context) (extensions []string, err error)
-	GetTables(context.Context, *IntrospectSettings) ([]Table, error)
-	GetColumns(context.Context, *IntrospectSettings) ([]Column, error)
-	GetConstraints(context.Context, *IntrospectSettings) ([]Constraint, error)
-	GetIndexes(context.Context, *IntrospectSettings) ([]Index, error)
-	GetTriggers(context.Context, *IntrospectSettings) ([]Trigger, error)
-	GetViews(context.Context, *IntrospectSettings) ([]View, error)
-	GetFunctions(context.Context, *IntrospectSettings) ([]Function, error)
+	GetTables(context.Context, *Filter) ([]Table, error)
+	GetColumns(context.Context, *Filter) ([]Column, error)
+	GetConstraints(context.Context, *Filter) ([]Constraint, error)
+	GetIndexes(context.Context, *Filter) ([]Index, error)
+	GetTriggers(context.Context, *Filter) ([]Trigger, error)
+	GetViews(context.Context, *Filter) ([]View, error)
+	GetFunctions(context.Context, *Filter) ([]Function, error)
 }
 
 type DatabaseIntrospector struct {
-	dialect         string
-	db              sq.DB
-	mu              *sync.RWMutex
-	defaultSettings *IntrospectSettings
-	templates       map[string]*template.Template
+	dialect       string
+	db            sq.DB
+	mu            *sync.RWMutex
+	defaultFilter *Filter
+	templates     map[string]*template.Template
 }
 
-func NewDatabaseIntrospector(dialect string, db sq.DB, defaultSettings *IntrospectSettings) (*DatabaseIntrospector, error) {
+func NewDatabaseIntrospector(dialect string, db sq.DB, defaultFilter *Filter) (*DatabaseIntrospector, error) {
 	if db == nil {
 		return nil, fmt.Errorf("db is nil")
 	}
@@ -59,16 +59,16 @@ func NewDatabaseIntrospector(dialect string, db sq.DB, defaultSettings *Introspe
 		return nil, fmt.Errorf("liveliness check failed: %w", err)
 	}
 	dbi := &DatabaseIntrospector{
-		dialect:         dialect,
-		db:              db,
-		mu:              &sync.RWMutex{},
-		defaultSettings: defaultSettings,
-		templates:       make(map[string]*template.Template),
+		dialect:       dialect,
+		db:            db,
+		mu:            &sync.RWMutex{},
+		defaultFilter: defaultFilter,
+		templates:     make(map[string]*template.Template),
 	}
 	return dbi, nil
 }
 
-func (dbi *DatabaseIntrospector) queryContext(ctx context.Context, fsys fs.FS, name string, settings *IntrospectSettings) (*sql.Rows, error) {
+func (dbi *DatabaseIntrospector) queryContext(ctx context.Context, fsys fs.FS, name string, filter *Filter) (*sql.Rows, error) {
 	var err error
 	dbi.mu.RLock()
 	tmpl := dbi.templates[name]
@@ -87,13 +87,14 @@ func (dbi *DatabaseIntrospector) queryContext(ctx context.Context, fsys fs.FS, n
 		buf.Reset()
 		bufpool.Put(buf)
 	}()
-	if settings == nil {
-		settings = dbi.defaultSettings
+	if filter == nil {
+		if dbi.defaultFilter == nil {
+			filter = &Filter{}
+		} else {
+			filter = dbi.defaultFilter
+		}
 	}
-	if settings == nil {
-		settings = &IntrospectSettings{}
-	}
-	err = tmpl.Execute(buf, *settings)
+	err = tmpl.Execute(buf, *filter)
 	if err != nil {
 		return nil, fmt.Errorf("executing %s: %w", name, err)
 	}
@@ -250,22 +251,22 @@ func (dbi *DatabaseIntrospector) GetExtensions(ctx context.Context) (extensions 
 	return extensions, nil
 }
 
-func (dbi *DatabaseIntrospector) GetTables(ctx context.Context, settings *IntrospectSettings) ([]Table, error) {
+func (dbi *DatabaseIntrospector) GetTables(ctx context.Context, filter *Filter) ([]Table, error) {
 	var err error
 	var rows *sql.Rows
 	switch dbi.dialect {
 	case sq.DialectSQLite:
-		rows, err = dbi.queryContext(ctx, sqlDir, "sqlite_tables.sql", settings)
+		rows, err = dbi.queryContext(ctx, sqlDir, "sqlite_tables.sql", filter)
 		if err != nil {
 			return nil, err
 		}
 	case sq.DialectPostgres:
-		rows, err = dbi.queryContext(ctx, sqlDir, "postgres_tables.sql", settings)
+		rows, err = dbi.queryContext(ctx, sqlDir, "postgres_tables.sql", filter)
 		if err != nil {
 			return nil, err
 		}
 	case sq.DialectMySQL:
-		rows, err = dbi.queryContext(ctx, sqlDir, "mysql_tables.sql", settings)
+		rows, err = dbi.queryContext(ctx, sqlDir, "mysql_tables.sql", filter)
 		if err != nil {
 			return nil, err
 		}
@@ -301,22 +302,22 @@ func (dbi *DatabaseIntrospector) GetTables(ctx context.Context, settings *Intros
 	return tbls, nil
 }
 
-func (dbi *DatabaseIntrospector) GetColumns(ctx context.Context, settings *IntrospectSettings) ([]Column, error) {
+func (dbi *DatabaseIntrospector) GetColumns(ctx context.Context, filter *Filter) ([]Column, error) {
 	var err error
 	var rows *sql.Rows
 	switch dbi.dialect {
 	case sq.DialectSQLite:
-		rows, err = dbi.queryContext(ctx, sqlDir, "sqlite_tables.sql", settings)
+		rows, err = dbi.queryContext(ctx, sqlDir, "sqlite_tables.sql", filter)
 		if err != nil {
 			return nil, err
 		}
 	case sq.DialectPostgres:
-		rows, err = dbi.queryContext(ctx, sqlDir, "postgres_tables.sql", settings)
+		rows, err = dbi.queryContext(ctx, sqlDir, "postgres_tables.sql", filter)
 		if err != nil {
 			return nil, err
 		}
 	case sq.DialectMySQL:
-		rows, err = dbi.queryContext(ctx, sqlDir, "mysql_tables.sql", settings)
+		rows, err = dbi.queryContext(ctx, sqlDir, "mysql_tables.sql", filter)
 		if err != nil {
 			return nil, err
 		}
@@ -417,22 +418,22 @@ func (dbi *DatabaseIntrospector) GetColumns(ctx context.Context, settings *Intro
 	return columns, nil
 }
 
-func (dbi *DatabaseIntrospector) GetConstraints(ctx context.Context, settings *IntrospectSettings) ([]Constraint, error) {
+func (dbi *DatabaseIntrospector) GetConstraints(ctx context.Context, filter *Filter) ([]Constraint, error) {
 	var err error
 	var rows *sql.Rows
 	switch dbi.dialect {
 	case sq.DialectSQLite:
-		rows, err = dbi.queryContext(ctx, sqlDir, "sqlite_constraints.sql", settings)
+		rows, err = dbi.queryContext(ctx, sqlDir, "sqlite_constraints.sql", filter)
 		if err != nil {
 			return nil, err
 		}
 	case sq.DialectPostgres:
-		rows, err = dbi.queryContext(ctx, sqlDir, "postgres_constraints.sql", settings)
+		rows, err = dbi.queryContext(ctx, sqlDir, "postgres_constraints.sql", filter)
 		if err != nil {
 			return nil, err
 		}
 	case sq.DialectMySQL:
-		rows, err = dbi.queryContext(ctx, sqlDir, "mysql_constraints.sql", settings)
+		rows, err = dbi.queryContext(ctx, sqlDir, "mysql_constraints.sql", filter)
 		if err != nil {
 			return nil, err
 		}
@@ -533,22 +534,22 @@ func (dbi *DatabaseIntrospector) GetConstraints(ctx context.Context, settings *I
 	return constraints, nil
 }
 
-func (dbi *DatabaseIntrospector) GetIndexes(ctx context.Context, settings *IntrospectSettings) ([]Index, error) {
+func (dbi *DatabaseIntrospector) GetIndexes(ctx context.Context, filter *Filter) ([]Index, error) {
 	var err error
 	var rows *sql.Rows
 	switch dbi.dialect {
 	case sq.DialectSQLite:
-		rows, err = dbi.queryContext(ctx, sqlDir, "sqlite_indexes.sql", settings)
+		rows, err = dbi.queryContext(ctx, sqlDir, "sqlite_indexes.sql", filter)
 		if err != nil {
 			return nil, err
 		}
 	case sq.DialectPostgres:
-		rows, err = dbi.queryContext(ctx, sqlDir, "postgres_indexes.sql", settings)
+		rows, err = dbi.queryContext(ctx, sqlDir, "postgres_indexes.sql", filter)
 		if err != nil {
 			return nil, err
 		}
 	case sq.DialectMySQL:
-		rows, err = dbi.queryContext(ctx, sqlDir, "mysql_indexes.sql", settings)
+		rows, err = dbi.queryContext(ctx, sqlDir, "mysql_indexes.sql", filter)
 		if err != nil {
 			return nil, err
 		}
@@ -662,22 +663,22 @@ func (dbi *DatabaseIntrospector) GetIndexes(ctx context.Context, settings *Intro
 	return indexes, nil
 }
 
-func (dbi *DatabaseIntrospector) GetTriggers(ctx context.Context, settings *IntrospectSettings) ([]Trigger, error) {
+func (dbi *DatabaseIntrospector) GetTriggers(ctx context.Context, filter *Filter) ([]Trigger, error) {
 	var err error
 	var rows *sql.Rows
 	switch dbi.dialect {
 	case sq.DialectSQLite:
-		rows, err = dbi.queryContext(ctx, sqlDir, "sqlite_triggers.sql", settings)
+		rows, err = dbi.queryContext(ctx, sqlDir, "sqlite_triggers.sql", filter)
 		if err != nil {
 			return nil, err
 		}
 	case sq.DialectPostgres:
-		rows, err = dbi.queryContext(ctx, sqlDir, "postgres_triggers.sql", settings)
+		rows, err = dbi.queryContext(ctx, sqlDir, "postgres_triggers.sql", filter)
 		if err != nil {
 			return nil, err
 		}
 	case sq.DialectMySQL:
-		rows, err = dbi.queryContext(ctx, sqlDir, "mysql_triggers.sql", settings)
+		rows, err = dbi.queryContext(ctx, sqlDir, "mysql_triggers.sql", filter)
 		if err != nil {
 			return nil, err
 		}
@@ -747,22 +748,22 @@ func (dbi *DatabaseIntrospector) GetTriggers(ctx context.Context, settings *Intr
 	return triggers, nil
 }
 
-func (dbi *DatabaseIntrospector) GetViews(ctx context.Context, settings *IntrospectSettings) ([]View, error) {
+func (dbi *DatabaseIntrospector) GetViews(ctx context.Context, filter *Filter) ([]View, error) {
 	var err error
 	var rows *sql.Rows
 	switch dbi.dialect {
 	case sq.DialectSQLite:
-		rows, err = dbi.queryContext(ctx, sqlDir, "sqlite_views.sql", settings)
+		rows, err = dbi.queryContext(ctx, sqlDir, "sqlite_views.sql", filter)
 		if err != nil {
 			return nil, err
 		}
 	case sq.DialectPostgres:
-		rows, err = dbi.queryContext(ctx, sqlDir, "postgres_views.sql", settings)
+		rows, err = dbi.queryContext(ctx, sqlDir, "postgres_views.sql", filter)
 		if err != nil {
 			return nil, err
 		}
 	case sq.DialectMySQL:
-		rows, err = dbi.queryContext(ctx, sqlDir, "mysql_views.sql", settings)
+		rows, err = dbi.queryContext(ctx, sqlDir, "mysql_views.sql", filter)
 		if err != nil {
 			return nil, err
 		}
