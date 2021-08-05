@@ -92,7 +92,7 @@ going to strip it out from the postgres schema too). Kick the can down the
 road, when the problem is more well-defined.
 
 add dialect modifier
-add ignore modifier
+add ignore modifier ignore=postgres
 UUIDField can be used with some media table like in devlab
 
 All commands need to exclude the semicolon. The semicolon will be inserted by
@@ -124,7 +124,16 @@ ddl.AutoMigrate(dialect, db, ddl.CreateMissing|ddl.UpdateExisting, WithTables(),
 
 // clearing db before use
 ddl.AutoMigrate(dialect, tx, ddl.DropExtraneous|ddl.DropCascade)
+ddl.DropFunctions(dialect, tx, []Function{})
 ddl.AutoMigrate(dialect, tx, ddl.CreateMissing, WithTables(), ...)
+
+DropExtraneous:
+- drop tables
+- drop columns
+- drop constraints
+- drop indexes
+- drop triggers
+- drop views
 
 // logging before executing
 gotCatalog, err := NewCatalog(dialect, WithDB(db))
@@ -133,7 +142,7 @@ if err != nil {
 wantCatalog, err := NewCatalog(dialect, WithTables(), ...)
 if err != nil {
 }
-migration, err := Migrate(ddl.CreateMissing|ddl.UpdateExisting, gotCatalog, wantCatalog)
+migration, err := ddl.Migrate(ddl.CreateMissing|ddl.UpdateExisting, gotCatalog, wantCatalog)
 if err != nil {
 }
 migration.WriteSQL(os.Stdout)

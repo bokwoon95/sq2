@@ -3,6 +3,7 @@ package ddl2
 import (
 	"bytes"
 	"fmt"
+	"io/fs"
 	"strings"
 
 	"github.com/bokwoon95/sq"
@@ -153,6 +154,23 @@ LOOP:
 		return fmt.Errorf("could not find function name, did you write the function correctly?")
 	}
 	return nil
+}
+
+func FilesToFunctions(dialect string, fsys fs.FS, filenames ...string) ([]Function, error) {
+	var functions []Function
+	for _, filename := range filenames {
+		b, err := fs.ReadFile(fsys, filename)
+		if err != nil {
+			return nil, fmt.Errorf("reading file %s: %w", filename, err)
+		}
+		function := Function{SQL: string(b)}
+		err = function.populateFunctionInfo(dialect)
+		if err != nil {
+			return nil, fmt.Errorf("populating function from %s: %w", filename, err)
+		}
+		functions = append(functions, function)
+	}
+	return functions, nil
 }
 
 type CreateFunctionCommand struct {

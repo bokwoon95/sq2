@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"io/fs"
 
 	"github.com/bokwoon95/sq"
 )
@@ -289,27 +288,6 @@ func WithFunctions(functions ...Function) CatalogOption {
 			err = c.loadFunction(function)
 			if err != nil {
 				return fmt.Errorf("WithFunctions function #%d: %w", i+1, err)
-			}
-		}
-		return nil
-	}
-}
-
-func WithFunctionFiles(fsys fs.FS, filenames ...string) CatalogOption {
-	return func(c *Catalog) error {
-		for _, filename := range filenames {
-			b, err := fs.ReadFile(fsys, filename)
-			if err != nil {
-				return fmt.Errorf("WithFunctionFiles file %s: %w", filename, err)
-			}
-			function := Function{SQL: string(b)}
-			err = function.populateFunctionInfo(c.Dialect)
-			if err != nil {
-				return fmt.Errorf("WithFunctionFiles file %s: %w", filename, err)
-			}
-			err = c.loadFunction(function)
-			if err != nil {
-				return fmt.Errorf("WithFunctionFiles file %s: %w", filename, err)
 			}
 		}
 		return nil
