@@ -713,3 +713,34 @@ func (cmd *RenameTableCommand) AppendSQL(dialect string, buf *bytes.Buffer, args
 	}
 	return nil
 }
+
+type DropTableCommand struct {
+	DropIfExists bool
+	TableSchemas []string
+	TableNames   []string
+	DropCascade  bool
+}
+
+func (cmd *DropTableCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
+	buf.WriteString("DROP TABLE ")
+	if cmd.DropIfExists {
+		buf.WriteString("IF EXISTS ")
+	}
+	for i, tableName := range cmd.TableNames {
+		if i > 0 {
+			buf.WriteString(", ")
+		}
+		tableSchema := cmd.TableSchemas[i]
+		if tableSchema != "" {
+			buf.WriteString(sq.QuoteIdentifier(dialect, tableSchema) + ".")
+		}
+		buf.WriteString(sq.QuoteIdentifier(dialect, tableName))
+	}
+	if cmd.DropCascade {
+		if dialect != sq.DialectPostgres && dialect != sq.DialectMySQL {
+			return fmt.Errorf("%s does not support DROP TABLE ... CASCADE", dialect)
+		}
+		buf.WriteString(" CASCADE")
+	}
+	return nil
+}
