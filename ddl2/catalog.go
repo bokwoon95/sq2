@@ -9,13 +9,14 @@ import (
 )
 
 type Catalog struct {
-	Dialect       string   `json:",omitempty"`
-	VersionNums   []int    `json:",omitempty"`
-	CatalogName   string   `json:",omitempty"`
-	CurrentSchema string   `json:",omitempty"`
-	Extensions    []string `json:",omitempty"`
-	Schemas       []Schema `json:",omitempty"`
-	schemaCache   map[string]int
+	Dialect        string   `json:",omitempty"`
+	VersionNums    []int    `json:",omitempty"`
+	CatalogName    string   `json:",omitempty"`
+	CurrentSchema  string   `json:",omitempty"`
+	Extensions     []string `json:",omitempty"`
+	Schemas        []Schema `json:",omitempty"`
+	schemaCache    map[string]int
+	extensionCache map[string]int
 }
 
 func (c *Catalog) CachedSchemaPosition(schemaName string) (schemaPosition int) {

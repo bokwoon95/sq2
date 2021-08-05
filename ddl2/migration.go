@@ -65,6 +65,12 @@ func Migrate(mode MigrationMode, gotCatalog, wantCatalog Catalog) (Migration, er
 		m.Dialect = wantCatalog.Dialect
 	}
 	var err error
+	if m.Dialect == sq.DialectPostgres {
+		for _, wantExtension := range wantCatalog.Extensions {
+			// TODO: schema.CachedExtensionPosition
+			_ = wantExtension
+		}
+	}
 	for _, wantSchema := range wantCatalog.Schemas {
 		err = migrateSchema(&m, mode, gotCatalog, wantSchema)
 		if err != nil {
@@ -72,42 +78,9 @@ func Migrate(mode MigrationMode, gotCatalog, wantCatalog Catalog) (Migration, er
 		}
 	}
 	if mode&DropExtraneous != 0 {
-		dropTableCmd := DropTableCommand{
-			DropIfExists: true,
-			DropCascade:  mode&DropCascade != 0,
-		}
-		for _, gotSchema := range gotCatalog.Schemas {
-			n1 := wantCatalog.CachedSchemaPosition(gotSchema.SchemaName)
-			if n1 < 0 {
-				break
-			}
-			wantSchema := wantCatalog.Schemas[n1]
-			// drop tables
-			for _, gotTable := range gotSchema.Tables {
-				n2 := wantSchema.CachedTablePosition(gotTable.TableName)
-				if n2 < 0 {
-					dropTableCmd.TableSchemas = append(dropTableCmd.TableSchemas, gotTable.TableSchema)
-					dropTableCmd.TableNames = append(dropTableCmd.TableSchemas, gotTable.TableName)
-					continue
-				}
-				wantTable := wantSchema.Tables[n2]
-				// drop columns
-				for _, gotColumn := range gotTable.Columns {
-					n3 := wantTable.CachedColumnPosition(gotColumn.ColumnName)
-					if n3 < 0 {
-					}
-				}
-				// drop constraints
-				// drop indexes
-				// drop triggers
-			}
-			// drop views
-			for _, gotView := range gotSchema.Views {
-				viewPosition := wantSchema.CachedViewPosition(gotView.ViewName)
-				if viewPosition < 0 {
-					continue
-				}
-			}
+		err = dropExtraneousObjects(&m, mode, gotCatalog, wantCatalog)
+		if err != nil {
+			return m, err
 		}
 	}
 	return m, nil
@@ -122,6 +95,47 @@ func migrateTable(m *Migration, mode MigrationMode, gotSchema Schema, wantTable 
 }
 
 func migrateColumn(m *Migration, mode MigrationMode, gotTable Table, wantColumn Column) error {
+	return nil
+}
+
+func dropExtraneousObjects(m *Migration, mode MigrationMode, gotCatalog, wantCatalog Catalog) error {
+	dropTableCmd := DropTableCommand{
+		DropIfExists: true,
+		DropCascade:  mode&DropCascade != 0,
+	}
+	for _, gotSchema := range gotCatalog.Schemas {
+		n1 := wantCatalog.CachedSchemaPosition(gotSchema.SchemaName)
+		if n1 < 0 {
+			break
+		}
+		wantSchema := wantCatalog.Schemas[n1]
+		// drop tables
+		for _, gotTable := range gotSchema.Tables {
+			n2 := wantSchema.CachedTablePosition(gotTable.TableName)
+			if n2 < 0 {
+				dropTableCmd.TableSchemas = append(dropTableCmd.TableSchemas, gotTable.TableSchema)
+				dropTableCmd.TableNames = append(dropTableCmd.TableSchemas, gotTable.TableName)
+				continue
+			}
+			wantTable := wantSchema.Tables[n2]
+			// drop columns
+			for _, gotColumn := range gotTable.Columns {
+				n3 := wantTable.CachedColumnPosition(gotColumn.ColumnName)
+				if n3 < 0 {
+				}
+			}
+			// drop constraints
+			// drop indexes
+			// drop triggers
+		}
+		// drop views
+		for _, gotView := range gotSchema.Views {
+			viewPosition := wantSchema.CachedViewPosition(gotView.ViewName)
+			if viewPosition < 0 {
+				continue
+			}
+		}
+	}
 	return nil
 }
 
