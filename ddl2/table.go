@@ -9,16 +9,16 @@ import (
 )
 
 type Table struct {
-	TableSchema      string        `json:",omitempty"`
-	TableName        string        `json:",omitempty"`
-	Columns          []*Column     `json:",omitempty"`
-	Constraints      []*Constraint `json:",omitempty"`
-	Indexes          []*Index      `json:",omitempty"`
-	Triggers         []*Trigger    `json:",omitempty"`
-	VirtualTable     string        `json:",omitempty"`
-	VirtualTableArgs []string      `json:",omitempty"`
-	SQL              string        `json:",omitempty"`
-	Ignore           bool          `json:",omitempty"`
+	TableSchema      string       `json:",omitempty"`
+	TableName        string       `json:",omitempty"`
+	Columns          []Column     `json:",omitempty"`
+	Constraints      []Constraint `json:",omitempty"`
+	Indexes          []Index     `json:",omitempty"`
+	Triggers         []Trigger   `json:",omitempty"`
+	VirtualTable     string       `json:",omitempty"`
+	VirtualTableArgs []string     `json:",omitempty"`
+	SQL              string       `json:",omitempty"`
+	Ignore           bool         `json:",omitempty"`
 	columnCache      map[string]int
 	constraintCache  map[string]int
 	indexCache       map[string]int
@@ -40,7 +40,7 @@ func (tbl *Table) CachedColumnPosition(columnName string) (columnPosition int) {
 	return columnPosition
 }
 
-func (tbl *Table) AppendColumn(column *Column) (columnPosition int) {
+func (tbl *Table) AppendColumn(column Column) (columnPosition int) {
 	tbl.Columns = append(tbl.Columns, column)
 	if tbl.columnCache == nil {
 		tbl.columnCache = make(map[string]int)
@@ -74,7 +74,7 @@ func (tbl *Table) CachedConstraintPosition(constraintName string) (constraintPos
 	return constraintPosition
 }
 
-func (tbl *Table) AppendConstraint(constraint *Constraint) (constraintPosition int) {
+func (tbl *Table) AppendConstraint(constraint Constraint) (constraintPosition int) {
 	tbl.Constraints = append(tbl.Constraints, constraint)
 	if tbl.constraintCache == nil {
 		tbl.constraintCache = make(map[string]int)
@@ -108,7 +108,7 @@ func (tbl *Table) CachedIndexPosition(indexName string) (indexPosition int) {
 	return indexPosition
 }
 
-func (tbl *Table) AppendIndex(index *Index) (indexPosition int) {
+func (tbl *Table) AppendIndex(index Index) (indexPosition int) {
 	tbl.Indexes = append(tbl.Indexes, index)
 	if tbl.indexCache == nil {
 		tbl.indexCache = make(map[string]int)
@@ -142,7 +142,7 @@ func (tbl *Table) CachedTriggerPosition(triggerName string) (triggerPosition int
 	return triggerPosition
 }
 
-func (tbl *Table) AppendTrigger(trigger *Trigger) (triggerPosition int) {
+func (tbl *Table) AppendTrigger(trigger Trigger) (triggerPosition int) {
 	tbl.Triggers = append(tbl.Triggers, trigger)
 	if tbl.triggerCache == nil {
 		tbl.triggerCache = make(map[string]int)
@@ -175,11 +175,11 @@ func (tbl *Table) LoadIndexConfig(tableSchema, tableName string, columns []strin
 	if indexName == "" && len(columns) > 0 {
 		indexName = generateName(INDEX, tableName, columns...)
 	}
-	var index *Index
+	var index Index
 	if n := tbl.CachedIndexPosition(indexName); n >= 0 {
 		index = tbl.Indexes[n]
 	} else {
-		index = &Index{
+		index = Index{
 			TableSchema: tbl.TableSchema,
 			TableName:   tbl.TableName,
 			IndexName:   indexName,
@@ -229,12 +229,12 @@ func (tbl *Table) LoadConstraintConfig(constraintType, tableSchema, tableName st
 	if constraintName == "" && len(columns) > 0 {
 		constraintName = generateName(constraintType, tableName, columns...)
 	}
-	var constraint *Constraint
+	var constraint Constraint
 	if n := tbl.CachedConstraintPosition(constraintName); n >= 0 {
 		constraint = tbl.Constraints[n]
 		constraint.ConstraintType = constraintType
 	} else {
-		constraint = &Constraint{
+		constraint = Constraint{
 			TableSchema:    tableSchema,
 			TableName:      tableName,
 			ConstraintName: constraintName,
@@ -312,11 +312,11 @@ func (tbl *Table) LoadColumnConfig(dialect, columnName, columnType, config strin
 	if err != nil {
 		return fmt.Errorf("%s: %s", qualifiedColumn, err.Error())
 	}
-	var col *Column
+	var col Column
 	if n := tbl.CachedColumnPosition(columnName); n >= 0 {
 		col = tbl.Columns[n]
 	} else {
-		col = &Column{
+		col = Column{
 			TableSchema: tbl.TableSchema,
 			TableName:   tbl.TableName,
 			ColumnName:  columnName,
@@ -448,7 +448,7 @@ func (cmd *CreateTableCommand) AppendSQL(dialect string, buf *bytes.Buffer, args
 		} else {
 			buf.WriteString("\n    ,")
 		}
-		err := writeColumnDefinition(dialect, buf, *column)
+		err := writeColumnDefinition(dialect, buf, column)
 		if err != nil {
 			return fmt.Errorf("column #%d: %w", i+1, err)
 		}
@@ -494,7 +494,7 @@ func (cmd *CreateTableCommand) AppendSQL(dialect string, buf *bytes.Buffer, args
 			} else {
 				buf.WriteString("\n    ,CONSTRAINT " + sq.QuoteIdentifier(dialect, constraint.ConstraintName) + " ")
 			}
-			err := writeConstraintDefinition(dialect, buf, *constraint)
+			err := writeConstraintDefinition(dialect, buf, constraint)
 			if err != nil {
 				return fmt.Errorf("constraint #%d: %w", i+1, err)
 			}
