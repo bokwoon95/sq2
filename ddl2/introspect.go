@@ -26,10 +26,10 @@ type IntrospectSettings struct {
 }
 
 type Introspector interface {
-	GetVersion(context.Context) (versionNums []int, err error)
+	GetVersionNums(context.Context) (versionNums []int, err error)
 	GetCatalogName(context.Context) (catalogName string, err error)
 	GetCurrentSchema(context.Context) (currentSchema string, err error)
-	GetExtensions(context.Context) (extensions [][2]string, err error)
+	GetExtensions(context.Context) (extensions []string, err error)
 	GetTables(context.Context, *IntrospectSettings) ([]Table, error)
 	GetColumns(context.Context, *IntrospectSettings) ([]Column, error)
 	GetConstraints(context.Context, *IntrospectSettings) ([]Constraint, error)
@@ -100,7 +100,7 @@ func (dbi *DatabaseIntrospector) queryContext(ctx context.Context, fsys fs.FS, n
 	return dbi.db.QueryContext(ctx, buf.String())
 }
 
-func (dbi *DatabaseIntrospector) GetVersion(ctx context.Context) (versionNums []int, err error) {
+func (dbi *DatabaseIntrospector) GetVersionNums(ctx context.Context) (versionNums []int, err error) {
 	var rows *sql.Rows
 	switch dbi.dialect {
 	case sq.DialectSQLite:
@@ -230,7 +230,7 @@ func (dbi *DatabaseIntrospector) GetCurrentSchema(ctx context.Context) (currentS
 	return currentSchema, nil
 }
 
-func (dbi *DatabaseIntrospector) GetExtensions(ctx context.Context) (extensions [][2]string, err error) {
+func (dbi *DatabaseIntrospector) GetExtensions(ctx context.Context) (extensions []string, err error) {
 	if dbi.dialect != sq.DialectPostgres {
 		return nil, fmt.Errorf("%w dialect=%s, feature=extensions", ErrUnsupportedFeature, dbi.dialect)
 	}
@@ -240,12 +240,12 @@ func (dbi *DatabaseIntrospector) GetExtensions(ctx context.Context) (extensions 
 	}
 	defer rows.Close()
 	for rows.Next() {
-		var extension [2]string
-		err = rows.Scan(&extension[0], &extension[1])
+		var extname, extversion string
+		err = rows.Scan(&extname, &extversion)
 		if err != nil {
 			return nil, fmt.Errorf("scanning extension: %w", err)
 		}
-		extensions = append(extensions, extension)
+		extensions = append(extensions, extname+"@"+extversion)
 	}
 	return extensions, nil
 }

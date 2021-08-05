@@ -1,21 +1,21 @@
 package ddl2
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"io/fs"
-	"strings"
 
 	"github.com/bokwoon95/sq"
 )
 
 type Catalog struct {
-	Dialect       string      `json:",omitempty"`
-	CatalogName   string      `json:",omitempty"`
-	VersionNums   []int       `json:",omitempty"`
-	CurrentSchema string      `json:",omitempty"`
-	Extensions    [][2]string `json:",omitempty"`
-	Schemas       []*Schema   `json:",omitempty"`
+	Dialect       string    `json:",omitempty"`
+	VersionNums   []int     `json:",omitempty"`
+	CatalogName   string    `json:",omitempty"`
+	CurrentSchema string    `json:",omitempty"`
+	Extensions    []string  `json:",omitempty"`
+	Schemas       []*Schema `json:",omitempty"`
 	schemaCache   map[string]int
 }
 
@@ -136,20 +136,44 @@ func NewCatalog(dialect string, opts ...CatalogOption) (Catalog, error) {
 
 func WithDB(db sq.DB) CatalogOption {
 	return func(c *Catalog) error {
+		dbi, err := NewDatabaseIntrospector(c.Dialect, db, nil)
+		if err != nil {
+			return fmt.Errorf("NewDatabaseIntrospector: %w", err)
+		}
+		ctx := context.Background()
+		c.VersionNums, err = dbi.GetVersionNums(ctx)
+		if err != nil {
+			return fmt.Errorf("GetVersionNums: %w", err)
+		}
+		c.CatalogName, err = dbi.GetCatalogName(ctx)
+		if err != nil {
+			return fmt.Errorf("GetCatalogName: %w", err)
+		}
+		c.CurrentSchema, err = dbi.GetCurrentSchema(ctx)
+		if err != nil {
+			return fmt.Errorf("GetCurrentSchema: %w", err)
+		}
+		if c.Dialect == sq.DialectPostgres {
+			c.Extensions, err = dbi.GetExtensions(ctx)
+			if err != nil {
+				return fmt.Errorf("GetExtensions: %w", err)
+			}
+		}
+		tbls, err := dbi.GetTables(ctx, nil)
+		if err != nil {
+			return fmt.Errorf("GetTables: %w", err)
+		}
+		schemaTables := make(map[string]int)
+		for _, tbl := range tbls {
+			_, _ = schemaTables, tbl
+		}
 		return nil
 	}
 }
 
 func WithExtensions(extensions ...string) CatalogOption {
 	return func(c *Catalog) error {
-		for _, extension := range extensions {
-			ext := [2]string{extension, ""}
-			if i := strings.IndexByte(extension, '@'); i >= 0 {
-				ext[0], ext[1] = extension[:i], strings.TrimSpace(extension[i+1:])
-			}
-			ext[0] = strings.TrimSpace(ext[0])
-			c.Extensions = append(c.Extensions, ext)
-		}
+		c.Extensions = extensions
 		return nil
 	}
 }

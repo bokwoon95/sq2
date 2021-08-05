@@ -6,5 +6,6 @@ table.go
 view.go
 v.go | t.go
 schema.go
+introspect.go
 catalog.go
 migration_commands.go
