@@ -11,8 +11,8 @@ type View struct {
 	ViewSchema     string     `json:",omitempty"`
 	ViewName       string     `json:",omitempty"`
 	IsMaterialized bool       `json:",omitempty"`
-	Indexes        []*Index   `json:",omitempty"`
-	Triggers       []*Trigger `json:",omitempty"`
+	Indexes        []Index   `json:",omitempty"`
+	Triggers       []Trigger `json:",omitempty"`
 	SQL            string     `json:",omitempty"`
 	Ignore         bool       `json:",omitempty"`
 	indexCache     map[string]int
@@ -34,7 +34,7 @@ func (view *View) CachedIndexPosition(indexName string) (indexPosition int) {
 	return indexPosition
 }
 
-func (view *View) AppendIndex(index *Index) (indexPosition int) {
+func (view *View) AppendIndex(index Index) (indexPosition int) {
 	view.Indexes = append(view.Indexes, index)
 	if view.indexCache == nil {
 		view.indexCache = make(map[string]int)
@@ -74,7 +74,7 @@ func (view *View) CachedTriggerPosition(tableSchema, tableName, triggerName stri
 	return triggerPosition
 }
 
-func (view *View) AppendTrigger(trigger *Trigger) (triggerPosition int) {
+func (view *View) AppendTrigger(trigger Trigger) (triggerPosition int) {
 	view.Triggers = append(view.Triggers, trigger)
 	if view.triggerCache == nil {
 		view.triggerCache = make(map[[3]string]int)
@@ -107,7 +107,7 @@ func (view *View) createOrUpdateIndex(indexName string, columns []string, exprs 
 		index.Exprs = exprs
 		view.Indexes[indexPosition] = index
 	} else {
-		indexPosition = view.AppendIndex(&Index{
+		indexPosition = view.AppendIndex(Index{
 			TableSchema: view.ViewSchema,
 			TableName:   view.ViewName,
 			IndexName:   indexName,
