@@ -8,13 +8,13 @@ import (
 )
 
 type View struct {
-	ViewSchema     string     `json:",omitempty"`
-	ViewName       string     `json:",omitempty"`
-	IsMaterialized bool       `json:",omitempty"`
+	ViewSchema     string    `json:",omitempty"`
+	ViewName       string    `json:",omitempty"`
+	IsMaterialized bool      `json:",omitempty"`
 	Indexes        []Index   `json:",omitempty"`
 	Triggers       []Trigger `json:",omitempty"`
-	SQL            string     `json:",omitempty"`
-	Ignore         bool       `json:",omitempty"`
+	SQL            string    `json:",omitempty"`
+	Ignore         bool      `json:",omitempty"`
 	indexCache     map[string]int
 	triggerCache   map[[3]string]int
 }

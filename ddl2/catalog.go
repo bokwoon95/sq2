@@ -168,9 +168,81 @@ func WithDB(db sq.DB) CatalogOption {
 		if err != nil {
 			return fmt.Errorf("GetTables: %w", err)
 		}
-		schemaTables := make(map[string]int)
+		schemaTableCount := make(map[string]int)
 		for _, tbl := range tbls {
-			_, _ = schemaTables, tbl
+			schemaTableCount[tbl.TableSchema]++
+		}
+		c.Schemas = make([]Schema, 0, len(schemaTableCount))
+		for _, tbl := range tbls {
+			n := c.CachedSchemaPosition(tbl.TableSchema)
+			if n < 0 {
+				n = c.AppendSchema(Schema{
+					SchemaName: tbl.TableSchema,
+					Tables:     make([]Table, 0, schemaTableCount[tbl.TableSchema]),
+				})
+			}
+			c.Schemas[n].AppendTable(tbl)
+		}
+		views, err := dbi.GetViews(ctx, nil)
+		if err != nil {
+			return fmt.Errorf("GetViews: %w", err)
+		}
+		for _, view := range views {
+			n := c.CachedSchemaPosition(view.ViewSchema)
+			if n < 0 {
+				n = c.AppendSchema(Schema{SchemaName: view.ViewSchema})
+			}
+			c.Schemas[n].AppendView(view)
+		}
+		columns, err := dbi.GetColumns(ctx, nil)
+		if err != nil {
+			return fmt.Errorf("GetColumns: %w", err)
+		}
+		for _, column := range columns {
+			if n1 := c.CachedSchemaPosition(column.TableSchema); n1 >= 0 {
+				if n2 := c.Schemas[n1].CachedTablePosition(column.TableName); n2 >= 0 {
+					c.Schemas[n1].Tables[n2].AppendColumn(column)
+				}
+			}
+		}
+		constraints, err := dbi.GetConstraints(ctx, nil)
+		if err != nil {
+			return fmt.Errorf("GetConstraints: %w", err)
+		}
+		for _, constraint := range constraints {
+			if n1 := c.CachedSchemaPosition(constraint.TableSchema); n1 >= 0 {
+				if n2 := c.Schemas[n1].CachedTablePosition(constraint.TableName); n2 >= 0 {
+					c.Schemas[n1].Tables[n2].AppendConstraint(constraint)
+				}
+			}
+		}
+		indexes, err := dbi.GetIndexes(ctx, nil)
+		if err != nil {
+			return fmt.Errorf("GetConstraints: %w", err)
+		}
+		for _, index := range indexes {
+			if n1 := c.CachedSchemaPosition(index.TableSchema); n1 >= 0 {
+				if n2 := c.Schemas[n1].CachedTablePosition(index.TableName); n2 >= 0 {
+					c.Schemas[n1].Tables[n2].AppendIndex(index)
+				}
+				if n3 := c.Schemas[n1].CachedViewPosition(index.TableName); n3 >= 0 {
+					c.Schemas[n1].Views[n3].AppendIndex(index)
+				}
+			}
+		}
+		triggers, err := dbi.GetTriggers(ctx, nil)
+		if err != nil {
+			return fmt.Errorf("GetTriggers: %w", err)
+		}
+		for _, trigger := range triggers {
+			if n1 := c.CachedSchemaPosition(trigger.TableSchema); n1 >= 0 {
+				if n2 := c.Schemas[n1].CachedTablePosition(trigger.TableName); n2 >= 0 {
+					c.Schemas[n1].Tables[n2].AppendTrigger(trigger)
+				}
+				if n3 := c.Schemas[n1].CachedViewPosition(trigger.TableName); n3 >= 0 {
+					c.Schemas[n1].Views[n3].AppendTrigger(trigger)
+				}
+			}
 		}
 		return nil
 	}
