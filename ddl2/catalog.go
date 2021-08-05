@@ -65,11 +65,11 @@ func (c *Catalog) loadTable(table sq.SchemaTable) error {
 		schema = Schema{SchemaName: tableSchema}
 		c.AppendSchema(schema)
 	}
-	var tbl *Table
+	var tbl Table
 	if n := schema.CachedTablePosition(tableName); n >= 0 {
 		tbl = schema.Tables[n]
 	} else {
-		tbl = &Table{
+		tbl = Table{
 			TableSchema: tableSchema,
 			TableName:   tableName,
 		}

@@ -9,7 +9,7 @@ import (
 
 type Schema struct {
 	SchemaName    string      `json:",omitempty"`
-	Tables        []*Table    `json:",omitempty"`
+	Tables        []Table     `json:",omitempty"`
 	Views         []*View     `json:",omitempty"`
 	Functions     []*Function `json:",omitempty"`
 	Ignore        bool        `json:",omitempty"`
@@ -33,7 +33,7 @@ func (s *Schema) CachedTablePosition(tableName string) (tablePosition int) {
 	return tablePosition
 }
 
-func (s *Schema) AppendTable(table *Table) (tablePosition int) {
+func (s *Schema) AppendTable(table Table) (tablePosition int) {
 	s.Tables = append(s.Tables, table)
 	if s.tableCache == nil {
 		s.tableCache = make(map[string]int)
