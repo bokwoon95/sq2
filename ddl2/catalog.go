@@ -10,12 +10,12 @@ import (
 )
 
 type Catalog struct {
-	Dialect       string    `json:",omitempty"`
-	VersionNums   []int     `json:",omitempty"`
-	CatalogName   string    `json:",omitempty"`
-	CurrentSchema string    `json:",omitempty"`
-	Extensions    []string  `json:",omitempty"`
-	Schemas       []*Schema `json:",omitempty"`
+	Dialect       string   `json:",omitempty"`
+	VersionNums   []int    `json:",omitempty"`
+	CatalogName   string   `json:",omitempty"`
+	CurrentSchema string   `json:",omitempty"`
+	Extensions    []string `json:",omitempty"`
+	Schemas       []Schema `json:",omitempty"`
 	schemaCache   map[string]int
 }
 
@@ -31,7 +31,7 @@ func (c *Catalog) CachedSchemaPosition(schemaName string) (schemaPosition int) {
 	return schemaPosition
 }
 
-func (c *Catalog) AppendSchema(schema *Schema) (schemaPosition int) {
+func (c *Catalog) AppendSchema(schema Schema) (schemaPosition int) {
 	c.Schemas = append(c.Schemas, schema)
 	if c.schemaCache == nil {
 		c.schemaCache = make(map[string]int)
@@ -58,11 +58,11 @@ func (c *Catalog) loadTable(table sq.SchemaTable) error {
 	if tableName == "" {
 		return fmt.Errorf("table name is empty")
 	}
-	var schema *Schema
+	var schema Schema
 	if n := c.CachedSchemaPosition(tableSchema); n >= 0 {
 		schema = c.Schemas[n]
 	} else {
-		schema = &Schema{SchemaName: tableSchema}
+		schema = Schema{SchemaName: tableSchema}
 		c.AppendSchema(schema)
 	}
 	var tbl *Table
@@ -86,11 +86,11 @@ func (c *Catalog) loadDDLView(ddlView DDLView) error {
 	if viewName == "" {
 		return fmt.Errorf("table name is empty")
 	}
-	var schema *Schema
+	var schema Schema
 	if n := c.CachedSchemaPosition(viewSchema); n >= 0 {
 		schema = c.Schemas[n]
 	} else {
-		schema = &Schema{SchemaName: viewSchema}
+		schema = Schema{SchemaName: viewSchema}
 		c.AppendSchema(schema)
 	}
 	var view *View
@@ -110,11 +110,11 @@ func (c *Catalog) loadFunction(function Function) error {
 	if function.FunctionName == "" {
 		return fmt.Errorf("function name cannot be empty")
 	}
-	var schema *Schema
+	var schema Schema
 	if n := c.CachedSchemaPosition(function.FunctionSchema); n >= 0 {
 		schema = c.Schemas[n]
 	} else {
-		schema = &Schema{SchemaName: function.FunctionSchema}
+		schema = Schema{SchemaName: function.FunctionSchema}
 		c.AppendSchema(schema)
 	}
 	schema.Functions = append(schema.Functions, &function)
