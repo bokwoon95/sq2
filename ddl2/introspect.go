@@ -6,6 +6,7 @@ import (
 	"database/sql"
 	"fmt"
 	"io/fs"
+	"strconv"
 	"strings"
 	"sync"
 	"text/template"
@@ -22,18 +23,14 @@ type IntrospectSettings struct {
 }
 
 type Introspector interface {
-	// SELECT sqlite_version();
-	// SELECT split_part(current_setting('server_version'), ' ', 1);
-	// SELECT version();
-	GetVersion(context.Context, *IntrospectSettings) (version string, err error)
+	GetVersion(context.Context) (versionNums []int, err error)
+	GetCurrentSchema(context.Context) (currentSchema string, err error)
 	GetTables(context.Context, *IntrospectSettings) ([]Table, error)
 	GetColumns(context.Context, *IntrospectSettings) ([]Column, error)
 	GetConstraints(context.Context, *IntrospectSettings) ([]Constraint, error)
 	GetIndexes(context.Context, *IntrospectSettings) ([]Index, error)
 	GetTriggers(context.Context, *IntrospectSettings) ([]Trigger, error)
 	GetViews(context.Context, *IntrospectSettings) ([]View, error)
-	GetDefaultSchema(context.Context) (defaultSchema string, err error)
-	GetSchemas(context.Context, *IntrospectSettings) ([]Schema, error)
 	GetExtensions(context.Context, *IntrospectSettings) (extensions [][2]string, err error)
 	GetFunctions(context.Context, *IntrospectSettings) ([]Function, error)
 }
@@ -99,6 +96,62 @@ func (dbi *DatabaseIntrospector) queryContext(ctx context.Context, fsys fs.FS, n
 	return dbi.db.QueryContext(ctx, buf.String())
 }
 
+func (dbi *DatabaseIntrospector) GetVersion(ctx context.Context) (versionNums []int, err error) {
+	var rows *sql.Rows
+	switch dbi.dialect {
+	case sq.DialectSQLite:
+		rows, err = dbi.db.QueryContext(ctx, "SELECT sqlite_version()")
+		if err != nil {
+			return nil, err
+		}
+	case sq.DialectPostgres:
+		rows, err = dbi.db.QueryContext(ctx, "SELECT current_settings('server_version')")
+		if err != nil {
+			return nil, err
+		}
+	case sq.DialectMySQL:
+		rows, err = dbi.db.QueryContext(ctx, "SELECT version()")
+		if err != nil {
+			return nil, err
+		}
+	default:
+		return nil, fmt.Errorf("unsupported dialect: %s", dbi.dialect)
+	}
+	defer rows.Close()
+	var versionString string
+	for rows.Next() {
+		err = rows.Scan(&versionString)
+		if err != nil {
+			return nil, fmt.Errorf("scanning versionString: %w", err)
+		}
+		switch dbi.dialect {
+		case sq.DialectPostgres:
+			if i := strings.IndexByte(versionString, ' '); i >= 0 {
+				versionString = versionString[:i]
+			}
+		}
+		break
+	}
+	rawVersionNums := strings.Split(versionString, ".")
+	versionNums = make([]int, len(rawVersionNums))
+	for i, rawVersionNum := range rawVersionNums {
+		versionNum, err := strconv.Atoi(rawVersionNum)
+		if err != nil {
+			return versionNums, fmt.Errorf("version %s: cannot convert %s to integer: %w", versionString, rawVersionNum, err)
+		}
+		versionNums[i] = versionNum
+	}
+	err = rows.Close()
+	if err != nil {
+		return nil, fmt.Errorf("rows.Close: %w", err)
+	}
+	err = rows.Err()
+	if err != nil {
+		return nil, fmt.Errorf("rows.Err: %w", err)
+	}
+	return versionNums, nil
+}
+
 func (dbi *DatabaseIntrospector) GetTables(ctx context.Context, settings *IntrospectSettings) ([]Table, error) {
 	var err error
 	var rows *sql.Rows
@@ -121,6 +174,7 @@ func (dbi *DatabaseIntrospector) GetTables(ctx context.Context, settings *Intros
 	default:
 		return nil, fmt.Errorf("unsupported dialect: %s", dbi.dialect)
 	}
+	defer rows.Close()
 	var tbls []Table
 	for rows.Next() {
 		var tbl Table
@@ -137,6 +191,14 @@ func (dbi *DatabaseIntrospector) GetTables(ctx context.Context, settings *Intros
 			}
 		}
 		tbls = append(tbls, tbl)
+	}
+	err = rows.Close()
+	if err != nil {
+		return nil, fmt.Errorf("rows.Close: %w", err)
+	}
+	err = rows.Err()
+	if err != nil {
+		return nil, fmt.Errorf("rows.Err: %w", err)
 	}
 	return tbls, nil
 }
