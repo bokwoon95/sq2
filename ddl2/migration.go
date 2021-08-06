@@ -115,11 +115,13 @@ func migrateSchema(m *Migration, mode MigrationMode, gotCatalog Catalog, wantSch
 		gotSchema = gotCatalog.Schemas[n]
 	} else {
 		gotSchema.SchemaName = wantSchema.SchemaName
-		createSchemaCmd := &CreateSchemaCommand{
-			CreateIfNotExists: true,
-			SchemaName:        wantSchema.SchemaName,
+		if gotSchema.SchemaName != "" {
+			createSchemaCmd := &CreateSchemaCommand{
+				CreateIfNotExists: true,
+				SchemaName:        wantSchema.SchemaName,
+			}
+			m.SchemaCommands = append(m.SchemaCommands, createSchemaCmd)
 		}
-		m.SchemaCommands = append(m.SchemaCommands, createSchemaCmd)
 	}
 	for _, wantTable := range wantSchema.Tables {
 		if wantTable.Ignore {
@@ -138,10 +140,10 @@ func migrateSchema(m *Migration, mode MigrationMode, gotCatalog Catalog, wantSch
 			continue
 		}
 		createViewCmd := &CreateViewCommand{View: wantView}
-		if m.Dialect == sq.DialectSQLite || (m.Dialect == sq.DialectPostgres && wantView.IsMaterialized) {
+		if m.Dialect == sq.DialectMySQL || (m.Dialect == sq.DialectPostgres && !wantView.IsMaterialized) {
 			createViewCmd.CreateOrReplace = true
 		}
-		if m.Dialect == sq.DialectMySQL || (m.Dialect == sq.DialectPostgres && !wantView.IsMaterialized) {
+		if m.Dialect == sq.DialectSQLite || (m.Dialect == sq.DialectPostgres && wantView.IsMaterialized) {
 			createViewCmd.CreateIfNotExists = true
 		}
 		m.ViewCommands = append(m.ViewCommands, createViewCmd)
@@ -230,7 +232,7 @@ func migrateTable(m *Migration, mode MigrationMode, gotSchema Schema, wantTable 
 				}
 				fkeyCmd.AddConstraintCommands = append(fkeyCmd.AddConstraintCommands, addConstraintCmd)
 			default:
-				if createTableCmd != nil && !createTableCmd.IncludeConstraints {
+				if createTableCmd == nil || createTableCmd.IncludeConstraints {
 					continue
 				}
 				if alterTableCmd == nil {
@@ -250,7 +252,14 @@ func migrateTable(m *Migration, mode MigrationMode, gotSchema Schema, wantTable 
 		createIndexCmd := CreateIndexCommand{Index: wantIndex}
 		switch m.Dialect {
 		case sq.DialectMySQL:
-			alterTableCmd.CreateIndexCommands = append(alterTableCmd.CreateIndexCommands, createIndexCmd)
+			if createTableCmd != nil {
+				createTableCmd.CreateIndexCommands = append(createTableCmd.CreateIndexCommands, createIndexCmd)
+			} else {
+				if alterTableCmd == nil {
+					alterTableCmd = &AlterTableCommand{TableSchema: wantTable.TableSchema, TableName: wantTable.TableName}
+				}
+				alterTableCmd.CreateIndexCommands = append(alterTableCmd.CreateIndexCommands, createIndexCmd)
+			}
 		default:
 			createIndexCmd.CreateIfNotExists = true
 			m.IndexCommands = append(m.IndexCommands, &createIndexCmd)
@@ -500,11 +509,11 @@ func DropFunctions(dialect string, db sq.DB, functions []Function, dropCascade b
 		cmd.DropCascade = dropCascade
 		query, args, _, err := sq.ToSQL(dialect, cmd)
 		if err != nil {
-			return fmt.Errorf("building command %s: %w", query, err)
+			return fmt.Errorf("building command (%s): %w", query, err)
 		}
 		_, err = db.ExecContext(context.Background(), query, args...)
 		if err != nil {
-			return fmt.Errorf("executing command %s: %w", query, err)
+			return fmt.Errorf("executing command (%s): %w", query, err)
 		}
 	}
 	return nil
@@ -527,12 +536,12 @@ func (m *Migration) WriteSQL(w io.Writer) error {
 		for _, cmd := range cmds {
 			query, args, _, err := sq.ToSQL(m.Dialect, cmd)
 			if err != nil {
-				return fmt.Errorf("building command %s: %w", query, err)
+				return fmt.Errorf("building command (%s): %w", query, err)
 			}
 			if len(args) > 0 {
 				query, err = sq.Sprintf(m.Dialect, query, args)
 				if err != nil {
-					return fmt.Errorf("building command %s: %w", query, err)
+					return fmt.Errorf("building command (%s): %w", query, err)
 				}
 			}
 			if !written {
@@ -540,7 +549,11 @@ func (m *Migration) WriteSQL(w io.Writer) error {
 			} else {
 				io.WriteString(w, "\n\n")
 			}
-			io.WriteString(w, query+";")
+			query = strings.TrimSpace(query)
+			io.WriteString(w, query)
+			if last := len(query) - 1; query[last] != ';' {
+				io.WriteString(w, ";")
+			}
 		}
 	}
 	return nil
@@ -565,11 +578,11 @@ func (m *Migration) ExecContext(ctx context.Context, db sq.DB) error {
 		for _, cmd := range cmds {
 			query, args, _, err := sq.ToSQL(m.Dialect, cmd)
 			if err != nil {
-				return fmt.Errorf("building command %s: %w", query, err)
+				return fmt.Errorf("building command (%s): %w", query, err)
 			}
 			_, err = db.ExecContext(ctx, query, args...)
 			if err != nil {
-				return fmt.Errorf("executing command %s: %w", query, err)
+				return fmt.Errorf("executing command (%s): %w", query, err)
 			}
 		}
 	}

@@ -115,9 +115,9 @@ CREATE TABLE IF NOT EXISTS film_actor_review (
     ,actor_id INT
     ,review_title TEXT NOT NULL DEFAULT '' COLLATE nocase
     ,review_body TEXT NOT NULL DEFAULT ''
-    ,metadata JSONB
-    ,last_update TIMESTAMPTZ NOT NULL DEFAULT (DATETIME('now'))
-    ,last_delete TIMESTAMPTZ
+    ,metadata JSON
+    ,last_update DATETIME NOT NULL DEFAULT (DATETIME('now'))
+    ,last_delete DATETIME
 
     ,PRIMARY KEY (film_id, actor_id)
     ,FOREIGN KEY (film_id, actor_id) REFERENCES film_actor (film_id, actor_id) ON UPDATE CASCADE ON DELETE RESTRICT

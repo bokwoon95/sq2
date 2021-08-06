@@ -150,18 +150,6 @@ FOR EACH ROW EXECUTE PROCEDURE last_update_trg();`, tbl))
 	}
 }
 
-func NEW_ADDRESS(dialect, alias string) ADDRESS {
-	var tbl ADDRESS
-	switch dialect {
-	case sq.DialectPostgres:
-		tbl.TableInfo.TableSchema = "public"
-	case sq.DialectMySQL:
-		tbl.TableInfo.TableSchema = "db"
-	}
-	_ = sq.ReflectTable(&tbl, alias)
-	return tbl
-}
-
 type ADDRESS struct {
 	sq.TableInfo
 	ADDRESS_ID  sq.NumberField `ddl:"type=INTEGER primarykey"`
@@ -172,6 +160,12 @@ type ADDRESS struct {
 	POSTAL_CODE sq.StringField
 	PHONE       sq.StringField `ddl:"notnull"`
 	LAST_UPDATE sq.TimeField   `ddl:"default=DATETIME('now') notnull"`
+}
+
+func NEW_ADDRESS(alias string) ADDRESS {
+	var tbl ADDRESS
+	_ = sq.ReflectTable(&tbl, alias)
+	return tbl
 }
 
 func (tbl ADDRESS) DDL(dialect string, t *T) {
@@ -198,23 +192,17 @@ FOR EACH ROW EXECUTE PROCEDURE last_update_trg();`, tbl))
 	}
 }
 
-func NEW_LANGUAGE(dialect, alias string) LANGUAGE {
-	var tbl LANGUAGE
-	switch dialect {
-	case sq.DialectPostgres:
-		tbl.TableInfo.TableSchema = "public"
-	case sq.DialectMySQL:
-		tbl.TableInfo.TableSchema = "db"
-	}
-	_ = sq.ReflectTable(&tbl, alias)
-	return tbl
-}
-
 type LANGUAGE struct {
 	sq.TableInfo
 	LANGUAGE_ID sq.NumberField `ddl:"type=INTEGER primarykey"`
 	NAME        sq.StringField `ddl:"notnull"`
 	LAST_UPDATE sq.TimeField   `ddl:"default=DATETIME('now') notnull"`
+}
+
+func NEW_LANGUAGE(alias string) LANGUAGE {
+	var tbl LANGUAGE
+	_ = sq.ReflectTable(&tbl, alias)
+	return tbl
 }
 
 func (tbl LANGUAGE) DDL(dialect string, t *T) {
@@ -235,18 +223,6 @@ FOR EACH ROW EXECUTE PROCEDURE last_update_trg();`, tbl))
 	}
 }
 
-func NEW_FILM(dialect, alias string) FILM {
-	var tbl FILM
-	switch dialect {
-	case sq.DialectPostgres:
-		tbl.TableInfo.TableSchema = "public"
-	case sq.DialectMySQL:
-		tbl.TableInfo.TableSchema = "db"
-	}
-	_ = sq.ReflectTable(&tbl, alias)
-	return tbl
-}
-
 type FILM struct {
 	sq.TableInfo
 	FILM_ID              sq.NumberField `ddl:"type=INTEGER primarykey"`
@@ -265,8 +241,14 @@ type FILM struct {
 	FULLTEXT             sq.StringField `ddl:"ignore=mysql,sqlite"`
 }
 
+func NEW_FILM(alias string) FILM {
+	var tbl FILM
+	_ = sq.ReflectTable(&tbl, alias)
+	return tbl
+}
+
 func (tbl FILM) DDL(dialect string, t *T) {
-	FILM_TEXT := NEW_FILM_TEXT(dialect, "")
+	FILM_TEXT := NEW_FILM_TEXT("")
 	switch dialect {
 	case sq.DialectSQLite:
 		New := func(field sq.Field) sq.Field { return sq.Literal("NEW." + field.GetName()) }
@@ -277,7 +259,6 @@ func (tbl FILM) DDL(dialect string, t *T) {
 		ftsFields := sq.Param("ftsFields", sq.Fields{sq.Literal("ROWID"), NameOnly(FILM_TEXT.TITLE), NameOnly(FILM_TEXT.DESCRIPTION)})
 		insertValues := sq.Param("insertValues", sq.Fields{New(tbl.FILM_ID), New(tbl.TITLE), New(tbl.DESCRIPTION)})
 		deleteValues := sq.Param("deleteValues", sq.Fields{Old(tbl.FILM_ID), Old(tbl.TITLE), Old(tbl.DESCRIPTION)})
-		t.Column(tbl.FULLTEXT).Ignore()
 		t.Check("film_release_year_check", "{1} >= 1901 AND {1} <= 2155", tbl.RELEASE_YEAR)
 		t.Check("film_rating_check", "{} IN ('G','PG','PG-13','R','NC-17')", tbl.RATING)
 		t.Trigger(t.Sprintf(`CREATE TRIGGER film_last_update_after_update_trg AFTER UPDATE ON {1} BEGIN
@@ -311,7 +292,6 @@ FOR EACH ROW EXECUTE PROCEDURE tsvector_update_trigger(fulltext, 'pg_catalog.eng
 		t.Column(tbl.DESCRIPTION).Type("TEXT")
 		t.Column(tbl.RATING).Type("ENUM('G','PG','PG-13','R','NC-17')")
 		t.Column(tbl.LAST_UPDATE).Type("TIMESTAMP").Default("CURRENT_TIMESTAMP").OnUpdateCurrentTimestamp()
-		t.Column(tbl.FULLTEXT).Ignore()
 		t.Check("film_release_year_check", "{1} >= 1901 AND {1} <= 2155", tbl.RELEASE_YEAR)
 		t.Trigger(t.Sprintf(`CREATE TRIGGER film_after_insert_trg AFTER INSERT ON film FOR EACH ROW BEGIN
 	INSERT INTO film_text (film_id, title, description) VALUES (NEW.film_id, NEW.title, NEW.description);
@@ -329,18 +309,6 @@ END`))
 	}
 }
 
-func NEW_FILM_TEXT(dialect, alias string) FILM_TEXT {
-	var tbl FILM_TEXT
-	switch dialect {
-	case sq.DialectPostgres:
-		tbl.TableInfo.TableSchema = "public"
-	case sq.DialectMySQL:
-		tbl.TableInfo.TableSchema = "db"
-	}
-	_ = sq.ReflectTable(&tbl, alias)
-	return tbl
-}
-
 type FILM_TEXT struct {
 	sq.TableInfo `ddl:"ignore=postgres virtual={fts5 content='film' content_rowid='film_id'}"`
 	FILM_ID      sq.NumberField `ddl:"ignore=sqlite"`
@@ -348,11 +316,16 @@ type FILM_TEXT struct {
 	DESCRIPTION  sq.StringField
 }
 
+func NEW_FILM_TEXT(alias string) FILM_TEXT {
+	var tbl FILM_TEXT
+	_ = sq.ReflectTable(&tbl, alias)
+	return tbl
+}
+
 func (tbl FILM_TEXT) DDL(dialect string, t *T) {
 	switch dialect {
 	case sq.DialectSQLite:
 		t.VirtualTable("fts5", `content='film'`, `content_rowid='film_id'`)
-		t.Column(tbl.FILM_ID).Ignore()
 	case sq.DialectPostgres:
 		t.Ignore()
 	case sq.DialectMySQL:
@@ -363,23 +336,17 @@ func (tbl FILM_TEXT) DDL(dialect string, t *T) {
 	}
 }
 
-func NEW_FILM_ACTOR(dialect, alias string) FILM_ACTOR {
-	var tbl FILM_ACTOR
-	switch dialect {
-	case sq.DialectPostgres:
-		tbl.TableInfo.TableSchema = "public"
-	case sq.DialectMySQL:
-		tbl.TableInfo.TableSchema = "db"
-	}
-	_ = sq.ReflectTable(&tbl, alias)
-	return tbl
-}
-
 type FILM_ACTOR struct {
 	sq.TableInfo `ddl:"index={. cols=actor_id,film_id unique}"`
-	ACTOR_ID     sq.NumberField `ddl:"notnull references={actor.actor_id onupdate=cascade ondelete=restrict}"`
 	FILM_ID      sq.NumberField `ddl:"notnull references={film.film_id onupdate=cascade ondelete=restrict} index"`
+	ACTOR_ID     sq.NumberField `ddl:"notnull references={actor.actor_id onupdate=cascade ondelete=restrict}"`
 	LAST_UPDATE  sq.TimeField   `ddl:"default=DATETIME('now') notnull"`
+}
+
+func NEW_FILM_ACTOR(alias string) FILM_ACTOR {
+	var tbl FILM_ACTOR
+	_ = sq.ReflectTable(&tbl, alias)
+	return tbl
 }
 
 func (tbl FILM_ACTOR) DDL(dialect string, t *T) {
@@ -398,16 +365,63 @@ FOR EACH ROW EXECUTE PROCEDURE last_update_trg();`, tbl))
 	}
 }
 
-func NEW_FILM_CATEGORY(dialect, alias string) FILM_CATEGORY {
-	var tbl FILM_CATEGORY
-	switch dialect {
-	case sq.DialectPostgres:
-		tbl.TableInfo.TableSchema = "public"
-	case sq.DialectMySQL:
-		tbl.TableInfo.TableSchema = "db"
-	}
+type FILM_ACTOR_REVIEW struct {
+	sq.TableInfo
+	FILM_ID      sq.NumberField `ddl:"type=INT"`
+	ACTOR_ID     sq.NumberField `ddl:"type=INT"`
+	REVIEW_TITLE sq.StringField `ddl:"notnull default='' collate=nocase"`
+	REVIEW_BODY  sq.StringField `ddl:"notnull default=''"`
+	METADATA     sq.JSONField
+	LAST_UPDATE  sq.TimeField `ddl:"notnull default=DATETIME('now')"`
+	LAST_DELETE  sq.TimeField
+}
+
+func NEW_FILM_ACTOR_REVIEW(alias string) FILM_ACTOR_REVIEW {
+	var tbl FILM_ACTOR_REVIEW
 	_ = sq.ReflectTable(&tbl, alias)
 	return tbl
+}
+
+func (tbl FILM_ACTOR_REVIEW) DDL(dialect string, t *T) {
+	FILM_ACTOR := NEW_FILM_ACTOR("")
+	t.PrimaryKey(tbl.FILM_ID, tbl.ACTOR_ID)
+	t.ForeignKey(tbl.FILM_ID, tbl.ACTOR_ID).References(FILM_ACTOR, FILM_ACTOR.FILM_ID, FILM_ACTOR.ACTOR_ID).OnUpdate(CASCADE).OnDelete(RESTRICT)
+	t.Check("film_actor_review_check", "LENGTH({}) > LENGTH({})", tbl.REVIEW_BODY, tbl.REVIEW_TITLE)
+	switch dialect {
+	case sq.DialectSQLite:
+		t.NameIndex("film_actor_review_misc",
+			tbl.FILM_ID,
+			sq.Fieldf("SUBSTR({}, 2, 10)", tbl.REVIEW_BODY),
+			sq.Fieldf("{} || {}", tbl.REVIEW_TITLE, " abcd"),
+			sq.Fieldf("CAST(JSON_EXTRACT({}, {}) AS INT)", tbl.METADATA, "$.score"),
+		).Where("{} IS NULL", tbl.LAST_DELETE)
+		t.Trigger(t.Sprintf(`CREATE TRIGGER film_actor_review_last_update_after_update_trg AFTER UPDATE ON {1} BEGIN
+	UPDATE {1} SET last_update = DATETIME('now') WHERE ROWID = NEW.ROWID;
+END;`, tbl))
+	case sq.DialectPostgres:
+		t.Column(tbl.REVIEW_TITLE).Collate("C")
+		t.Column(tbl.LAST_UPDATE).Default("NOW()")
+		t.NameIndex("film_actor_review_review_title_idx", sq.Literal(t.Sprintf("{} text_pattern_ops", tbl.REVIEW_TITLE)))
+		t.NameIndex("film_actor_review_review_body_idx", sq.Literal(t.Sprintf(`{} COLLATE "C"`, tbl.REVIEW_BODY)))
+		t.NameIndex("film_actor_review_misc",
+			tbl.FILM_ID,
+			sq.Fieldf("SUBSTR({}, 2, 10)", tbl.REVIEW_BODY),
+			sq.Fieldf("{} || {}", tbl.REVIEW_TITLE, " abcd"),
+			sq.Fieldf("({}->>{})::INT", tbl.METADATA, "score"),
+		).Include(tbl.ACTOR_ID, tbl.LAST_UPDATE).Where("{} IS NULL", tbl.LAST_DELETE)
+		t.Trigger(t.Sprintf(`CREATE TRIGGER film_actor_review_last_update_before_update_trg BEFORE UPDATE ON {1}
+FOR EACH ROW EXECUTE PROCEDURE last_update_trg();`, tbl))
+	case sq.DialectMySQL:
+		t.Column(tbl.REVIEW_TITLE).Type("VARCHAR(50)").Collate("latin1_swedish_ci")
+		t.Column(tbl.REVIEW_BODY).Type("VARCHAR(255)")
+		t.Column(tbl.LAST_UPDATE).Default("CURRENT_TIMESTAMP").OnUpdateCurrentTimestamp()
+		t.NameIndex("film_actor_review_misc",
+			tbl.FILM_ID,
+			sq.Fieldf("SUBSTR({}, 2, 10)", tbl.REVIEW_BODY),
+			sq.Fieldf("CONCAT({}, {})", tbl.REVIEW_TITLE, " abcd"),
+			sq.Fieldf("CAST({}->>{} AS SIGNED)", tbl.METADATA, "$.score"),
+		)
+	}
 }
 
 type FILM_CATEGORY struct {
@@ -415,6 +429,12 @@ type FILM_CATEGORY struct {
 	FILM_ID     sq.NumberField `ddl:"notnull references={film.film_id onupdate=cascade ondelete=restrict}"`
 	CATEGORY_ID sq.NumberField `ddl:"notnull references={category.category_id onupdate=cascade ondelete=restrict}"`
 	LAST_UPDATE sq.TimeField   `ddl:"default=DATETIME('now') notnull"`
+}
+
+func NEW_FILM_CATEGORY(alias string) FILM_CATEGORY {
+	var tbl FILM_CATEGORY
+	_ = sq.ReflectTable(&tbl, alias)
+	return tbl
 }
 
 func (tbl FILM_CATEGORY) DDL(dialect string, t *T) {
@@ -432,18 +452,6 @@ FOR EACH ROW EXECUTE PROCEDURE last_update_trg();`, tbl))
 	}
 }
 
-func NEW_STAFF(dialect, alias string) STAFF {
-	var tbl STAFF
-	switch dialect {
-	case sq.DialectPostgres:
-		tbl.TableInfo.TableSchema = "public"
-	case sq.DialectMySQL:
-		tbl.TableInfo.TableSchema = "db"
-	}
-	_ = sq.ReflectTable(&tbl, alias)
-	return tbl
-}
-
 type STAFF struct {
 	sq.TableInfo
 	STAFF_ID    sq.NumberField `ddl:"type=INTEGER primarykey"`
@@ -457,6 +465,12 @@ type STAFF struct {
 	PASSWORD    sq.StringField
 	LAST_UPDATE sq.TimeField `ddl:"default=DATETIME('now') notnull"`
 	PICTURE     sq.BlobField
+}
+
+func NEW_STAFF(alias string) STAFF {
+	var tbl STAFF
+	_ = sq.ReflectTable(&tbl, alias)
+	return tbl
 }
 
 func (tbl STAFF) DDL(dialect string, t *T) {
@@ -482,24 +496,18 @@ FOR EACH ROW EXECUTE PROCEDURE last_update_trg();`, tbl))
 	}
 }
 
-func NEW_STORE(dialect, alias string) STORE {
-	var tbl STORE
-	switch dialect {
-	case sq.DialectPostgres:
-		tbl.TableInfo.TableSchema = "public"
-	case sq.DialectMySQL:
-		tbl.TableInfo.TableSchema = "db"
-	}
-	_ = sq.ReflectTable(&tbl, alias)
-	return tbl
-}
-
 type STORE struct {
 	sq.TableInfo
 	STORE_ID         sq.NumberField `ddl:"type=INTEGER primarykey"`
 	MANAGER_STAFF_ID sq.NumberField `ddl:"notnull references={staff.staff_id onupdate=cascade ondelete=restrict} index={. unique}"`
 	ADDRESS_ID       sq.NumberField `ddl:"notnull references={address.address_id onupdate=cascade ondelete=restrict}"`
 	LAST_UPDATE      sq.TimeField   `ddl:"default=DATETIME('now') notnull"`
+}
+
+func NEW_STORE(alias string) STORE {
+	var tbl STORE
+	_ = sq.ReflectTable(&tbl, alias)
+	return tbl
 }
 
 func (tbl STORE) DDL(dialect string, t *T) {
@@ -519,18 +527,6 @@ FOR EACH ROW EXECUTE PROCEDURE last_update_trg();`, tbl))
 	}
 }
 
-func NEW_CUSTOMER(dialect, alias string) CUSTOMER {
-	var tbl CUSTOMER
-	switch dialect {
-	case sq.DialectPostgres:
-		tbl.TableInfo.TableSchema = "public"
-	case sq.DialectMySQL:
-		tbl.TableInfo.TableSchema = "db"
-	}
-	_ = sq.ReflectTable(&tbl, alias)
-	return tbl
-}
-
 type CUSTOMER struct {
 	sq.TableInfo `sq:"name=customer" ddl:"unique={. cols=email,first_name,last_name}"`
 	CUSTOMER_ID  sq.NumberField  `ddl:"type=INTEGER primarykey"`
@@ -543,6 +539,12 @@ type CUSTOMER struct {
 	DATA         sq.JSONField
 	CREATE_DATE  sq.TimeField `ddl:"default=DATETIME('now') notnull"`
 	LAST_UPDATE  sq.TimeField `ddl:"default=DATETIME('now')"`
+}
+
+func NEW_CUSTOMER(alias string) CUSTOMER {
+	var tbl CUSTOMER
+	_ = sq.ReflectTable(&tbl, alias)
+	return tbl
 }
 
 func (tbl CUSTOMER) DDL(dialect string, t *T) {
@@ -567,24 +569,18 @@ FOR EACH ROW EXECUTE PROCEDURE last_update_trg();`, tbl))
 	}
 }
 
-func NEW_INVENTORY(dialect, alias string) INVENTORY {
-	var tbl INVENTORY
-	switch dialect {
-	case sq.DialectPostgres:
-		tbl.TableInfo.TableSchema = "public"
-	case sq.DialectMySQL:
-		tbl.TableInfo.TableSchema = "db"
-	}
-	_ = sq.ReflectTable(&tbl, alias)
-	return tbl
-}
-
 type INVENTORY struct {
 	sq.TableInfo `sq:"name=inventory" ddl:"index={. cols=store_id,film_id}"`
 	INVENTORY_ID sq.NumberField `ddl:"type=INTEGER primarykey"`
 	FILM_ID      sq.NumberField `ddl:"notnull references={film.film_id onupdate=cascade ondelete=restrict}"`
 	STORE_ID     sq.NumberField `ddl:"notnull references={store.store_id onupdate=cascade ondelete=restrict}"`
 	LAST_UPDATE  sq.TimeField   `ddl:"default=DATETIME('now') notnull"`
+}
+
+func NEW_INVENTORY(alias string) INVENTORY {
+	var tbl INVENTORY
+	_ = sq.ReflectTable(&tbl, alias)
+	return tbl
 }
 
 func (tbl INVENTORY) DDL(dialect string, t *T) {
@@ -604,18 +600,6 @@ FOR EACH ROW EXECUTE PROCEDURE last_update_trg();`, tbl))
 	}
 }
 
-func NEW_RENTAL(dialect, alias string) RENTAL {
-	var tbl RENTAL
-	switch dialect {
-	case sq.DialectPostgres:
-		tbl.TableInfo.TableSchema = "public"
-	case sq.DialectMySQL:
-		tbl.TableInfo.TableSchema = "db"
-	}
-	_ = sq.ReflectTable(&tbl, alias)
-	return tbl
-}
-
 type RENTAL struct {
 	sq.TableInfo `ddl:"index={. cols=rental_date,inventory_id,customer_id unique}"`
 	RENTAL_ID    sq.NumberField `ddl:"type=INTEGER primarykey"`
@@ -625,6 +609,12 @@ type RENTAL struct {
 	RETURN_DATE  sq.TimeField
 	STAFF_ID     sq.NumberField `ddl:"notnull index references={staff.staff_id onupdate=cascade ondelete=restrict}"`
 	LAST_UPDATE  sq.TimeField   `ddl:"default=DATETIME('now') notnull"`
+}
+
+func NEW_RENTAL(alias string) RENTAL {
+	var tbl RENTAL
+	_ = sq.ReflectTable(&tbl, alias)
+	return tbl
 }
 
 func (tbl RENTAL) DDL(dialect string, t *T) {
@@ -646,18 +636,6 @@ FOR EACH ROW EXECUTE PROCEDURE last_update_trg();`, tbl))
 	}
 }
 
-func NEW_PAYMENT(dialect, alias string) PAYMENT {
-	var tbl PAYMENT
-	switch dialect {
-	case sq.DialectPostgres:
-		tbl.TableInfo.TableSchema = "public"
-	case sq.DialectMySQL:
-		tbl.TableInfo.TableSchema = "db"
-	}
-	_ = sq.ReflectTable(&tbl, alias)
-	return tbl
-}
-
 type PAYMENT struct {
 	sq.TableInfo
 	PAYMENT_ID   sq.NumberField `ddl:"type=INTEGER primarykey"`
@@ -668,6 +646,12 @@ type PAYMENT struct {
 	PAYMENT_DATE sq.TimeField   `ddl:"notnull"`
 }
 
+func NEW_PAYMENT(alias string) PAYMENT {
+	var tbl PAYMENT
+	_ = sq.ReflectTable(&tbl, alias)
+	return tbl
+}
+
 func (tbl PAYMENT) DDL(dialect string, t *T) {
 	switch dialect {
 	case sq.DialectPostgres:
@@ -676,90 +660,6 @@ func (tbl PAYMENT) DDL(dialect string, t *T) {
 	case sq.DialectMySQL:
 		t.Column(tbl.PAYMENT_ID).Type("INT").Autoincrement()
 		t.Column(tbl.PAYMENT_DATE).Type("TIMESTAMP")
-	}
-}
-
-func NEW_DUMMY_TABLE(dialect, alias string) DUMMY_TABLE {
-	var tbl DUMMY_TABLE
-	switch dialect {
-	case sq.DialectPostgres:
-		tbl.TableInfo.TableSchema = "public"
-	case sq.DialectMySQL:
-		tbl.TableInfo.TableSchema = "db"
-	}
-	_ = sq.ReflectTable(&tbl, alias)
-	return tbl
-}
-
-type DUMMY_TABLE struct {
-	sq.TableInfo `ddl:"primarykey={. cols=id1,id2} unique={. cols=score,color}"`
-	ID1          sq.NumberField
-	ID2          sq.StringField
-	SCORE        sq.NumberField
-	COLOR        sq.StringField `ddl:"collate=nocase default='red'"`
-	DATA         sq.JSONField
-}
-
-func (tbl DUMMY_TABLE) DDL(dialect string, t *T) {
-	const indexName = "dummy_table_complex_expr_idx"
-	switch dialect {
-	case sq.DialectSQLite:
-		t.Column(tbl.COLOR).Collate("nocase")
-		t.NameIndex(indexName,
-			tbl.SCORE,
-			sq.Fieldf("SUBSTR({}, 1, 2)", tbl.COLOR),
-			sq.Fieldf("{} || {}", tbl.COLOR, " abcd"),
-			sq.Fieldf("CAST(JSON_EXTRACT({}, {}) AS INT)", tbl.DATA, "$.age"),
-		).Where("{} = {}", tbl.COLOR, "red")
-	case sq.DialectPostgres:
-		t.Column(tbl.ID1).AlwaysIdentity()
-		t.Column(tbl.COLOR).Collate("C")
-		t.NameIndex(indexName,
-			tbl.SCORE,
-			sq.Fieldf("SUBSTR({}, 1, 2)", tbl.COLOR),
-			sq.Fieldf("{} || {}", tbl.COLOR, " abcd"),
-			sq.Fieldf("({}->>{})::INT", tbl.DATA, "age"),
-		).Where("{} = {}", tbl.COLOR, "red")
-		t.NameIndex("dummy_table_id2_idx", sq.Literal(`id2 COLLATE "C"`))
-		t.NameIndex("dummy_table_color_idx", sq.Literal("color text_pattern_ops"))
-	case sq.DialectMySQL:
-		t.Column(tbl.COLOR).Type("VARCHAR(50)").Collate("latin1_swedish_ci")
-		t.NameIndex(indexName,
-			tbl.SCORE,
-			sq.Fieldf("SUBSTR({}, 1, 2)", tbl.COLOR),
-			sq.Fieldf("CONCAT({}, {})", tbl.COLOR, " abcd"),
-			sq.Fieldf("CAST({}->>{} AS SIGNED)", tbl.DATA, "$.age"),
-		)
-	}
-	t.Check("dummy_table_score_positive_check", "{} > 0", tbl.SCORE)
-	t.Check("dummy_table_score_id1_greater_than_check", "{} > {}", tbl.SCORE, tbl.ID1)
-	t.PrimaryKey(tbl.ID1, tbl.ID2)
-	t.Unique(tbl.SCORE, tbl.COLOR)
-}
-
-func NEW_DUMMY_TABLE_2(dialect, alias string) DUMMY_TABLE_2 {
-	var tbl DUMMY_TABLE_2
-	switch dialect {
-	case sq.DialectPostgres:
-		tbl.TableInfo.TableSchema = "public"
-	case sq.DialectMySQL:
-		tbl.TableInfo.TableSchema = "db"
-	}
-	_ = sq.ReflectTable(&tbl, alias)
-	return tbl
-}
-
-type DUMMY_TABLE_2 struct {
-	sq.TableInfo `ddl:"references={dummy_table.id1,id2 cols=id1,id2 onupdate=cascade ondelete=restrict}"`
-	ID1          sq.NumberField
-	ID2          sq.StringField
-}
-
-func (tbl DUMMY_TABLE_2) DDL(dialect string, t *T) {
-	ref := NEW_DUMMY_TABLE(dialect, "")
-	switch dialect {
-	case sq.DialectPostgres, sq.DialectMySQL:
-		t.ForeignKey(tbl.ID1, tbl.ID2).References(ref, ref.ID1, ref.ID2).OnUpdate("CASCADE").OnDelete("RESTRICT")
 	}
 }
 
@@ -782,22 +682,6 @@ func json_array_agg(value interface{}) sq.CustomField {
 	}, value)
 }
 
-func NEW_ACTOR_INFO(dialect, alias string) ACTOR_INFO {
-	var tbl ACTOR_INFO
-	tbl.TableInfo = sq.TableInfo{TableName: "actor_info", TableAlias: alias}
-	switch dialect {
-	case sq.DialectPostgres:
-		tbl.TableInfo.TableSchema = "public"
-	case sq.DialectMySQL:
-		tbl.TableInfo.TableSchema = "db"
-	}
-	tbl.ACTOR_ID = sq.NewNumberField("actor_id", tbl.TableInfo)
-	tbl.FIRST_NAME = sq.NewStringField("first_name", tbl.TableInfo)
-	tbl.LAST_NAME = sq.NewStringField("last_name", tbl.TableInfo)
-	tbl.FILM_INFO = sq.NewJSONField("film_info", tbl.TableInfo)
-	return tbl
-}
-
 type ACTOR_INFO struct {
 	sq.TableInfo
 	ACTOR_ID   sq.NumberField
@@ -806,11 +690,21 @@ type ACTOR_INFO struct {
 	FILM_INFO  sq.JSONField
 }
 
+func NEW_ACTOR_INFO(alias string) ACTOR_INFO {
+	var tbl ACTOR_INFO
+	tbl.TableInfo = sq.TableInfo{TableName: "actor_info", TableAlias: alias}
+	tbl.ACTOR_ID = sq.NewNumberField("actor_id", tbl.TableInfo)
+	tbl.FIRST_NAME = sq.NewStringField("first_name", tbl.TableInfo)
+	tbl.LAST_NAME = sq.NewStringField("last_name", tbl.TableInfo)
+	tbl.FILM_INFO = sq.NewJSONField("film_info", tbl.TableInfo)
+	return tbl
+}
+
 func (view ACTOR_INFO) DDL(dialect string, v *V) {
 	ACTOR := NEW_ACTOR("a")
-	FILM := NEW_FILM(dialect, "f")
-	FILM_ACTOR := NEW_FILM_ACTOR(dialect, "fa")
-	FILM_CATEGORY := NEW_FILM_CATEGORY(dialect, "fc")
+	FILM := NEW_FILM("f")
+	FILM_ACTOR := NEW_FILM_ACTOR("fa")
+	FILM_CATEGORY := NEW_FILM_CATEGORY("fc")
 	CATEGORY := NEW_CATEGORY("c")
 	v.AsQuery(sq.SQLite.
 		From(ACTOR).
@@ -837,27 +731,6 @@ func (view ACTOR_INFO) DDL(dialect string, v *V) {
 	)
 }
 
-func NEW_CUSTOMER_LIST(dialect, alias string) CUSTOMER_LIST {
-	var tbl CUSTOMER_LIST
-	tbl.TableInfo = sq.TableInfo{TableName: "customer_list", TableAlias: alias}
-	switch dialect {
-	case sq.DialectPostgres:
-		tbl.TableInfo.TableSchema = "public"
-	case sq.DialectMySQL:
-		tbl.TableInfo.TableSchema = "db"
-	}
-	tbl.ID = sq.NewNumberField("id", tbl.TableInfo)
-	tbl.NAME = sq.NewStringField("name", tbl.TableInfo)
-	tbl.ADDRESS = sq.NewStringField("address", tbl.TableInfo)
-	tbl.ZIP_CODE = sq.NewStringField("zip code", tbl.TableInfo)
-	tbl.PHONE = sq.NewStringField("phone", tbl.TableInfo)
-	tbl.CITY = sq.NewStringField("city", tbl.TableInfo)
-	tbl.COUNTRY = sq.NewStringField("country", tbl.TableInfo)
-	tbl.NOTES = sq.NewStringField("notes", tbl.TableInfo)
-	tbl.SID = sq.NewNumberField("sid", tbl.TableInfo)
-	return tbl
-}
-
 type CUSTOMER_LIST struct {
 	sq.TableInfo
 	ID       sq.NumberField
@@ -871,9 +744,24 @@ type CUSTOMER_LIST struct {
 	SID      sq.NumberField
 }
 
+func NEW_CUSTOMER_LIST(alias string) CUSTOMER_LIST {
+	var tbl CUSTOMER_LIST
+	tbl.TableInfo = sq.TableInfo{TableName: "customer_list", TableAlias: alias}
+	tbl.ID = sq.NewNumberField("id", tbl.TableInfo)
+	tbl.NAME = sq.NewStringField("name", tbl.TableInfo)
+	tbl.ADDRESS = sq.NewStringField("address", tbl.TableInfo)
+	tbl.ZIP_CODE = sq.NewStringField("zip code", tbl.TableInfo)
+	tbl.PHONE = sq.NewStringField("phone", tbl.TableInfo)
+	tbl.CITY = sq.NewStringField("city", tbl.TableInfo)
+	tbl.COUNTRY = sq.NewStringField("country", tbl.TableInfo)
+	tbl.NOTES = sq.NewStringField("notes", tbl.TableInfo)
+	tbl.SID = sq.NewNumberField("sid", tbl.TableInfo)
+	return tbl
+}
+
 func (view CUSTOMER_LIST) DDL(dialect string, v *V) {
-	CUSTOMER := NEW_CUSTOMER(dialect, "cu")
-	ADDRESS := NEW_ADDRESS(dialect, "a")
+	CUSTOMER := NEW_CUSTOMER("cu")
+	ADDRESS := NEW_ADDRESS("a")
 	CITY := NEW_CITY("")
 	COUNTRY := NEW_COUNTRY("")
 	v.AsQuery(sq.SQLite.
@@ -898,26 +786,6 @@ func (view CUSTOMER_LIST) DDL(dialect string, v *V) {
 	)
 }
 
-func NEW_FILM_LIST(dialect, alias string) FILM_LIST {
-	var tbl FILM_LIST
-	tbl.TableInfo = sq.TableInfo{TableName: "film_list", TableAlias: alias}
-	switch dialect {
-	case sq.DialectPostgres:
-		tbl.TableInfo.TableSchema = "public"
-	case sq.DialectMySQL:
-		tbl.TableInfo.TableSchema = "db"
-	}
-	tbl.FID = sq.NewNumberField("fid", tbl.TableInfo)
-	tbl.TITLE = sq.NewStringField("title", tbl.TableInfo)
-	tbl.DESCRIPTION = sq.NewStringField("description", tbl.TableInfo)
-	tbl.CATEGORY = sq.NewStringField("category", tbl.TableInfo)
-	tbl.PRICE = sq.NewNumberField("price", tbl.TableInfo)
-	tbl.LENGTH = sq.NewNumberField("length", tbl.TableInfo)
-	tbl.RATING = sq.NewStringField("rating", tbl.TableInfo)
-	tbl.ACTORS = sq.NewJSONField("actors", tbl.TableInfo)
-	return tbl
-}
-
 type FILM_LIST struct {
 	sq.TableInfo
 	FID         sq.NumberField
@@ -930,11 +798,25 @@ type FILM_LIST struct {
 	ACTORS      sq.JSONField
 }
 
+func NEW_FILM_LIST(alias string) FILM_LIST {
+	var tbl FILM_LIST
+	tbl.TableInfo = sq.TableInfo{TableName: "film_list", TableAlias: alias}
+	tbl.FID = sq.NewNumberField("fid", tbl.TableInfo)
+	tbl.TITLE = sq.NewStringField("title", tbl.TableInfo)
+	tbl.DESCRIPTION = sq.NewStringField("description", tbl.TableInfo)
+	tbl.CATEGORY = sq.NewStringField("category", tbl.TableInfo)
+	tbl.PRICE = sq.NewNumberField("price", tbl.TableInfo)
+	tbl.LENGTH = sq.NewNumberField("length", tbl.TableInfo)
+	tbl.RATING = sq.NewStringField("rating", tbl.TableInfo)
+	tbl.ACTORS = sq.NewJSONField("actors", tbl.TableInfo)
+	return tbl
+}
+
 func (view FILM_LIST) DDL(dialect string, v *V) {
 	CATEGORY := NEW_CATEGORY("")
-	FILM_CATEGORY := NEW_FILM_CATEGORY(dialect, "")
-	FILM := NEW_FILM(dialect, "")
-	FILM_ACTOR := NEW_FILM_ACTOR(dialect, "")
+	FILM_CATEGORY := NEW_FILM_CATEGORY("")
+	FILM := NEW_FILM("")
+	FILM_ACTOR := NEW_FILM_ACTOR("")
 	ACTOR := NEW_ACTOR("")
 	v.AsQuery(sq.SQLite.
 		From(CATEGORY).
@@ -969,26 +851,6 @@ func (view FILM_LIST) DDL(dialect string, v *V) {
 	)
 }
 
-func NEW_NICER_BUT_SLOWER_FILM_LIST(dialect, alias string) NICER_BUT_SLOWER_FILM_LIST {
-	var tbl NICER_BUT_SLOWER_FILM_LIST
-	tbl.TableInfo = sq.TableInfo{TableName: "nicer_but_slower_film_list", TableAlias: alias}
-	switch dialect {
-	case sq.DialectPostgres:
-		tbl.TableInfo.TableSchema = "public"
-	case sq.DialectMySQL:
-		tbl.TableInfo.TableSchema = "db"
-	}
-	tbl.FID = sq.NewNumberField("fid", tbl.TableInfo)
-	tbl.TITLE = sq.NewStringField("title", tbl.TableInfo)
-	tbl.DESCRIPTION = sq.NewStringField("description", tbl.TableInfo)
-	tbl.CATEGORY = sq.NewStringField("category", tbl.TableInfo)
-	tbl.PRICE = sq.NewNumberField("price", tbl.TableInfo)
-	tbl.LENGTH = sq.NewNumberField("length", tbl.TableInfo)
-	tbl.RATING = sq.NewStringField("rating", tbl.TableInfo)
-	tbl.ACTORS = sq.NewJSONField("actors", tbl.TableInfo)
-	return tbl
-}
-
 type NICER_BUT_SLOWER_FILM_LIST struct {
 	sq.TableInfo
 	FID         sq.NumberField
@@ -1001,11 +863,25 @@ type NICER_BUT_SLOWER_FILM_LIST struct {
 	ACTORS      sq.JSONField
 }
 
+func NEW_NICER_BUT_SLOWER_FILM_LIST(alias string) NICER_BUT_SLOWER_FILM_LIST {
+	var tbl NICER_BUT_SLOWER_FILM_LIST
+	tbl.TableInfo = sq.TableInfo{TableName: "nicer_but_slower_film_list", TableAlias: alias}
+	tbl.FID = sq.NewNumberField("fid", tbl.TableInfo)
+	tbl.TITLE = sq.NewStringField("title", tbl.TableInfo)
+	tbl.DESCRIPTION = sq.NewStringField("description", tbl.TableInfo)
+	tbl.CATEGORY = sq.NewStringField("category", tbl.TableInfo)
+	tbl.PRICE = sq.NewNumberField("price", tbl.TableInfo)
+	tbl.LENGTH = sq.NewNumberField("length", tbl.TableInfo)
+	tbl.RATING = sq.NewStringField("rating", tbl.TableInfo)
+	tbl.ACTORS = sq.NewJSONField("actors", tbl.TableInfo)
+	return tbl
+}
+
 func (view NICER_BUT_SLOWER_FILM_LIST) DDL(dialect string, v *V) {
 	CATEGORY := NEW_CATEGORY("")
-	FILM_CATEGORY := NEW_FILM_CATEGORY(dialect, "")
-	FILM := NEW_FILM(dialect, "")
-	FILM_ACTOR := NEW_FILM_ACTOR(dialect, "")
+	FILM_CATEGORY := NEW_FILM_CATEGORY("")
+	FILM := NEW_FILM("")
+	FILM_ACTOR := NEW_FILM_ACTOR("")
 	ACTOR := NEW_ACTOR("")
 	v.AsQuery(sq.SQLite.
 		From(CATEGORY).
@@ -1048,32 +924,26 @@ func (view NICER_BUT_SLOWER_FILM_LIST) DDL(dialect string, v *V) {
 	)
 }
 
-func NEW_SALES_BY_FILM_CATEGORY(dialect, alias string) SALES_BY_FILM_CATEGORY {
-	var tbl SALES_BY_FILM_CATEGORY
-	tbl.TableInfo = sq.TableInfo{TableName: "sales_by_film_category", TableAlias: alias}
-	switch dialect {
-	case sq.DialectPostgres:
-		tbl.TableInfo.TableSchema = "public"
-	case sq.DialectMySQL:
-		tbl.TableInfo.TableSchema = "db"
-	}
-	tbl.CATEGORY = sq.NewStringField("category", tbl.TableInfo)
-	tbl.TOTAL_SALES = sq.NewNumberField("total_sales", tbl.TableInfo)
-	return tbl
-}
-
 type SALES_BY_FILM_CATEGORY struct {
 	sq.TableInfo
 	CATEGORY    sq.StringField
 	TOTAL_SALES sq.NumberField
 }
 
+func NEW_SALES_BY_FILM_CATEGORY(alias string) SALES_BY_FILM_CATEGORY {
+	var tbl SALES_BY_FILM_CATEGORY
+	tbl.TableInfo = sq.TableInfo{TableName: "sales_by_film_category", TableAlias: alias}
+	tbl.CATEGORY = sq.NewStringField("category", tbl.TableInfo)
+	tbl.TOTAL_SALES = sq.NewNumberField("total_sales", tbl.TableInfo)
+	return tbl
+}
+
 func (view SALES_BY_FILM_CATEGORY) DDL(dialect string, v *V) {
-	PAYMENT := NEW_PAYMENT(dialect, "p")
-	RENTAL := NEW_RENTAL(dialect, "r")
-	INVENTORY := NEW_INVENTORY(dialect, "i")
-	FILM := NEW_FILM(dialect, "f")
-	FILM_CATEGORY := NEW_FILM_CATEGORY(dialect, "fc")
+	PAYMENT := NEW_PAYMENT("p")
+	RENTAL := NEW_RENTAL("r")
+	INVENTORY := NEW_INVENTORY("i")
+	FILM := NEW_FILM("f")
+	FILM_CATEGORY := NEW_FILM_CATEGORY("fc")
 	CATEGORY := NEW_CATEGORY("c")
 	v.AsQuery(sq.SQLite.
 		From(PAYMENT).
@@ -1091,21 +961,6 @@ func (view SALES_BY_FILM_CATEGORY) DDL(dialect string, v *V) {
 	)
 }
 
-func NEW_SALES_BY_STORE(dialect, alias string) SALES_BY_STORE {
-	var tbl SALES_BY_STORE
-	tbl.TableInfo = sq.TableInfo{TableName: "sales_by_store", TableAlias: alias}
-	switch dialect {
-	case sq.DialectPostgres:
-		tbl.TableInfo.TableSchema = "public"
-	case sq.DialectMySQL:
-		tbl.TableInfo.TableSchema = "db"
-	}
-	tbl.STORE = sq.NewStringField("store", tbl.TableInfo)
-	tbl.MANAGER = sq.NewStringField("manager", tbl.TableInfo)
-	tbl.TOTAL_SALES = sq.NewNumberField("total_sales", tbl.TableInfo)
-	return tbl
-}
-
 type SALES_BY_STORE struct {
 	sq.TableInfo
 	STORE       sq.StringField
@@ -1113,15 +968,24 @@ type SALES_BY_STORE struct {
 	TOTAL_SALES sq.NumberField
 }
 
+func NEW_SALES_BY_STORE(alias string) SALES_BY_STORE {
+	var tbl SALES_BY_STORE
+	tbl.TableInfo = sq.TableInfo{TableName: "sales_by_store", TableAlias: alias}
+	tbl.STORE = sq.NewStringField("store", tbl.TableInfo)
+	tbl.MANAGER = sq.NewStringField("manager", tbl.TableInfo)
+	tbl.TOTAL_SALES = sq.NewNumberField("total_sales", tbl.TableInfo)
+	return tbl
+}
+
 func (view SALES_BY_STORE) DDL(dialect string, v *V) {
-	PAYMENT := NEW_PAYMENT(dialect, "p")
-	RENTAL := NEW_RENTAL(dialect, "r")
-	INVENTORY := NEW_INVENTORY(dialect, "i")
-	STORE := NEW_STORE(dialect, "s")
-	ADDRESS := NEW_ADDRESS(dialect, "a")
+	PAYMENT := NEW_PAYMENT("p")
+	RENTAL := NEW_RENTAL("r")
+	INVENTORY := NEW_INVENTORY("i")
+	STORE := NEW_STORE("s")
+	ADDRESS := NEW_ADDRESS("a")
 	CITY := NEW_CITY("ci")
 	COUNTRY := NEW_COUNTRY("co")
-	STAFF := NEW_STAFF(dialect, "m")
+	STAFF := NEW_STAFF("m")
 	v.AsQuery(sq.SQLite.
 		From(PAYMENT).
 		Join(RENTAL, RENTAL.RENTAL_ID.Eq(PAYMENT.RENTAL_ID)).
@@ -1156,26 +1020,6 @@ func (view SALES_BY_STORE) DDL(dialect string, v *V) {
 	)
 }
 
-func NEW_STAFF_LIST(dialect, alias string) STAFF_LIST {
-	var tbl STAFF_LIST
-	tbl.TableInfo = sq.TableInfo{TableName: "staff_list", TableAlias: alias}
-	switch dialect {
-	case sq.DialectPostgres:
-		tbl.TableInfo.TableSchema = "public"
-	case sq.DialectMySQL:
-		tbl.TableInfo.TableSchema = "db"
-	}
-	tbl.ID = sq.NewNumberField("id", tbl.TableInfo)
-	tbl.NAME = sq.NewStringField("name", tbl.TableInfo)
-	tbl.ADDRESS = sq.NewStringField("address", tbl.TableInfo)
-	tbl.ZIP_CODE = sq.NewStringField("zip code", tbl.TableInfo)
-	tbl.PHONE = sq.NewStringField("phone", tbl.TableInfo)
-	tbl.CITY = sq.NewStringField("city", tbl.TableInfo)
-	tbl.COUNTRY = sq.NewStringField("country", tbl.TableInfo)
-	tbl.SID = sq.NewNumberField("sid", tbl.TableInfo)
-	return tbl
-}
-
 type STAFF_LIST struct {
 	sq.TableInfo
 	ID       sq.NumberField
@@ -1188,9 +1032,23 @@ type STAFF_LIST struct {
 	SID      sq.NumberField
 }
 
+func NEW_STAFF_LIST(alias string) STAFF_LIST {
+	var tbl STAFF_LIST
+	tbl.TableInfo = sq.TableInfo{TableName: "staff_list", TableAlias: alias}
+	tbl.ID = sq.NewNumberField("id", tbl.TableInfo)
+	tbl.NAME = sq.NewStringField("name", tbl.TableInfo)
+	tbl.ADDRESS = sq.NewStringField("address", tbl.TableInfo)
+	tbl.ZIP_CODE = sq.NewStringField("zip code", tbl.TableInfo)
+	tbl.PHONE = sq.NewStringField("phone", tbl.TableInfo)
+	tbl.CITY = sq.NewStringField("city", tbl.TableInfo)
+	tbl.COUNTRY = sq.NewStringField("country", tbl.TableInfo)
+	tbl.SID = sq.NewNumberField("sid", tbl.TableInfo)
+	return tbl
+}
+
 func (view STAFF_LIST) DDL(dialect string, v *V) {
-	STAFF := NEW_STAFF(dialect, "s")
-	ADDRESS := NEW_ADDRESS(dialect, "a")
+	STAFF := NEW_STAFF("s")
+	ADDRESS := NEW_ADDRESS("a")
 	CITY := NEW_CITY("ci")
 	COUNTRY := NEW_COUNTRY("co")
 	v.AsQuery(sq.SQLite.
@@ -1212,4 +1070,57 @@ func (view STAFF_LIST) DDL(dialect string, v *V) {
 			STAFF.STORE_ID.As("sid"),
 		),
 	)
+}
+
+type FULL_ADDRESS struct {
+	sq.TableInfo `ddl:"ignore=sqlite,mysql"`
+	COUNTRY_ID   sq.NumberField
+	CITY_ID      sq.NumberField
+	ADDRESS_ID   sq.NumberField
+	COUNTRY      sq.StringField
+	CITY         sq.StringField
+	ADDRESS      sq.StringField
+	ADDRESS2     sq.StringField
+	DISTRICT     sq.StringField
+	POSTAL_CODE  sq.StringField
+	PHONE        sq.StringField
+	LAST_UPDATE  sq.TimeField
+}
+
+func NEW_FULL_ADDRESS(alias string) FULL_ADDRESS {
+	var tbl FULL_ADDRESS
+	_ = sq.ReflectTable(&tbl, alias)
+	return tbl
+}
+
+func (view FULL_ADDRESS) DDL(dialect string, v *V) {
+	ADDRESS := NEW_ADDRESS("")
+	CITY := NEW_CITY("")
+	COUNTRY := NEW_COUNTRY("")
+	v.IsMaterialized()
+	v.AsQuery(sq.SQLite.
+		From(ADDRESS).
+		Join(CITY, CITY.CITY_ID.Eq(ADDRESS.CITY_ID)).
+		Join(COUNTRY, COUNTRY.COUNTRY_ID.Eq(CITY.COUNTRY_ID)).
+		Select(
+			COUNTRY.COUNTRY_ID,
+			CITY.CITY_ID,
+			ADDRESS.ADDRESS_ID,
+			COUNTRY.COUNTRY,
+			CITY.CITY,
+			ADDRESS.ADDRESS,
+			ADDRESS.ADDRESS2,
+			ADDRESS.DISTRICT,
+			ADDRESS.POSTAL_CODE,
+			ADDRESS.PHONE,
+			ADDRESS.LAST_UPDATE,
+		),
+	)
+	v.Index(view.COUNTRY_ID, view.CITY_ID, view.ADDRESS_ID).Unique().Include(view.COUNTRY, view.CITY, view.ADDRESS, view.ADDRESS2)
+	v.Trigger(v.Sprintf(`CREATE TRIGGER address_refresh_full_address_trg AFTER INSERT OR UPDATE OR DELETE OR TRUNCATE ON {}
+FOR EACH STATEMENT EXECUTE PROCEDURE refresh_full_address();`, ADDRESS))
+	v.Trigger(v.Sprintf(`CREATE TRIGGER city_refresh_full_address_trg AFTER INSERT OR UPDATE OR DELETE OR TRUNCATE ON {}
+FOR EACH STATEMENT EXECUTE PROCEDURE refresh_full_address();`, CITY))
+	v.Trigger(v.Sprintf(`CREATE TRIGGER country_refresh_full_address_trg AFTER INSERT OR UPDATE OR DELETE OR TRUNCATE ON {}
+FOR EACH STATEMENT EXECUTE PROCEDURE refresh_full_address();`, COUNTRY))
 }

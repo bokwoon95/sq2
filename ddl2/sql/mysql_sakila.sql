@@ -131,7 +131,7 @@ CREATE TABLE IF NOT EXISTS film_actor (
 CREATE TABLE IF NOT EXISTS film_actor_review (
     film_id INT
     ,actor_id INT
-    ,review_title VARCHAR(50) NOT NULL DEFAULT '' COLLATE latin1_swedish_ci -- collate "C", collate nocase, collate latin1_swedish_ci
+    ,review_title VARCHAR(50) NOT NULL DEFAULT '' COLLATE latin1_swedish_ci
     ,review_body VARCHAR(255) NOT NULL DEFAULT ''
     ,metadata JSON
     ,last_update TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP

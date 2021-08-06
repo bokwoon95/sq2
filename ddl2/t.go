@@ -189,7 +189,7 @@ func (t *TColumn) NotNull() *TColumn {
 
 func (t *TColumn) PrimaryKey() *TColumn {
 	constraintName := generateName(PRIMARY_KEY, t.tbl.TableName, t.columnName)
-	_, err := createOrUpdateConstraint(t.tbl, PRIMARY_KEY, constraintName, []string{t.columnName}, "")
+	_, err := createOrUpdateConstraint(t.dialect, t.tbl, PRIMARY_KEY, constraintName, []string{t.columnName}, "")
 	if err != nil {
 		panicErr(fmt.Errorf("PrimaryKey: %w", err))
 	}
@@ -198,7 +198,7 @@ func (t *TColumn) PrimaryKey() *TColumn {
 
 func (t *TColumn) Unique() *TColumn {
 	constraintName := generateName(UNIQUE, t.tbl.TableName, t.columnName)
-	_, err := createOrUpdateConstraint(t.tbl, UNIQUE, constraintName, []string{t.columnName}, "")
+	_, err := createOrUpdateConstraint(t.dialect, t.tbl, UNIQUE, constraintName, []string{t.columnName}, "")
 	if err != nil {
 		panicErr(fmt.Errorf("Unique: %w", err))
 	}
@@ -232,8 +232,8 @@ func getColumnNames(fields []sq.Field) ([]string, error) {
 	return columnNames, nil
 }
 
-func createOrUpdateConstraint(tbl *Table, constraintType, constraintName string, columns []string, checkExpr string) (constraintPosition int, err error) {
-	if constraintName == "" {
+func createOrUpdateConstraint(dialect string, tbl *Table, constraintType, constraintName string, columns []string, checkExpr string) (constraintPosition int, err error) {
+	if dialect != sq.DialectSQLite && constraintName == "" {
 		return -1, fmt.Errorf("constraintName cannot be empty")
 	}
 	if constraintPosition = tbl.CachedConstraintPosition(constraintName); constraintPosition >= 0 {
@@ -267,7 +267,7 @@ func (t *T) Check(constraintName string, format string, values ...interface{}) *
 		tbl:            t.tbl,
 		constraintName: constraintName,
 	}
-	tConstraint.constraintPosition, err = createOrUpdateConstraint(t.tbl, CHECK, constraintName, nil, expr)
+	tConstraint.constraintPosition, err = createOrUpdateConstraint(t.dialect, t.tbl, CHECK, constraintName, nil, expr)
 	if err != nil {
 		panicErr(fmt.Errorf("Check: %w", err))
 	}
@@ -285,7 +285,7 @@ func (t *T) Unique(fields ...sq.Field) *TConstraint {
 		tbl:            t.tbl,
 		constraintName: constraintName,
 	}
-	tConstraint.constraintPosition, err = createOrUpdateConstraint(t.tbl, UNIQUE, constraintName, columnNames, "")
+	tConstraint.constraintPosition, err = createOrUpdateConstraint(t.dialect, t.tbl, UNIQUE, constraintName, columnNames, "")
 	if err != nil {
 		panicErr(fmt.Errorf("Unique: %w", err))
 	}
@@ -303,7 +303,7 @@ func (t *T) PrimaryKey(fields ...sq.Field) *TConstraint {
 		tbl:            t.tbl,
 		constraintName: constraintName,
 	}
-	tConstraint.constraintPosition, err = createOrUpdateConstraint(t.tbl, PRIMARY_KEY, constraintName, columnNames, "")
+	tConstraint.constraintPosition, err = createOrUpdateConstraint(t.dialect, t.tbl, PRIMARY_KEY, constraintName, columnNames, "")
 	if err != nil {
 		panicErr(fmt.Errorf("PrimaryKey: %w", err))
 	}
@@ -321,7 +321,7 @@ func (t *T) ForeignKey(fields ...sq.Field) *TConstraint {
 		tbl:            t.tbl,
 		constraintName: constraintName,
 	}
-	tConstraint.constraintPosition, err = createOrUpdateConstraint(t.tbl, FOREIGN_KEY, constraintName, columnNames, "")
+	tConstraint.constraintPosition, err = createOrUpdateConstraint(t.dialect, t.tbl, FOREIGN_KEY, constraintName, columnNames, "")
 	if err != nil {
 		panicErr(fmt.Errorf("ForeignKey: %w", err))
 	}
@@ -338,7 +338,7 @@ func (t *T) NameUnique(constraintName string, fields ...sq.Field) *TConstraint {
 		tbl:            t.tbl,
 		constraintName: constraintName,
 	}
-	tConstraint.constraintPosition, err = createOrUpdateConstraint(t.tbl, UNIQUE, constraintName, columnNames, "")
+	tConstraint.constraintPosition, err = createOrUpdateConstraint(t.dialect, t.tbl, UNIQUE, constraintName, columnNames, "")
 	if err != nil {
 		panicErr(fmt.Errorf("NameUnique: %w", err))
 	}
@@ -355,7 +355,7 @@ func (t *T) NamePrimaryKey(constraintName string, fields ...sq.Field) *TConstrai
 		tbl:            t.tbl,
 		constraintName: constraintName,
 	}
-	tConstraint.constraintPosition, err = createOrUpdateConstraint(t.tbl, PRIMARY_KEY, constraintName, columnNames, "")
+	tConstraint.constraintPosition, err = createOrUpdateConstraint(t.dialect, t.tbl, PRIMARY_KEY, constraintName, columnNames, "")
 	if err != nil {
 		panicErr(fmt.Errorf("NamePrimaryKey: %w", err))
 	}
@@ -372,7 +372,7 @@ func (t *T) NameForeignKey(constraintName string, fields ...sq.Field) *TConstrai
 		tbl:            t.tbl,
 		constraintName: constraintName,
 	}
-	tConstraint.constraintPosition, err = createOrUpdateConstraint(t.tbl, FOREIGN_KEY, constraintName, columnNames, "")
+	tConstraint.constraintPosition, err = createOrUpdateConstraint(t.dialect, t.tbl, FOREIGN_KEY, constraintName, columnNames, "")
 	if err != nil {
 		panicErr(fmt.Errorf("NameForeignKey: %w", err))
 	}
@@ -660,17 +660,19 @@ func (tbl *Table) LoadTable(dialect string, table sq.SchemaTable) (err error) {
 	for _, modifier := range modifiers {
 		switch modifier[0] {
 		case "virtual":
-			virtualTable, submodifiers, _, err := tokenizeValue(modifier[1])
-			if err != nil {
-				return fmt.Errorf("%s: %s", qualifiedTable, err.Error())
-			}
-			tbl.VirtualTable = virtualTable
-			for _, submodifier := range submodifiers {
-				virtualTableArg := submodifier[0]
-				if submodifier[1] != "" {
-					virtualTableArg += "=" + submodifier[1]
+			if dialect == sq.DialectSQLite {
+				virtualTable, submodifiers, _, err := tokenizeValue(modifier[1])
+				if err != nil {
+					return fmt.Errorf("%s: %s", qualifiedTable, err.Error())
 				}
-				tbl.VirtualTableArgs = append(tbl.VirtualTableArgs, virtualTableArg)
+				tbl.VirtualTable = virtualTable
+				for _, submodifier := range submodifiers {
+					virtualTableArg := submodifier[0]
+					if submodifier[1] != "" {
+						virtualTableArg += "=" + submodifier[1]
+					}
+					tbl.VirtualTableArgs = append(tbl.VirtualTableArgs, virtualTableArg)
+				}
 			}
 		case "primarykey":
 			err = tbl.LoadConstraintConfig(dialect, PRIMARY_KEY, tbl.TableSchema, tbl.TableName, nil, modifier[1])
@@ -712,6 +714,9 @@ func (tbl *Table) LoadTable(dialect string, table sq.SchemaTable) (err error) {
 		default:
 			return fmt.Errorf("%s: unknown modifier '%s'", qualifiedTable, modifier[0])
 		}
+	}
+	if tbl.Ignore {
+		return nil
 	}
 	for i := 0; i < tableValue.NumField(); i++ {
 		field, ok := tableValue.Field(i).Interface().(sq.Field)
