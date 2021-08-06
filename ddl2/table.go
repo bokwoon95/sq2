@@ -740,13 +740,34 @@ func (cmd *AlterTableCommand) AppendSQL(dialect string, buf *bytes.Buffer, args 
 	return nil
 }
 
-func decomposeAlterTableCommandSQLite(alterTableCmd *AlterTableCommand) ([]*AlterTableCommand, error) {
-	var alterTableCmds []AlterTableCommand
-	cmdPtrs := make([]*AlterTableCommand, len(alterTableCmds))
-	for i := range alterTableCmds {
-		cmdPtrs[i] = &alterTableCmds[i]
+func decomposeAlterTableCommandSQLite(alterTableCmd *AlterTableCommand) ([]Command, error) {
+	alterTableCmds := make([]AlterTableCommand, 0, len(alterTableCmd.AddColumnCommands)+len(alterTableCmd.DropColumnCommands)+len(alterTableCmd.RenameColumnCommands))
+	for _, addColumnCmd := range alterTableCmd.AddColumnCommands {
+		alterTableCmds = append(alterTableCmds, AlterTableCommand{
+			TableSchema:       alterTableCmd.TableSchema,
+			TableName:         alterTableCmd.TableName,
+			AddColumnCommands: []AddColumnCommand{addColumnCmd},
+		})
 	}
-	return cmdPtrs, nil
+	for _, dropColumnCmd := range alterTableCmd.DropColumnCommands {
+		alterTableCmds = append(alterTableCmds, AlterTableCommand{
+			TableSchema:        alterTableCmd.TableSchema,
+			TableName:          alterTableCmd.TableName,
+			DropColumnCommands: []DropColumnCommand{dropColumnCmd},
+		})
+	}
+	for _, renameColumnCmd := range alterTableCmd.RenameColumnCommands {
+		alterTableCmds = append(alterTableCmds, AlterTableCommand{
+			TableSchema:          alterTableCmd.TableSchema,
+			TableName:            alterTableCmd.TableName,
+			RenameColumnCommands: []RenameColumnCommand{renameColumnCmd},
+		})
+	}
+	cmds := make([]Command, len(alterTableCmds))
+	for i := range alterTableCmds {
+		cmds[i] = &alterTableCmds[i]
+	}
+	return cmds, nil
 }
 
 type RenameTableCommand struct {
