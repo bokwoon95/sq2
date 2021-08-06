@@ -375,7 +375,7 @@ func dropExtraneousObjects(m *Migration, mode MigrationMode, gotCatalog, wantCat
 				wantTable = wantSchema.Tables[n]
 			} else {
 				dropTableCmd.TableSchemas = append(dropTableCmd.TableSchemas, gotTable.TableSchema)
-				dropTableCmd.TableNames = append(dropTableCmd.TableSchemas, gotTable.TableName)
+				dropTableCmd.TableNames = append(dropTableCmd.TableNames, gotTable.TableName)
 				continue
 			}
 			alterTableCmd := AlterTableCommand{
