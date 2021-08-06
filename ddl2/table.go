@@ -740,7 +740,7 @@ func (cmd *AlterTableCommand) AppendSQL(dialect string, buf *bytes.Buffer, args 
 	return nil
 }
 
-func decomposeAlterTableCommandSQLite(alterTableCmd *AlterTableCommand) ([]Command, error) {
+func decomposeAlterTableCommandSQLite(alterTableCmd *AlterTableCommand) []Command {
 	alterTableCmds := make([]AlterTableCommand, 0, len(alterTableCmd.AddColumnCommands)+len(alterTableCmd.DropColumnCommands)+len(alterTableCmd.RenameColumnCommands))
 	for _, addColumnCmd := range alterTableCmd.AddColumnCommands {
 		alterTableCmds = append(alterTableCmds, AlterTableCommand{
@@ -767,7 +767,7 @@ func decomposeAlterTableCommandSQLite(alterTableCmd *AlterTableCommand) ([]Comma
 	for i := range alterTableCmds {
 		cmds[i] = &alterTableCmds[i]
 	}
-	return cmds, nil
+	return cmds
 }
 
 type RenameTableCommand struct {
@@ -842,4 +842,20 @@ func (cmd *DropTableCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *
 		buf.WriteString(" CASCADE")
 	}
 	return nil
+}
+
+func decomposeDropTableCommandSQLite(dropTableCmd *DropTableCommand) []Command {
+	dropTableCmds := make([]DropTableCommand, 0, len(dropTableCmd.TableNames))
+	for i, tableName := range dropTableCmd.TableNames {
+		dropTableCmds = append(dropTableCmds, DropTableCommand{
+			DropIfExists: dropTableCmd.DropIfExists,
+			TableSchemas: []string{dropTableCmd.TableSchemas[i]},
+			TableNames:   []string{tableName},
+		})
+	}
+	cmds := make([]Command, len(dropTableCmd.TableNames))
+	for i := range dropTableCmds {
+		cmds[i] = &dropTableCmds[i]
+	}
+	return cmds
 }

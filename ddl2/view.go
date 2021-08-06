@@ -174,7 +174,7 @@ type DropViewCommand struct {
 	DropCascade    bool
 }
 
-func (cmd DropViewCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
+func (cmd *DropViewCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
 	buf.WriteString("DROP ")
 	if cmd.IsMaterialized {
 		if dialect != sq.DialectPostgres {
@@ -205,6 +205,22 @@ func (cmd DropViewCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *[]
 		buf.WriteString(" CASCADE")
 	}
 	return nil
+}
+
+func decomposeDropViewCommandSQLite(dropViewCmd *DropViewCommand) []Command {
+	dropTableCmds := make([]DropTableCommand, 0, len(dropViewCmd.ViewNames))
+	for i, viewName := range dropViewCmd.ViewNames {
+		dropTableCmds = append(dropTableCmds, DropTableCommand{
+			DropIfExists: dropViewCmd.DropIfExists,
+			TableSchemas: []string{dropViewCmd.ViewSchemas[i]},
+			TableNames:   []string{viewName},
+		})
+	}
+	cmds := make([]Command, len(dropViewCmd.ViewNames))
+	for i := range dropTableCmds {
+		cmds[i] = &dropTableCmds[i]
+	}
+	return cmds
 }
 
 type RenameViewCommand struct {
