@@ -673,29 +673,41 @@ func (tbl *Table) LoadTable(dialect string, table sq.SchemaTable) (err error) {
 				tbl.VirtualTableArgs = append(tbl.VirtualTableArgs, virtualTableArg)
 			}
 		case "primarykey":
-			err = tbl.LoadConstraintConfig(PRIMARY_KEY, tbl.TableSchema, tbl.TableName, nil, modifier[1])
+			err = tbl.LoadConstraintConfig(dialect, PRIMARY_KEY, tbl.TableSchema, tbl.TableName, nil, modifier[1])
 			if err != nil {
 				return fmt.Errorf("%s: %s", qualifiedTable, err.Error())
 			}
 		case "references":
-			err = tbl.LoadConstraintConfig(FOREIGN_KEY, tbl.TableSchema, tbl.TableName, nil, modifier[1])
+			err = tbl.LoadConstraintConfig(dialect, FOREIGN_KEY, tbl.TableSchema, tbl.TableName, nil, modifier[1])
 			if err != nil {
 				return fmt.Errorf("%s: %s", qualifiedTable, err.Error())
 			}
 		case "unique":
-			err = tbl.LoadConstraintConfig(UNIQUE, tbl.TableSchema, tbl.TableName, nil, modifier[1])
+			err = tbl.LoadConstraintConfig(dialect, UNIQUE, tbl.TableSchema, tbl.TableName, nil, modifier[1])
 			if err != nil {
 				return fmt.Errorf("%s: %s", qualifiedTable, err.Error())
 			}
 		case "check":
-			err = tbl.LoadConstraintConfig(CHECK, tbl.TableSchema, tbl.TableName, nil, modifier[1])
+			err = tbl.LoadConstraintConfig(dialect, CHECK, tbl.TableSchema, tbl.TableName, nil, modifier[1])
 			if err != nil {
 				return fmt.Errorf("%s: %s", qualifiedTable, err.Error())
 			}
 		case "index":
-			err = tbl.LoadIndexConfig(tbl.TableSchema, tbl.TableName, nil, modifier[1])
+			err = tbl.LoadIndexConfig(dialect, tbl.TableSchema, tbl.TableName, nil, modifier[1])
 			if err != nil {
 				return fmt.Errorf("%s: %s", qualifiedTable, err.Error())
+			}
+		case "ignore":
+			if modifier[1] == "" {
+				tbl.Ignore = true
+			} else {
+				ignoredDialects := strings.Split(modifier[1], ",")
+				for _, ignoredDialect := range ignoredDialects {
+					if dialect == ignoredDialect {
+						tbl.Ignore = true
+						break
+					}
+				}
 			}
 		default:
 			return fmt.Errorf("%s: unknown modifier '%s'", qualifiedTable, modifier[0])

@@ -68,7 +68,7 @@ func Migrate(mode MigrationMode, gotCatalog, wantCatalog Catalog) (Migration, er
 	if mode&CreateMissing != 0 {
 		if len(wantCatalog.Extensions) > 0 {
 			if m.Dialect != sq.DialectPostgres {
-				return m, fmt.Errorf("%w dialect=%s feature=extensions", ErrUnsupportedFeature, m.Dialect)
+				return m, fmt.Errorf("{%w} dialect=%s feature=extensions", ErrUnsupportedFeature, m.Dialect)
 			}
 			for _, wantExtension := range wantCatalog.Extensions {
 				if n := gotCatalog.CachedExtensionPosition(wantExtension); n < 0 {
@@ -81,6 +81,9 @@ func Migrate(mode MigrationMode, gotCatalog, wantCatalog Catalog) (Migration, er
 			}
 		}
 		for _, wantSchema := range wantCatalog.Schemas {
+			if wantSchema.Ignore {
+				continue
+			}
 			err = migrateSchema(&m, mode, gotCatalog, wantSchema)
 			if err != nil {
 				return m, err
@@ -124,10 +127,15 @@ func migrateSchema(m *Migration, mode MigrationMode, gotCatalog Catalog, wantSch
 			return err
 		}
 	}
-	for _, wantFunction := range wantSchema.Functions {
-		err = migrateFunction(m, mode, gotSchema, wantFunction)
-		if err != nil {
-			return err
+	if len(wantSchema.Functions) > 0 {
+		if m.Dialect != sq.DialectPostgres && m.Dialect != sq.DialectMySQL {
+			return fmt.Errorf("{%w} dialect=%s feature=functions", ErrUnsupportedFeature, m.Dialect)
+		}
+		for _, wantFunction := range wantSchema.Functions {
+			err = migrateFunction(m, mode, gotSchema, wantFunction)
+			if err != nil {
+				return err
+			}
 		}
 	}
 	return nil
@@ -137,10 +145,16 @@ func migrateTable(m *Migration, mode MigrationMode, gotSchema Schema, wantTable 
 	var err error
 	var gotTable Table
 	var createTableCmd *CreateTableCommand
+	var alterTableCmd *AlterTableCommand
+	var fkeyCmd *AlterTableCommand
 	if n := gotSchema.CachedTablePosition(wantTable.TableName); n >= 0 {
 		gotTable = gotSchema.Tables[n]
+		alterTableCmd = &AlterTableCommand{
+			TableSchema: wantTable.TableSchema,
+			TableName:   wantTable.TableName,
+		}
 		for _, wantColumn := range wantTable.Columns {
-			err = migrateColumn(m, mode, gotTable, wantColumn)
+			err = migrateColumn(m.Dialect, alterTableCmd, mode, gotTable, wantColumn)
 			if err != nil {
 				return err
 			}
@@ -153,22 +167,28 @@ func migrateTable(m *Migration, mode MigrationMode, gotSchema Schema, wantTable 
 			IncludeConstraints: true,
 			Table:              wantTable,
 		}
-		m.TableCommands = append(m.TableCommands, createTableCmd)
 	}
-	for _, wantConstraint := range wantTable.Constraints {
-		err = migrateConstraint(m, mode, gotTable, wantConstraint)
-		if err != nil {
-			return err
+	if len(wantTable.Constraints) > 0 && createTableCmd == nil {
+		for _, wantConstraint := range wantTable.Constraints {
+			switch wantConstraint.ConstraintType {
+			case FOREIGN_KEY:
+				if fkeyCmd == nil {
+					fkeyCmd = &AlterTableCommand{TableSchema: wantTable.TableSchema, TableName: wantTable.TableName}
+				}
+				err = migrateConstraint(m.Dialect, fkeyCmd, mode, gotTable, wantConstraint)
+				if err != nil {
+					return err
+				}
+			default:
+				err = migrateConstraint(m.Dialect, alterTableCmd, mode, gotTable, wantConstraint)
+				if err != nil {
+					return err
+				}
+			}
 		}
 	}
 	for _, wantIndex := range wantTable.Indexes {
-		if m.Dialect == sq.DialectMySQL && createTableCmd != nil {
-			createTableCmd.CreateIndexCommands = append(createTableCmd.CreateIndexCommands, CreateIndexCommand{
-				Index: wantIndex,
-			})
-			continue
-		}
-		err = migrateTableIndex(m, mode, gotTable, wantIndex)
+		err = migrateTableIndex(m.Dialect, alterTableCmd, mode, gotTable, wantIndex)
 		if err != nil {
 			return err
 		}
@@ -179,15 +199,38 @@ func migrateTable(m *Migration, mode MigrationMode, gotSchema Schema, wantTable 
 			return err
 		}
 	}
+	if m.Dialect == sq.DialectPostgres {
+		if alterTableCmd != nil {
+			alterTableCmd.AlterIfExists = true
+		}
+		if fkeyCmd != nil {
+			fkeyCmd.AlterIfExists = true
+		}
+	}
+	if createTableCmd != nil {
+		m.TableCommands = append(m.TableCommands, createTableCmd)
+	}
+	if alterTableCmd != nil {
+		switch m.Dialect {
+		case sq.DialectSQLite:
+			alterTableCmds, err := decomposeAlterTableCommandSQLite(alterTableCmd)
+			if err != nil {
+				return err
+			}
+			_ = alterTableCmds
+		case sq.DialectPostgres:
+		case sq.DialectMySQL:
+		}
+	}
+	if fkeyCmd != nil {
+	}
 	return nil
 }
 
 func migrateView(m *Migration, mode MigrationMode, gotSchema Schema, wantView View) error {
 	var err error
 	var gotView View
-	if n := gotSchema.CachedViewPosition(wantView.ViewName); n >= 0 {
-		gotView = gotSchema.Views[n]
-	} else {
+	if n := gotSchema.CachedViewPosition(wantView.ViewName); n < 0 {
 		gotView.ViewSchema = wantView.ViewSchema
 		gotView.ViewName = wantView.ViewName
 		createViewCmd := &CreateViewCommand{View: wantView}
@@ -198,29 +241,52 @@ func migrateView(m *Migration, mode MigrationMode, gotSchema Schema, wantView Vi
 			createViewCmd.CreateIfNotExists = true
 		}
 		m.ViewCommands = append(m.ViewCommands, createViewCmd)
-	}
-	for _, wantIndex := range wantView.Indexes {
-		err = migrateViewIndex(m, mode, gotView, wantIndex)
-		if err != nil {
-			return err
+		if wantView.IsMaterialized {
+			if m.Dialect != sq.DialectPostgres {
+				return fmt.Errorf("{%w} dialect=%s feature={materialized views}", ErrUnsupportedFeature, m.Dialect)
+			}
+			for _, wantIndex := range wantView.Indexes {
+				err = migrateViewIndex(m, mode, gotView, wantIndex)
+				if err != nil {
+					return err
+				}
+			}
+			for _, wantTrigger := range wantView.Triggers {
+				err = migrateViewTrigger(m, mode, gotView, wantTrigger)
+				if err != nil {
+					return err
+				}
+			}
 		}
 	}
 	return nil
 }
 
 func migrateFunction(m *Migration, mode MigrationMode, gotSchema Schema, wantFunction Function) error {
+	if positions := gotSchema.CachedFunctionPositions(wantFunction.FunctionName); len(positions) == 0 {
+		createFunctionCmd := &CreateFunctionCommand{Function: wantFunction}
+		if wantFunction.IsIndependent {
+			m.IndependentFunctionCommands = append(m.IndependentFunctionCommands, createFunctionCmd)
+		} else {
+			m.FunctionCommands = append(m.FunctionCommands, createFunctionCmd)
+		}
+	}
 	return nil
 }
 
-func migrateColumn(m *Migration, mode MigrationMode, gotTable Table, wantColumn Column) error {
+func migrateColumn(dialect string, alterTableCmd *AlterTableCommand, mode MigrationMode, gotTable Table, wantColumn Column) error {
 	return nil
 }
 
-func migrateConstraint(m *Migration, mode MigrationMode, gotTable Table, wantConstraint Constraint) error {
+func migrateConstraint(dialect string, alterTableCmd *AlterTableCommand, mode MigrationMode, gotTable Table, wantConstraint Constraint) error {
+	if n := gotTable.CachedConstraintPosition(wantConstraint.ConstraintName); n < 0 {
+	}
 	return nil
 }
 
-func migrateTableIndex(m *Migration, mode MigrationMode, gotTable Table, wantIndex Index) error {
+func migrateTableIndex(dialect string, alterTableCmd *AlterTableCommand, mode MigrationMode, gotTable Table, wantIndex Index) error {
+	if n := gotTable.CachedIndexPosition(wantIndex.IndexName); n < 0 {
+	}
 	return nil
 }
 
@@ -232,7 +298,7 @@ func migrateViewIndex(m *Migration, mode MigrationMode, gotView View, wantIndex 
 	return nil
 }
 
-func migrateViewTrigger(m *Migration, mode MigrationMode, gotTable Table, wantTrigger Trigger) error {
+func migrateViewTrigger(m *Migration, mode MigrationMode, gotView View, wantTrigger Trigger) error {
 	return nil
 }
 

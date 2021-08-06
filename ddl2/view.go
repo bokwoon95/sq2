@@ -27,7 +27,12 @@ func (view *View) CachedIndexPosition(indexName string) (indexPosition int) {
 	if !ok {
 		return -1
 	}
-	if indexPosition < 0 || indexPosition >= len(view.Indexes) || view.Indexes[indexPosition].IndexName != indexName {
+	if indexPosition < 0 || indexPosition >= len(view.Indexes) {
+		delete(view.indexCache, indexName)
+		return -1
+	}
+	index := view.Indexes[indexPosition]
+	if index.IndexName != indexName || index.Ignore {
 		delete(view.indexCache, indexName)
 		return -1
 	}
@@ -49,6 +54,9 @@ func (view *View) RefreshIndexCache() {
 		view.indexCache = make(map[string]int)
 	}
 	for i, index := range view.Indexes {
+		if view.Ignore {
+			continue
+		}
 		view.indexCache[index.IndexName] = i
 	}
 }
@@ -67,7 +75,7 @@ func (view *View) CachedTriggerPosition(tableSchema, tableName, triggerName stri
 		return -1
 	}
 	trigger := view.Triggers[triggerPosition]
-	if trigger.TableSchema != tableSchema || trigger.TableName != tableName || trigger.TriggerName != triggerName {
+	if trigger.TableSchema != tableSchema || trigger.TableName != tableName || trigger.TriggerName != triggerName || trigger.Ignore {
 		delete(view.triggerCache, key)
 		return -1
 	}
@@ -90,6 +98,9 @@ func (view *View) RefreshTriggerCache() {
 		view.triggerCache = make(map[[3]string]int)
 	}
 	for i, trigger := range view.Triggers {
+		if trigger.Ignore {
+			continue
+		}
 		key := [3]string{trigger.TableSchema, trigger.TableName, trigger.TriggerName}
 		view.triggerCache[key] = i
 	}

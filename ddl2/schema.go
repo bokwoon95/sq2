@@ -26,7 +26,12 @@ func (s *Schema) CachedTablePosition(tableName string) (tablePosition int) {
 	if !ok {
 		return -1
 	}
-	if tablePosition < 0 || tablePosition >= len(s.Tables) || s.Tables[tablePosition].TableName != tableName {
+	if tablePosition < 0 || tablePosition >= len(s.Tables) {
+		delete(s.tableCache, tableName)
+		return -1
+	}
+	tbl := s.Tables[tablePosition]
+	if tbl.TableName != tableName || tbl.Ignore {
 		delete(s.tableCache, tableName)
 		return -1
 	}
@@ -48,6 +53,9 @@ func (s *Schema) RefreshTableCache() {
 		s.tableCache = make(map[string]int)
 	}
 	for n, table := range s.Tables {
+		if table.Ignore {
+			continue
+		}
 		s.tableCache[table.TableName] = n
 	}
 }
@@ -60,7 +68,12 @@ func (s *Schema) CachedViewPosition(viewName string) (viewPosition int) {
 	if !ok {
 		return -1
 	}
-	if viewPosition < 0 || viewPosition >= len(s.Views) || s.Views[viewPosition].ViewName != viewName {
+	if viewPosition < 0 || viewPosition >= len(s.Views) {
+		delete(s.viewCache, viewName)
+		return -1
+	}
+	view := s.Views[viewPosition]
+	if view.ViewName != viewName || view.Ignore {
 		delete(s.viewCache, viewName)
 		return -1
 	}
@@ -82,6 +95,9 @@ func (s *Schema) RefreshViewCache() {
 		s.viewCache = make(map[string]int)
 	}
 	for n, view := range s.Views {
+		if view.Ignore {
+			continue
+		}
 		s.viewCache[view.ViewName] = n
 	}
 	return
@@ -130,6 +146,9 @@ func (s *Schema) RefreshFunctionCache() {
 		s.functionCache[functionName] = value[:0]
 	}
 	for n, function := range s.Functions {
+		if function.Ignore {
+			continue
+		}
 		s.functionCache[function.FunctionName] = append(s.functionCache[function.FunctionName], n)
 	}
 }

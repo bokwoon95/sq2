@@ -33,7 +33,12 @@ func (tbl *Table) CachedColumnPosition(columnName string) (columnPosition int) {
 	if !ok {
 		return -1
 	}
-	if columnPosition < 0 || columnPosition >= len(tbl.Columns) || tbl.Columns[columnPosition].ColumnName != columnName {
+	if columnPosition < 0 || columnPosition >= len(tbl.Columns) {
+		delete(tbl.columnCache, columnName)
+		return -1
+	}
+	column := tbl.Columns[columnPosition]
+	if column.ColumnName != columnName || column.Ignore {
 		delete(tbl.columnCache, columnName)
 		return -1
 	}
@@ -55,6 +60,9 @@ func (tbl *Table) RefreshColumnCache() {
 		tbl.columnCache = make(map[string]int)
 	}
 	for i, column := range tbl.Columns {
+		if column.Ignore {
+			continue
+		}
 		tbl.columnCache[column.ColumnName] = i
 	}
 }
@@ -67,7 +75,12 @@ func (tbl *Table) CachedConstraintPosition(constraintName string) (constraintPos
 	if !ok {
 		return -1
 	}
-	if constraintPosition < 0 || constraintPosition >= len(tbl.Constraints) || tbl.Constraints[constraintPosition].ConstraintName != constraintName {
+	if constraintPosition < 0 || constraintPosition >= len(tbl.Constraints) {
+		delete(tbl.constraintCache, constraintName)
+		return -1
+	}
+	constraint := tbl.Constraints[constraintPosition]
+	if constraint.ConstraintName != constraintName || constraint.Ignore {
 		delete(tbl.constraintCache, constraintName)
 		return -1
 	}
@@ -89,6 +102,9 @@ func (tbl *Table) RefreshConstraintCache() {
 		tbl.constraintCache = make(map[string]int)
 	}
 	for i, constraint := range tbl.Constraints {
+		if constraint.Ignore {
+			continue
+		}
 		tbl.constraintCache[constraint.ConstraintName] = i
 	}
 }
@@ -101,7 +117,12 @@ func (tbl *Table) CachedIndexPosition(indexName string) (indexPosition int) {
 	if !ok {
 		return -1
 	}
-	if indexPosition < 0 || indexPosition >= len(tbl.Indexes) || tbl.Indexes[indexPosition].IndexName != indexName {
+	if indexPosition < 0 || indexPosition >= len(tbl.Indexes) {
+		delete(tbl.indexCache, indexName)
+		return -1
+	}
+	index := tbl.Indexes[indexPosition]
+	if index.IndexName != indexName || index.Ignore {
 		delete(tbl.indexCache, indexName)
 		return -1
 	}
@@ -123,6 +144,9 @@ func (tbl *Table) RefreshIndexesCache() {
 		tbl.indexCache = make(map[string]int)
 	}
 	for i, index := range tbl.Indexes {
+		if index.Ignore {
+			continue
+		}
 		tbl.indexCache[index.IndexName] = i
 	}
 }
@@ -135,7 +159,12 @@ func (tbl *Table) CachedTriggerPosition(triggerName string) (triggerPosition int
 	if !ok {
 		return -1
 	}
-	if triggerPosition < 0 || triggerPosition >= len(tbl.Triggers) || tbl.Triggers[triggerPosition].TriggerName != triggerName {
+	if triggerPosition < 0 || triggerPosition >= len(tbl.Triggers) {
+		delete(tbl.triggerCache, triggerName)
+		return -1
+	}
+	trigger := tbl.Triggers[triggerPosition]
+	if trigger.TriggerName != triggerName || trigger.Ignore {
 		delete(tbl.triggerCache, triggerName)
 		return -1
 	}
@@ -157,11 +186,14 @@ func (tbl *Table) RefreshTriggerCache() {
 		tbl.triggerCache = make(map[string]int)
 	}
 	for i, trigger := range tbl.Triggers {
+		if trigger.Ignore {
+			continue
+		}
 		tbl.triggerCache[trigger.TriggerName] = i
 	}
 }
 
-func (tbl *Table) LoadIndexConfig(tableSchema, tableName string, columns []string, config string) error {
+func (tbl *Table) LoadIndexConfig(dialect, tableSchema, tableName string, columns []string, config string) error {
 	indexName, modifiers, modifierPositions, err := tokenizeValue(config)
 	if err != nil {
 		return err
@@ -200,6 +232,18 @@ func (tbl *Table) LoadIndexConfig(tableSchema, tableName string, columns []strin
 			index.Predicate = modifier[1]
 		case "include":
 			index.IncludeColumns = strings.Split(modifier[1], ",")
+		case "ignore":
+			if modifier[1] == "" {
+				index.Ignore = true
+			} else {
+				ignoredDialects := strings.Split(modifier[1], ",")
+				for _, ignoredDialect := range ignoredDialects {
+					if dialect == ignoredDialect {
+						index.Ignore = true
+						break
+					}
+				}
+			}
 		default:
 			return fmt.Errorf("invalid modifier 'index.%s'", modifier[0])
 		}
@@ -207,7 +251,7 @@ func (tbl *Table) LoadIndexConfig(tableSchema, tableName string, columns []strin
 	return nil
 }
 
-func (tbl *Table) LoadConstraintConfig(constraintType, tableSchema, tableName string, columns []string, config string) error {
+func (tbl *Table) LoadConstraintConfig(dialect, constraintType, tableSchema, tableName string, columns []string, config string) error {
 	value, modifiers, modifierPositions, err := tokenizeValue(config)
 	if err != nil {
 		return err
@@ -298,6 +342,18 @@ func (tbl *Table) LoadConstraintConfig(constraintType, tableSchema, tableName st
 			constraint.IsDeferrable = true
 		case "deferred":
 			constraint.IsInitiallyDeferred = true
+		case "ignore":
+			if modifier[1] == "" {
+				constraint.Ignore = true
+			} else {
+				ignoredDialects := strings.Split(modifier[1], ",")
+				for _, ignoredDialect := range ignoredDialects {
+					if dialect == ignoredDialect {
+						constraint.Ignore = true
+						break
+					}
+				}
+			}
 		default:
 			return fmt.Errorf("invalid modifier 'check.%s'", modifier[0])
 		}
@@ -368,32 +424,42 @@ func (tbl *Table) LoadColumnConfig(dialect, columnName, columnType, config strin
 			} else {
 				column.ColumnDefault = modifier[1]
 			}
-		case "ignore":
-			column.Ignore = true
 		case "primarykey":
-			err = tbl.LoadConstraintConfig(PRIMARY_KEY, column.TableSchema, column.TableName, []string{column.ColumnName}, modifier[1])
+			err = tbl.LoadConstraintConfig(dialect, PRIMARY_KEY, column.TableSchema, column.TableName, []string{column.ColumnName}, modifier[1])
 			if err != nil {
 				return fmt.Errorf("%s: %s", qualifiedColumn, err.Error())
 			}
 		case "references":
-			err = tbl.LoadConstraintConfig(FOREIGN_KEY, column.TableSchema, column.TableName, []string{column.ColumnName}, modifier[1])
+			err = tbl.LoadConstraintConfig(dialect, FOREIGN_KEY, column.TableSchema, column.TableName, []string{column.ColumnName}, modifier[1])
 			if err != nil {
 				return fmt.Errorf("%s: %s", qualifiedColumn, err.Error())
 			}
 		case "unique":
-			err = tbl.LoadConstraintConfig(UNIQUE, column.TableSchema, column.TableName, []string{column.ColumnName}, modifier[1])
+			err = tbl.LoadConstraintConfig(dialect, UNIQUE, column.TableSchema, column.TableName, []string{column.ColumnName}, modifier[1])
 			if err != nil {
 				return fmt.Errorf("%s: %s", qualifiedColumn, err.Error())
 			}
 		case "check":
-			err = tbl.LoadConstraintConfig(CHECK, column.TableSchema, column.TableName, []string{column.ColumnName}, modifier[1])
+			err = tbl.LoadConstraintConfig(dialect, CHECK, column.TableSchema, column.TableName, []string{column.ColumnName}, modifier[1])
 			if err != nil {
 				return fmt.Errorf("%s: %s", qualifiedColumn, err.Error())
 			}
 		case "index":
-			err = tbl.LoadIndexConfig(column.TableSchema, column.TableName, []string{column.ColumnName}, modifier[1])
+			err = tbl.LoadIndexConfig(dialect, column.TableSchema, column.TableName, []string{column.ColumnName}, modifier[1])
 			if err != nil {
 				return fmt.Errorf("%s: %s", qualifiedColumn, err.Error())
+			}
+		case "ignore":
+			if modifier[1] == "" {
+				column.Ignore = true
+			} else {
+				ignoredDialects := strings.Split(modifier[1], ",")
+				for _, ignoredDialect := range ignoredDialects {
+					if dialect == ignoredDialect {
+						column.Ignore = true
+						break
+					}
+				}
 			}
 		default:
 			return fmt.Errorf("%s: unknown modifier '%s'", qualifiedColumn, modifier[0])
@@ -648,6 +714,9 @@ func (cmd *AlterTableCommand) AppendSQL(dialect string, buf *bytes.Buffer, args 
 	}
 	for _, createIndexCmd := range cmd.CreateIndexCommands {
 		writeNewLine()
+		if dialect == sq.DialectMySQL {
+			buf.WriteString("ADD ")
+		}
 		err := createIndexCmd.AppendSQL(dialect, buf, args, params)
 		if err != nil {
 			return fmt.Errorf("ALTER TABLE INDEX %s: %w", createIndexCmd.Index.IndexName, err)
@@ -669,6 +738,15 @@ func (cmd *AlterTableCommand) AppendSQL(dialect string, buf *bytes.Buffer, args 
 	}
 	buf.WriteString("\n")
 	return nil
+}
+
+func decomposeAlterTableCommandSQLite(alterTableCmd *AlterTableCommand) ([]*AlterTableCommand, error) {
+	var alterTableCmds []AlterTableCommand
+	cmdPtrs := make([]*AlterTableCommand, len(alterTableCmds))
+	for i := range alterTableCmds {
+		cmdPtrs[i] = &alterTableCmds[i]
+	}
+	return cmdPtrs, nil
 }
 
 type RenameTableCommand struct {

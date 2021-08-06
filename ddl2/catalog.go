@@ -25,7 +25,12 @@ func (c *Catalog) CachedSchemaPosition(schemaName string) (schemaPosition int) {
 	if !ok {
 		return -1
 	}
-	if schemaPosition < 0 || schemaPosition >= len(c.Schemas) || c.Schemas[schemaPosition].SchemaName != schemaName {
+	if schemaPosition < 0 || schemaPosition >= len(c.Schemas) {
+		delete(c.schemaCache, schemaName)
+		return -1
+	}
+	schema := c.Schemas[schemaPosition]
+	if schema.SchemaName != schemaName || schema.Ignore {
 		delete(c.schemaCache, schemaName)
 		return -1
 	}
@@ -47,6 +52,9 @@ func (c *Catalog) RefreshSchemaCache() {
 		c.schemaCache = make(map[string]int)
 	}
 	for n, schema := range c.Schemas {
+		if schema.Ignore {
+			continue
+		}
 		c.schemaCache[schema.SchemaName] = n
 	}
 }
