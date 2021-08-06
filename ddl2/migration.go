@@ -360,6 +360,10 @@ func dropExtraneousObjects(m *Migration, mode MigrationMode, gotCatalog, wantCat
 		DropIfExists: true,
 		DropCascade:  mode&DropCascade != 0,
 	}
+	dropMatViewCmd := DropViewCommand{
+		IsMaterialized: true,
+		DropCascade:    mode&DropCascade != 0,
+	}
 	var alterTableCmds []AlterTableCommand // drop columns, drop constraints, drop indexes (mysql only)
 	var dropIndexCmds []Command
 	var dropTriggerCmds []Command
@@ -449,8 +453,13 @@ func dropExtraneousObjects(m *Migration, mode MigrationMode, gotCatalog, wantCat
 		// drop views
 		for _, gotView := range gotSchema.Views {
 			if n := wantSchema.CachedViewPosition(gotView.ViewName); n < 0 {
-				dropViewCmd.ViewSchemas = append(dropViewCmd.ViewSchemas, gotView.ViewSchema)
-				dropViewCmd.ViewNames = append(dropViewCmd.ViewNames, gotView.ViewName)
+				if gotView.IsMaterialized {
+					dropMatViewCmd.ViewSchemas = append(dropMatViewCmd.ViewSchemas, gotView.ViewSchema)
+					dropMatViewCmd.ViewNames = append(dropMatViewCmd.ViewNames, gotView.ViewName)
+				} else {
+					dropViewCmd.ViewSchemas = append(dropViewCmd.ViewSchemas, gotView.ViewSchema)
+					dropViewCmd.ViewNames = append(dropViewCmd.ViewNames, gotView.ViewName)
+				}
 			}
 		}
 	}
@@ -467,8 +476,15 @@ func dropExtraneousObjects(m *Migration, mode MigrationMode, gotCatalog, wantCat
 		for _, alterTableCmd := range alterTableCmds {
 			m.DropCommands = append(m.DropCommands, &alterTableCmd)
 		}
-		m.DropCommands = append(m.DropCommands, &dropViewCmd)
-		m.DropCommands = append(m.DropCommands, &dropTableCmd)
+		if len(dropViewCmd.ViewNames) > 0 {
+			m.DropCommands = append(m.DropCommands, &dropViewCmd)
+		}
+		if len(dropMatViewCmd.ViewNames) > 0 {
+			m.DropCommands = append(m.DropCommands, &dropMatViewCmd)
+		}
+		if len(dropTableCmd.TableNames) > 0 {
+			m.DropCommands = append(m.DropCommands, &dropTableCmd)
+		}
 	}
 	return nil
 }
@@ -524,7 +540,7 @@ func (m *Migration) WriteSQL(w io.Writer) error {
 			} else {
 				io.WriteString(w, "\n\n")
 			}
-			io.WriteString(w, query)
+			io.WriteString(w, query+";")
 		}
 	}
 	return nil

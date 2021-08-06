@@ -827,7 +827,9 @@ func (cmd *DropTableCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *
 	}
 	for i, tableName := range cmd.TableNames {
 		if i > 0 {
-			buf.WriteString(", ")
+			buf.WriteString("\n    ,")
+		} else if len(cmd.TableNames) > 1 {
+			buf.WriteString("\n    ")
 		}
 		tableSchema := cmd.TableSchemas[i]
 		if tableSchema != "" {
@@ -839,7 +841,12 @@ func (cmd *DropTableCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *
 		if dialect != sq.DialectPostgres && dialect != sq.DialectMySQL {
 			return fmt.Errorf("%s does not support DROP TABLE ... CASCADE", dialect)
 		}
-		buf.WriteString(" CASCADE")
+		if len(cmd.TableNames) > 1 {
+			buf.WriteString("\n")
+		} else {
+			buf.WriteString(" ")
+		}
+		buf.WriteString("CASCADE")
 	}
 	return nil
 }

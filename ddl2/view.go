@@ -191,7 +191,9 @@ func (cmd *DropViewCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *[
 	}
 	for i, viewSchema := range cmd.ViewSchemas {
 		if i > 0 {
-			buf.WriteString(", ")
+			buf.WriteString("\n    ,")
+		} else if len(cmd.ViewNames) > 1 {
+			buf.WriteString("\n    ")
 		}
 		if viewSchema != "" {
 			buf.WriteString(sq.QuoteIdentifier(dialect, viewSchema) + ".")
@@ -202,7 +204,12 @@ func (cmd *DropViewCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *[
 		if dialect == sq.DialectSQLite {
 			return fmt.Errorf("sqlite does not support DROP VIEW CASCADE")
 		}
-		buf.WriteString(" CASCADE")
+		if len(cmd.ViewNames) > 1 {
+			buf.WriteString("\n")
+		} else {
+			buf.WriteString(" ")
+		}
+		buf.WriteString("CASCADE")
 	}
 	return nil
 }

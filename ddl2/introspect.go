@@ -119,7 +119,8 @@ func (dbi *DatabaseIntrospector) GetVersionNums(ctx context.Context) (versionNum
 			return nil, err
 		}
 	case sq.DialectPostgres:
-		rows, err = dbi.db.QueryContext(ctx, "SELECT current_settings('server_version')")
+		// rows, err = dbi.db.QueryContext(ctx, "SELECT current_settings('server_version')")
+		rows, err = dbi.db.QueryContext(ctx, "SHOW server_version")
 		if err != nil {
 			return nil, err
 		}
