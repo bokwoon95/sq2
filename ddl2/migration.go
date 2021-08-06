@@ -44,11 +44,11 @@ func AutoMigrate(dialect string, db sq.DB, migrationMode MigrationMode, opts ...
 	if err != nil {
 		return fmt.Errorf("building catalog: %w", err)
 	}
-	m, err := Migrate(migrationMode, gotCatalog, wantCatalog)
+	migration, err := Migrate(migrationMode, gotCatalog, wantCatalog)
 	if err != nil {
 		return fmt.Errorf("building migration: %w", err)
 	}
-	err = m.Exec(db)
+	err = migration.Exec(db)
 	if err != nil {
 		return fmt.Errorf("executing migration: %w", err)
 	}
@@ -574,8 +574,11 @@ func (m *Migration) ExecContext(ctx context.Context, db sq.DB) error {
 		m.IndexCommands,
 		m.TriggerCommands,
 		m.ForeignKeyCommands,
+		m.RenameCommands,
+		m.DropCommands,
 	} {
-		for _, cmd := range cmds {
+		for i, cmd := range cmds {
+			_ = i
 			query, args, _, err := sq.ToSQL(m.Dialect, cmd)
 			if err != nil {
 				return fmt.Errorf("building command (%s): %w", query, err)

@@ -215,12 +215,12 @@ func (cmd *DropViewCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *[
 }
 
 func decomposeDropViewCommandSQLite(dropViewCmd *DropViewCommand) []Command {
-	dropTableCmds := make([]DropTableCommand, 0, len(dropViewCmd.ViewNames))
+	dropTableCmds := make([]DropViewCommand, 0, len(dropViewCmd.ViewNames))
 	for i, viewName := range dropViewCmd.ViewNames {
-		dropTableCmds = append(dropTableCmds, DropTableCommand{
+		dropTableCmds = append(dropTableCmds, DropViewCommand{
 			DropIfExists: dropViewCmd.DropIfExists,
-			TableSchemas: []string{dropViewCmd.ViewSchemas[i]},
-			TableNames:   []string{viewName},
+			ViewSchemas:  []string{dropViewCmd.ViewSchemas[i]},
+			ViewNames:    []string{viewName},
 		})
 	}
 	cmds := make([]Command, len(dropViewCmd.ViewNames))
