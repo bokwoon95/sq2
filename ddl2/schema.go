@@ -47,8 +47,8 @@ func (s *Schema) RefreshTableCache() {
 	if s.tableCache == nil && len(s.Tables) > 0 {
 		s.tableCache = make(map[string]int)
 	}
-	for i, table := range s.Tables {
-		s.tableCache[table.TableName] = i
+	for n, table := range s.Tables {
+		s.tableCache[table.TableName] = n
 	}
 }
 
@@ -81,8 +81,8 @@ func (s *Schema) RefreshViewCache() {
 	if s.viewCache == nil && len(s.Views) > 0 {
 		s.viewCache = make(map[string]int)
 	}
-	for i, view := range s.Views {
-		s.viewCache[view.ViewName] = i
+	for n, view := range s.Views {
+		s.viewCache[view.ViewName] = n
 	}
 	return
 }
@@ -95,39 +95,42 @@ func (s *Schema) CachedFunctionPositions(functionName string) (functionPositions
 	if !ok {
 		return nil
 	}
-	var n int
+	var i int
 	var hasInvalidPosition bool
-	for _, i := range functionPositions {
-		if i < 0 || i >= len(s.Functions) || s.Functions[i].FunctionName != functionName {
+	for _, n := range functionPositions {
+		if n < 0 || n >= len(s.Functions) || s.Functions[n].FunctionName != functionName {
 			hasInvalidPosition = true
 			continue
 		}
-		functionPositions[n] = i
-		n++
+		functionPositions[i] = n
+		i++
 	}
 	if hasInvalidPosition {
-		functionPositions = functionPositions[:n]
+		functionPositions = functionPositions[:i]
 		s.functionCache[functionName] = functionPositions
 	}
 	return functionPositions
 }
 
-func (s *Schema) AppendFunction(function Function) (functionPositions int) {
+func (s *Schema) AppendFunction(function Function) (functionPosition int) {
 	s.Functions = append(s.Functions, function)
 	if s.functionCache == nil {
 		s.functionCache = make(map[string][]int)
 	}
-	functionPositions = len(s.Functions) - 1
-	s.functionCache[function.FunctionName] = append(s.functionCache[function.FunctionName], functionPositions)
-	return functionPositions
+	functionPosition = len(s.Functions) - 1
+	s.functionCache[function.FunctionName] = append(s.functionCache[function.FunctionName], functionPosition)
+	return functionPosition
 }
 
 func (s *Schema) RefreshFunctionCache() {
 	if s.functionCache == nil && len(s.Functions) > 0 {
 		s.functionCache = make(map[string][]int)
 	}
-	for i, function := range s.Functions {
-		s.functionCache[function.FunctionName] = append(s.functionCache[function.FunctionName], i)
+	for functionName, value := range s.functionCache {
+		s.functionCache[functionName] = value[:0]
+	}
+	for n, function := range s.Functions {
+		s.functionCache[function.FunctionName] = append(s.functionCache[function.FunctionName], n)
 	}
 }
 

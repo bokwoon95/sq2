@@ -67,7 +67,7 @@ func Migrate(mode MigrationMode, gotCatalog, wantCatalog Catalog) (Migration, er
 	var err error
 	if m.Dialect == sq.DialectPostgres {
 		for _, wantExtension := range wantCatalog.Extensions {
-			// TODO: schema.CachedExtensionPosition
+			// TODO: catalog.CachedExtensionPosition
 			_ = wantExtension
 		}
 	}
@@ -94,7 +94,35 @@ func migrateTable(m *Migration, mode MigrationMode, gotSchema Schema, wantTable 
 	return nil
 }
 
+func migrateView(m *Migration, mode MigrationMode, gotSchema Schema, wantView View) error {
+	return nil
+}
+
+func migrateFunction(m *Migration, mode MigrationMode, gotSchema Schema, wantFunction Function) error {
+	return nil
+}
+
 func migrateColumn(m *Migration, mode MigrationMode, gotTable Table, wantColumn Column) error {
+	return nil
+}
+
+func migrateConstraint(m *Migration, mode MigrationMode, gotTable Table, wantConstraint Constraint) error {
+	return nil
+}
+
+func migrateTableIndex(m *Migration, mode MigrationMode, gotTable Table, wantIndex Index) error {
+	return nil
+}
+
+func migrateTableTrigger(m *Migration, mode MigrationMode, gotTable Table, wantTrigger Trigger) error {
+	return nil
+}
+
+func migrateViewIndex(m *Migration, mode MigrationMode, gotView View, wantIndex Index) error {
+	return nil
+}
+
+func migrateViewTrigger(m *Migration, mode MigrationMode, gotTable Table, wantTrigger Trigger) error {
 	return nil
 }
 

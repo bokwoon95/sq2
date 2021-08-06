@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"strings"
 
 	"github.com/bokwoon95/sq"
 )
@@ -45,8 +46,48 @@ func (c *Catalog) RefreshSchemaCache() {
 	if c.schemaCache == nil && len(c.Schemas) > 0 {
 		c.schemaCache = make(map[string]int)
 	}
-	for i, schema := range c.Schemas {
-		c.schemaCache[schema.SchemaName] = i
+	for n, schema := range c.Schemas {
+		c.schemaCache[schema.SchemaName] = n
+	}
+}
+
+func (c *Catalog) CachedExtensionPosition(extension string) (extensionPosition int) {
+	if i := strings.IndexByte(extension, '@'); i >= 0 {
+		extension = extension[:i]
+	}
+	extensionPosition, ok := c.extensionCache[extension]
+	if !ok {
+		return -1
+	}
+	if extensionPosition < 0 || extensionPosition >= len(c.Schemas) || !strings.HasPrefix(c.Extensions[extensionPosition], extension) {
+		delete(c.schemaCache, extension)
+		return -1
+	}
+	return extensionPosition
+}
+
+func (c *Catalog) AppendExtension(extension string) (extensionPosition int) {
+	c.Extensions = append(c.Extensions, extension)
+	if c.extensionCache == nil {
+		c.extensionCache = make(map[string]int)
+	}
+	extensionPosition = len(c.Extensions) - 1
+	if i := strings.IndexByte(extension, '@'); i >= 0 {
+		extension = extension[:i]
+	}
+	c.extensionCache[extension] = extensionPosition
+	return extensionPosition
+}
+
+func (c *Catalog) RefreshExtensionCache() {
+	if c.extensionCache == nil && len(c.Extensions) > 0 {
+		c.extensionCache = make(map[string]int)
+	}
+	for n, extension := range c.Extensions {
+		if i := strings.IndexByte(extension, '@'); i >= 0 {
+			extension = extension[:i]
+		}
+		c.extensionCache[extension] = n
 	}
 }
 
