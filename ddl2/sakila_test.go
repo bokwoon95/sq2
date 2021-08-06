@@ -342,8 +342,8 @@ func NEW_FILM_TEXT(dialect, alias string) FILM_TEXT {
 }
 
 type FILM_TEXT struct {
-	sq.TableInfo `ddl:"ignore=postgres"`
-	FILM_ID      sq.NumberField
+	sq.TableInfo `ddl:"ignore=postgres virtual={fts5 content='film' content_rowid='film_id'}"`
+	FILM_ID      sq.NumberField `ddl:"ignore=sqlite"`
 	TITLE        sq.StringField
 	DESCRIPTION  sq.StringField
 }
