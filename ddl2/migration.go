@@ -65,16 +65,26 @@ func Migrate(mode MigrationMode, gotCatalog, wantCatalog Catalog) (Migration, er
 		m.Dialect = wantCatalog.Dialect
 	}
 	var err error
-	if m.Dialect == sq.DialectPostgres {
-		for _, wantExtension := range wantCatalog.Extensions {
-			// TODO: catalog.CachedExtensionPosition
-			_ = wantExtension
+	if mode&CreateMissing != 0 {
+		if len(wantCatalog.Extensions) > 0 {
+			if m.Dialect != sq.DialectPostgres {
+				return m, fmt.Errorf("%w dialect=%s feature=extensions", ErrUnsupportedFeature, m.Dialect)
+			}
+			for _, wantExtension := range wantCatalog.Extensions {
+				if n := gotCatalog.CachedExtensionPosition(wantExtension); n < 0 {
+					createExtensionCmd := &CreateExtensionCommand{
+						CreateIfNotExists: true,
+						Extension:         wantExtension,
+					}
+					m.ExtensionCommands = append(m.ExtensionCommands, createExtensionCmd)
+				}
+			}
 		}
-	}
-	for _, wantSchema := range wantCatalog.Schemas {
-		err = migrateSchema(&m, mode, gotCatalog, wantSchema)
-		if err != nil {
-			return m, err
+		for _, wantSchema := range wantCatalog.Schemas {
+			err = migrateSchema(&m, mode, gotCatalog, wantSchema)
+			if err != nil {
+				return m, err
+			}
 		}
 	}
 	if mode&DropExtraneous != 0 {
@@ -87,14 +97,114 @@ func Migrate(mode MigrationMode, gotCatalog, wantCatalog Catalog) (Migration, er
 }
 
 func migrateSchema(m *Migration, mode MigrationMode, gotCatalog Catalog, wantSchema Schema) error {
+	if mode&CreateMissing == 0 {
+		return nil
+	}
+	var err error
+	var gotSchema Schema
+	if n := gotCatalog.CachedSchemaPosition(wantSchema.SchemaName); n >= 0 {
+		gotSchema = gotCatalog.Schemas[n]
+	} else {
+		gotSchema.SchemaName = wantSchema.SchemaName
+		createSchemaCmd := &CreateSchemaCommand{
+			CreateIfNotExists: true,
+			SchemaName:        wantSchema.SchemaName,
+		}
+		m.SchemaCommands = append(m.SchemaCommands, createSchemaCmd)
+	}
+	for _, wantTable := range wantSchema.Tables {
+		err = migrateTable(m, mode, gotSchema, wantTable)
+		if err != nil {
+			return err
+		}
+	}
+	for _, wantView := range wantSchema.Views {
+		err = migrateView(m, mode, gotSchema, wantView)
+		if err != nil {
+			return err
+		}
+	}
+	for _, wantFunction := range wantSchema.Functions {
+		err = migrateFunction(m, mode, gotSchema, wantFunction)
+		if err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
 func migrateTable(m *Migration, mode MigrationMode, gotSchema Schema, wantTable Table) error {
+	var err error
+	var gotTable Table
+	var createTableCmd *CreateTableCommand
+	if n := gotSchema.CachedTablePosition(wantTable.TableName); n >= 0 {
+		gotTable = gotSchema.Tables[n]
+		for _, wantColumn := range wantTable.Columns {
+			err = migrateColumn(m, mode, gotTable, wantColumn)
+			if err != nil {
+				return err
+			}
+		}
+	} else {
+		gotTable.TableSchema = wantTable.TableSchema
+		gotTable.TableName = wantTable.TableName
+		createTableCmd = &CreateTableCommand{
+			CreateIfNotExists:  true,
+			IncludeConstraints: true,
+			Table:              wantTable,
+		}
+		m.TableCommands = append(m.TableCommands, createTableCmd)
+	}
+	for _, wantConstraint := range wantTable.Constraints {
+		err = migrateConstraint(m, mode, gotTable, wantConstraint)
+		if err != nil {
+			return err
+		}
+	}
+	for _, wantIndex := range wantTable.Indexes {
+		if m.Dialect == sq.DialectMySQL && createTableCmd != nil {
+			createTableCmd.CreateIndexCommands = append(createTableCmd.CreateIndexCommands, CreateIndexCommand{
+				Index: wantIndex,
+			})
+			continue
+		}
+		err = migrateTableIndex(m, mode, gotTable, wantIndex)
+		if err != nil {
+			return err
+		}
+	}
+	for _, wantTrigger := range wantTable.Triggers {
+		err = migrateTableTrigger(m, mode, gotTable, wantTrigger)
+		if err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
 func migrateView(m *Migration, mode MigrationMode, gotSchema Schema, wantView View) error {
+	var err error
+	var gotView View
+	if n := gotSchema.CachedViewPosition(wantView.ViewName); n >= 0 {
+		gotView = gotSchema.Views[n]
+	} else {
+		gotView.ViewSchema = wantView.ViewSchema
+		gotView.ViewName = wantView.ViewName
+		createViewCmd := &CreateViewCommand{View: wantView}
+		if m.Dialect == sq.DialectSQLite || (m.Dialect == sq.DialectPostgres && wantView.IsMaterialized) {
+			createViewCmd.CreateOrReplace = true
+		}
+		if m.Dialect == sq.DialectMySQL || (m.Dialect == sq.DialectPostgres && !wantView.IsMaterialized) {
+			createViewCmd.CreateIfNotExists = true
+		}
+		m.ViewCommands = append(m.ViewCommands, createViewCmd)
+	}
+	for _, wantIndex := range wantView.Indexes {
+		err = migrateViewIndex(m, mode, gotView, wantIndex)
+		if err != nil {
+			return err
+		}
+	}
 	return nil
 }
 

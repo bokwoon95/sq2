@@ -127,11 +127,11 @@ type CreateViewCommand struct {
 func (cmd CreateViewCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
 	buf.WriteString("CREATE ")
 	if cmd.CreateOrReplace {
-		if dialect != sq.DialectPostgres && dialect != sq.DialectMySQL {
-			return fmt.Errorf("%s does not support CREATE OR REPLACE VIEW", dialect)
-		}
 		if dialect == sq.DialectPostgres && cmd.View.IsMaterialized {
 			return fmt.Errorf("postgres does not allow CREATE OR REPLACE VIEW for Materialized Views")
+		}
+		if dialect != sq.DialectPostgres && dialect != sq.DialectMySQL {
+			return fmt.Errorf("%s does not support CREATE OR REPLACE VIEW", dialect)
 		}
 		buf.WriteString("OR REPLACE ")
 	}
@@ -140,11 +140,11 @@ func (cmd CreateViewCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *
 	}
 	buf.WriteString("VIEW ")
 	if cmd.CreateIfNotExists {
-		if dialect != sq.DialectSQLite && dialect != sq.DialectPostgres {
-			return fmt.Errorf("%s does not support CREATE VIEW IF NOT EXISTS", dialect)
-		}
 		if dialect == sq.DialectPostgres && !cmd.View.IsMaterialized {
 			return fmt.Errorf("postgres does not allow CREATE VIEW IF NOT EXISTS for Non-Materialized Views")
+		}
+		if dialect != sq.DialectSQLite && dialect != sq.DialectPostgres {
+			return fmt.Errorf("%s does not support CREATE VIEW IF NOT EXISTS", dialect)
 		}
 		buf.WriteString("IF NOT EXISTS ")
 	}
