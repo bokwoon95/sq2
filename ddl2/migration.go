@@ -35,12 +35,12 @@ type Migration struct {
 	DropCommands                []Command
 }
 
-func AutoMigrate(dialect string, db sq.DB, migrationMode MigrationMode, opts ...CatalogOption) error {
+func AutoMigrate(dialect string, db sq.DB, migrationMode MigrationMode, wantCatalogOpts ...CatalogOption) error {
 	gotCatalog, err := NewCatalog(dialect, WithDB(db))
 	if err != nil {
 		return fmt.Errorf("introspecting db: %w", err)
 	}
-	wantCatalog, err := NewCatalog(dialect, opts...)
+	wantCatalog, err := NewCatalog(dialect, wantCatalogOpts...)
 	if err != nil {
 		return fmt.Errorf("building catalog: %w", err)
 	}
@@ -590,108 +590,4 @@ func (m *Migration) ExecContext(ctx context.Context, db sq.DB) error {
 		}
 	}
 	return nil
-}
-
-func (c *Catalog) Commands() *Migration {
-	m := &Migration{Dialect: c.Dialect}
-	for _, schema := range c.Schemas {
-		if schema.SchemaName != "" {
-			createSchemaCmd := &CreateSchemaCommand{
-				CreateIfNotExists: true,
-				SchemaName:        schema.SchemaName,
-			}
-			m.SchemaCommands = append(m.SchemaCommands, createSchemaCmd)
-		}
-		for _, table := range schema.Tables {
-			if table.Ignore {
-				continue
-			}
-			createTableCmd := &CreateTableCommand{
-				CreateIfNotExists:  true,
-				IncludeConstraints: true,
-				Table:              table,
-			}
-			alterTableCmd := &AlterTableCommand{
-				TableSchema: table.TableSchema,
-				TableName:   table.TableName,
-			}
-			if c.Dialect == sq.DialectPostgres {
-				alterTableCmd.AlterIfExists = true
-			}
-			var hasForeignKey bool
-			for _, constraint := range table.Constraints {
-				if constraint.ConstraintType == FOREIGN_KEY && c.Dialect != sq.DialectSQLite {
-					hasForeignKey = true
-					alterTableCmd.AddConstraintCommands = append(alterTableCmd.AddConstraintCommands, AddConstraintCommand{Constraint: constraint})
-				}
-			}
-			if hasForeignKey {
-				m.ForeignKeyCommands = append(m.ForeignKeyCommands, alterTableCmd)
-			}
-			for _, index := range table.Indexes {
-				if index.Ignore {
-					continue
-				}
-				createIndexCmd := &CreateIndexCommand{Index: index}
-				if c.Dialect == sq.DialectMySQL {
-					createTableCmd.CreateIndexCommands = append(createTableCmd.CreateIndexCommands, *createIndexCmd)
-				} else {
-					createIndexCmd.CreateIfNotExists = true
-					m.IndexCommands = append(m.IndexCommands, createIndexCmd)
-				}
-			}
-			for _, trigger := range table.Triggers {
-				if trigger.Ignore {
-					continue
-				}
-				createTriggerCmd := &CreateTriggerCommand{Trigger: trigger}
-				m.TriggerCommands = append(m.TriggerCommands, createTriggerCmd)
-			}
-			m.TableCommands = append(m.TableCommands, createTableCmd)
-		}
-		for _, view := range schema.Views {
-			if view.Ignore {
-				continue
-			}
-			createViewCmd := &CreateViewCommand{View: view}
-			if c.Dialect == sq.DialectMySQL || (c.Dialect == sq.DialectPostgres && !view.IsMaterialized) {
-				createViewCmd.CreateOrReplace = true
-			}
-			if c.Dialect == sq.DialectSQLite || (c.Dialect == sq.DialectPostgres && view.IsMaterialized) {
-				createViewCmd.CreateIfNotExists = true
-			}
-			if c.Dialect == sq.DialectPostgres {
-				for _, index := range view.Indexes {
-					if index.Ignore {
-						continue
-					}
-					createIndexCmd := &CreateIndexCommand{
-						CreateIfNotExists: true,
-						Index:             index,
-					}
-					m.IndexCommands = append(m.IndexCommands, createIndexCmd)
-				}
-				for _, trigger := range view.Triggers {
-					if trigger.Ignore {
-						continue
-					}
-					createTriggerCmd := &CreateTriggerCommand{Trigger: trigger}
-					m.IndexCommands = append(m.IndexCommands, createTriggerCmd)
-				}
-			}
-			m.ViewCommands = append(m.ViewCommands, createViewCmd)
-		}
-		for _, function := range schema.Functions {
-			if function.Ignore {
-				continue
-			}
-			createFunctionCmd := &CreateFunctionCommand{Function: function}
-			if function.IsIndependent {
-				m.IndependentFunctionCommands = append(m.IndependentFunctionCommands, createFunctionCmd)
-			} else {
-				m.FunctionCommands = append(m.FunctionCommands, createFunctionCmd)
-			}
-		}
-	}
-	return m
 }
