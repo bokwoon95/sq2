@@ -733,6 +733,9 @@ func (tbl *Table) LoadTable(dialect string, table sq.SchemaTable) (err error) {
 		if strings.EqualFold(tbl.VirtualTable, "FTS5") {
 			var columnNames []string
 			for _, column := range tbl.Columns {
+				if column.Ignore {
+					continue
+				}
 				if strings.EqualFold(column.ColumnType, "TEXT") {
 					columnNames = append(columnNames, column.ColumnName)
 				}
