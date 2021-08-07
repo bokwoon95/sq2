@@ -501,30 +501,9 @@ func dropExtraneousObjects(m *Migration, mode MigrationMode, gotCatalog, wantCat
 	return nil
 }
 
-// NOTE: this function is too simple to warrant both a DropFunctions and
-// DropFunctionsContext slot. Ask the user to do it themselves. Deprecate this
-// function.
-func DropFunctions(dialect string, db sq.DB, functions []Function, dropCascade bool) error {
-	var cmd DropFunctionCommand
-	for _, function := range functions {
-		cmd.DropIfExists = true
-		cmd.Function = function
-		cmd.DropCascade = dropCascade
-		query, args, _, err := sq.ToSQL(dialect, cmd)
-		if err != nil {
-			return fmt.Errorf("building command (%s): %w", query, err)
-		}
-		_, err = db.ExecContext(context.Background(), query, args...)
-		if err != nil {
-			return fmt.Errorf("executing command (%s): %w", query, err)
-		}
-	}
-	return nil
-}
-
 func (m *Migration) WriteSQL(w io.Writer) error {
 	var written bool
-	for _, cmds := range [][]Command{
+	for i, cmds := range [][]Command{
 		m.SchemaCommands,
 		m.IndependentFunctionCommands,
 		m.TableCommands,
@@ -536,6 +515,9 @@ func (m *Migration) WriteSQL(w io.Writer) error {
 		m.RenameCommands,
 		m.DropCommands,
 	} {
+		if m.Dialect == sq.DialectMySQL && i == 6 {
+			io.WriteString(w, "\n\nDELIMITER ;;")
+		}
 		for _, cmd := range cmds {
 			query, args, _, err := sq.ToSQL(m.Dialect, cmd)
 			if err != nil {
@@ -554,9 +536,16 @@ func (m *Migration) WriteSQL(w io.Writer) error {
 			}
 			query = strings.TrimSpace(query)
 			io.WriteString(w, query)
-			if last := len(query) - 1; query[last] != ';' {
-				io.WriteString(w, ";")
+			if m.Dialect == sq.DialectMySQL && i == 6 {
+				io.WriteString(w, ";;")
+			} else {
+				if last := len(query) - 1; query[last] != ';' {
+					io.WriteString(w, ";")
+				}
 			}
+		}
+		if m.Dialect == sq.DialectMySQL && i == 6 {
+			io.WriteString(w, "\n\nDELIMITER ;")
 		}
 	}
 	return nil

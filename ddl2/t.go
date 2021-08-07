@@ -3,7 +3,6 @@ package ddl2
 import (
 	"bytes"
 	"fmt"
-	"io/fs"
 	"reflect"
 	"runtime"
 	"strconv"
@@ -162,23 +161,38 @@ func (t *TColumn) Default(format string, values ...interface{}) *TColumn {
 	return t
 }
 
+func (t *TColumn) AutoIncrement() *TColumn {
+	if t.dialect == sq.DialectMySQL {
+		t.tbl.Columns[t.columnPosition].IsAutoincrement = true
+	}
+	return t
+}
+
 func (t *TColumn) Autoincrement() *TColumn {
-	t.tbl.Columns[t.columnPosition].IsAutoincrement = true
+	if t.dialect == sq.DialectSQLite {
+		t.tbl.Columns[t.columnPosition].IsAutoincrement = true
+	}
 	return t
 }
 
 func (t *TColumn) Identity() *TColumn {
-	t.tbl.Columns[t.columnPosition].Identity = BY_DEFAULT_AS_IDENTITY
+	if t.dialect == sq.DialectPostgres {
+		t.tbl.Columns[t.columnPosition].Identity = BY_DEFAULT_AS_IDENTITY
+	}
 	return t
 }
 
 func (t *TColumn) AlwaysIdentity() *TColumn {
-	t.tbl.Columns[t.columnPosition].Identity = ALWAYS_AS_IDENTITY
+	if t.dialect == sq.DialectPostgres {
+		t.tbl.Columns[t.columnPosition].Identity = ALWAYS_AS_IDENTITY
+	}
 	return t
 }
 
 func (t *TColumn) OnUpdateCurrentTimestamp() *TColumn {
-	t.tbl.Columns[t.columnPosition].OnUpdateCurrentTimestamp = true
+	if t.dialect == sq.DialectMySQL {
+		t.tbl.Columns[t.columnPosition].OnUpdateCurrentTimestamp = true
+	}
 	return t
 }
 
@@ -584,7 +598,7 @@ type TTrigger struct {
 }
 
 func (t *T) Trigger(sql string) {
-	trigger := Trigger{SQL: sql}
+	trigger := Trigger{SQL: strings.TrimSpace(sql)}
 	err := trigger.populateTriggerInfo(t.dialect)
 	if err != nil {
 		panicErr(fmt.Errorf("Trigger: %w", err))
@@ -594,29 +608,6 @@ func (t *T) Trigger(sql string) {
 	}
 	if trigger.TableName != t.tbl.TableName {
 		panicErr(fmt.Errorf("Trigger: table name does not match (got=%s, want=%s)", trigger.TableName, t.tbl.TableName))
-	}
-	if n := t.tbl.CachedTriggerPosition(trigger.TriggerName); n >= 0 {
-		t.tbl.Triggers[n].SQL = trigger.SQL
-	} else {
-		t.tbl.AppendTrigger(trigger)
-	}
-}
-
-func (t *T) TriggerFile(fsys fs.FS, name string) {
-	b, err := fs.ReadFile(fsys, name)
-	if err != nil {
-		panicErr(fmt.Errorf("TriggerFile: %w", err))
-	}
-	trigger := Trigger{SQL: string(b)}
-	err = trigger.populateTriggerInfo(t.dialect)
-	if err != nil {
-		panicErr(fmt.Errorf("TriggerFile: %w", err))
-	}
-	if trigger.TableSchema != "" && trigger.TableSchema != t.tbl.TableSchema {
-		panicErr(fmt.Errorf("TriggerFile: table schema does not match (got=%s, want=%s)", trigger.TableSchema, t.tbl.TableSchema))
-	}
-	if trigger.TableName != t.tbl.TableName {
-		panicErr(fmt.Errorf("TriggerFile: table name does not match (got=%s, want=%s)", trigger.TableName, t.tbl.TableName))
 	}
 	if n := t.tbl.CachedTriggerPosition(trigger.TriggerName); n >= 0 {
 		t.tbl.Triggers[n].SQL = trigger.SQL
@@ -658,7 +649,15 @@ func (tbl *Table) LoadTable(dialect string, table sq.SchemaTable) (err error) {
 		return fmt.Errorf("%s: %s", qualifiedTable, err.Error())
 	}
 	for _, modifier := range modifiers {
-		switch modifier[0] {
+		modifierName := modifier[0]
+		if i := strings.IndexByte(modifierName, ':'); i >= 0 {
+			modifierDialect := modifierName[:i]
+			modifierName = modifierName[i+1:]
+			if modifierDialect != dialect {
+				continue
+			}
+		}
+		switch modifierName {
 		case "virtual":
 			if dialect == sq.DialectSQLite {
 				virtualTable, submodifiers, _, err := tokenizeValue(modifier[1])

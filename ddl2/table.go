@@ -384,11 +384,23 @@ func (tbl *Table) LoadColumnConfig(dialect, columnName, columnType, config strin
 		defer func() { tbl.AppendColumn(column) }()
 	}
 	for _, modifier := range modifiers {
-		switch modifier[0] {
+		modifierName := modifier[0]
+		if i := strings.IndexByte(modifierName, ':'); i >= 0 {
+			modifierDialect := modifierName[:i]
+			modifierName = modifierName[i+1:]
+			if modifierDialect != dialect {
+				continue
+			}
+		}
+		switch modifierName {
 		case "type":
 			column.ColumnType = modifier[1]
+		case "auto_increment":
+			if dialect == sq.DialectMySQL {
+				column.IsAutoincrement = true
+			}
 		case "autoincrement":
-			if dialect == sq.DialectMySQL || dialect == sq.DialectSQLite {
+			if dialect == sq.DialectSQLite {
 				column.IsAutoincrement = true
 			}
 		case "identity":

@@ -3,7 +3,6 @@ package ddl2
 import (
 	"bytes"
 	"fmt"
-	"io/fs"
 	"reflect"
 	"sort"
 	"strings"
@@ -23,10 +22,9 @@ type V struct {
 }
 
 func (v *V) IsMaterialized() {
-	if v.dialect != sq.DialectPostgres {
-		panicErr(fmt.Errorf("%s does not support Materialized Views", v.dialect))
+	if v.dialect == sq.DialectPostgres {
+		v.view.IsMaterialized = true
 	}
-	v.view.IsMaterialized = true
 }
 
 func (v *V) AsQuery(query sq.Query) {
@@ -96,27 +94,13 @@ func (v *V) AsQuery(query sq.Query) {
 }
 
 func (v *V) Trigger(sql string) {
-	trigger := Trigger{SQL: sql}
+	if v.dialect != sq.DialectPostgres {
+		return
+	}
+	trigger := Trigger{SQL: strings.TrimSpace(sql)}
 	err := trigger.populateTriggerInfo(v.dialect)
 	if err != nil {
 		panicErr(fmt.Errorf("Trigger: %w", err))
-	}
-	if n := v.view.CachedTriggerPosition(trigger.TableSchema, trigger.TableName, trigger.TriggerName); n >= 0 {
-		v.view.Triggers[n].SQL = trigger.SQL
-	} else {
-		v.view.AppendTrigger(trigger)
-	}
-}
-
-func (v *V) TriggerFile(fsys fs.FS, name string) {
-	b, err := fs.ReadFile(fsys, name)
-	if err != nil {
-		panicErr(fmt.Errorf("TriggerFile: %w", err))
-	}
-	trigger := Trigger{SQL: string(b)}
-	err = trigger.populateTriggerInfo(v.dialect)
-	if err != nil {
-		panicErr(fmt.Errorf("TriggerFile: %w", err))
 	}
 	if n := v.view.CachedTriggerPosition(trigger.TableSchema, trigger.TableName, trigger.TriggerName); n >= 0 {
 		v.view.Triggers[n].SQL = trigger.SQL
@@ -141,6 +125,9 @@ type VIndex struct {
 }
 
 func (v *V) Index(fields ...sq.Field) *VIndex {
+	if v.dialect != sq.DialectPostgres {
+		return &VIndex{dialect: v.dialect}
+	}
 	if !v.view.IsMaterialized {
 		panicErr(fmt.Errorf("Indexes can only be defined on Materialized Views"))
 	}
@@ -165,6 +152,9 @@ func (v *V) Index(fields ...sq.Field) *VIndex {
 }
 
 func (v *V) NameIndex(indexName string, fields ...sq.Field) *VIndex {
+	if v.dialect != sq.DialectPostgres {
+		return &VIndex{dialect: v.dialect}
+	}
 	if !v.view.IsMaterialized {
 		panicErr(fmt.Errorf("NameIndex: Indexes can only be defined on Materialized Views"))
 	}
@@ -188,16 +178,25 @@ func (v *V) NameIndex(indexName string, fields ...sq.Field) *VIndex {
 }
 
 func (v *VIndex) Unique() *VIndex {
+	if v.dialect != sq.DialectPostgres {
+		return v
+	}
 	v.view.Indexes[v.indexPosition].IsUnique = true
 	return v
 }
 
 func (v *VIndex) Using(indexType string) *VIndex {
+	if v.dialect != sq.DialectPostgres {
+		return v
+	}
 	v.view.Indexes[v.indexPosition].IndexType = strings.ToUpper(indexType)
 	return v
 }
 
 func (v *VIndex) Where(format string, values ...interface{}) *VIndex {
+	if v.dialect != sq.DialectPostgres {
+		return v
+	}
 	expr, err := sprintf(v.dialect, format, values, []string{v.view.ViewName})
 	if err != nil {
 		panicErr(fmt.Errorf("Where: %w", err))
@@ -207,6 +206,9 @@ func (v *VIndex) Where(format string, values ...interface{}) *VIndex {
 }
 
 func (v *VIndex) Include(fields ...sq.Field) *VIndex {
+	if v.dialect != sq.DialectPostgres {
+		return v
+	}
 	columnNames, err := getColumnNames(fields)
 	if err != nil {
 		panicErr(fmt.Errorf("Include: %w", err))
@@ -216,6 +218,9 @@ func (v *VIndex) Include(fields ...sq.Field) *VIndex {
 }
 
 func (v *VIndex) Config(config func(index *Index)) {
+	if v.dialect != sq.DialectPostgres {
+		return
+	}
 	index := v.view.Indexes[v.indexPosition]
 	config(&index)
 	index.TableSchema = v.view.ViewSchema

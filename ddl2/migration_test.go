@@ -57,6 +57,7 @@ func Test_CatalogSQLite(t *testing.T) {
 		NEW_SALES_BY_FILM_CATEGORY(""),
 		NEW_SALES_BY_STORE(""),
 		NEW_STAFF_LIST(""),
+		NEW_FULL_ADDRESS(""),
 	))
 	if err != nil {
 		t.Fatal(testcallers(), err)
@@ -135,6 +136,7 @@ func Test_CatalogSQLite(t *testing.T) {
 // 		NEW_SALES_BY_FILM_CATEGORY(""),
 // 		NEW_SALES_BY_STORE(""),
 // 		NEW_STAFF_LIST(""),
+// 		NEW_FULL_ADDRESS(""),
 // 	))
 // 	if err != nil {
 // 		t.Fatal(testcallers(), err)
@@ -364,6 +366,7 @@ func Test_CatalogMySQL(t *testing.T) {
 		NEW_SALES_BY_FILM_CATEGORY(""),
 		NEW_SALES_BY_STORE(""),
 		NEW_STAFF_LIST(""),
+		NEW_FULL_ADDRESS(""),
 	))
 	if err != nil {
 		t.Fatal(testcallers(), err)
@@ -419,6 +422,7 @@ func Test_CatalogMySQL(t *testing.T) {
 // 		NEW_NICER_BUT_SLOWER_FILM_LIST(""),
 // 		NEW_SALES_BY_FILM_CATEGORY(""),
 // 		NEW_SALES_BY_STORE(""),
+// 		NEW_FULL_ADDRESS(""),
 // 	))
 // 	if err != nil {
 // 		t.Fatal(testcallers(), err)
