@@ -163,6 +163,10 @@ func Test_IntrospectSQLite(t *testing.T) {
 }
 
 func Test_DropPostgres(t *testing.T) {
+	functions, err := FilesToFunctions(sq.DialectPostgres, sqlDir, "sql/last_update_trg.sql", "sql/refresh_full_address.sql")
+	if err != nil {
+		t.Fatal(testcallers(), err)
+	}
 	db, err := sql.Open("postgres", "postgres://postgres:postgres@localhost:5442/db?sslmode=disable")
 	if err != nil {
 		t.Fatal(testcallers(), err)
@@ -174,6 +178,13 @@ func Test_DropPostgres(t *testing.T) {
 	migration, err := Migrate(DropExtraneous|DropCascade, gotCatalog, Catalog{})
 	if err != nil {
 		t.Fatal(testcallers(), err)
+	}
+	for _, function := range functions {
+		migration.DropCommands = append(migration.DropCommands, &DropFunctionCommand{
+			DropIfExists: true,
+			Function:     function,
+			DropCascade:  true,
+		})
 	}
 	err = migration.WriteSQL(os.Stdout)
 	if err != nil {

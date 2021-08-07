@@ -194,7 +194,7 @@ type FILM struct {
 	LENGTH               sq.NumberField
 	REPLACEMENT_COST     sq.NumberField `ddl:"type=DECIMAL(5,2) default=19.99 notnull"`
 	RATING               sq.StringField `ddl:"mysql:type=ENUM('G','PG','PG-13','R','NC-17') default='G'"`
-	SPECIAL_FEATURES     sq.CustomField `ddl:"type=JSON postgres:type=[]TEXT"`
+	SPECIAL_FEATURES     sq.CustomField `ddl:"type=JSON postgres:type=TEXT[]"`
 	LAST_UPDATE          sq.TimeField   `ddl:"notnull default=CURRENT_TIMESTAMP sqlite:default=DATETIME('now') onupdatecurrenttimestamp"`
 	FULLTEXT             sq.StringField `ddl:"ignore=mysql,sqlite postgres:type=TSVECTOR postgres:index={. using=GIST}"`
 	// TODO: CREATE TYPE mpaa_rating, CREATE DOMAIN year
@@ -393,7 +393,7 @@ type STAFF struct {
 	ACTIVE      sq.BooleanField `ddl:"default=TRUE notnull"`
 	USERNAME    sq.StringField  `ddl:"mysql:type=VARCHAR(16) notnull"`
 	PASSWORD    sq.StringField  `ddl:"mysql:type=VARCHAR(40)"`
-	LAST_UPDATE sq.TimeField    `ddl:"default=DATETIME('now') notnull"`
+	LAST_UPDATE sq.TimeField    `ddl:"notnull default=CURRENT_TIMESTAMP sqlite:default=DATETIME('now') onupdatecurrenttimestamp"`
 	PICTURE     sq.BlobField
 }
 

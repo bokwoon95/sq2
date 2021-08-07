@@ -1,3 +1,4 @@
+DROP VIEW IF EXISTS full_address;
 DROP VIEW IF EXISTS staff_list;
 DROP VIEW IF EXISTS sales_by_store;
 DROP VIEW IF EXISTS sales_by_film_category;
@@ -378,6 +379,25 @@ FROM
     JOIN address AS a ON a.address_id = s.address_id
     JOIN city AS ci ON ci.city_id = a.city_id
     JOIN country AS co ON co.country_id = ci.country_id
+;
+
+CREATE VIEW IF NOT EXISTS full_address AS
+SELECT
+    country.country_id
+    ,city.city_id
+    ,address.address_id
+    ,country.country
+    ,city.city
+    ,address.address
+    ,address.address2
+    ,address.district
+    ,address.postal_code
+    ,address.phone
+    ,address.last_update
+FROM
+    address
+    JOIN city ON city.city_id = address.city_id
+    JOIN country ON country.country_id = city.country_id
 ;
 
 CREATE INDEX IF NOT EXISTS actor_last_name_idx ON actor (last_name);

@@ -67,7 +67,7 @@ CREATE TABLE IF NOT EXISTS film (
     ,length INT
     ,replacement_cost DECIMAL(5,2) NOT NULL DEFAULT 19.99
     ,rating TEXT DEFAULT 'G'
-    ,special_features []TEXT
+    ,special_features TEXT[]
     ,last_update TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
     ,fulltext TSVECTOR
 
@@ -111,7 +111,7 @@ CREATE TABLE IF NOT EXISTS staff (
     ,active BOOLEAN NOT NULL DEFAULT TRUE
     ,username TEXT NOT NULL
     ,password TEXT
-    ,last_update TIMESTAMPTZ NOT NULL DEFAULT DATETIME('now')
+    ,last_update TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
     ,picture BYTEA
 
     ,CONSTRAINT staff_staff_id_pkey PRIMARY KEY (staff_id)
