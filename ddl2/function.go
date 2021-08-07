@@ -12,6 +12,7 @@ import (
 type Function struct {
 	FunctionSchema string   `json:",omitempty"`
 	FunctionName   string   `json:",omitempty"`
+	Args           string   `json:",omitempty"`
 	ArgModes       []string `json:",omitempty"`
 	ArgNames       []string `json:",omitempty"`
 	ArgTypes       []string `json:",omitempty"`
@@ -56,14 +57,14 @@ LOOP:
 			if j < 0 {
 				return fmt.Errorf("closing bracket for args not found")
 			}
-			rawArgs := strings.TrimSpace(remainder[i+1 : j])
-			if rawArgs == "" {
+			fun.Args = strings.TrimSpace(remainder[i+1 : j])
+			if fun.Args == "" {
 				if token, tmp, _ := popIdentifierToken(dialect, remainder[j+1:]); strings.EqualFold(token, "RETURNS") {
 					fun.ReturnType, _, _ = popIdentifierToken(dialect, tmp)
 				}
 				break LOOP
 			}
-			args := splitArgs(rawArgs)
+			args := splitArgs(fun.Args)
 			fun.ArgModes = make([]string, len(args))
 			fun.ArgNames = make([]string, len(args))
 			fun.ArgTypes = make([]string, len(args))
@@ -204,7 +205,7 @@ func (cmd *DropFunctionCommand) AppendSQL(dialect string, buf *bytes.Buffer, arg
 	}
 	buf.WriteString(sq.QuoteIdentifier(dialect, cmd.Function.FunctionName))
 	if dialect == sq.DialectPostgres {
-		buf.WriteString("(" + strings.Join(cmd.Function.ArgTypes, ", ") + ")")
+		buf.WriteString("(" + cmd.Function.Args + ")")
 	}
 	if cmd.DropCascade {
 		buf.WriteString(" CASCADE")

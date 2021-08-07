@@ -3,13 +3,23 @@ SELECT
     ,pg_proc.proname AS function_name
     ,pg_get_functiondef(pg_proc.oid) AS sql
     ,pg_get_function_arguments(pg_proc.oid) AS raw_args
-    ,pg_type.typname AS return_type
+    ,pg_catalog.pg_get_function_result(pg_proc.oid) AS return_type
 FROM
     pg_catalog.pg_proc
     JOIN pg_catalog.pg_namespace ON pg_proc.pronamespace = pg_namespace.oid
-    JOIN pg_catalog.pg_type ON pg_type.oid = pg_proc.prorettype
 WHERE
-    TRUE
+    pg_function_is_visible(pg_proc.oid)
+    AND NOT EXISTS (
+        SELECT
+            *
+        FROM
+            pg_catalog.pg_extension
+            JOIN pg_catalog.pg_depend ON pg_depend.refobjid = pg_extension.oid
+            JOIN pg_catalog.pg_proc AS extension_proc ON extension_proc.oid = pg_depend.objid
+        WHERE
+            pg_depend.deptype = 'e'
+            AND extension_proc.oid = pg_proc.oid
+    )
     {{ if not .IncludeSystemObjects }}AND pg_namespace.nspname <> 'information_schema' AND pg_namespace.nspname NOT LIKE 'pg_%'{{ end }}
     {{ if .WithSchemas }}AND pg_namespace.nspname IN ({{ printList .WithSchemas }}){{ end }}
     {{ if .WithoutSchemas }}AND pg_namespace.nspname NOT IN ({{ printList .WithoutSchemas }}){{ end }}

@@ -373,12 +373,28 @@ func dropExtraneousObjects(m *Migration, mode MigrationMode, gotCatalog, wantCat
 		DropCascade:  mode&DropCascade != 0,
 	}
 	dropMatViewCmd := DropViewCommand{
+		DropIfExists:   true,
 		IsMaterialized: true,
 		DropCascade:    mode&DropCascade != 0,
+	}
+	dropExtensionCmd := DropExtensionCommand{
+		DropIfExists: true,
+		DropCascade:  mode&DropCascade != 0,
 	}
 	var alterTableCmds []AlterTableCommand // drop columns, drop constraints, drop indexes (mysql only)
 	var dropIndexCmds []Command
 	var dropTriggerCmds []Command
+	var dropFunctionCmds []Command
+	// drop extensions
+	for _, gotExtension := range gotCatalog.Extensions {
+		if strings.HasPrefix(gotExtension, "plpgsql") {
+			continue
+		}
+		if n := wantCatalog.CachedExtensionPosition(gotExtension); n >= 0 {
+			continue
+		}
+		dropExtensionCmd.Extensions = append(dropExtensionCmd.Extensions, gotExtension)
+	}
 	for _, gotSchema := range gotCatalog.Schemas {
 		wantSchema := Schema{SchemaName: gotSchema.SchemaName}
 		if n := wantCatalog.CachedSchemaPosition(gotSchema.SchemaName); n >= 0 {
@@ -474,6 +490,16 @@ func dropExtraneousObjects(m *Migration, mode MigrationMode, gotCatalog, wantCat
 				}
 			}
 		}
+		// drop functions
+		for _, gotFunction := range gotSchema.Functions {
+			if positions := wantSchema.CachedFunctionPositions(gotFunction.FunctionName); len(positions) == 0 {
+				dropFunctionCmds = append(dropFunctionCmds, &DropFunctionCommand{
+					DropIfExists: true,
+					Function:     gotFunction,
+					DropCascade:  true,
+				})
+			}
+		}
 	}
 	m.DropCommands = append(m.DropCommands, dropTriggerCmds...)
 	m.DropCommands = append(m.DropCommands, dropIndexCmds...)
@@ -497,6 +523,10 @@ func dropExtraneousObjects(m *Migration, mode MigrationMode, gotCatalog, wantCat
 		if len(dropTableCmd.TableNames) > 0 {
 			m.DropCommands = append(m.DropCommands, &dropTableCmd)
 		}
+	}
+	m.DropCommands = append(m.DropCommands, dropFunctionCmds...)
+	if len(dropExtensionCmd.Extensions) > 0 {
+		m.DropCommands = append(m.DropCommands, &dropExtensionCmd)
 	}
 	return nil
 }

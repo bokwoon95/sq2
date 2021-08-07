@@ -8,7 +8,7 @@ DROP VIEW IF EXISTS
     ,public.staff_list
 CASCADE;
 
-DROP MATERIALIZED VIEW public.full_address CASCADE;
+DROP MATERIALIZED VIEW IF EXISTS public.full_address CASCADE;
 
 DROP TABLE IF EXISTS
     public.actor
@@ -29,8 +29,8 @@ DROP TABLE IF EXISTS
     ,public.store
 CASCADE;
 
-DROP FUNCTION IF EXISTS last_update_trg() CASCADE;
+DROP FUNCTION IF EXISTS public.last_update_trg() CASCADE;
 
-DROP FUNCTION IF EXISTS refresh_full_address() CASCADE;
+DROP FUNCTION IF EXISTS public.refresh_full_address() CASCADE;
 
 DROP EXTENSION IF EXISTS btree_gist, "uuid-ossp" CASCADE;

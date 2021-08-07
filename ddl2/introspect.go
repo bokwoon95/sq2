@@ -796,7 +796,6 @@ func (dbi *DatabaseIntrospector) GetFunctions(ctx context.Context, filter *Filte
 	}
 	defer rows.Close()
 	var functions []Function
-	var rawArgs string
 	for rows.Next() {
 		var function Function
 		switch dbi.dialect {
@@ -805,11 +804,11 @@ func (dbi *DatabaseIntrospector) GetFunctions(ctx context.Context, filter *Filte
 				&function.FunctionSchema,
 				&function.FunctionName,
 				&function.SQL,
-				&rawArgs,
+				&function.Args,
 				&function.ReturnType,
 			)
 			if err != nil {
-				return nil, fmt.Errorf("scanning Trigger: %w", err)
+				return nil, fmt.Errorf("scanning Function: %w", err)
 			}
 		}
 		functions = append(functions, function)

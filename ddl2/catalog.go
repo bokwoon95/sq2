@@ -298,12 +298,12 @@ func WithDB(db sq.DB, defaultFilter *Filter) CatalogOption {
 		if dbi.dialect == sq.DialectPostgres {
 			functions, err := dbi.GetFunctions(ctx, nil)
 			if err != nil {
-				return fmt.Errorf("GetConstraints: %w", err)
+				return fmt.Errorf("GetFunctions: %w", err)
 			}
 			for _, function := range functions {
 				n1 := c.CachedSchemaPosition(function.FunctionSchema)
 				if n1 < 0 {
-					continue
+					n1 = c.AppendSchema(Schema{SchemaName: function.FunctionSchema})
 				}
 				c.Schemas[n1].AppendFunction(function)
 			}

@@ -161,6 +161,7 @@ func Test_SakilaPostgres(t *testing.T) {
 	if err != nil {
 		t.Fatal(testcallers(), err)
 	}
+	_, _ = extensions, functions
 	db, err := sql.Open("postgres", "postgres://postgres:postgres@localhost:5442/db?sslmode=disable")
 	if err != nil {
 		t.Fatal(testcallers(), err)
@@ -176,7 +177,16 @@ func Test_SakilaPostgres(t *testing.T) {
 			tx.Commit()
 		}
 	}()
-	err = AutoMigrate(dialect, tx, DropExtraneous|DropCascade)
+	catalogA, err := NewCatalog(dialect, WithDB(db, &Filter{SortOutput: true}))
+	if err != nil {
+		t.Fatal(testcallers(), err)
+	}
+	resetMigration, err := Migrate(DropExtraneous|DropCascade, catalogA, Catalog{})
+	if err != nil {
+		t.Fatal(testcallers(), err)
+	}
+	resetMigration.WriteSQL(os.Stdout)
+	err = resetMigration.Exec(db)
 	if err != nil {
 		t.Fatal(testcallers(), err)
 	}
@@ -198,10 +208,17 @@ func Test_SakilaPostgres(t *testing.T) {
 	if len(views) != 0 {
 		t.Fatal(testcallers(), " AutoMigrate did not drop all views:", fmt.Sprint(views))
 	}
-	for _, function := range functions {
-		query, args, _, err := sq.ToSQL(dialect, &DropFunctionCommand{
+	funs, err := dbi.GetFunctions(context.Background(), nil)
+	if err != nil {
+		t.Fatal(testcallers(), err)
+	}
+	if len(funs) != 0 {
+		t.Fatal(testcallers(), " AutoMigrate did not drop all functions:", fmt.Sprint(funs))
+	}
+	if len(extensions) > 0 {
+		query, args, _, err := sq.ToSQL(dialect, &DropExtensionCommand{
 			DropIfExists: true,
-			Function:     function,
+			Extensions:   extensions,
 			DropCascade:  true,
 		})
 		if err != nil {
@@ -211,15 +228,6 @@ func Test_SakilaPostgres(t *testing.T) {
 		if err != nil {
 			t.Fatal(testcallers(), err)
 		}
-	}
-	dropExtensionCmd := &DropExtensionCommand{DropIfExists: true, Extensions: extensions, DropCascade: true}
-	query, args, _, err := sq.ToSQL(dialect, dropExtensionCmd)
-	if err != nil {
-		t.Fatal(testcallers(), err)
-	}
-	_, err = tx.Exec(query, args...)
-	if err != nil {
-		t.Fatal(testcallers(), err)
 	}
 	wantCatalog, err := NewCatalog(dialect, WithTables(
 		NEW_ACTOR(""),
@@ -282,11 +290,7 @@ func Test_SakilaPostgres(t *testing.T) {
 	if err != nil {
 		t.Fatal(testcallers(), err)
 	}
-	withFunctions := make([]string, len(functions))
-	for i, function := range functions {
-		withFunctions[i] = function.FunctionName
-	}
-	gotCatalog, err := NewCatalog(dialect, WithDB(tx, &Filter{SortOutput: true, WithFunctions: withFunctions}))
+	gotCatalog, err := NewCatalog(dialect, WithDB(tx, &Filter{SortOutput: true}))
 	if err != nil {
 		t.Fatal(testcallers(), err)
 	}
@@ -317,14 +321,6 @@ func Test_SakilaPostgres(t *testing.T) {
 	if err != nil {
 		t.Fatal(testcallers(), err)
 	}
-	for _, function := range functions {
-		downMigration.DropCommands = append(downMigration.DropCommands, &DropFunctionCommand{
-			DropIfExists: true,
-			Function:     function,
-			DropCascade:  true,
-		})
-	}
-	downMigration.DropCommands = append(downMigration.DropCommands, dropExtensionCmd)
 	buf.Reset()
 	err = downMigration.WriteSQL(buf)
 	if err != nil {
@@ -416,80 +412,6 @@ func Test_CatalogPostgres(t *testing.T) {
 		t.Fatal(testcallers(), err)
 	}
 }
-
-// func Test_ResetPostgres(t *testing.T) {
-// 	db, err := sql.Open("postgres", "postgres://postgres:postgres@localhost:5442/db?sslmode=disable")
-// 	if err != nil {
-// 		t.Fatal(testcallers(), err)
-// 	}
-// 	tx, err := db.Begin()
-// 	if err != nil {
-// 		t.Fatal(testcallers(), err)
-// 	}
-// 	defer func() {
-// 		if err != nil {
-// 			tx.Rollback()
-// 		} else {
-// 			tx.Commit()
-// 		}
-// 	}()
-// 	err = AutoMigrate(sq.DialectPostgres, tx, DropExtraneous|DropCascade)
-// 	if err != nil {
-// 		t.Fatal(testcallers(), err)
-// 	}
-// }
-//
-// func Test_SetupPostgres(t *testing.T) {
-// 	functions, err := FilesToFunctions(sq.DialectPostgres, sqlDir, "sql/last_update_trg.sql", "sql/refresh_full_address.sql")
-// 	if err != nil {
-// 		t.Fatal(testcallers(), err)
-// 	}
-// 	db, err := sql.Open("postgres", "postgres://postgres:postgres@localhost:5442/db?sslmode=disable")
-// 	if err != nil {
-// 		t.Fatal(testcallers(), err)
-// 	}
-// 	tx, err := db.Begin()
-// 	if err != nil {
-// 		t.Fatal(testcallers(), err)
-// 	}
-// 	defer func() {
-// 		if err != nil {
-// 			tx.Rollback()
-// 		} else {
-// 			tx.Commit()
-// 		}
-// 	}()
-// 	err = AutoMigrate(sq.DialectPostgres, tx, CreateMissing|UpdateExisting, WithTables(
-// 		NEW_ACTOR(""),
-// 		NEW_CATEGORY(""),
-// 		NEW_COUNTRY(""),
-// 		NEW_CITY(""),
-// 		NEW_ADDRESS(""),
-// 		NEW_LANGUAGE(""),
-// 		NEW_FILM(""),
-// 		NEW_FILM_TEXT(""),
-// 		NEW_FILM_ACTOR(""),
-// 		NEW_FILM_ACTOR_REVIEW(""),
-// 		NEW_FILM_CATEGORY(""),
-// 		NEW_STAFF(""),
-// 		NEW_STORE(""),
-// 		NEW_CUSTOMER(""),
-// 		NEW_INVENTORY(""),
-// 		NEW_RENTAL(""),
-// 		NEW_PAYMENT(""),
-// 	), WithDDLViews(
-// 		NEW_ACTOR_INFO(""),
-// 		NEW_CUSTOMER_LIST(""),
-// 		NEW_FILM_LIST(""),
-// 		NEW_NICER_BUT_SLOWER_FILM_LIST(""),
-// 		NEW_SALES_BY_FILM_CATEGORY(""),
-// 		NEW_SALES_BY_STORE(""),
-// 		NEW_FULL_ADDRESS(""),
-// 	), WithFunctions(functions...))
-// 	if err != nil {
-// 		t.Fatal(testcallers(), err)
-// 	}
-// }
 
 func Test_IntrospectPostgres(t *testing.T) {
 	db, err := sql.Open("postgres", "postgres://postgres:postgres@localhost:5442/db?sslmode=disable")
