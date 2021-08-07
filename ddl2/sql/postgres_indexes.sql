@@ -46,4 +46,10 @@ GROUP BY
     ,num_key_columns
     ,exprs
     ,predicate
+{{- if .SortOutput }}
+ORDER BY
+    table_schema
+    ,table_name
+    ,index_name
+{{- end }}
 ;

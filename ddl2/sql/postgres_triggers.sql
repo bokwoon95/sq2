@@ -14,4 +14,10 @@ WHERE
     {{ if .WithoutSchemas }}AND table_namespace.nspname NOT IN ({{ printList .WithoutSchemas }}){{ end }}
     {{ if .WithTables }}AND table_info.relname IN ({{ printList .WithTables }}){{ end }}
     {{ if .WithoutTables }}AND table_info.relname NOT IN ({{ printList .WithoutTables }}){{ end }}
+{{- if .SortOutput }}
+ORDER BY
+    table_namespace.nspname
+    ,table_info.relname
+    ,pg_trigger.tgname
+{{- end }}
 ;

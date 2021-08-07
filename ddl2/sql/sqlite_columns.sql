@@ -16,4 +16,9 @@ FROM (
         {{ if .WithoutTables }}AND tbl_name NOT IN ({{ printList .WithoutTables }}){{ end }}
     ) AS tables
     CROSS JOIN pragma_table_xinfo(tables.tbl_name) AS columns
+{{- if .SortOutput }}
+ORDER BY
+    tables.tbl_name
+    ,columns.name
+{{- end }}
 ;

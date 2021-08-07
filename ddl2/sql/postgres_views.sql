@@ -1,4 +1,7 @@
 SELECT
+    *
+FROM (
+SELECT
     schemaname AS view_schema
     ,viewname AS view_name
     ,FALSE AS is_materialized
@@ -27,4 +30,10 @@ WHERE
     {{ if .WithoutSchemas }}AND schemaname NOT IN ({{ printList .WithoutSchemas }}){{ end }}
     {{ if .WithTables }}AND matviewname IN ({{ printList .WithTables }}){{ end }}
     {{ if .WithoutTables }}AND matviewname NOT IN ({{ printList .WithoutTables }}){{ end }}
+) AS tmp
+{{- if .SortOutput }}
+ORDER BY
+    view_schema
+    ,view_name
+{{- end }}
 ;

@@ -14,4 +14,9 @@ WHERE
 GROUP BY
     pg_namespace.nspname
     ,pg_type.typname
+{{- if .SortOutput }}
+ORDER BY
+    pg_namespace.nspname
+    ,pg_type.typname
+{{- end }}
 ;

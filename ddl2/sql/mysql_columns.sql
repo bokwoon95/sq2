@@ -22,4 +22,10 @@ WHERE
     {{ if .WithoutSchemas }}AND c.table_schema NOT IN ({{ printList .WithoutSchemas }}){{ end }}
     {{ if .WithTables }}AND c.table_name IN ({{ printList .WithTables }}){{ end }}
     {{ if .WithoutTables }}AND c.table_name NOT IN ({{ printList .WithoutTables }}){{ end }}
+{{- if .SortOutput }}
+ORDER BY
+    c.table_schema
+    ,c.table_name
+    ,c.column_name
+{{- end }}
 ;

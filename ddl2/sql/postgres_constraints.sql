@@ -1,4 +1,7 @@
 SELECT
+    *
+FROM (
+SELECT
     table_schema
     ,table_name
     ,constraint_name
@@ -139,4 +142,11 @@ WHERE
     {{ if .WithoutSchemas }}AND pg_namespace.nspname NOT IN ({{ printList .WithoutSchemas }}){{ end }}
     {{ if .WithTables }}AND pg_class.relname IN ({{ printList .WithTables }}){{ end }}
     {{ if .WithoutTables }}AND pg_class.relname NOT IN ({{ printList .WithoutTables }}){{ end }}
+) AS tmp
+{{- if .SortOutput }}
+ORDER BY
+    table_schema
+    ,table_name
+    ,constraint_name
+{{- end }}
 ;

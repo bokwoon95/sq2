@@ -10,4 +10,9 @@ WHERE
     {{ if .WithoutSchemas }}AND table_schema NOT IN ({{ printList .WithoutSchemas }}){{ end }}
     {{ if .WithTables }}AND table_name IN ({{ printList .WithTables }}){{ end }}
     {{ if .WithoutTables }}AND table_name NOT IN ({{ printList .WithoutTables }}){{ end }}
+{{- if .SortOutput }}
+ORDER BY
+    table_schema
+    ,table_name
+{{- end }}
 ;

@@ -188,9 +188,9 @@ func NewCatalog(dialect string, opts ...CatalogOption) (Catalog, error) {
 	return catalog, nil
 }
 
-func WithDB(db sq.DB) CatalogOption {
+func WithDB(db sq.DB, defaultFilter *Filter) CatalogOption {
 	return func(c *Catalog) error {
-		dbi, err := NewDatabaseIntrospector(c.Dialect, db, nil)
+		dbi, err := NewDatabaseIntrospector(c.Dialect, db, defaultFilter)
 		if err != nil {
 			return fmt.Errorf("NewDatabaseIntrospector: %w", err)
 		}
@@ -259,9 +259,25 @@ func WithDB(db sq.DB) CatalogOption {
 			return fmt.Errorf("GetConstraints: %w", err)
 		}
 		for _, constraint := range constraints {
-			if n1 := c.CachedSchemaPosition(constraint.TableSchema); n1 >= 0 {
-				if n2 := c.Schemas[n1].CachedTablePosition(constraint.TableName); n2 >= 0 {
-					c.Schemas[n1].Tables[n2].AppendConstraint(constraint)
+			n1 := c.CachedSchemaPosition(constraint.TableSchema)
+			if n1 < 0 {
+				continue
+			}
+			n2 := c.Schemas[n1].CachedTablePosition(constraint.TableName)
+			if n2 < 0 {
+				continue
+			}
+			c.Schemas[n1].Tables[n2].AppendConstraint(constraint)
+			if len(constraint.Columns) == 1 && (constraint.ConstraintType == PRIMARY_KEY || constraint.ConstraintType == UNIQUE) {
+				n3 := c.Schemas[n1].Tables[n2].CachedColumnPosition(constraint.Columns[0])
+				if n3 < 0 {
+					continue
+				}
+				switch constraint.ConstraintType {
+				case PRIMARY_KEY:
+					c.Schemas[n1].Tables[n2].Columns[n3].IsPrimaryKey = true
+				case UNIQUE:
+					c.Schemas[n1].Tables[n2].Columns[n3].IsUnique = true
 				}
 			}
 		}

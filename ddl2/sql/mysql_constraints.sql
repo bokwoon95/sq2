@@ -1,4 +1,7 @@
 SELECT
+    *
+FROM (
+SELECT
     tc.table_schema
     ,tc.table_name
     ,tc.constraint_name
@@ -55,4 +58,11 @@ WHERE
     {{ if .WithoutSchemas }}AND tc.table_schema NOT IN ({{ printList .WithoutSchemas }}){{ end }}
     {{ if .WithTables }}AND tc.table_name IN ({{ printList .WithTables }}){{ end }}
     {{ if .WithoutTables }}AND tc.table_name NOT IN ({{ printList .WithoutTables }}){{ end }}
+) AS tmp
+{{- if .SortOutput }}
+ORDER BY
+    table_schema
+    ,table_name
+    ,constraint_name
+{{- end }}
 ;

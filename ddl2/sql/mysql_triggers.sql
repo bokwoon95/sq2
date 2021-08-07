@@ -14,4 +14,10 @@ WHERE
     {{ if .WithoutSchemas }}AND event_object_schema NOT IN ({{ printList .WithoutSchemas }}){{ end }}
     {{ if .WithTables }}AND event_object_table IN ({{ printList .WithTables }}){{ end }}
     {{ if .WithoutTables }}AND event_object_table NOT IN ({{ printList .WithoutTables }}){{ end }}
+{{- if .SortOutput }}
+ORDER BY
+    table_schema
+    ,table_name
+    ,trigger_name
+{{- end }}
 ;

@@ -32,4 +32,10 @@ GROUP BY
     ,index_name
     ,index_type
     ,is_unique
+{{- if .SortOutput }}
+ORDER BY
+    table_schema
+    ,table_name
+    ,index_name
+{{- end }}
 ;

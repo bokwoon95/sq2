@@ -1,4 +1,7 @@
 SELECT
+    *
+FROM (
+SELECT
     table_name
     ,'PRIMARY KEY' AS constraint_type
     ,COALESCE(group_concat(column_name), 'ROWID') AS columns
@@ -105,4 +108,10 @@ GROUP BY
     ,references_table
     ,update_rule
     ,delete_rule
+) AS tmp
+{{- if .SortOutput }}
+ORDER BY
+    table_name
+    ,constraint_type
+{{- end }}
 ;

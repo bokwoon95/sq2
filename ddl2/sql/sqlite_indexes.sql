@@ -37,4 +37,9 @@ GROUP BY
     ,index_name
     ,is_unique
     ,sql
+{{- if .SortOutput }}
+ORDER BY
+    table_name
+    ,index_name
+{{- end }}
 ;

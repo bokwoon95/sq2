@@ -19,6 +19,7 @@ var ErrUnsupportedFeature = errors.New("dialect does not support this feature")
 
 type Filter struct {
 	IncludeSystemObjects bool
+	SortOutput           bool
 	WithSchemas          []string
 	WithoutSchemas       []string
 	WithTables           []string
@@ -350,6 +351,10 @@ func (dbi *DatabaseIntrospector) GetColumns(ctx context.Context, filter *Filter)
 			)
 			if err != nil {
 				return nil, fmt.Errorf("scanning Column: %w", err)
+			}
+			column.ColumnType = strings.TrimSuffix(column.ColumnType, " GENERATED ALWAYS")
+			if column.ColumnDefault != "" {
+				column.ColumnDefault = toExpr(dbi.dialect, column.ColumnDefault)
 			}
 		case sq.DialectPostgres:
 			err = rows.Scan(
@@ -792,6 +797,9 @@ func (dbi *DatabaseIntrospector) GetViews(ctx context.Context, filter *Filter) (
 			)
 			if err != nil {
 				return nil, fmt.Errorf("scanning View: %w", err)
+			}
+			if i := strings.Index(view.SQL, " AS "); i >= 0 {
+				view.SQL = view.SQL[i+4:]
 			}
 		case sq.DialectPostgres:
 			err = rows.Scan(

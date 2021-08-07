@@ -39,7 +39,7 @@ type Migration struct {
 }
 
 func AutoMigrate(dialect string, db sq.DB, migrationMode MigrationMode, catalogOpts ...CatalogOption) error {
-	gotCatalog, err := NewCatalog(dialect, WithDB(db))
+	gotCatalog, err := NewCatalog(dialect, WithDB(db, nil))
 	if err != nil {
 		return fmt.Errorf("introspecting db: %w", err)
 	}
