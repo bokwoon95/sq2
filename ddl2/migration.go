@@ -9,13 +9,16 @@ import (
 	"github.com/bokwoon95/sq"
 )
 
-type MigrationMode int
+type MigrationMode int64
 
+// note: do not serialize these values! the underlying value of the constant
+// may change and if you depend on the value, it will break your application.
+// Only ever refer to these constants by name and never by value.
 const (
-	CreateMissing  MigrationMode = 0b1
-	UpdateExisting MigrationMode = 0b10
-	DropExtraneous MigrationMode = 0b100
-	DropCascade    MigrationMode = 0b1000
+	CreateMissing MigrationMode = 1 << iota
+	UpdateExisting
+	DropExtraneous
+	DropCascade
 )
 
 type Migration struct {

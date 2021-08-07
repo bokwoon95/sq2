@@ -28,13 +28,14 @@ add ignore modifier ignore=postgres
 [BOTH*] index      {cols unique where include dialect}
 == single value, multi dialect ==
 [COLUMN] type={INT sqlite INTEGER} primarykey autoincrement auto_increment identity
-[COLUMN] notnull default={NOW() sqlite DATETIME('now')} onupdatecurrenttimestamp
+[COLUMN] default={NOW() sqlite DATETIME('now')} onupdatecurrenttimestamp notnull
 [COLUMN] generated={{first_name || last_name} mysql {CONCAT(first_name, ' ', last_name)}}
 [COLUMN] collate={nocase postgres C mysql latin1_swedish_ci}
 == single key, multi-dialect ==
 [BOTH**] ignore=sqlite,mysql
 [BOTH***] virtual=sqlite
 [COLUMN] stored
+[COLUMN] notnull
 == dialect specific ==
 [COLUMN] auto_increment
 [COLUMN] autoincrement
@@ -204,23 +205,3 @@ triggers can't be altered online safely because two triggers living
 side-by-side may result in incorrect behaviour.
 generating non-online trigger migrations is also not possible because we cannot
 detect trigger identity.
-
-func (m CatalogMigration) Commands() MigrationCommands
-type MigrationCommands struct {
-	Dialect               string
-	SchemaCommands        []Command
-	FunctionCommands      []Command
-	TableCommands         []Command
-	ViewCommands          []Command
-	TableFunctionCommands []Command
-	TriggerCommands       []Command
-	DualWriteTriggers     []Command
-	BackfillQueries       []sq.Query
-	GhostTableCommands    []Command
-	ForeignKeyCommands    []Command
-	RenameCommands        []Command
-	DropCommands          []Command
-}
-
-Idea: MigrateCatalog() should generate all of the drop (unused) X commands as well. AutoMigrate will simply ignore the drop queries.
-    but what about the scheduled drop (old <-> new) queries, like for migrating tables in sqlite?
