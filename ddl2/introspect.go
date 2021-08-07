@@ -266,17 +266,17 @@ func (dbi *DatabaseIntrospector) GetTables(ctx context.Context, filter *Filter) 
 	var rows *sql.Rows
 	switch dbi.dialect {
 	case sq.DialectSQLite:
-		rows, err = dbi.queryContext(ctx, sqlDir, "sql/sqlite_tables.sql", filter)
+		rows, err = dbi.queryContext(ctx, dataDir, "sql/sqlite_tables.sql", filter)
 		if err != nil {
 			return nil, err
 		}
 	case sq.DialectPostgres:
-		rows, err = dbi.queryContext(ctx, sqlDir, "sql/postgres_tables.sql", filter)
+		rows, err = dbi.queryContext(ctx, dataDir, "sql/postgres_tables.sql", filter)
 		if err != nil {
 			return nil, err
 		}
 	case sq.DialectMySQL:
-		rows, err = dbi.queryContext(ctx, sqlDir, "sql/mysql_tables.sql", filter)
+		rows, err = dbi.queryContext(ctx, dataDir, "sql/mysql_tables.sql", filter)
 		if err != nil {
 			return nil, err
 		}
@@ -317,17 +317,17 @@ func (dbi *DatabaseIntrospector) GetColumns(ctx context.Context, filter *Filter)
 	var rows *sql.Rows
 	switch dbi.dialect {
 	case sq.DialectSQLite:
-		rows, err = dbi.queryContext(ctx, sqlDir, "sql/sqlite_columns.sql", filter)
+		rows, err = dbi.queryContext(ctx, dataDir, "sql/sqlite_columns.sql", filter)
 		if err != nil {
 			return nil, err
 		}
 	case sq.DialectPostgres:
-		rows, err = dbi.queryContext(ctx, sqlDir, "sql/postgres_columns.sql", filter)
+		rows, err = dbi.queryContext(ctx, dataDir, "sql/postgres_columns.sql", filter)
 		if err != nil {
 			return nil, err
 		}
 	case sq.DialectMySQL:
-		rows, err = dbi.queryContext(ctx, sqlDir, "sql/mysql_columns.sql", filter)
+		rows, err = dbi.queryContext(ctx, dataDir, "sql/mysql_columns.sql", filter)
 		if err != nil {
 			return nil, err
 		}
@@ -433,17 +433,17 @@ func (dbi *DatabaseIntrospector) GetConstraints(ctx context.Context, filter *Fil
 	var rows *sql.Rows
 	switch dbi.dialect {
 	case sq.DialectSQLite:
-		rows, err = dbi.queryContext(ctx, sqlDir, "sql/sqlite_constraints.sql", filter)
+		rows, err = dbi.queryContext(ctx, dataDir, "sql/sqlite_constraints.sql", filter)
 		if err != nil {
 			return nil, err
 		}
 	case sq.DialectPostgres:
-		rows, err = dbi.queryContext(ctx, sqlDir, "sql/postgres_constraints.sql", filter)
+		rows, err = dbi.queryContext(ctx, dataDir, "sql/postgres_constraints.sql", filter)
 		if err != nil {
 			return nil, err
 		}
 	case sq.DialectMySQL:
-		rows, err = dbi.queryContext(ctx, sqlDir, "sql/mysql_constraints.sql", filter)
+		rows, err = dbi.queryContext(ctx, dataDir, "sql/mysql_constraints.sql", filter)
 		if err != nil {
 			return nil, err
 		}
@@ -549,17 +549,17 @@ func (dbi *DatabaseIntrospector) GetIndexes(ctx context.Context, filter *Filter)
 	var rows *sql.Rows
 	switch dbi.dialect {
 	case sq.DialectSQLite:
-		rows, err = dbi.queryContext(ctx, sqlDir, "sql/sqlite_indexes.sql", filter)
+		rows, err = dbi.queryContext(ctx, dataDir, "sql/sqlite_indexes.sql", filter)
 		if err != nil {
 			return nil, err
 		}
 	case sq.DialectPostgres:
-		rows, err = dbi.queryContext(ctx, sqlDir, "sql/postgres_indexes.sql", filter)
+		rows, err = dbi.queryContext(ctx, dataDir, "sql/postgres_indexes.sql", filter)
 		if err != nil {
 			return nil, err
 		}
 	case sq.DialectMySQL:
-		rows, err = dbi.queryContext(ctx, sqlDir, "sql/mysql_indexes.sql", filter)
+		rows, err = dbi.queryContext(ctx, dataDir, "sql/mysql_indexes.sql", filter)
 		if err != nil {
 			return nil, err
 		}
@@ -678,17 +678,17 @@ func (dbi *DatabaseIntrospector) GetTriggers(ctx context.Context, filter *Filter
 	var rows *sql.Rows
 	switch dbi.dialect {
 	case sq.DialectSQLite:
-		rows, err = dbi.queryContext(ctx, sqlDir, "sql/sqlite_triggers.sql", filter)
+		rows, err = dbi.queryContext(ctx, dataDir, "sql/sqlite_triggers.sql", filter)
 		if err != nil {
 			return nil, err
 		}
 	case sq.DialectPostgres:
-		rows, err = dbi.queryContext(ctx, sqlDir, "sql/postgres_triggers.sql", filter)
+		rows, err = dbi.queryContext(ctx, dataDir, "sql/postgres_triggers.sql", filter)
 		if err != nil {
 			return nil, err
 		}
 	case sq.DialectMySQL:
-		rows, err = dbi.queryContext(ctx, sqlDir, "sql/mysql_triggers.sql", filter)
+		rows, err = dbi.queryContext(ctx, dataDir, "sql/mysql_triggers.sql", filter)
 		if err != nil {
 			return nil, err
 		}
@@ -763,17 +763,17 @@ func (dbi *DatabaseIntrospector) GetViews(ctx context.Context, filter *Filter) (
 	var rows *sql.Rows
 	switch dbi.dialect {
 	case sq.DialectSQLite:
-		rows, err = dbi.queryContext(ctx, sqlDir, "sql/sqlite_views.sql", filter)
+		rows, err = dbi.queryContext(ctx, dataDir, "sql/sqlite_views.sql", filter)
 		if err != nil {
 			return nil, err
 		}
 	case sq.DialectPostgres:
-		rows, err = dbi.queryContext(ctx, sqlDir, "sql/postgres_views.sql", filter)
+		rows, err = dbi.queryContext(ctx, dataDir, "sql/postgres_views.sql", filter)
 		if err != nil {
 			return nil, err
 		}
 	case sq.DialectMySQL:
-		rows, err = dbi.queryContext(ctx, sqlDir, "sql/mysql_views.sql", filter)
+		rows, err = dbi.queryContext(ctx, dataDir, "sql/mysql_views.sql", filter)
 		if err != nil {
 			return nil, err
 		}
