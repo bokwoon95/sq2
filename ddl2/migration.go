@@ -35,12 +35,12 @@ type Migration struct {
 	DropCommands                []Command
 }
 
-func AutoMigrate(dialect string, db sq.DB, migrationMode MigrationMode, wantCatalogOpts ...CatalogOption) error {
+func AutoMigrate(dialect string, db sq.DB, migrationMode MigrationMode, catalogOpts ...CatalogOption) error {
 	gotCatalog, err := NewCatalog(dialect, WithDB(db))
 	if err != nil {
 		return fmt.Errorf("introspecting db: %w", err)
 	}
-	wantCatalog, err := NewCatalog(dialect, wantCatalogOpts...)
+	wantCatalog, err := NewCatalog(dialect, catalogOpts...)
 	if err != nil {
 		return fmt.Errorf("building catalog: %w", err)
 	}

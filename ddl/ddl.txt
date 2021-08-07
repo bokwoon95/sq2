@@ -1,76 +1,8 @@
-forget about offering users the options to slot in their own predicates.
-WithDB's behavior is fixed, take it or leave it. Instead, offer them a way to
-write their own CatalogOption function, leveraging the existing IntrospectQuery
-and MapColumns/MapTables/etc if necessary.
-
-type PostgresIntrospector struct {
-    DB ddl.DB
-    IncludeSystemSchemas bool
-    IncludeSchemas []string
-    ExcludeSchemas []string
-    IncludeTables [][2]string
-    ExcludeTables [][2]string
-    IncludeViews [][2]string
-    ExcludeViews [][2]string
-}
-
-or should templateData be part of the underlying object instead? This would
-allow you to extend existing introspector implementations with your own data.
-type ddl.DB = interface{
-    QueryContext(ctx context.Context, query string, args ...interface{}) (*sql.Rows, error)
-    ExecContext(ctx context.Context, query string, args ...interface{}) (sql.Result, error)
-    PrepareContext(ctx context.Context, query string) (*sql.Stmt, error)
-}
-type DBIntrospector interface {
-    GetDefaultSchema() (defaultSchema string, error)
-    GetVersion() (versionString string, versionNum [2]int, error)
-    GetExtensions() (extensions [][2]string, supported bool, err error)
-    GetSchemas() (schemas []Schema, supported bool, error)
-    GetTables() (tbls []Table, supported bool, error)
-    GetColumns() (columns []Column, supported bool, error)
-    GetConstraints() (constraints []Constraint, supported bool, error)
-    GetIndexes() (indexes []Index, supported bool, err error)
-    GetTriggers() (triggers []Trigger, supported bool, err error)
-    GetViews() (views []View, supported bool, err error)
-    GetFunctions() (functions []Function, supported bool, err error)
-}
-WithDB(ddl.DB)
-WithDBIntrospector(db DB, dbIntrospector DBIntrospector)
-introspect_sqlite.go
-- type SQLiteIntrospector struct
-- SQLiteIntrospector is the special kid because before it can introspect columns, it must populate its internal list of tables so that it can run the introspection query over and over for each table.
-introspect_postgres.go
-- type PostgresIntrospector struct
-introspect_mysql.go
-- type MySQLIntrospector struct
-
-we *could* decouple the ddl and introspect* packages. That means ddl will no longer be able to choose the introspector for you based on the dialect. Instead the user must always pass in a DB connection and an introspector.
-
-catalog := ddl.NewCatalog(WithDB(db, introspect_sqlite.NewIntrospector()))
-
-catalog := ddl.NewCatalog(ddl.WithDialect(), ddl.WithTables(), ddl.WithDDLViews())
-
-- OR -
-
-catalog := ddl.NewCatalog(dialect, WithDB(db))
-
-catalog := ddl.NewCatalog(dialect, WithDBAndIntrospector(db, dbIntrospector)) // they can write their own option that uses their introspector
-
-catalog := ddl.NewCatalog(dialect, ddl.WithTables(), ddl.WithDDLViews())
-
-ughh I really hate having to repeat the dialect twice first as the dialect string and second as the introspector though.
-
 omfg both postgres and mysql support functions AND stored procedures, so now
 I'd have to figure out how that looks from the user-definition side (in Go
 files) and the database-definition side (reading from the db).
 ALSO: functions may be user-defined aggregate functions or user-defined window
 functions. guh.
-
-need a special function just for generating tables + views from the database,
-because in those cases you don't want the overhead of introspecting the
-functions (which there are quite a lot of in the postgres public schema). In
-those cases it will only generate a Catalog with the requisite information for
-structs+DDL impl.
 
 ddl.go
 column.go | constraint.go | index.go
@@ -83,16 +15,37 @@ schema.go
 catalog.go
 migration_commands.go
 
-next up:
-bah gawd. extensions. enums.
-
-Also: TYPEs, DOMAINs, ENUMs. aaargh.
-I don't need to add these now because the sakila database doesn't use them (I'm
-going to strip it out from the postgres schema too). Kick the can down the
-road, when the problem is more well-defined.
+bah gawd. extensions. types. domains. enums.
 
 add dialect modifier
 add ignore modifier ignore=postgres
+
+== multi value, multi dialect ==
+[BOTH*] primarykey {name cols onupdate ondelete deferrable deferred dialect}
+[BOTH*] references {name cols onupdate ondelete deferrable deferred dialect}
+[BOTH*] unique     {name cols onupdate ondelete deferrable deferred dialect}
+[BOTH] check      {name cols onupdate ondelete deferrable deferred dialect}
+[BOTH*] index      {cols unique where include dialect}
+== single value, multi dialect ==
+[COLUMN] type={INT sqlite INTEGER} primarykey autoincrement auto_increment identity
+[COLUMN] notnull default={NOW() sqlite DATETIME('now')} onupdatecurrenttimestamp
+[COLUMN] generated={{first_name || last_name} mysql {CONCAT(first_name, ' ', last_name)}}
+[COLUMN] collate={nocase postgres C mysql latin1_swedish_ci}
+== single key, multi-dialect ==
+[BOTH**] ignore=sqlite,mysql
+[BOTH***] virtual=sqlite
+[COLUMN] stored
+== dialect specific ==
+[COLUMN] auto_increment
+[COLUMN] autoincrement
+[COLUMN] identity
+[COLUMN] alwaysidentity
+[COLUMN] onupdatecurrenttimestamp
+
+* if declared on a column, the column will be implicitly passed in as the 'cols' modifier (unless cols is explicitly declared). hence if declared on a table you must explicitly list the cols modifier or there will be no associated columns. you can declare exprs as well but im not liable for what damage it does in the system
+** ignore has different semantics on a column or table
+*** virtual has different semantics on a column or table (and entirely different modifiers)
+
 UUIDField can be used with some media table like in devlab
 
 All commands need to exclude the semicolon. The semicolon will be inserted by
