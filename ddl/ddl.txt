@@ -43,6 +43,9 @@ add ignore modifier ignore=postgres
 [COLUMN] alwaysidentity
 [COLUMN] onupdatecurrenttimestamp
 
+type:sqlite=INTEGER type:mysql=INT
+sqlite:type=INTEGER mysql:type=INT
+
 * if declared on a column, the column will be implicitly passed in as the 'cols' modifier (unless cols is explicitly declared). hence if declared on a table you must explicitly list the cols modifier or there will be no associated columns. you can declare exprs as well but im not liable for what damage it does in the system
 ** ignore has different semantics on a column or table
 *** virtual has different semantics on a column or table (and entirely different modifiers)
