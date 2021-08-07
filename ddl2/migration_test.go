@@ -161,7 +161,6 @@ func Test_SakilaPostgres(t *testing.T) {
 	if err != nil {
 		t.Fatal(testcallers(), err)
 	}
-	_, _ = extensions, functions
 	db, err := sql.Open("postgres", "postgres://postgres:postgres@localhost:5442/db?sslmode=disable")
 	if err != nil {
 		t.Fatal(testcallers(), err)
@@ -177,16 +176,7 @@ func Test_SakilaPostgres(t *testing.T) {
 			tx.Commit()
 		}
 	}()
-	catalogA, err := NewCatalog(dialect, WithDB(db, &Filter{SortOutput: true}))
-	if err != nil {
-		t.Fatal(testcallers(), err)
-	}
-	resetMigration, err := Migrate(DropExtraneous|DropCascade, catalogA, Catalog{})
-	if err != nil {
-		t.Fatal(testcallers(), err)
-	}
-	resetMigration.WriteSQL(os.Stdout)
-	err = resetMigration.Exec(db)
+	err = AutoMigrate(dialect, tx, DropExtraneous|DropCascade)
 	if err != nil {
 		t.Fatal(testcallers(), err)
 	}
