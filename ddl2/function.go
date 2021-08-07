@@ -191,7 +191,7 @@ type DropFunctionCommand struct {
 	DropCascade  bool
 }
 
-func (cmd DropFunctionCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
+func (cmd *DropFunctionCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
 	if dialect == sq.DialectSQLite {
 		return fmt.Errorf("sqlite does not support functions")
 	}

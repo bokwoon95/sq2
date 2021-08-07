@@ -82,7 +82,7 @@ FROM (
         ,ccu.column_name AS references_column
         ,rc.update_rule
         ,rc.delete_rule
-        ,rc.match_option
+        ,CASE rc.match_option WHEN 'NONE' THEN '' ELSE 'MATCH ' || match_option END AS match_option
         ,tc.is_deferrable::BOOLEAN
         ,tc.initially_deferred::BOOLEAN AS is_initially_deferred
         ,kcu.ordinal_position

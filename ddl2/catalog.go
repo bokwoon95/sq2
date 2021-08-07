@@ -208,7 +208,7 @@ func WithDB(db sq.DB, defaultFilter *Filter) CatalogOption {
 			return fmt.Errorf("GetCurrentSchema: %w", err)
 		}
 		if c.Dialect == sq.DialectPostgres {
-			c.Extensions, err = dbi.GetExtensions(ctx)
+			c.Extensions, err = dbi.GetExtensions(ctx, nil)
 			if err != nil {
 				return fmt.Errorf("GetExtensions: %w", err)
 			}
@@ -293,6 +293,19 @@ func WithDB(db sq.DB, defaultFilter *Filter) CatalogOption {
 				if n3 := c.Schemas[n1].CachedViewPosition(index.TableName); n3 >= 0 {
 					c.Schemas[n1].Views[n3].AppendIndex(index)
 				}
+			}
+		}
+		if dbi.dialect == sq.DialectPostgres {
+			functions, err := dbi.GetFunctions(ctx, nil)
+			if err != nil {
+				return fmt.Errorf("GetConstraints: %w", err)
+			}
+			for _, function := range functions {
+				n1 := c.CachedSchemaPosition(function.FunctionSchema)
+				if n1 < 0 {
+					continue
+				}
+				c.Schemas[n1].AppendFunction(function)
 			}
 		}
 		triggers, err := dbi.GetTriggers(ctx, nil)

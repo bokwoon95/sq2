@@ -33,7 +33,7 @@ func Test_SakilaSQLite(t *testing.T) {
 			tx.Commit()
 		}
 	}()
-	err = AutoMigrate(sq.DialectSQLite, tx, DropExtraneous|DropCascade)
+	err = AutoMigrate(dialect, tx, DropExtraneous|DropCascade)
 	if err != nil {
 		t.Fatal(testcallers(), err)
 	}
@@ -55,7 +55,7 @@ func Test_SakilaSQLite(t *testing.T) {
 	if len(views) != 0 {
 		t.Fatal(testcallers(), " AutoMigrate did not drop all views:", fmt.Sprint(views))
 	}
-	wantCatalog, err := NewCatalog(sq.DialectSQLite, WithTables(
+	wantCatalog, err := NewCatalog(dialect, WithTables(
 		NEW_ACTOR(""),
 		NEW_ADDRESS(""),
 		NEW_CATEGORY(""),
@@ -112,7 +112,7 @@ func Test_SakilaSQLite(t *testing.T) {
 	if err != nil {
 		t.Fatal(testcallers(), err)
 	}
-	gotCatalog, err := NewCatalog(dialect, WithDB(db, &Filter{SortOutput: true}))
+	gotCatalog, err := NewCatalog(dialect, WithDB(tx, &Filter{SortOutput: true}))
 	if err != nil {
 		t.Fatal(testcallers(), err)
 	}
@@ -134,7 +134,7 @@ func Test_SakilaSQLite(t *testing.T) {
 	if diff := testdiff(gotIntrospectSQL, wantIntrospectSQL); diff != "" {
 		t.Fatal(testcallers(), diff)
 	}
-	downMigration, err := Migrate(DropExtraneous, gotCatalog, Catalog{})
+	downMigration, err := Migrate(DropExtraneous|DropCascade, gotCatalog, Catalog{})
 	if err != nil {
 		t.Fatal(testcallers(), err)
 	}
@@ -154,154 +154,190 @@ func Test_SakilaSQLite(t *testing.T) {
 	}
 }
 
-func Test_DropSQLite(t *testing.T) {
-	db, err := sql.Open("sqlite3", "/Users/bokwoon/Documents/sq2/db.sqlite3")
+func Test_SakilaPostgres(t *testing.T) {
+	const dialect = sq.DialectPostgres
+	extensions := []string{"btree_gist", "uuid-ossp"}
+	functions, err := FilesToFunctions(sq.DialectPostgres, dataDir, "sql/last_update_trg.sql", "sql/refresh_full_address.sql")
 	if err != nil {
 		t.Fatal(testcallers(), err)
 	}
-	gotCatalog, err := NewCatalog(sq.DialectSQLite, WithDB(db, &Filter{SortOutput: true}))
+	db, err := sql.Open("postgres", "postgres://postgres:postgres@localhost:5442/db?sslmode=disable")
 	if err != nil {
 		t.Fatal(testcallers(), err)
 	}
-	migration, err := Migrate(DropExtraneous|DropCascade, gotCatalog, Catalog{})
+	tx, err := db.Begin()
 	if err != nil {
 		t.Fatal(testcallers(), err)
 	}
-	err = migration.WriteSQL(os.Stdout)
+	defer func() {
+		if err != nil {
+			tx.Rollback()
+		} else {
+			tx.Commit()
+		}
+	}()
+	err = AutoMigrate(dialect, tx, DropExtraneous|DropCascade)
 	if err != nil {
 		t.Fatal(testcallers(), err)
 	}
-}
-
-func Test_CatalogSQLite(t *testing.T) {
-	wantCatalog, err := NewCatalog(sq.DialectSQLite, WithTables(
+	dbi, err := NewDatabaseIntrospector(dialect, tx, nil)
+	if err != nil {
+		t.Fatal(testcallers(), err)
+	}
+	tbls, err := dbi.GetTables(context.Background(), nil)
+	if err != nil {
+		t.Fatal(testcallers(), err)
+	}
+	if len(tbls) != 0 {
+		t.Fatal(testcallers(), " AutoMigrate did not drop all tables:", fmt.Sprint(tbls))
+	}
+	views, err := dbi.GetViews(context.Background(), nil)
+	if err != nil {
+		t.Fatal(testcallers(), err)
+	}
+	if len(views) != 0 {
+		t.Fatal(testcallers(), " AutoMigrate did not drop all views:", fmt.Sprint(views))
+	}
+	for _, function := range functions {
+		query, args, _, err := sq.ToSQL(dialect, &DropFunctionCommand{
+			DropIfExists: true,
+			Function:     function,
+			DropCascade:  true,
+		})
+		if err != nil {
+			t.Fatal(testcallers(), err)
+		}
+		_, err = tx.Exec(query, args...)
+		if err != nil {
+			t.Fatal(testcallers(), err)
+		}
+	}
+	dropExtensionCmd := &DropExtensionCommand{DropIfExists: true, Extensions: extensions, DropCascade: true}
+	query, args, _, err := sq.ToSQL(dialect, dropExtensionCmd)
+	if err != nil {
+		t.Fatal(testcallers(), err)
+	}
+	_, err = tx.Exec(query, args...)
+	if err != nil {
+		t.Fatal(testcallers(), err)
+	}
+	wantCatalog, err := NewCatalog(dialect, WithTables(
 		NEW_ACTOR(""),
-		NEW_CATEGORY(""),
-		NEW_COUNTRY(""),
-		NEW_CITY(""),
 		NEW_ADDRESS(""),
-		NEW_LANGUAGE(""),
+		NEW_CATEGORY(""),
+		NEW_CITY(""),
+		NEW_COUNTRY(""),
+		NEW_CUSTOMER(""),
 		NEW_FILM(""),
-		NEW_FILM_TEXT(""),
 		NEW_FILM_ACTOR(""),
 		NEW_FILM_ACTOR_REVIEW(""),
 		NEW_FILM_CATEGORY(""),
+		NEW_FILM_TEXT(""),
+		NEW_INVENTORY(""),
+		NEW_LANGUAGE(""),
+		NEW_PAYMENT(""),
+		NEW_RENTAL(""),
 		NEW_STAFF(""),
 		NEW_STORE(""),
-		NEW_CUSTOMER(""),
-		NEW_INVENTORY(""),
-		NEW_RENTAL(""),
-		NEW_PAYMENT(""),
 	), WithDDLViews(
 		NEW_ACTOR_INFO(""),
 		NEW_CUSTOMER_LIST(""),
 		NEW_FILM_LIST(""),
+		NEW_FULL_ADDRESS(""),
 		NEW_NICER_BUT_SLOWER_FILM_LIST(""),
 		NEW_SALES_BY_FILM_CATEGORY(""),
 		NEW_SALES_BY_STORE(""),
 		NEW_STAFF_LIST(""),
-		NEW_FULL_ADDRESS(""),
+	), WithFunctions(
+		functions...,
+	), WithExtensions(
+		extensions...,
 	))
 	if err != nil {
 		t.Fatal(testcallers(), err)
 	}
-	migration, err := Migrate(CreateMissing, Catalog{}, wantCatalog)
+	upMigration, err := Migrate(CreateMissing|UpdateExisting, Catalog{}, wantCatalog)
 	if err != nil {
 		t.Fatal(testcallers(), err)
 	}
-	err = migration.WriteSQL(os.Stdout)
+	buf := bufpool.Get().(*bytes.Buffer)
+	defer func() {
+		buf.Reset()
+		bufpool.Put(buf)
+	}()
+	err = upMigration.WriteSQL(buf)
 	if err != nil {
 		t.Fatal(testcallers(), err)
 	}
-}
-
-// func Test_ResetSQLite(t *testing.T) {
-// 	db, err := sql.Open("sqlite3", "/Users/bokwoon/Documents/sq2/db.sqlite3")
-// 	if err != nil {
-// 		t.Fatal(testcallers(), err)
-// 	}
-// 	tx, err := db.Begin()
-// 	if err != nil {
-// 		t.Fatal(testcallers(), err)
-// 	}
-// 	defer func() {
-// 		if err != nil {
-// 			tx.Rollback()
-// 		} else {
-// 			tx.Commit()
-// 		}
-// 	}()
-// 	err = AutoMigrate(sq.DialectSQLite, tx, DropExtraneous|DropCascade)
-// 	if err != nil {
-// 		t.Fatal(testcallers(), err)
-// 	}
-// }
-//
-// func Test_SetupSQLite(t *testing.T) {
-// 	db, err := sql.Open("sqlite3", "/Users/bokwoon/Documents/sq2/db.sqlite3")
-// 	if err != nil {
-// 		t.Fatal(testcallers(), err)
-// 	}
-// 	tx, err := db.Begin()
-// 	if err != nil {
-// 		t.Fatal(testcallers(), err)
-// 	}
-// 	defer func() {
-// 		if err != nil {
-// 			tx.Rollback()
-// 		} else {
-// 			tx.Commit()
-// 		}
-// 	}()
-// 	err = AutoMigrate(sq.DialectSQLite, tx, CreateMissing|UpdateExisting, WithTables(
-// 		NEW_ACTOR(""),
-// 		NEW_CATEGORY(""),
-// 		NEW_COUNTRY(""),
-// 		NEW_CITY(""),
-// 		NEW_ADDRESS(""),
-// 		NEW_LANGUAGE(""),
-// 		NEW_FILM(""),
-// 		NEW_FILM_TEXT(""),
-// 		NEW_FILM_ACTOR(""),
-// 		NEW_FILM_ACTOR_REVIEW(""),
-// 		NEW_FILM_CATEGORY(""),
-// 		NEW_STAFF(""),
-// 		NEW_STORE(""),
-// 		NEW_CUSTOMER(""),
-// 		NEW_INVENTORY(""),
-// 		NEW_RENTAL(""),
-// 		NEW_PAYMENT(""),
-// 	), WithDDLViews(
-// 		NEW_ACTOR_INFO(""),
-// 		NEW_CUSTOMER_LIST(""),
-// 		NEW_FILM_LIST(""),
-// 		NEW_NICER_BUT_SLOWER_FILM_LIST(""),
-// 		NEW_SALES_BY_FILM_CATEGORY(""),
-// 		NEW_SALES_BY_STORE(""),
-// 		NEW_STAFF_LIST(""),
-// 		NEW_FULL_ADDRESS(""),
-// 	))
-// 	if err != nil {
-// 		t.Fatal(testcallers(), err)
-// 	}
-// }
-
-func Test_IntrospectSQLite(t *testing.T) {
-	db, err := sql.Open("sqlite3", "/Users/bokwoon/Documents/sq2/db.sqlite3")
+	gotUpSQL := buf.String()
+	b, err := fs.ReadFile(dataDir, "testdata/postgres_up.sql")
 	if err != nil {
 		t.Fatal(testcallers(), err)
 	}
-	catalog, err := NewCatalog(sq.DialectSQLite, WithDB(db, &Filter{SortOutput: true}))
+	wantUpSQL := strings.TrimSpace(string(b))
+	if diff := testdiff(gotUpSQL, wantUpSQL); diff != "" {
+		t.Fatal(testcallers(), diff)
+	}
+	err = upMigration.Exec(tx)
 	if err != nil {
 		t.Fatal(testcallers(), err)
 	}
-	migration, err := Migrate(CreateMissing|UpdateExisting, Catalog{}, catalog)
+	withFunctions := make([]string, len(functions))
+	for i, function := range functions {
+		withFunctions[i] = function.FunctionName
+	}
+	gotCatalog, err := NewCatalog(dialect, WithDB(tx, &Filter{SortOutput: true, WithFunctions: withFunctions}))
 	if err != nil {
 		t.Fatal(testcallers(), err)
 	}
-	err = migration.WriteSQL(os.Stdout)
+	for i, extension := range gotCatalog.Extensions {
+		if n := strings.IndexByte(extension, '@'); n >= 0 {
+			gotCatalog.Extensions[i] = extension[:n]
+		}
+	}
+	introspectMigration, err := Migrate(CreateMissing|UpdateExisting, Catalog{}, gotCatalog)
 	if err != nil {
 		t.Fatal(testcallers(), err)
+	}
+	buf.Reset()
+	err = introspectMigration.WriteSQL(buf)
+	if err != nil {
+		t.Fatal(testcallers(), err)
+	}
+	gotIntrospectSQL := buf.String()
+	b, err = fs.ReadFile(dataDir, "testdata/postgres_introspect.sql")
+	if err != nil {
+		t.Fatal(testcallers(), err)
+	}
+	wantIntrospectSQL := strings.TrimSpace(string(b))
+	if diff := testdiff(gotIntrospectSQL, wantIntrospectSQL); diff != "" {
+		t.Fatal(testcallers(), diff)
+	}
+	downMigration, err := Migrate(DropExtraneous|DropCascade, gotCatalog, Catalog{})
+	if err != nil {
+		t.Fatal(testcallers(), err)
+	}
+	for _, function := range functions {
+		downMigration.DropCommands = append(downMigration.DropCommands, &DropFunctionCommand{
+			DropIfExists: true,
+			Function:     function,
+			DropCascade:  true,
+		})
+	}
+	downMigration.DropCommands = append(downMigration.DropCommands, dropExtensionCmd)
+	buf.Reset()
+	err = downMigration.WriteSQL(buf)
+	if err != nil {
+		t.Fatal(testcallers(), err)
+	}
+	gotDownSQL := buf.String()
+	b, err = fs.ReadFile(dataDir, "testdata/postgres_down.sql")
+	if err != nil {
+		t.Fatal(testcallers(), err)
+	}
+	wantDownSQL := strings.TrimSpace(string(b))
+	if diff := testdiff(gotDownSQL, wantDownSQL); diff != "" {
+		t.Fatal(testcallers(), diff)
 	}
 }
 

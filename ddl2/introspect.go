@@ -24,13 +24,15 @@ type Filter struct {
 	WithoutSchemas       []string
 	WithTables           []string
 	WithoutTables        []string
+	WithFunctions        []string
+	WithoutFunctions     []string
 }
 
 type Introspector interface {
 	GetVersionNums(context.Context) (versionNums []int, err error)
 	GetCatalogName(context.Context) (catalogName string, err error)
 	GetCurrentSchema(context.Context) (currentSchema string, err error)
-	GetExtensions(context.Context) (extensions []string, err error)
+	GetExtensions(context.Context, *Filter) (extensions []string, err error)
 	GetTables(context.Context, *Filter) ([]Table, error)
 	GetColumns(context.Context, *Filter) ([]Column, error)
 	GetConstraints(context.Context, *Filter) ([]Constraint, error)
@@ -69,6 +71,21 @@ func NewDatabaseIntrospector(dialect string, db sq.DB, defaultFilter *Filter) (*
 	return dbi, nil
 }
 
+func printList(strs []string) string {
+	buf := bufpool.Get().(*bytes.Buffer)
+	defer func() {
+		buf.Reset()
+		bufpool.Put(buf)
+	}()
+	for i, str := range strs {
+		if i > 0 {
+			buf.WriteString(", ")
+		}
+		buf.WriteString("'" + sq.EscapeQuote(str, '\'') + "'")
+	}
+	return buf.String()
+}
+
 func (dbi *DatabaseIntrospector) queryContext(ctx context.Context, fsys fs.FS, name string, filter *Filter) (*sql.Rows, error) {
 	var err error
 	dbi.mu.RLock()
@@ -81,9 +98,7 @@ func (dbi *DatabaseIntrospector) queryContext(ctx context.Context, fsys fs.FS, n
 		}
 		tmpl, err = template.
 			New(name).
-			Funcs(template.FuncMap{
-				"printList": func(strs []string) string { return strings.Join(strs, ", ") },
-			}).
+			Funcs(template.FuncMap{"printList": printList}).
 			Parse(string(b))
 		if err != nil {
 			return nil, fmt.Errorf("parsing %s: %w", name, err)
@@ -242,11 +257,11 @@ func (dbi *DatabaseIntrospector) GetCurrentSchema(ctx context.Context) (currentS
 	return currentSchema, nil
 }
 
-func (dbi *DatabaseIntrospector) GetExtensions(ctx context.Context) (extensions []string, err error) {
+func (dbi *DatabaseIntrospector) GetExtensions(ctx context.Context, filter *Filter) (extensions []string, err error) {
 	if dbi.dialect != sq.DialectPostgres {
 		return nil, fmt.Errorf("%w dialect=%s, feature=extensions", ErrUnsupportedFeature, dbi.dialect)
 	}
-	rows, err := dbi.db.QueryContext(ctx, "SELECT extname, extversion FROM pg_catalog.pg_extension")
+	rows, err := dbi.queryContext(ctx, dataDir, "sql/postgres_extensions.sql", filter)
 	if err != nil {
 		return nil, err
 	}
@@ -761,6 +776,53 @@ func (dbi *DatabaseIntrospector) GetTriggers(ctx context.Context, filter *Filter
 		return nil, fmt.Errorf("rows.Err: %w", err)
 	}
 	return triggers, nil
+}
+
+func (dbi *DatabaseIntrospector) GetFunctions(ctx context.Context, filter *Filter) ([]Function, error) {
+	var err error
+	var rows *sql.Rows
+	switch dbi.dialect {
+	case sq.DialectSQLite:
+		return nil, fmt.Errorf("{%w} dialect=sqlite feature=functions", ErrUnsupportedFeature)
+	case sq.DialectPostgres:
+		rows, err = dbi.queryContext(ctx, dataDir, "sql/postgres_functions.sql", filter)
+		if err != nil {
+			return nil, err
+		}
+	case sq.DialectMySQL:
+		return nil, fmt.Errorf("(*DatabaseIntrospector).GetFunctions() has not yet been implemented for MySQL (TODO)")
+	default:
+		return nil, fmt.Errorf("unsupported dialect: %s", dbi.dialect)
+	}
+	defer rows.Close()
+	var functions []Function
+	var rawArgs string
+	for rows.Next() {
+		var function Function
+		switch dbi.dialect {
+		case sq.DialectPostgres:
+			err = rows.Scan(
+				&function.FunctionSchema,
+				&function.FunctionName,
+				&function.SQL,
+				&rawArgs,
+				&function.ReturnType,
+			)
+			if err != nil {
+				return nil, fmt.Errorf("scanning Trigger: %w", err)
+			}
+		}
+		functions = append(functions, function)
+	}
+	err = rows.Close()
+	if err != nil {
+		return nil, fmt.Errorf("rows.Close: %w", err)
+	}
+	err = rows.Err()
+	if err != nil {
+		return nil, fmt.Errorf("rows.Err: %w", err)
+	}
+	return functions, nil
 }
 
 func (dbi *DatabaseIntrospector) GetViews(ctx context.Context, filter *Filter) ([]View, error) {

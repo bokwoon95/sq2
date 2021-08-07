@@ -505,6 +505,8 @@ func (m *Migration) WriteSQL(w io.Writer) error {
 	var written bool
 	for i, cmds := range [][]Command{
 		m.SchemaCommands,
+		m.ExtensionCommands,
+		m.EnumCommands,
 		m.IndependentFunctionCommands,
 		m.TableCommands,
 		m.ViewCommands,
@@ -564,6 +566,7 @@ func (m *Migration) ExecContext(ctx context.Context, db sq.DB) error {
 		m.TableCommands,
 		m.ViewCommands,
 		m.IndexCommands,
+		m.FunctionCommands,
 		m.TriggerCommands,
 		m.ForeignKeyCommands,
 		m.RenameCommands,

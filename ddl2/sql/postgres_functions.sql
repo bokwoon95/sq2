@@ -13,6 +13,8 @@ WHERE
     {{ if not .IncludeSystemObjects }}AND pg_namespace.nspname <> 'information_schema' AND pg_namespace.nspname NOT LIKE 'pg_%'{{ end }}
     {{ if .WithSchemas }}AND pg_namespace.nspname IN ({{ printList .WithSchemas }}){{ end }}
     {{ if .WithoutSchemas }}AND pg_namespace.nspname NOT IN ({{ printList .WithoutSchemas }}){{ end }}
+    {{ if .WithFunctions }}AND pg_proc.proname IN ({{ printList .WithFunctions }}){{ end }}
+    {{ if .WithoutFunctions }}AND pg_proc.proname NOT IN ({{ printList .WithoutFunctions }}){{ end }}
 {{- if .SortOutput }}
 ORDER BY
     pg_namespace.nspname

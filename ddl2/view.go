@@ -135,7 +135,7 @@ type CreateViewCommand struct {
 	View              View
 }
 
-func (cmd CreateViewCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
+func (cmd *CreateViewCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
 	buf.WriteString("CREATE ")
 	if cmd.CreateOrReplace {
 		if dialect == sq.DialectPostgres && cmd.View.IsMaterialized {
@@ -162,7 +162,7 @@ func (cmd CreateViewCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *
 	if cmd.View.ViewSchema != "" {
 		buf.WriteString(sq.QuoteIdentifier(dialect, cmd.View.ViewSchema) + ".")
 	}
-	buf.WriteString(sq.QuoteIdentifier(dialect, cmd.View.ViewName) + " AS " + cmd.View.SQL + ";")
+	buf.WriteString(sq.QuoteIdentifier(dialect, cmd.View.ViewName) + " AS " + cmd.View.SQL)
 	return nil
 }
 
@@ -184,7 +184,10 @@ func (cmd *DropViewCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *[
 	}
 	buf.WriteString("VIEW ")
 	if cmd.DropIfExists {
-		buf.WriteString("IF EXISTS ")
+		buf.WriteString("IF EXISTS")
+		if len(cmd.ViewNames) == 1 {
+			buf.WriteString(" ")
+		}
 	}
 	if len(cmd.ViewNames) > 1 && dialect == sq.DialectSQLite {
 		return fmt.Errorf("sqlite does not support dropping multiple views in one command")
@@ -251,6 +254,6 @@ func (cmd RenameViewCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *
 	if cmd.ViewSchema != "" {
 		buf.WriteString(sq.QuoteIdentifier(dialect, cmd.ViewSchema) + ".")
 	}
-	buf.WriteString(sq.QuoteIdentifier(dialect, cmd.ViewName) + " RENAME TO " + sq.QuoteIdentifier(dialect, cmd.RenameToName) + ";")
+	buf.WriteString(sq.QuoteIdentifier(dialect, cmd.ViewName) + " RENAME TO " + sq.QuoteIdentifier(dialect, cmd.RenameToName))
 	return nil
 }

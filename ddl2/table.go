@@ -835,7 +835,10 @@ type DropTableCommand struct {
 func (cmd *DropTableCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
 	buf.WriteString("DROP TABLE ")
 	if cmd.DropIfExists {
-		buf.WriteString("IF EXISTS ")
+		buf.WriteString("IF EXISTS")
+		if len(cmd.TableNames) == 1 {
+			buf.WriteString(" ")
+		}
 	}
 	for i, tableName := range cmd.TableNames {
 		if i > 0 {
