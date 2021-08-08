@@ -203,3 +203,34 @@ WHERE
 ;
 
 -- EXCLUDE
+SELECT
+    schemas.nspname AS table_schema
+    ,tables.relname AS table_name
+    ,pg_constraint.conname AS constraint_name
+    ,'CHECK' AS constraint_type
+    ,'' AS columns
+    ,'' AS exprs
+    ,'' AS references_schema
+    ,'' AS references_table
+    ,'' AS references_columns
+    ,'' AS update_rule
+    ,'' AS delete_rule
+    ,'' AS match_option
+    ,pg_get_constraintdef(pg_constraint.oid, TRUE) AS check_expr
+    ,'' AS operators
+    ,'' AS index_type
+    ,'' AS predicate
+    ,pg_constraint.condeferrable AS is_deferrable
+    ,pg_constraint.condeferred AS is_initially_deferred
+FROM
+    pg_constraint
+    JOIN pg_class AS tables ON tables.oid = pg_constraint.conrelid
+    JOIN pg_namespace AS schemas ON schemas.oid = tables.relnamespace
+WHERE
+    pg_constraint.contype = 'c'
+    {{ if not .IncludeSystemCatalogs }}AND schemas.nspname <> 'information_schema' AND schemas.nspname NOT LIKE 'pg_%'{{ end }}
+    {{ if .WithSchemas }}AND schemas.nspname IN ({{ printList .WithSchemas }}){{ end }}
+    {{ if .WithoutSchemas }}AND schemas.nspname NOT IN ({{ printList .WithoutSchemas }}){{ end }}
+    {{ if .WithTables }}AND tables.relname IN ({{ printList .WithTables }}){{ end }}
+    {{ if .WithoutTables }}AND tables.relname NOT IN ({{ printList .WithoutTables }}){{ end }}
+;
