@@ -218,7 +218,7 @@ type RenameFunctionCommand struct {
 	RenameToName string
 }
 
-func (cmd RenameFunctionCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
+func (cmd *RenameFunctionCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
 	if dialect == sq.DialectSQLite || dialect == sq.DialectMySQL {
 		return fmt.Errorf("%s does not support renaming functions", dialect)
 	}
