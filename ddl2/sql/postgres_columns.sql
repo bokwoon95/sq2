@@ -17,7 +17,7 @@ FROM
     JOIN information_schema.tables AS t USING (table_schema, table_name)
 WHERE
     t.table_type = 'BASE TABLE'
-    {{ if not .IncludeSystemObjects }}AND c.table_schema <> 'information_schema' AND c.table_schema NOT LIKE 'pg_%'{{ end }}
+    {{ if not .IncludeSystemCatalogs }}AND c.table_schema <> 'information_schema' AND c.table_schema NOT LIKE 'pg_%'{{ end }}
     {{ if .WithSchemas }}AND c.table_schema IN ({{ printList .WithSchemas }}){{ end }}
     {{ if .WithoutSchemas }}AND c.table_schema NOT IN ({{ printList .WithoutSchemas }}){{ end }}
     {{ if .WithTables }}AND c.table_name IN ({{ printList .WithTables }}){{ end }}

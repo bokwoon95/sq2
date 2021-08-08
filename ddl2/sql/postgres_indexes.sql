@@ -31,7 +31,7 @@ FROM (
         LEFT JOIN pg_catalog.pg_attribute ON pg_attribute.attrelid = pg_index.indrelid AND pg_attribute.attnum = columns.column_oid
     WHERE
         TRUE
-        {{ if not .IncludeSystemObjects }}AND table_namespace.nspname <> 'information_schema' AND table_namespace.nspname NOT LIKE 'pg_%'{{ end }}
+        {{ if not .IncludeSystemCatalogs }}AND table_namespace.nspname <> 'information_schema' AND table_namespace.nspname NOT LIKE 'pg_%'{{ end }}
         {{ if .WithSchemas }}AND table_namespace.nspname IN ({{ printList .WithSchemas }}){{ end }}
         {{ if .WithoutSchemas }}AND table_namespace.nspname NOT IN ({{ printList .WithoutSchemas }}){{ end }}
         {{ if .WithTables }}AND table_info.relname IN ({{ printList .WithTables }}){{ end }}

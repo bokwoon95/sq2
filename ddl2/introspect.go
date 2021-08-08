@@ -18,7 +18,7 @@ import (
 var ErrUnsupportedFeature = errors.New("dialect does not support this feature")
 
 type Filter struct {
-	IncludeSystemObjects bool
+	IncludeSystemCatalogs bool
 	SortOutput           bool
 	WithSchemas          []string
 	WithoutSchemas       []string

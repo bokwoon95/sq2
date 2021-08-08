@@ -20,7 +20,7 @@ FROM
     LEFT JOIN information_schema.referential_constraints AS rc USING (constraint_schema, constraint_name)
 WHERE
     tc.constraint_type IN ('PRIMARY KEY', 'FOREIGN KEY', 'UNIQUE')
-    {{ if not .IncludeSystemObjects }}AND tc.table_schema NOT IN ('mysql', 'information_schema', 'performance_schema', 'sys'){{ end }}
+    {{ if not .IncludeSystemCatalogs }}AND tc.table_schema NOT IN ('mysql', 'information_schema', 'performance_schema', 'sys'){{ end }}
     {{ if .WithSchemas }}AND tc.table_schema IN ({{ printList .WithSchemas }}){{ end }}
     {{ if .WithoutSchemas }}AND tc.table_schema NOT IN ({{ printList .WithoutSchemas }}){{ end }}
     {{ if .WithTables }}AND tc.table_name IN ({{ printList .WithTables }}){{ end }}
@@ -53,7 +53,7 @@ FROM
     information_schema.table_constraints AS tc
     JOIN information_schema.check_constraints AS cc USING (constraint_schema, constraint_name)
 WHERE
-    {{ if not .IncludeSystemObjects }}table_schema NOT IN ('mysql', 'information_schema', 'performance_schema', 'sys'){{ end }}
+    {{ if not .IncludeSystemCatalogs }}table_schema NOT IN ('mysql', 'information_schema', 'performance_schema', 'sys'){{ end }}
     {{ if .WithSchemas }}AND tc.table_schema IN ({{ printList .WithSchemas }}){{ end }}
     {{ if .WithoutSchemas }}AND tc.table_schema NOT IN ({{ printList .WithoutSchemas }}){{ end }}
     {{ if .WithTables }}AND tc.table_name IN ({{ printList .WithTables }}){{ end }}

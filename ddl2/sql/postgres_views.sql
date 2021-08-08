@@ -10,7 +10,7 @@ FROM
     pg_catalog.pg_views
 WHERE
     TRUE
-    {{ if not .IncludeSystemObjects }}AND schemaname <> 'information_schema' AND schemaname NOT LIKE 'pg_%'{{ end }}
+    {{ if not .IncludeSystemCatalogs }}AND schemaname <> 'information_schema' AND schemaname NOT LIKE 'pg_%'{{ end }}
     {{ if .WithSchemas }}AND schemaname IN ({{ printList .WithSchemas }}){{ end }}
     {{ if .WithoutSchemas }}AND schemaname NOT IN ({{ printList .WithoutSchemas }}){{ end }}
     {{ if .WithTables }}AND viewname IN ({{ printList .WithTables }}){{ end }}
@@ -25,7 +25,7 @@ FROM
     pg_catalog.pg_matviews
 WHERE
     TRUE
-    {{ if not .IncludeSystemObjects }}AND schemaname <> 'information_schema' AND schemaname NOT LIKE 'pg_%'{{ end }}
+    {{ if not .IncludeSystemCatalogs }}AND schemaname <> 'information_schema' AND schemaname NOT LIKE 'pg_%'{{ end }}
     {{ if .WithSchemas }}AND schemaname IN ({{ printList .WithSchemas }}){{ end }}
     {{ if .WithoutSchemas }}AND schemaname NOT IN ({{ printList .WithoutSchemas }}){{ end }}
     {{ if .WithTables }}AND matviewname IN ({{ printList .WithTables }}){{ end }}

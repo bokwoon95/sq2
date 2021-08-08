@@ -8,7 +8,7 @@ FROM
     JOIN pg_catalog.pg_namespace ON pg_namespace.oid = pg_type.typnamespace
 WHERE
     TRUE
-    {{ if not .IncludeSystemObjects }}AND pg_namespace.nspname <> 'information_schema' AND pg_namespace.nspname NOT LIKE 'pg_%'{{ end }}
+    {{ if not .IncludeSystemCatalogs }}AND pg_namespace.nspname <> 'information_schema' AND pg_namespace.nspname NOT LIKE 'pg_%'{{ end }}
     {{ if .WithSchemas }}AND pg_namespace.nspname IN ({{ printList .WithSchemas }}){{ end }}
     {{ if .WithoutSchemas }}AND pg_namespace.nspname NOT IN ({{ printList .WithoutSchemas }}){{ end }}
 GROUP BY

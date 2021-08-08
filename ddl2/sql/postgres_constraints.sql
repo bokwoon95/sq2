@@ -36,7 +36,7 @@ FROM (
         JOIN information_schema.key_column_usage AS kcu USING (constraint_schema, constraint_name, column_name)
     WHERE
         tc.constraint_type IN ('PRIMARY KEY', 'UNIQUE')
-        {{ if not .IncludeSystemObjects }}AND tc.table_schema <> 'information_schema' AND tc.table_schema NOT LIKE 'pg_%'{{ end }}
+        {{ if not .IncludeSystemCatalogs }}AND tc.table_schema <> 'information_schema' AND tc.table_schema NOT LIKE 'pg_%'{{ end }}
         {{ if .WithSchemas }}AND tc.table_schema IN ({{ printList .WithSchemas }}){{ end }}
         {{ if .WithoutSchemas }}AND tc.table_schema NOT IN ({{ printList .WithoutSchemas }}){{ end }}
         {{ if .WithTables }}AND tc.table_name IN ({{ printList .WithTables }}){{ end }}
@@ -93,7 +93,7 @@ FROM (
         LEFT JOIN information_schema.referential_constraints AS rc USING (constraint_schema, constraint_name)
     WHERE
         tc.constraint_type = 'FOREIGN KEY'
-        {{ if not .IncludeSystemObjects }}AND tc.table_schema <> 'information_schema' AND tc.table_schema NOT LIKE 'pg_%'{{ end }}
+        {{ if not .IncludeSystemCatalogs }}AND tc.table_schema <> 'information_schema' AND tc.table_schema NOT LIKE 'pg_%'{{ end }}
         {{ if .WithSchemas }}AND tc.table_schema IN ({{ printList .WithSchemas }}){{ end }}
         {{ if .WithoutSchemas }}AND tc.table_schema NOT IN ({{ printList .WithoutSchemas }}){{ end }}
         {{ if .WithTables }}AND tc.table_name IN ({{ printList .WithTables }}){{ end }}
@@ -137,7 +137,7 @@ FROM
     JOIN pg_catalog.pg_namespace ON pg_namespace.oid = pg_class.relnamespace
 WHERE
     pg_constraint.contype = 'c'
-    {{ if not .IncludeSystemObjects }}AND pg_namespace.nspname <> 'information_schema' AND pg_namespace.nspname NOT LIKE 'pg_%'{{ end }}
+    {{ if not .IncludeSystemCatalogs }}AND pg_namespace.nspname <> 'information_schema' AND pg_namespace.nspname NOT LIKE 'pg_%'{{ end }}
     {{ if .WithSchemas }}AND pg_namespace.nspname IN ({{ printList .WithSchemas }}){{ end }}
     {{ if .WithoutSchemas }}AND pg_namespace.nspname NOT IN ({{ printList .WithoutSchemas }}){{ end }}
     {{ if .WithTables }}AND pg_class.relname IN ({{ printList .WithTables }}){{ end }}

@@ -20,7 +20,7 @@ WHERE
             pg_depend.deptype = 'e'
             AND extension_proc.oid = pg_proc.oid
     )
-    {{ if not .IncludeSystemObjects }}AND pg_namespace.nspname <> 'information_schema' AND pg_namespace.nspname NOT LIKE 'pg_%'{{ end }}
+    {{ if not .IncludeSystemCatalogs }}AND pg_namespace.nspname <> 'information_schema' AND pg_namespace.nspname NOT LIKE 'pg_%'{{ end }}
     {{ if .WithSchemas }}AND pg_namespace.nspname IN ({{ printList .WithSchemas }}){{ end }}
     {{ if .WithoutSchemas }}AND pg_namespace.nspname NOT IN ({{ printList .WithoutSchemas }}){{ end }}
     {{ if .WithFunctions }}AND pg_proc.proname IN ({{ printList .WithFunctions }}){{ end }}
