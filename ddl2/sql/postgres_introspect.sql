@@ -155,6 +155,7 @@ CREATE TABLE IF NOT EXISTS public.rental (
     ,staff_id INTEGER NOT NULL
     ,last_update TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
 
+    ,CONSTRAINT rental_range_excl EXCLUDE USING GIST (inventory_id WITH =, tstzrange(rental_date, return_date, '[]'::text) WITH &&)
     ,CONSTRAINT rental_rental_id_pkey PRIMARY KEY (rental_id)
 );
 
@@ -364,6 +365,8 @@ CREATE INDEX IF NOT EXISTS rental_customer_id_idx ON public.rental (customer_id)
 
 CREATE INDEX IF NOT EXISTS rental_inventory_id_idx ON public.rental (inventory_id);
 
+CREATE INDEX IF NOT EXISTS rental_range_excl ON public.rental USING GIST (inventory_id, (tstzrange(rental_date, return_date, '[]'::text)));
+
 CREATE UNIQUE INDEX IF NOT EXISTS rental_rental_date_inventory_id_customer_id_idx ON public.rental (rental_date, inventory_id, customer_id);
 
 CREATE UNIQUE INDEX IF NOT EXISTS rental_rental_id_pkey ON public.rental (rental_id);
@@ -442,7 +445,8 @@ ALTER TABLE IF EXISTS public.customer
     ADD CONSTRAINT customer_address_id_fkey FOREIGN KEY (address_id) REFERENCES public.address (address_id) ON UPDATE CASCADE ON DELETE RESTRICT;
 
 ALTER TABLE IF EXISTS public.film
-    ADD CONSTRAINT film_language_id_fkey FOREIGN KEY (language_id) REFERENCES public.language (language_id) ON UPDATE CASCADE ON DELETE RESTRICT;
+    ADD CONSTRAINT film_language_id_fkey FOREIGN KEY (language_id) REFERENCES public.language (language_id) ON UPDATE CASCADE ON DELETE RESTRICT
+    ,ADD CONSTRAINT film_original_language_id_fkey FOREIGN KEY (original_language_id) REFERENCES public.language (language_id) ON UPDATE CASCADE ON DELETE RESTRICT;
 
 ALTER TABLE IF EXISTS public.film_actor
     ADD CONSTRAINT film_actor_actor_id_fkey FOREIGN KEY (actor_id) REFERENCES public.actor (actor_id) ON UPDATE CASCADE ON DELETE RESTRICT
@@ -474,4 +478,5 @@ ALTER TABLE IF EXISTS public.staff
     ,ADD CONSTRAINT staff_store_id_fkey FOREIGN KEY (store_id) REFERENCES public.store (store_id) ON UPDATE NO ACTION ON DELETE NO ACTION;
 
 ALTER TABLE IF EXISTS public.store
-    ADD CONSTRAINT store_address_id_fkey FOREIGN KEY (address_id) REFERENCES public.address (address_id) ON UPDATE CASCADE ON DELETE RESTRICT;
+    ADD CONSTRAINT store_address_id_fkey FOREIGN KEY (address_id) REFERENCES public.address (address_id) ON UPDATE CASCADE ON DELETE RESTRICT
+    ,ADD CONSTRAINT store_manager_staff_id_fkey FOREIGN KEY (manager_staff_id) REFERENCES public.staff (staff_id) ON UPDATE CASCADE ON DELETE RESTRICT;
