@@ -100,7 +100,7 @@ func Test_SakilaSQLite(t *testing.T) {
 		t.Fatal(testcallers(), err)
 	}
 	gotUpSQL := buf.String()
-	b, err := fs.ReadFile(dataDir, "testdata/sqlite_up.sql")
+	b, err := fs.ReadFile(srcDir, "sql/sqlite_up.sql")
 	if err != nil {
 		t.Fatal(testcallers(), err)
 	}
@@ -126,7 +126,7 @@ func Test_SakilaSQLite(t *testing.T) {
 		t.Fatal(testcallers(), err)
 	}
 	gotIntrospectSQL := buf.String()
-	b, err = fs.ReadFile(dataDir, "testdata/sqlite_introspect.sql")
+	b, err = fs.ReadFile(srcDir, "sql/sqlite_introspect.sql")
 	if err != nil {
 		t.Fatal(testcallers(), err)
 	}
@@ -144,7 +144,7 @@ func Test_SakilaSQLite(t *testing.T) {
 		t.Fatal(testcallers(), err)
 	}
 	gotDownSQL := buf.String()
-	b, err = fs.ReadFile(dataDir, "testdata/sqlite_down.sql")
+	b, err = fs.ReadFile(srcDir, "sql/sqlite_down.sql")
 	if err != nil {
 		t.Fatal(testcallers(), err)
 	}
@@ -157,7 +157,7 @@ func Test_SakilaSQLite(t *testing.T) {
 func Test_SakilaPostgres(t *testing.T) {
 	const dialect = sq.DialectPostgres
 	extensions := []string{"btree_gist", "uuid-ossp"}
-	functions, err := FilesToFunctions(sq.DialectPostgres, dataDir, "sql/last_update_trg.sql", "sql/refresh_full_address.sql")
+	functions, err := FilesToFunctions(sq.DialectPostgres, srcDir, "sql/last_update_trg.sql", "sql/refresh_full_address.sql")
 	if err != nil {
 		t.Fatal(testcallers(), err)
 	}
@@ -268,7 +268,7 @@ func Test_SakilaPostgres(t *testing.T) {
 		t.Fatal(testcallers(), err)
 	}
 	gotUpSQL := buf.String()
-	b, err := fs.ReadFile(dataDir, "testdata/postgres_up.sql")
+	b, err := fs.ReadFile(srcDir, "sql/postgres_up.sql")
 	if err != nil {
 		t.Fatal(testcallers(), err)
 	}
@@ -299,7 +299,7 @@ func Test_SakilaPostgres(t *testing.T) {
 		t.Fatal(testcallers(), err)
 	}
 	gotIntrospectSQL := buf.String()
-	b, err = fs.ReadFile(dataDir, "testdata/postgres_introspect.sql")
+	b, err = fs.ReadFile(srcDir, "sql/postgres_introspect.sql")
 	if err != nil {
 		t.Fatal(testcallers(), err)
 	}
@@ -317,7 +317,7 @@ func Test_SakilaPostgres(t *testing.T) {
 		t.Fatal(testcallers(), err)
 	}
 	gotDownSQL := buf.String()
-	b, err = fs.ReadFile(dataDir, "testdata/postgres_down.sql")
+	b, err = fs.ReadFile(srcDir, "sql/postgres_down.sql")
 	if err != nil {
 		t.Fatal(testcallers(), err)
 	}
@@ -400,7 +400,7 @@ func Test_SakilaMySQL(t *testing.T) {
 		t.Fatal(testcallers(), err)
 	}
 	gotUpSQL := buf.String()
-	b, err := fs.ReadFile(dataDir, "testdata/mysql_up.sql")
+	b, err := fs.ReadFile(srcDir, "sql/mysql_up.sql")
 	if err != nil {
 		t.Fatal(testcallers(), err)
 	}
@@ -426,7 +426,7 @@ func Test_SakilaMySQL(t *testing.T) {
 	// 	t.Fatal(testcallers(), err)
 	// }
 	// gotIntrospectSQL := buf.String()
-	// b, err = fs.ReadFile(dataDir, "testdata/mysql_introspect.sql")
+	// b, err = fs.ReadFile(dataDir, "sql/mysql_introspect.sql")
 	// if err != nil {
 	// 	t.Fatal(testcallers(), err)
 	// }
@@ -444,7 +444,7 @@ func Test_SakilaMySQL(t *testing.T) {
 	// 	t.Fatal(testcallers(), err)
 	// }
 	// gotDownSQL := buf.String()
-	// b, err = fs.ReadFile(dataDir, "testdata/mysql_down.sql")
+	// b, err = fs.ReadFile(dataDir, "sql/mysql_down.sql")
 	// if err != nil {
 	// 	t.Fatal(testcallers(), err)
 	// }

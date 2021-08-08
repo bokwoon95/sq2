@@ -10,8 +10,8 @@ import (
 	"github.com/bokwoon95/sq"
 )
 
-//go:embed sql testdata
-var dataDir embed.FS
+//go:embed sql
+var srcDir embed.FS
 
 var (
 	bufpool  = sync.Pool{New: func() interface{} { return new(bytes.Buffer) }}
