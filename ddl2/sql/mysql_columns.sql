@@ -2,7 +2,7 @@ SELECT
     c.table_schema
     ,c.table_name
     ,c.column_name
-    ,c.column_type
+    ,UPPER(c.column_type) AS column_type
     ,COALESCE(c.numeric_precision, 0) AS numeric_precision
     ,COALESCE(c.numeric_scale, 0) AS numeric_scale
     ,COALESCE(c.extra = 'auto_increment', FALSE) AS is_autoincrement

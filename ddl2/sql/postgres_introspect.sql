@@ -85,7 +85,7 @@ CREATE TABLE IF NOT EXISTS public.film (
     ,rental_duration INTEGER NOT NULL DEFAULT 3
     ,rental_rate NUMERIC(4,2) NOT NULL DEFAULT 4.99
     ,replacement_cost NUMERIC(5,2) NOT NULL DEFAULT 19.99
-    ,special_features []text
+    ,special_features TEXT[]
     ,title TEXT NOT NULL
 
     ,CONSTRAINT film_film_id_pkey PRIMARY KEY (film_id)

@@ -19,13 +19,13 @@ var ErrUnsupportedFeature = errors.New("dialect does not support this feature")
 
 type Filter struct {
 	IncludeSystemCatalogs bool
-	SortOutput           bool
-	WithSchemas          []string
-	WithoutSchemas       []string
-	WithTables           []string
-	WithoutTables        []string
-	WithFunctions        []string
-	WithoutFunctions     []string
+	SortOutput            bool
+	WithSchemas           []string
+	WithoutSchemas        []string
+	WithTables            []string
+	WithoutTables         []string
+	WithFunctions         []string
+	WithoutFunctions      []string
 }
 
 type Introspector interface {
@@ -339,7 +339,6 @@ func (dbi *DatabaseIntrospector) GetColumns(ctx context.Context, filter *Filter)
 			return nil, err
 		}
 	case sq.DialectPostgres:
-		// TODO: convert this to use pg_catalog (because faster)
 		rows, err = dbi.queryContext(ctx, embeddedFiles, "sql/postgres_columns.sql", filter)
 		if err != nil {
 			return nil, err
@@ -354,7 +353,6 @@ func (dbi *DatabaseIntrospector) GetColumns(ctx context.Context, filter *Filter)
 	}
 	defer rows.Close()
 	var columns []Column
-	var columnType2 string
 	for rows.Next() {
 		var column Column
 		switch dbi.dialect {
@@ -379,7 +377,6 @@ func (dbi *DatabaseIntrospector) GetColumns(ctx context.Context, filter *Filter)
 				&column.TableName,
 				&column.ColumnName,
 				&column.ColumnType,
-				&columnType2,
 				&column.NumericPrecision,
 				&column.NumericScale,
 				&column.Identity,
@@ -391,27 +388,6 @@ func (dbi *DatabaseIntrospector) GetColumns(ctx context.Context, filter *Filter)
 			)
 			if err != nil {
 				return nil, fmt.Errorf("scanning Column: %w", err)
-			}
-			if strings.EqualFold(column.ColumnType, "USER-DEFINED") {
-				column.ColumnType = columnType2
-			} else if strings.EqualFold(column.ColumnType, "ARRAY") {
-				column.ColumnType = "[]" + columnType2[1:]
-			} else if (strings.EqualFold(column.ColumnType, "NUMERIC") || strings.EqualFold(column.ColumnType, "DECIMAL")) && (column.NumericPrecision > 0 || column.NumericScale > 0) {
-				column.ColumnType = fmt.Sprintf("%s(%d,%d)", strings.ToUpper(column.ColumnType), column.NumericPrecision, column.NumericScale)
-			} else {
-				column.ColumnType = strings.ToUpper(column.ColumnType)
-			}
-			// remove surrounding brackets
-			if len(column.GeneratedExpr) > 2 {
-				last := len(column.GeneratedExpr) - 1
-				if column.GeneratedExpr[0] == '(' && column.GeneratedExpr[last] == ')' {
-					column.GeneratedExpr = column.GeneratedExpr[1:last]
-				}
-			}
-			if strings.EqualFold(column.Identity, "BY DEFAULT") {
-				column.Identity = BY_DEFAULT_AS_IDENTITY
-			} else if strings.EqualFold(column.Identity, "ALWAYS") {
-				column.Identity = ALWAYS_AS_IDENTITY
 			}
 		case sq.DialectMySQL:
 			err = rows.Scan(
@@ -432,7 +408,6 @@ func (dbi *DatabaseIntrospector) GetColumns(ctx context.Context, filter *Filter)
 			if err != nil {
 				return nil, fmt.Errorf("scanning Column: %w", err)
 			}
-			column.ColumnType = strings.ToUpper(column.ColumnType)
 			if column.GeneratedExpr != "" {
 				column.GeneratedExpr = strings.ReplaceAll(column.GeneratedExpr, `\'`, `'`)
 			}
