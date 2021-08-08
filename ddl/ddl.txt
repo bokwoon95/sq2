@@ -1,9 +1,3 @@
-omfg both postgres and mysql support functions AND stored procedures, so now
-I'd have to figure out how that looks from the user-definition side (in Go
-files) and the database-definition side (reading from the db).
-ALSO: functions may be user-defined aggregate functions or user-defined window
-functions. guh.
-
 ddl.go
 column.go | constraint.go | index.go
 trigger.go
@@ -15,196 +9,35 @@ schema.go
 catalog.go
 migration_commands.go
 
-bah gawd. extensions. types. domains. enums.
-
-add dialect modifier
-add ignore modifier ignore=postgres
-
-== multi value, multi dialect ==
-[BOTH*] primarykey {name cols onupdate ondelete deferrable deferred dialect}
-[BOTH*] references {name cols onupdate ondelete deferrable deferred dialect}
-[BOTH*] unique     {name cols onupdate ondelete deferrable deferred dialect}
-[BOTH] check      {name cols onupdate ondelete deferrable deferred dialect}
-[BOTH*] index      {cols unique where include dialect}
-== single value, multi dialect ==
-[COLUMN] type={INT sqlite INTEGER} primarykey autoincrement auto_increment identity
-[COLUMN] default={NOW() sqlite DATETIME('now')} onupdatecurrenttimestamp notnull
-[COLUMN] generated={{first_name || last_name} mysql {CONCAT(first_name, ' ', last_name)}}
-[COLUMN] collate={nocase postgres C mysql latin1_swedish_ci}
-== single key, multi-dialect ==
-[BOTH**] ignore=sqlite,mysql
-[BOTH***] virtual=sqlite
-[COLUMN] stored
-[COLUMN] notnull
-== dialect specific ==
-[COLUMN] auto_increment
-[COLUMN] autoincrement
-[COLUMN] identity
-[COLUMN] alwaysidentity
-[COLUMN] onupdatecurrenttimestamp
-
-type:sqlite=INTEGER type:mysql=INT
-sqlite:type=INTEGER mysql:type=INT
-
-* if declared on a column, the column will be implicitly passed in as the 'cols' modifier (unless cols is explicitly declared). hence if declared on a table you must explicitly list the cols modifier or there will be no associated columns. you can declare exprs as well but im not liable for what damage it does in the system
-** ignore has different semantics on a column or table
-*** virtual has different semantics on a column or table (and entirely different modifiers)
-
-UUIDField can be used with some media table like in devlab
-
-All commands need to exclude the semicolon. The semicolon will be inserted by
-(*MigrationCommands).WriteSQL. For MySQL triggers and MySQL
-functions/pocedures, (*MigrationCommands).WriteSQL will write in the
-appropriate `DELIMITER ;;` command before and after the
-triggers/functions/procedures have been defined.
-
-type MigrationOption int
-
-const (
-    CreateMissing  MigrationOption = 0b1
-    UpdateExisting MigrationOption = 0b10
-    DropExtraneous MigrationOption = 0b100
-    DropCascade    MigrationOption = 0b1000
-)
+bah gawd. types. domains. enums.
+ALSO: functions may be user-defined aggregate functions or user-defined windows
 
 // pass a tx in explicitly to run everything in a transaction
 
-to opt of of the implicit transactions, sql files must look like xxxxx.no_auto_transaction.up.sql
-or maybe instead of hardcoding it, users can pass in a custom function that
-takes in the environment and returns true or false whether auto transaction
-wrapping should be disabled. a default function can be provided that returns
-true of false depending on whether the file ends up no_auto_transaction.up.sql,
-but the user can easily substitute one for their own.
+001.up.sql
+001.down.sql
+002.manual-transaction.up.sql
+002.down.sql
+migration_name | started_at | ended_at | error_msg
+index (migration_name)
+index (migration_name, started_at, ended_at)
 
-// simple use case
-ddl.AutoMigrate(dialect, db, ddl.CreateMissing|ddl.UpdateExisting, WithTables(), ...)
-
-// clearing db before use
-ddl.AutoMigrate(dialect, tx, ddl.DropExtraneous|ddl.DropCascade)
-ddl.DropFunctions(dialect, tx, []Function{})
-ddl.AutoMigrate(dialect, tx, ddl.CreateMissing, WithTables(), ...)
+// is it possible to get the xxx_pattern_op or the COLLATE of an indexed column from pg_catalog?
 
 DropExtraneous:
-- drop tables
-- drop columns
-- drop constraints
-- drop indexes
-- drop triggers
 - drop views
+- drop tables
+- drop triggers
+- drop indexes
+- drop constraints
+- drop columns
+- drop functions
+- drop extensions
 
-// logging before executing
-gotCatalog, err := NewCatalog(dialect, WithDB(db))
-if err != nil {
-}
-wantCatalog, err := NewCatalog(dialect, WithTables(), ...)
-if err != nil {
-}
-migration, err := ddl.Migrate(ddl.CreateMissing|ddl.UpdateExisting, gotCatalog, wantCatalog)
-if err != nil {
-}
-migration.WriteSQL(os.Stdout)
-migration.ExecContext(ctx, db)
+if the user eventually wants to expose the sq.Query by a DDLView, I can add a
+function just for that.
+func GetDDLViewQuery(ddlView DDLView) sq.Query
 
-// generating migrations
-gotCatalog, err := NewCatalog(dialect, WithDB(db))
-if err != nil {
-}
-wantCatalog, err := NewCatalog(dialect, WithTables(), ...)
-if err != nil {
-}
-upMigration, err := Migrate(ddl.CreateMissing|ddl.UpdateExisting, gotCatalog, wantCatalog)
-if err != nil {
-}
-downMigration, err := Migrate(ddl.DropExtraneous|ddl.UpdateExisting, wantCatalog, gotCatalog)
-if err != nil {
-}
-upMigration.WriteSQL(f1)
-downMigration.WriteSQL(f2)
-
-if the user eventually wants to expose the sq.Query produced by a DDLView, I
-can add a public .Query field to V. Make a new constructor called NewV(dialect
-string, view *View, wantColumns []string) to keep the fields private but allow
-the user to inject them. Of course all this can be added later, only when
-required. I don't have to add it in now.
-
-dont bother with diffing catalogs to migrations at first:
-func (c Catalog) GenerateDDL(w io.Writer) error
-func (c Catalog) GenerateStructs(w io.Writer) error
-GenerateDDL will append commands directly into a MigrationCommands struct,
-bypassing the CatalogMigration struct, because we have no need for it.
-
-to clean a database (for example to reset its state to zero), all you have to
-do is to loop the gotCatalog Catalog struct, for each table and view and
-function you simply convert it to the corresponding
-DropTableCommand/DropViewCommand/DropFunctionCommand and append it into the
-MigrationCommands struct. You can then either execute the MigrationCommands
-directly or write it out to a file, the choice is yours.
-
-v.AsQuery()
-v.SQL() // used if you have the view literal
-This means the View struct must now store the full view definition, and not
-just the select query part. It also means we have to omit the IsMaterialized
-part of the struct. Everything compiles down to an SQL string.
-
-automigrate ops:
-- add schema
-- add table
-- add column
-- alter column nullable, default
-- change index columns
-generate migration ops:
-- all automigrate ops
-
-trigger_migration.go
-function_migration.go
-view_migration.go
-table_migration.go
-schema_migration.go
-catalog_migration.go
-
-func MigrateCatalog(gotCatalog, wantCatalog Catalog) (CatalogMigration, error)
-func MigrateSchema(gotCatalog Catalog, wantSchema Schema) (SchemaMigration, error)
-func MigrateTable(dialect string, gotSchema Schema, wantTable Table) (TableMigration, error)
-func MigrateColumn(dialect string, gotTable Table, wantColumn Column) (ColumnMigration, error)
-
-func (c Catalog) MigrateCatalog(wantCatalog Catalog) (CatalogMigration, error)
-func (c Catalog) MigrateSchema(wantSchema Schema) (SchemaMigration, error)
-func (c Catalog) MigrateTable(wantTable Table) (TableMigration, error)
-func (c Catalog) MigrateColumn(wantColumn Column) (ColumnMigration, error)
-// the below 2 can detect identity, hence we can generate alter migrations. but
-non-online migrations will not be possible.
-func (c Catalog) MigrateConstraint(wantConstraint Column) (ConstraintMigration, error)
-func (c Catalog) MigrateIndex(wantIndex Index) (IndexMigration, error)
-// all the migrations below should be create-only i.e. no alteration is possible
-func (c Catalog) MigrateView(wantView View) (ViewMigration, error)
-func (c Catalog) MigrateFunction(wantFunction Function) (FunctionMigration, error)
-func (c Catalog) MigrateTrigger(wantTrigger Trigger) (TriggerMigration, error)
-
-do we want to implement support for dropping unused tables/columns/constraints/indexes/views/functions/triggers? something like
-func (c Catalog) WantCatalog(wantCatalog Catalog) (CatalogMigration, error) will generate the create/alter commands. whereas
-func (c Catalog) GotCatalog(gotCatalog Catalog) (CatalogMigration, error) will generate the drop commands.
-
-generating online migrations for functions and views is a huge jar of worms.
-because functions can reference other functions and views can reference other
-views, it is not sufficient to simply create a new function/view, atomically
-rename current to old and new to current, then drop old. Because even if you
-rename current to old, there may be other functions that are still referencing
-old. You must work out the depedency graph and rebuild all depedencies, which
-sucks major ass. Therefore, alteration for functions and views should not be
-supported at all.
-generating non-online function and view is impossible, because we cannot detect
-function/view identity.
-
-generating online migrations for altering indexes is also not possible, but for
-different reasons. You cannot build a new index alongside the old index,
-because they might not be valid at the same time. For example, the reason for
-changing an index might be because a column is removed. So keeping the old
-index around may be impossible because a referenced column no longer exists.
-basically don't supprt altering indexes as well.
-generating non-online index migration is possible, because we can detect index
-identity.
-
-triggers can't be altered online safely because two triggers living
-side-by-side may result in incorrect behaviour.
-generating non-online trigger migrations is also not possible because we cannot
-detect trigger identity.
+consider adding ability to tag constraints, indexes, triggers, views, functions
+with a versionID. This would open the path for automatically dropping and
+recreating them if the versionID changes.

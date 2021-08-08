@@ -9,3 +9,36 @@ schema.go
 introspect.go
 catalog.go
 migration_commands.go
+
+bah gawd. types. domains. enums.
+ALSO: functions may be user-defined aggregate functions or user-defined windows
+
+// pass a tx in explicitly to run everything in a transaction
+
+001.up.sql
+001.down.sql
+002.manual-transaction.up.sql
+002.down.sql
+migration_name | started_at | ended_at | error_msg
+index (migration_name)
+index (migration_name, started_at, ended_at)
+
+// is it possible to get the xxx_pattern_op or the COLLATE of an indexed column from pg_catalog?
+
+DropExtraneous:
+- drop views
+- drop tables
+- drop triggers
+- drop indexes
+- drop constraints
+- drop columns
+- drop functions
+- drop extensions
+
+if the user eventually wants to expose the sq.Query by a DDLView, I can add a
+function just for that.
+func GetDDLViewQuery(ddlView DDLView) sq.Query
+
+consider adding ability to tag constraints, indexes, triggers, views, functions
+with a versionID. This would open the path for automatically dropping and
+recreating them if the versionID changes.
