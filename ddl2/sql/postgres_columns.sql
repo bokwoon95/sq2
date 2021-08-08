@@ -47,13 +47,12 @@ SELECT
     END AS column_default
 FROM
     pg_catalog.pg_attribute AS column_info
-    JOIN pg_catalog.pg_class AS table_info ON table_info.oid = column_info.attrelid
+    JOIN pg_catalog.pg_class AS table_info ON table_info.relkind = 'r' AND table_info.oid = column_info.attrelid
     JOIN pg_catalog.pg_namespace AS table_namespace ON table_namespace.oid = table_info.relnamespace
     LEFT JOIN pg_catalog.pg_attrdef ON pg_attrdef.adrelid = table_info.oid AND pg_attrdef.adnum = column_info.attnum
     LEFT JOIN pg_catalog.pg_collation ON pg_collation.oid = column_info.attcollation
 WHERE
-    table_info.relkind = 'r'
-    AND column_info.attnum > 0
+    column_info.attnum > 0
     AND NOT column_info.attisdropped
     {{ if not .IncludeSystemCatalogs }}AND table_namespace.nspname <> 'information_schema' AND table_namespace.nspname NOT LIKE 'pg_%'{{ end }}
     {{ if .WithSchemas }}AND table_namespace.nspname IN ({{ printList .WithSchemas }}){{ end }}
