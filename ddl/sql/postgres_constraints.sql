@@ -182,7 +182,7 @@ SELECT
     ,'' AS match_option
     ,'' AS check_expr
     ,string_agg(operator, ',' ORDER BY seq) AS operators
-    ,index_type
+    ,exclusion_index
     ,COALESCE(pg_get_expr(predicate_oid, table_oid, TRUE), '') AS predicate
     ,is_deferrable
     ,is_initially_deferred
@@ -193,7 +193,7 @@ FROM (
         ,pg_constraint.conname AS constraint_name
         ,COALESCE(columns.attname, '') AS column_name
         ,pg_operator.oprname AS operator
-        ,UPPER(pg_am.amname) AS index_type
+        ,UPPER(pg_am.amname) AS exclusion_index
         ,pg_constraint.condeferrable AS is_deferrable
         ,pg_constraint.condeferred AS is_initially_deferred
         ,pg_index.indrelid AS table_oid
@@ -208,8 +208,8 @@ FROM (
         JOIN pg_index ON pg_index.indexrelid = indexes.oid
         JOIN pg_am ON pg_am.oid = indexes.relam
         CROSS JOIN unnest(pg_index.indkey) WITH ORDINALITY AS c(oid, seq)
-        LEFT JOIN pg_attribute AS columns ON columns.attrelid = pg_index.indrelid AND columns.attnum = c.oid
         JOIN unnest(pg_constraint.conexclop) WITH ORDINALITY AS o(oid, seq) ON o.seq = c.seq
+        LEFT JOIN pg_attribute AS columns ON columns.attrelid = pg_index.indrelid AND columns.attnum = c.oid
         JOIN pg_operator ON pg_operator.oid = o.oid
     WHERE
         pg_constraint.contype = 'x'
@@ -223,7 +223,7 @@ GROUP BY
     table_schema
     ,table_name
     ,constraint_name
-    ,index_type
+    ,exclusion_index
     ,is_deferrable
     ,is_initially_deferred
     ,table_oid
