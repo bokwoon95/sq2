@@ -1,34 +1,34 @@
 CREATE TABLE IF NOT EXISTS actor (
     actor_id INTEGER PRIMARY KEY
     ,first_name TEXT NOT NULL
+    ,last_name TEXT NOT NULL
     ,full_name TEXT
     ,full_name_reversed TEXT
-    ,last_name TEXT NOT NULL
     ,last_update DATETIME NOT NULL DEFAULT (DATETIME('now'))
 );
 
 CREATE TABLE IF NOT EXISTS address (
-    address TEXT NOT NULL
+    address_id INTEGER PRIMARY KEY
+    ,address TEXT NOT NULL
     ,address2 TEXT
-    ,address_id INTEGER PRIMARY KEY
-    ,city_id INT NOT NULL
     ,district TEXT NOT NULL
-    ,last_update DATETIME NOT NULL DEFAULT (DATETIME('now'))
-    ,phone TEXT NOT NULL
+    ,city_id INT NOT NULL
     ,postal_code TEXT
+    ,phone TEXT NOT NULL
+    ,last_update DATETIME NOT NULL DEFAULT (DATETIME('now'))
 
     ,FOREIGN KEY (city_id) REFERENCES city (city_id) ON UPDATE CASCADE ON DELETE RESTRICT
 );
 
 CREATE TABLE IF NOT EXISTS category (
     category_id INTEGER PRIMARY KEY
-    ,last_update DATETIME NOT NULL DEFAULT (DATETIME('now'))
     ,name TEXT NOT NULL
+    ,last_update DATETIME NOT NULL DEFAULT (DATETIME('now'))
 );
 
 CREATE TABLE IF NOT EXISTS city (
-    city TEXT NOT NULL
-    ,city_id INTEGER PRIMARY KEY
+    city_id INTEGER PRIMARY KEY
+    ,city TEXT NOT NULL
     ,country_id INT NOT NULL
     ,last_update DATETIME NOT NULL DEFAULT (DATETIME('now'))
 
@@ -36,22 +36,22 @@ CREATE TABLE IF NOT EXISTS city (
 );
 
 CREATE TABLE IF NOT EXISTS country (
-    country TEXT NOT NULL
-    ,country_id INTEGER PRIMARY KEY
+    country_id INTEGER PRIMARY KEY
+    ,country TEXT NOT NULL
     ,last_update DATETIME NOT NULL DEFAULT (DATETIME('now'))
 );
 
 CREATE TABLE IF NOT EXISTS customer (
-    active BOOLEAN NOT NULL DEFAULT TRUE
-    ,address_id INT NOT NULL
-    ,create_date DATETIME NOT NULL DEFAULT (DATETIME('now'))
-    ,customer_id INTEGER PRIMARY KEY
-    ,data JSON
-    ,email TEXT
+    customer_id INTEGER PRIMARY KEY
+    ,store_id INT NOT NULL
     ,first_name TEXT NOT NULL
     ,last_name TEXT NOT NULL
+    ,email TEXT
+    ,address_id INT NOT NULL
+    ,active BOOLEAN NOT NULL DEFAULT TRUE
+    ,data JSON
+    ,create_date DATETIME NOT NULL DEFAULT (DATETIME('now'))
     ,last_update DATETIME NOT NULL DEFAULT (DATETIME('now'))
-    ,store_id INT NOT NULL
 
     ,FOREIGN KEY (address_id) REFERENCES address (address_id) ON UPDATE CASCADE ON DELETE RESTRICT
     ,UNIQUE (email, first_name, last_name)
@@ -59,27 +59,27 @@ CREATE TABLE IF NOT EXISTS customer (
 );
 
 CREATE TABLE IF NOT EXISTS film (
-    description TEXT
-    ,film_id INTEGER PRIMARY KEY
-    ,language_id INT NOT NULL
-    ,last_update DATETIME NOT NULL DEFAULT (DATETIME('now'))
-    ,length INT
-    ,original_language_id INT
-    ,rating TEXT DEFAULT 'G'
+    film_id INTEGER PRIMARY KEY
+    ,title TEXT NOT NULL
+    ,description TEXT
     ,release_year INT
+    ,language_id INT NOT NULL
+    ,original_language_id INT
     ,rental_duration INT NOT NULL DEFAULT 3
     ,rental_rate DECIMAL(4,2) NOT NULL DEFAULT 4.99
+    ,length INT
     ,replacement_cost DECIMAL(5,2) NOT NULL DEFAULT 19.99
+    ,rating TEXT DEFAULT 'G'
     ,special_features JSON
-    ,title TEXT NOT NULL
+    ,last_update DATETIME NOT NULL DEFAULT (DATETIME('now'))
 
     ,FOREIGN KEY (original_language_id) REFERENCES language (language_id) ON UPDATE CASCADE ON DELETE RESTRICT
     ,FOREIGN KEY (language_id) REFERENCES language (language_id) ON UPDATE CASCADE ON DELETE RESTRICT
 );
 
 CREATE TABLE IF NOT EXISTS film_actor (
-    actor_id INT NOT NULL
-    ,film_id INT NOT NULL
+    film_id INT NOT NULL
+    ,actor_id INT NOT NULL
     ,last_update DATETIME NOT NULL DEFAULT (DATETIME('now'))
 
     ,FOREIGN KEY (actor_id) REFERENCES actor (actor_id) ON UPDATE CASCADE ON DELETE RESTRICT
@@ -87,21 +87,21 @@ CREATE TABLE IF NOT EXISTS film_actor (
 );
 
 CREATE TABLE IF NOT EXISTS film_actor_review (
-    actor_id INT
-    ,film_id INT
-    ,last_delete DATETIME
-    ,last_update DATETIME NOT NULL DEFAULT (DATETIME('now'))
-    ,metadata JSON
-    ,review_body TEXT NOT NULL DEFAULT ''
+    film_id INT
+    ,actor_id INT
     ,review_title TEXT NOT NULL DEFAULT ''
+    ,review_body TEXT NOT NULL DEFAULT ''
+    ,metadata JSON
+    ,last_update DATETIME NOT NULL DEFAULT (DATETIME('now'))
+    ,last_delete DATETIME
 
     ,FOREIGN KEY (film_id, actor_id) REFERENCES film_actor (film_id, actor_id) ON UPDATE CASCADE ON DELETE RESTRICT
     ,PRIMARY KEY (film_id, actor_id)
 );
 
 CREATE TABLE IF NOT EXISTS film_category (
-    category_id INT NOT NULL
-    ,film_id INT NOT NULL
+    film_id INT NOT NULL
+    ,category_id INT NOT NULL
     ,last_update DATETIME NOT NULL DEFAULT (DATETIME('now'))
 
     ,FOREIGN KEY (category_id) REFERENCES category (category_id) ON UPDATE CASCADE ON DELETE RESTRICT
@@ -109,17 +109,17 @@ CREATE TABLE IF NOT EXISTS film_category (
 );
 
 CREATE TABLE IF NOT EXISTS film_text (
-    description
+    title
+    ,description
     ,film_text
     ,rank
-    ,title
 );
 
 CREATE TABLE IF NOT EXISTS inventory (
-    film_id INT NOT NULL
-    ,inventory_id INTEGER PRIMARY KEY
-    ,last_update DATETIME NOT NULL DEFAULT (DATETIME('now'))
+    inventory_id INTEGER PRIMARY KEY
+    ,film_id INT NOT NULL
     ,store_id INT NOT NULL
+    ,last_update DATETIME NOT NULL DEFAULT (DATETIME('now'))
 
     ,FOREIGN KEY (store_id) REFERENCES store (store_id) ON UPDATE CASCADE ON DELETE RESTRICT
     ,FOREIGN KEY (film_id) REFERENCES film (film_id) ON UPDATE CASCADE ON DELETE RESTRICT
@@ -127,17 +127,17 @@ CREATE TABLE IF NOT EXISTS inventory (
 
 CREATE TABLE IF NOT EXISTS language (
     language_id INTEGER PRIMARY KEY
-    ,last_update DATETIME NOT NULL DEFAULT (DATETIME('now'))
     ,name TEXT NOT NULL
+    ,last_update DATETIME NOT NULL DEFAULT (DATETIME('now'))
 );
 
 CREATE TABLE IF NOT EXISTS payment (
-    amount DECIMAL(5,2) NOT NULL
+    payment_id INTEGER PRIMARY KEY
     ,customer_id INT NOT NULL
-    ,payment_date DATETIME NOT NULL
-    ,payment_id INTEGER PRIMARY KEY
-    ,rental_id INT
     ,staff_id INT NOT NULL
+    ,rental_id INT
+    ,amount DECIMAL(5,2) NOT NULL
+    ,payment_date DATETIME NOT NULL
 
     ,FOREIGN KEY (rental_id) REFERENCES rental (rental_id) ON UPDATE CASCADE ON DELETE RESTRICT
     ,FOREIGN KEY (staff_id) REFERENCES staff (staff_id) ON UPDATE CASCADE ON DELETE RESTRICT
@@ -145,13 +145,13 @@ CREATE TABLE IF NOT EXISTS payment (
 );
 
 CREATE TABLE IF NOT EXISTS rental (
-    customer_id INT NOT NULL
-    ,inventory_id INT NOT NULL
-    ,last_update DATETIME NOT NULL DEFAULT (DATETIME('now'))
+    rental_id INTEGER PRIMARY KEY
     ,rental_date DATETIME NOT NULL
-    ,rental_id INTEGER PRIMARY KEY
+    ,inventory_id INT NOT NULL
+    ,customer_id INT NOT NULL
     ,return_date DATETIME
     ,staff_id INT NOT NULL
+    ,last_update DATETIME NOT NULL DEFAULT (DATETIME('now'))
 
     ,FOREIGN KEY (staff_id) REFERENCES staff (staff_id) ON UPDATE CASCADE ON DELETE RESTRICT
     ,FOREIGN KEY (customer_id) REFERENCES customer (customer_id) ON UPDATE CASCADE ON DELETE RESTRICT
@@ -159,27 +159,27 @@ CREATE TABLE IF NOT EXISTS rental (
 );
 
 CREATE TABLE IF NOT EXISTS staff (
-    active BOOLEAN NOT NULL DEFAULT TRUE
-    ,address_id INT NOT NULL
-    ,email TEXT
+    staff_id INTEGER PRIMARY KEY
     ,first_name TEXT NOT NULL
     ,last_name TEXT NOT NULL
-    ,last_update DATETIME NOT NULL DEFAULT (DATETIME('now'))
-    ,password TEXT
-    ,picture BLOB
-    ,staff_id INTEGER PRIMARY KEY
+    ,address_id INT NOT NULL
+    ,email TEXT
     ,store_id INT
+    ,active BOOLEAN NOT NULL DEFAULT TRUE
     ,username TEXT NOT NULL
+    ,password TEXT
+    ,last_update DATETIME NOT NULL DEFAULT (DATETIME('now'))
+    ,picture BLOB
 
     ,FOREIGN KEY (store_id) REFERENCES store (store_id) ON UPDATE NO ACTION ON DELETE NO ACTION
     ,FOREIGN KEY (address_id) REFERENCES address (address_id) ON UPDATE CASCADE ON DELETE RESTRICT
 );
 
 CREATE TABLE IF NOT EXISTS store (
-    address_id INT NOT NULL
-    ,last_update DATETIME NOT NULL DEFAULT (DATETIME('now'))
+    store_id INTEGER PRIMARY KEY
     ,manager_staff_id INT NOT NULL
-    ,store_id INTEGER PRIMARY KEY
+    ,address_id INT NOT NULL
+    ,last_update DATETIME NOT NULL DEFAULT (DATETIME('now'))
 
     ,FOREIGN KEY (address_id) REFERENCES address (address_id) ON UPDATE CASCADE ON DELETE RESTRICT
     ,FOREIGN KEY (manager_staff_id) REFERENCES staff (staff_id) ON UPDATE CASCADE ON DELETE RESTRICT

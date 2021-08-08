@@ -19,6 +19,6 @@ FROM (
 {{- if .SortOutput }}
 ORDER BY
     tables.tbl_name
-    ,columns.name
+    ,columns.cid
 {{- end }}
 ;
