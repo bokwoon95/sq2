@@ -208,19 +208,15 @@ func Test_SakilaPostgres(t *testing.T) {
 	if len(funs) != 0 {
 		t.Fatal(testcallers(), " AutoMigrate did not drop all functions:", fmt.Sprint(funs))
 	}
-	if len(extensions) > 0 {
-		query, args, _, err := sq.ToSQL(dialect, &DropExtensionCommand{
-			DropIfExists: true,
-			Extensions:   extensions,
-			DropCascade:  true,
-		})
-		if err != nil {
-			t.Fatal(testcallers(), err)
+	exts, err := dbi.GetExtensions(context.Background(), nil)
+	if err != nil {
+		t.Fatal(testcallers(), err)
+	}
+	for _, ext := range exts {
+		if strings.HasPrefix(ext, "plpgsql") {
+			continue
 		}
-		_, err = tx.Exec(query, args...)
-		if err != nil {
-			t.Fatal(testcallers(), err)
-		}
+		t.Fatal(testcallers(), " AutoMigrate did not drop all extensions:", fmt.Sprint(funs))
 	}
 	wantCatalog, err := NewCatalog(dialect, WithTables(
 		NEW_ACTOR(""),
