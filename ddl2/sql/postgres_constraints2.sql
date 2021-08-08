@@ -1,35 +1,6 @@
 SELECT
-    table_namespace.nspname AS table_schema
-    ,table_info.relname AS table_name
-    ,pg_constraint.conname AS constraint_name
-    ,CASE pg_constraint.contype
-        WHEN 'p' THEN 'PRIMARY KEY'
-        WHEN 'u' THEN 'UNIQUE'
-        WHEN 'f' THEN 'FOREIGN KEY'
-        WHEN 'c' THEN 'CHECK'
-        WHEN 'x' THEN 'EXCLUDE'
-    END AS constraint_type
-    ,COALESCE(referenced_table_namespace.nspname, '') AS references_schema
-    ,COALESCE(referenced_table_info.relname, '') AS references_table
-    ,pg_get_constraintdef(pg_constraint.oid, TRUE) AS expr
-    ,pg_constraint.conkey
-    ,pg_constraint.confkey
-    ,pg_constraint.conpfeqop
-    ,pg_constraint.conppeqop
-    ,pg_constraint.conffeqop
-    ,pg_constraint.conexclop
-FROM
-    pg_constraint
-    JOIN pg_class AS table_info ON table_info.oid = pg_constraint.conrelid
-    JOIN pg_namespace AS table_namespace ON table_namespace.oid = table_info.relnamespace
-    LEFT JOIN pg_class AS referenced_table_info ON referenced_table_info.oid = pg_constraint.confrelid
-    LEFT JOIN pg_namespace AS referenced_table_namespace ON referenced_table_namespace.oid = referenced_table_info.relnamespace
-WHERE
-    TRUE
-    AND table_namespace.nspname <> 'information_schema' AND table_namespace.nspname NOT LIKE 'pg_%'
-;
-
--- PRIMARY KEY, UNIQUE
+    *
+FROM (
 SELECT
     table_schema
     ,table_name
@@ -83,9 +54,7 @@ GROUP BY
     ,constraint_type
     ,is_deferrable
     ,is_initially_deferred
-;
-
--- FOREIGN KEY
+UNION ALL
 SELECT
     table_schema
     ,table_name
@@ -167,9 +136,7 @@ GROUP BY
     ,match_option
     ,is_deferrable
     ,is_initially_deferred
-;
-
--- CHECK
+UNION ALL
 SELECT
     schemas.nspname AS table_schema
     ,tables.relname AS table_name
@@ -200,41 +167,74 @@ WHERE
     {{ if .WithoutSchemas }}AND schemas.nspname NOT IN ({{ printList .WithoutSchemas }}){{ end }}
     {{ if .WithTables }}AND tables.relname IN ({{ printList .WithTables }}){{ end }}
     {{ if .WithoutTables }}AND tables.relname NOT IN ({{ printList .WithoutTables }}){{ end }}
-;
-
--- EXCLUDE
+UNION ALL
 SELECT
-    schemas.nspname AS table_schema
-    ,tables.relname AS table_name
-    ,pg_constraint.conname AS constraint_name
-    ,'CHECK' AS constraint_type
-    ,'' AS columns
-    ,'' AS exprs
+    table_schema
+    ,table_name
+    ,constraint_name
+    ,'EXCLUDE' AS constraint_type
+    ,string_agg(column_name, ',' ORDER BY seq) AS columns
+    ,COALESCE(pg_get_expr(exprs_oid, table_oid, TRUE), '') AS exprs
     ,'' AS references_schema
     ,'' AS references_table
     ,'' AS references_columns
     ,'' AS update_rule
     ,'' AS delete_rule
     ,'' AS match_option
-    ,pg_get_constraintdef(pg_constraint.oid, TRUE) AS check_expr
-    ,'' AS operators
-    ,'' AS index_type
-    ,'' AS predicate
-    ,pg_constraint.condeferrable AS is_deferrable
-    ,pg_constraint.condeferred AS is_initially_deferred
-FROM
-    pg_constraint
-    JOIN pg_class AS tables ON tables.oid = pg_constraint.conrelid
-    JOIN pg_class AS indexes ON indexes.oid = pg_constraint.conindid
-    JOIN pg_namespace AS schemas ON schemas.oid = tables.relnamespace
-    JOIN pg_index ON pg_index.indexrelid = indexes.oid
-    JOIN pg_am ON pg_am.oid = indexes.relam
-    CROSS JOIN unnest(pg_index.indkey) WITH ORDINALITY AS c(oid, seq)
-WHERE
-    pg_constraint.contype = 'c'
-    {{ if not .IncludeSystemCatalogs }}AND schemas.nspname <> 'information_schema' AND schemas.nspname NOT LIKE 'pg_%'{{ end }}
-    {{ if .WithSchemas }}AND schemas.nspname IN ({{ printList .WithSchemas }}){{ end }}
-    {{ if .WithoutSchemas }}AND schemas.nspname NOT IN ({{ printList .WithoutSchemas }}){{ end }}
-    {{ if .WithTables }}AND tables.relname IN ({{ printList .WithTables }}){{ end }}
-    {{ if .WithoutTables }}AND tables.relname NOT IN ({{ printList .WithoutTables }}){{ end }}
+    ,'' AS check_expr
+    ,string_agg(operator, ',' ORDER BY seq) AS operators
+    ,index_type
+    ,COALESCE(pg_get_expr(predicate_oid, table_oid, TRUE), '') AS predicate
+    ,is_deferrable
+    ,is_initially_deferred
+FROM (
+    SELECT
+        schemas.nspname AS table_schema
+        ,tables.relname AS table_name
+        ,pg_constraint.conname AS constraint_name
+        ,COALESCE(columns.attname, '') AS column_name
+        ,pg_operator.oprname AS operator
+        ,UPPER(pg_am.amname) AS index_type
+        ,pg_constraint.condeferrable AS is_deferrable
+        ,pg_constraint.condeferred AS is_initially_deferred
+        ,pg_index.indrelid AS table_oid
+        ,pg_index.indexprs AS exprs_oid
+        ,pg_index.indpred AS predicate_oid
+        ,c.seq
+    FROM
+        pg_constraint
+        JOIN pg_class AS tables ON tables.oid = pg_constraint.conrelid
+        JOIN pg_class AS indexes ON indexes.oid = pg_constraint.conindid
+        JOIN pg_namespace AS schemas ON schemas.oid = tables.relnamespace
+        JOIN pg_index ON pg_index.indexrelid = indexes.oid
+        JOIN pg_am ON pg_am.oid = indexes.relam
+        CROSS JOIN unnest(pg_index.indkey) WITH ORDINALITY AS c(oid, seq)
+        LEFT JOIN pg_attribute AS columns ON columns.attrelid = pg_index.indrelid AND columns.attnum = c.oid
+        JOIN unnest(pg_constraint.conexclop) WITH ORDINALITY AS o(oid, seq) ON o.seq = c.seq
+        JOIN pg_operator ON pg_operator.oid = o.oid
+    WHERE
+        pg_constraint.contype = 'x'
+        {{ if not .IncludeSystemCatalogs }}AND schemas.nspname <> 'information_schema' AND schemas.nspname NOT LIKE 'pg_%'{{ end }}
+        {{ if .WithSchemas }}AND schemas.nspname IN ({{ printList .WithSchemas }}){{ end }}
+        {{ if .WithoutSchemas }}AND schemas.nspname NOT IN ({{ printList .WithoutSchemas }}){{ end }}
+        {{ if .WithTables }}AND tables.relname IN ({{ printList .WithTables }}){{ end }}
+        {{ if .WithoutTables }}AND tables.relname NOT IN ({{ printList .WithoutTables }}){{ end }}
+) AS exclude_columns
+GROUP BY
+    table_schema
+    ,table_name
+    ,constraint_name
+    ,index_type
+    ,is_deferrable
+    ,is_initially_deferred
+    ,table_oid
+    ,exprs_oid
+    ,predicate_oid
+) AS tmp
+{{- if .SortOutput }}
+ORDER BY
+    table_schema
+    ,table_name
+    ,constraint_name
+{{- end }}
 ;
