@@ -1,4 +1,4 @@
-package ddl2
+package ddl
 
 import (
 	"fmt"

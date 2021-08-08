@@ -1,4 +1,4 @@
-package ddl2
+package ddl
 
 import (
 	"github.com/bokwoon95/sq"
