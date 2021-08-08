@@ -261,7 +261,7 @@ func (dbi *DatabaseIntrospector) GetExtensions(ctx context.Context, filter *Filt
 	if dbi.dialect != sq.DialectPostgres {
 		return nil, fmt.Errorf("%w dialect=%s, feature=extensions", ErrUnsupportedFeature, dbi.dialect)
 	}
-	rows, err := dbi.queryContext(ctx, srcDir, "sql/postgres_extensions.sql", filter)
+	rows, err := dbi.queryContext(ctx, embeddedFiles, "sql/postgres_extensions.sql", filter)
 	if err != nil {
 		return nil, err
 	}
@@ -282,18 +282,18 @@ func (dbi *DatabaseIntrospector) GetTables(ctx context.Context, filter *Filter) 
 	var rows *sql.Rows
 	switch dbi.dialect {
 	case sq.DialectSQLite:
-		rows, err = dbi.queryContext(ctx, srcDir, "sql/sqlite_tables.sql", filter)
+		rows, err = dbi.queryContext(ctx, embeddedFiles, "sql/sqlite_tables.sql", filter)
 		if err != nil {
 			return nil, err
 		}
 	case sq.DialectPostgres:
 		// TODO: convert this to use pg_catalog (because faster)
-		rows, err = dbi.queryContext(ctx, srcDir, "sql/postgres_tables.sql", filter)
+		rows, err = dbi.queryContext(ctx, embeddedFiles, "sql/postgres_tables.sql", filter)
 		if err != nil {
 			return nil, err
 		}
 	case sq.DialectMySQL:
-		rows, err = dbi.queryContext(ctx, srcDir, "sql/mysql_tables.sql", filter)
+		rows, err = dbi.queryContext(ctx, embeddedFiles, "sql/mysql_tables.sql", filter)
 		if err != nil {
 			return nil, err
 		}
@@ -334,18 +334,18 @@ func (dbi *DatabaseIntrospector) GetColumns(ctx context.Context, filter *Filter)
 	var rows *sql.Rows
 	switch dbi.dialect {
 	case sq.DialectSQLite:
-		rows, err = dbi.queryContext(ctx, srcDir, "sql/sqlite_columns.sql", filter)
+		rows, err = dbi.queryContext(ctx, embeddedFiles, "sql/sqlite_columns.sql", filter)
 		if err != nil {
 			return nil, err
 		}
 	case sq.DialectPostgres:
 		// TODO: convert this to use pg_catalog (because faster)
-		rows, err = dbi.queryContext(ctx, srcDir, "sql/postgres_columns.sql", filter)
+		rows, err = dbi.queryContext(ctx, embeddedFiles, "sql/postgres_columns.sql", filter)
 		if err != nil {
 			return nil, err
 		}
 	case sq.DialectMySQL:
-		rows, err = dbi.queryContext(ctx, srcDir, "sql/mysql_columns.sql", filter)
+		rows, err = dbi.queryContext(ctx, embeddedFiles, "sql/mysql_columns.sql", filter)
 		if err != nil {
 			return nil, err
 		}
@@ -455,18 +455,18 @@ func (dbi *DatabaseIntrospector) GetConstraints(ctx context.Context, filter *Fil
 	var rows *sql.Rows
 	switch dbi.dialect {
 	case sq.DialectSQLite:
-		rows, err = dbi.queryContext(ctx, srcDir, "sql/sqlite_constraints.sql", filter)
+		rows, err = dbi.queryContext(ctx, embeddedFiles, "sql/sqlite_constraints.sql", filter)
 		if err != nil {
 			return nil, err
 		}
 	case sq.DialectPostgres:
 		// TODO: convert this to use pg_catalog (because faster)
-		rows, err = dbi.queryContext(ctx, srcDir, "sql/postgres_constraints.sql", filter)
+		rows, err = dbi.queryContext(ctx, embeddedFiles, "sql/postgres_constraints.sql", filter)
 		if err != nil {
 			return nil, err
 		}
 	case sq.DialectMySQL:
-		rows, err = dbi.queryContext(ctx, srcDir, "sql/mysql_constraints.sql", filter)
+		rows, err = dbi.queryContext(ctx, embeddedFiles, "sql/mysql_constraints.sql", filter)
 		if err != nil {
 			return nil, err
 		}
@@ -572,17 +572,17 @@ func (dbi *DatabaseIntrospector) GetIndexes(ctx context.Context, filter *Filter)
 	var rows *sql.Rows
 	switch dbi.dialect {
 	case sq.DialectSQLite:
-		rows, err = dbi.queryContext(ctx, srcDir, "sql/sqlite_indexes.sql", filter)
+		rows, err = dbi.queryContext(ctx, embeddedFiles, "sql/sqlite_indexes.sql", filter)
 		if err != nil {
 			return nil, err
 		}
 	case sq.DialectPostgres:
-		rows, err = dbi.queryContext(ctx, srcDir, "sql/postgres_indexes.sql", filter)
+		rows, err = dbi.queryContext(ctx, embeddedFiles, "sql/postgres_indexes.sql", filter)
 		if err != nil {
 			return nil, err
 		}
 	case sq.DialectMySQL:
-		rows, err = dbi.queryContext(ctx, srcDir, "sql/mysql_indexes.sql", filter)
+		rows, err = dbi.queryContext(ctx, embeddedFiles, "sql/mysql_indexes.sql", filter)
 		if err != nil {
 			return nil, err
 		}
@@ -701,17 +701,17 @@ func (dbi *DatabaseIntrospector) GetTriggers(ctx context.Context, filter *Filter
 	var rows *sql.Rows
 	switch dbi.dialect {
 	case sq.DialectSQLite:
-		rows, err = dbi.queryContext(ctx, srcDir, "sql/sqlite_triggers.sql", filter)
+		rows, err = dbi.queryContext(ctx, embeddedFiles, "sql/sqlite_triggers.sql", filter)
 		if err != nil {
 			return nil, err
 		}
 	case sq.DialectPostgres:
-		rows, err = dbi.queryContext(ctx, srcDir, "sql/postgres_triggers.sql", filter)
+		rows, err = dbi.queryContext(ctx, embeddedFiles, "sql/postgres_triggers.sql", filter)
 		if err != nil {
 			return nil, err
 		}
 	case sq.DialectMySQL:
-		rows, err = dbi.queryContext(ctx, srcDir, "sql/mysql_triggers.sql", filter)
+		rows, err = dbi.queryContext(ctx, embeddedFiles, "sql/mysql_triggers.sql", filter)
 		if err != nil {
 			return nil, err
 		}
@@ -788,7 +788,7 @@ func (dbi *DatabaseIntrospector) GetFunctions(ctx context.Context, filter *Filte
 	case sq.DialectSQLite:
 		return nil, fmt.Errorf("{%w} dialect=sqlite feature=functions", ErrUnsupportedFeature)
 	case sq.DialectPostgres:
-		rows, err = dbi.queryContext(ctx, srcDir, "sql/postgres_functions.sql", filter)
+		rows, err = dbi.queryContext(ctx, embeddedFiles, "sql/postgres_functions.sql", filter)
 		if err != nil {
 			return nil, err
 		}
@@ -832,17 +832,17 @@ func (dbi *DatabaseIntrospector) GetViews(ctx context.Context, filter *Filter) (
 	var rows *sql.Rows
 	switch dbi.dialect {
 	case sq.DialectSQLite:
-		rows, err = dbi.queryContext(ctx, srcDir, "sql/sqlite_views.sql", filter)
+		rows, err = dbi.queryContext(ctx, embeddedFiles, "sql/sqlite_views.sql", filter)
 		if err != nil {
 			return nil, err
 		}
 	case sq.DialectPostgres:
-		rows, err = dbi.queryContext(ctx, srcDir, "sql/postgres_views.sql", filter)
+		rows, err = dbi.queryContext(ctx, embeddedFiles, "sql/postgres_views.sql", filter)
 		if err != nil {
 			return nil, err
 		}
 	case sq.DialectMySQL:
-		rows, err = dbi.queryContext(ctx, srcDir, "sql/mysql_views.sql", filter)
+		rows, err = dbi.queryContext(ctx, embeddedFiles, "sql/mysql_views.sql", filter)
 		if err != nil {
 			return nil, err
 		}

@@ -6,6 +6,7 @@ DROP VIEW IF EXISTS
     ,db.nicer_but_slower_film_list
     ,db.sales_by_film_category
     ,db.sales_by_store
+    ,db.staff_list
 CASCADE;
 
 DROP TABLE IF EXISTS

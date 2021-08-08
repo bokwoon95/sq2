@@ -11,7 +11,7 @@ import (
 )
 
 //go:embed sql
-var srcDir embed.FS
+var embeddedFiles embed.FS
 
 var (
 	bufpool  = sync.Pool{New: func() interface{} { return new(bytes.Buffer) }}
