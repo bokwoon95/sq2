@@ -3,9 +3,9 @@ CREATE SCHEMA IF NOT EXISTS db;
 CREATE TABLE IF NOT EXISTS db.actor (
     actor_id INT NOT NULL AUTO_INCREMENT
     ,first_name VARCHAR(45) NOT NULL COLLATE utf8mb4_0900_ai_ci
+    ,last_name VARCHAR(45) NOT NULL COLLATE utf8mb4_0900_ai_ci
     ,full_name VARCHAR(255) NOT NULL GENERATED ALWAYS AS (concat(`first_name`,_utf8mb4' ',`last_name`)) VIRTUAL COLLATE utf8mb4_0900_ai_ci
     ,full_name_reversed VARCHAR(255) NOT NULL GENERATED ALWAYS AS (concat(`last_name`,_utf8mb4' ',`first_name`)) STORED COLLATE utf8mb4_0900_ai_ci
-    ,last_name VARCHAR(45) NOT NULL COLLATE utf8mb4_0900_ai_ci
     ,last_update DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 
     ,PRIMARY KEY (actor_id)
@@ -13,14 +13,14 @@ CREATE TABLE IF NOT EXISTS db.actor (
 );
 
 CREATE TABLE IF NOT EXISTS db.address (
-    address VARCHAR(50) NOT NULL COLLATE utf8mb4_0900_ai_ci
+    address_id INT NOT NULL AUTO_INCREMENT
+    ,address VARCHAR(50) NOT NULL COLLATE utf8mb4_0900_ai_ci
     ,address2 VARCHAR(50) NOT NULL COLLATE utf8mb4_0900_ai_ci
-    ,address_id INT NOT NULL AUTO_INCREMENT
-    ,city_id INT NOT NULL
     ,district VARCHAR(20) NOT NULL COLLATE utf8mb4_0900_ai_ci
-    ,last_update DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-    ,phone VARCHAR(20) NOT NULL COLLATE utf8mb4_0900_ai_ci
+    ,city_id INT NOT NULL
     ,postal_code VARCHAR(10) NOT NULL COLLATE utf8mb4_0900_ai_ci
+    ,phone VARCHAR(20) NOT NULL COLLATE utf8mb4_0900_ai_ci
+    ,last_update DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 
     ,PRIMARY KEY (address_id)
     ,INDEX address_city_id_idx (city_id)
@@ -28,15 +28,15 @@ CREATE TABLE IF NOT EXISTS db.address (
 
 CREATE TABLE IF NOT EXISTS db.category (
     category_id INT NOT NULL AUTO_INCREMENT
-    ,last_update DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
     ,name VARCHAR(25) NOT NULL COLLATE utf8mb4_0900_ai_ci
+    ,last_update DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 
     ,PRIMARY KEY (category_id)
 );
 
 CREATE TABLE IF NOT EXISTS db.city (
-    city VARCHAR(50) NOT NULL COLLATE utf8mb4_0900_ai_ci
-    ,city_id INT NOT NULL AUTO_INCREMENT
+    city_id INT NOT NULL AUTO_INCREMENT
+    ,city VARCHAR(50) NOT NULL COLLATE utf8mb4_0900_ai_ci
     ,country_id INT NOT NULL
     ,last_update DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 
@@ -45,24 +45,24 @@ CREATE TABLE IF NOT EXISTS db.city (
 );
 
 CREATE TABLE IF NOT EXISTS db.country (
-    country VARCHAR(50) NOT NULL COLLATE utf8mb4_0900_ai_ci
-    ,country_id INT NOT NULL AUTO_INCREMENT
+    country_id INT NOT NULL AUTO_INCREMENT
+    ,country VARCHAR(50) NOT NULL COLLATE utf8mb4_0900_ai_ci
     ,last_update DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 
     ,PRIMARY KEY (country_id)
 );
 
 CREATE TABLE IF NOT EXISTS db.customer (
-    active TINYINT(1) NOT NULL DEFAULT 1
-    ,address_id INT NOT NULL
-    ,create_date DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
-    ,customer_id INT NOT NULL AUTO_INCREMENT
-    ,data JSON NOT NULL
-    ,email VARCHAR(50) NOT NULL COLLATE utf8mb4_0900_ai_ci
+    customer_id INT NOT NULL AUTO_INCREMENT
+    ,store_id INT NOT NULL
     ,first_name VARCHAR(45) NOT NULL COLLATE utf8mb4_0900_ai_ci
     ,last_name VARCHAR(45) NOT NULL COLLATE utf8mb4_0900_ai_ci
+    ,email VARCHAR(50) NOT NULL COLLATE utf8mb4_0900_ai_ci
+    ,address_id INT NOT NULL
+    ,active TINYINT(1) NOT NULL DEFAULT 1
+    ,data JSON NOT NULL
+    ,create_date DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
     ,last_update DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-    ,store_id INT NOT NULL
 
     ,CONSTRAINT customer_email_first_name_last_name_key UNIQUE (email, first_name, last_name)
     ,CONSTRAINT customer_email_key UNIQUE (email)
@@ -75,19 +75,19 @@ CREATE TABLE IF NOT EXISTS db.customer (
 );
 
 CREATE TABLE IF NOT EXISTS db.film (
-    description TEXT NOT NULL COLLATE utf8mb4_0900_ai_ci
-    ,film_id INT NOT NULL
-    ,language_id INT NOT NULL
-    ,last_update DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-    ,length INT NOT NULL
-    ,original_language_id INT NOT NULL
-    ,rating ENUM('G','PG','PG-13','R','NC-17') NOT NULL DEFAULT G COLLATE utf8mb4_0900_ai_ci
+    film_id INT NOT NULL
+    ,title VARCHAR(255) NOT NULL COLLATE utf8mb4_0900_ai_ci
+    ,description TEXT NOT NULL COLLATE utf8mb4_0900_ai_ci
     ,release_year INT NOT NULL
+    ,language_id INT NOT NULL
+    ,original_language_id INT NOT NULL
     ,rental_duration INT NOT NULL DEFAULT 3
     ,rental_rate DECIMAL(4,2) NOT NULL DEFAULT 4.99
+    ,length INT NOT NULL
     ,replacement_cost DECIMAL(5,2) NOT NULL DEFAULT 19.99
+    ,rating ENUM('G','PG','PG-13','R','NC-17') NOT NULL DEFAULT G COLLATE utf8mb4_0900_ai_ci
     ,special_features JSON NOT NULL
-    ,title VARCHAR(255) NOT NULL COLLATE utf8mb4_0900_ai_ci
+    ,last_update DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 
     ,CONSTRAINT film_release_year_check CHECK ((`release_year` >= 1901) and (`release_year` <= 2155))
     ,PRIMARY KEY (film_id)
@@ -97,8 +97,8 @@ CREATE TABLE IF NOT EXISTS db.film (
 );
 
 CREATE TABLE IF NOT EXISTS db.film_actor (
-    actor_id INT NOT NULL
-    ,film_id INT NOT NULL
+    film_id INT NOT NULL
+    ,actor_id INT NOT NULL
     ,last_update DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 
     ,CONSTRAINT film_actor_actor_id_film_id_idx UNIQUE (actor_id, film_id)
@@ -107,13 +107,13 @@ CREATE TABLE IF NOT EXISTS db.film_actor (
 );
 
 CREATE TABLE IF NOT EXISTS db.film_actor_review (
-    actor_id INT NOT NULL
-    ,film_id INT NOT NULL
-    ,last_delete DATETIME NOT NULL
-    ,last_update DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-    ,metadata JSON NOT NULL
-    ,review_body VARCHAR(255) NOT NULL COLLATE utf8mb4_0900_ai_ci
+    film_id INT NOT NULL
+    ,actor_id INT NOT NULL
     ,review_title VARCHAR(50) NOT NULL COLLATE latin1_swedish_ci
+    ,review_body VARCHAR(255) NOT NULL COLLATE utf8mb4_0900_ai_ci
+    ,metadata JSON NOT NULL
+    ,last_update DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    ,last_delete DATETIME NOT NULL
 
     ,CONSTRAINT film_actor_review_check CHECK (length(`review_body`) > length(`review_title`))
     ,PRIMARY KEY (film_id, actor_id)
@@ -121,8 +121,8 @@ CREATE TABLE IF NOT EXISTS db.film_actor_review (
 );
 
 CREATE TABLE IF NOT EXISTS db.film_category (
-    category_id INT NOT NULL
-    ,film_id INT NOT NULL
+    film_id INT NOT NULL
+    ,category_id INT NOT NULL
     ,last_update DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 
     ,INDEX film_category_category_id_fkey (category_id)
@@ -130,19 +130,19 @@ CREATE TABLE IF NOT EXISTS db.film_category (
 );
 
 CREATE TABLE IF NOT EXISTS db.film_text (
-    description TEXT NOT NULL COLLATE utf8mb4_0900_ai_ci
-    ,film_id INT NOT NULL
+    film_id INT NOT NULL
     ,title VARCHAR(255) NOT NULL COLLATE utf8mb4_0900_ai_ci
+    ,description TEXT NOT NULL COLLATE utf8mb4_0900_ai_ci
 
     ,PRIMARY KEY (film_id)
     ,FULLTEXT INDEX film_text_title_description_idx (title, description)
 );
 
 CREATE TABLE IF NOT EXISTS db.inventory (
-    film_id INT NOT NULL
-    ,inventory_id INT NOT NULL AUTO_INCREMENT
-    ,last_update DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    inventory_id INT NOT NULL AUTO_INCREMENT
+    ,film_id INT NOT NULL
     ,store_id INT NOT NULL
+    ,last_update DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 
     ,PRIMARY KEY (inventory_id)
     ,INDEX inventory_film_id_fkey (film_id)
@@ -151,19 +151,19 @@ CREATE TABLE IF NOT EXISTS db.inventory (
 
 CREATE TABLE IF NOT EXISTS db.language (
     language_id INT NOT NULL AUTO_INCREMENT
-    ,last_update DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
     ,name CHAR(20) NOT NULL COLLATE utf8mb4_0900_ai_ci
+    ,last_update DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 
     ,PRIMARY KEY (language_id)
 );
 
 CREATE TABLE IF NOT EXISTS db.payment (
-    amount DECIMAL(5,2) NOT NULL
+    payment_id INT NOT NULL AUTO_INCREMENT
     ,customer_id INT NOT NULL
-    ,payment_date DATETIME NOT NULL
-    ,payment_id INT NOT NULL AUTO_INCREMENT
-    ,rental_id INT NOT NULL
     ,staff_id INT NOT NULL
+    ,rental_id INT NOT NULL
+    ,amount DECIMAL(5,2) NOT NULL
+    ,payment_date DATETIME NOT NULL
 
     ,PRIMARY KEY (payment_id)
     ,INDEX payment_customer_id_idx (customer_id)
@@ -172,13 +172,13 @@ CREATE TABLE IF NOT EXISTS db.payment (
 );
 
 CREATE TABLE IF NOT EXISTS db.rental (
-    customer_id INT NOT NULL
-    ,inventory_id INT NOT NULL
-    ,last_update DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    rental_id INT NOT NULL AUTO_INCREMENT
     ,rental_date DATETIME NOT NULL
-    ,rental_id INT NOT NULL AUTO_INCREMENT
+    ,inventory_id INT NOT NULL
+    ,customer_id INT NOT NULL
     ,return_date DATETIME NOT NULL
     ,staff_id INT NOT NULL
+    ,last_update DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 
     ,PRIMARY KEY (rental_id)
     ,CONSTRAINT rental_rental_date_inventory_id_customer_id_idx UNIQUE (rental_date, inventory_id, customer_id)
@@ -189,17 +189,17 @@ CREATE TABLE IF NOT EXISTS db.rental (
 );
 
 CREATE TABLE IF NOT EXISTS db.staff (
-    active TINYINT(1) NOT NULL DEFAULT 1
-    ,address_id INT NOT NULL
-    ,email VARCHAR(50) NOT NULL COLLATE utf8mb4_0900_ai_ci
+    staff_id INT NOT NULL
     ,first_name VARCHAR(45) NOT NULL COLLATE utf8mb4_0900_ai_ci
     ,last_name VARCHAR(45) NOT NULL COLLATE utf8mb4_0900_ai_ci
-    ,last_update DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-    ,password VARCHAR(40) NOT NULL COLLATE utf8mb4_0900_ai_ci
-    ,picture BLOB NOT NULL
-    ,staff_id INT NOT NULL
+    ,address_id INT NOT NULL
+    ,email VARCHAR(50) NOT NULL COLLATE utf8mb4_0900_ai_ci
     ,store_id INT NOT NULL
+    ,active TINYINT(1) NOT NULL DEFAULT 1
     ,username VARCHAR(16) NOT NULL COLLATE utf8mb4_0900_ai_ci
+    ,password VARCHAR(40) NOT NULL COLLATE utf8mb4_0900_ai_ci
+    ,last_update DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    ,picture BLOB NOT NULL
 
     ,PRIMARY KEY (staff_id)
     ,INDEX staff_address_id_fkey (address_id)
@@ -207,10 +207,10 @@ CREATE TABLE IF NOT EXISTS db.staff (
 );
 
 CREATE TABLE IF NOT EXISTS db.store (
-    address_id INT NOT NULL
-    ,last_update DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    store_id INT NOT NULL AUTO_INCREMENT
     ,manager_staff_id INT NOT NULL
-    ,store_id INT NOT NULL AUTO_INCREMENT
+    ,address_id INT NOT NULL
+    ,last_update DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 
     ,PRIMARY KEY (store_id)
     ,CONSTRAINT store_manager_staff_id_idx UNIQUE (manager_staff_id)

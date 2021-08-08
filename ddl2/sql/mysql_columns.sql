@@ -26,6 +26,6 @@ WHERE
 ORDER BY
     c.table_schema
     ,c.table_name
-    ,c.column_name
+    ,c.ordinal_position
 {{- end }}
 ;
