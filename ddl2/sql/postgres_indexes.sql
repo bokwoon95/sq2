@@ -6,8 +6,8 @@ SELECT
     ,is_unique
     ,num_key_columns
     ,string_agg(column_name, ',' ORDER BY seq) AS columns
-    ,exprs
-    ,predicate
+    ,COALESCE(pg_get_expr(exprs_oid, table_oid, TRUE), '') AS exprs
+    ,COALESCE(pg_get_expr(predicate_oid, table_oid, TRUE), '') AS predicate
 FROM (
     SELECT
         schemas.nspname AS table_schema
@@ -17,8 +17,9 @@ FROM (
         ,pg_index.indisunique AS is_unique
         ,pg_index.indnkeyatts AS num_key_columns
         ,COALESCE(columns.attname, '') AS column_name
-        ,COALESCE(pg_get_expr(pg_index.indexprs, pg_index.indrelid, TRUE), '') AS exprs
-        ,COALESCE(pg_get_expr(pg_index.indpred, pg_index.indrelid, TRUE), '') AS predicate
+        ,pg_index.indrelid AS table_oid
+        ,pg_index.indexprs AS exprs_oid
+        ,pg_index.indpred AS predicate_oid
         ,c.seq
     FROM
         pg_index
@@ -43,8 +44,9 @@ GROUP BY
     ,index_type
     ,is_unique
     ,num_key_columns
-    ,exprs
-    ,predicate
+    ,table_oid
+    ,exprs_oid
+    ,predicate_oid
 {{- if .SortOutput }}
 ORDER BY
     table_schema
