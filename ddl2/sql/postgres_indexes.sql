@@ -17,8 +17,8 @@ FROM (
         ,pg_index.indisunique AS is_unique
         ,pg_index.indnkeyatts AS num_key_columns
         ,COALESCE(pg_attribute.attname, '') AS column_name
-        ,COALESCE(pg_get_expr(pg_index.indexprs, pg_index.indrelid, TRUE), '') AS exprs
-        ,COALESCE(pg_get_expr(pg_index.indpred, pg_index.indrelid, TRUE), '') AS predicate
+        ,COALESCE(pg_catalog.pg_get_expr(pg_index.indexprs, pg_index.indrelid, TRUE), '') AS exprs
+        ,COALESCE(pg_catalog.pg_get_expr(pg_index.indpred, pg_index.indrelid, TRUE), '') AS predicate
         ,columns.seq_in_index
     FROM
         pg_catalog.pg_index

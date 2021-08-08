@@ -32,20 +32,36 @@ SELECT
         ELSE ''
     END AS identity
     ,column_info.attnotnull AS is_notnull
-    ,generated_expr
+    ,CASE column_info.attgenerated
+        WHEN 's' THEN COALESCE(pg_catalog.pg_get_expr(pg_attrdef.adbin, table_info.oid, TRUE), '')
+        ELSE ''
+    END AS generated_expr
     ,COALESCE(column_info.attgenerated = 's', FALSE) AS generated_expr_stored
+    ,COALESCE(pg_collation.collname, '') AS collation_name
+    ,CASE column_info.attgenerated
+        WHEN 's' THEN ''
+        ELSE COALESCE(pg_catalog.pg_get_expr(pg_attrdef.adbin, table_info.oid, TRUE), '')
+    END AS column_default
 FROM
     pg_catalog.pg_attribute AS column_info
     JOIN pg_catalog.pg_class AS table_info ON table_info.oid = column_info.attrelid
     JOIN pg_catalog.pg_namespace AS table_namespace ON table_namespace.oid = table_info.relnamespace
+    LEFT JOIN pg_catalog.pg_attrdef ON pg_attrdef.adrelid = table_info.oid AND pg_attrdef.adnum = column_info.attnum
+    LEFT JOIN pg_catalog.pg_collation ON pg_collation.oid = column_info.attcollation
 WHERE
     table_info.relkind = 'r'
     AND column_info.attnum > 0
     AND NOT column_info.attisdropped
-    AND table_namespace.nspname <> 'information_schema' AND table_namespace.nspname NOT LIKE 'pg_%'
+    {{ if not .IncludeSystemCatalogs }}AND table_namespace.nspname <> 'information_schema' AND table_namespace.nspname NOT LIKE 'pg_%'{{ end }}
+    {{ if .WithSchemas }}AND table_namespace.nspname IN ({{ printList .WithSchemas }}){{ end }}
+    {{ if .WithoutSchemas }}AND table_namespace.nspname NOT IN ({{ printList .WithoutSchemas }}){{ end }}
+    {{ if .WithTables }}AND table_info.relname IN ({{ printList .WithTables }}){{ end }}
+    {{ if .WithoutTables }}AND table_info.relname NOT IN ({{ printList .WithTables }}){{ end }}
+{{- if .SortOutput }}
 ORDER BY
     table_namespace.nspname
     ,table_info.relname
     -- ,column_info.attnum
     ,column_info.attname
+{{- end }}
 ;
