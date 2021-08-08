@@ -1,14 +1,14 @@
 SELECT
     pg_namespace.nspname AS function_schema
     ,pg_proc.proname AS function_name
-    ,pg_get_functiondef(pg_proc.oid) AS sql
-    ,pg_get_function_arguments(pg_proc.oid) AS raw_args
+    ,pg_catalog.pg_get_functiondef(pg_proc.oid) AS sql
+    ,pg_catalog.pg_get_function_arguments(pg_proc.oid) AS raw_args
     ,pg_catalog.pg_get_function_result(pg_proc.oid) AS return_type
 FROM
     pg_catalog.pg_proc
     JOIN pg_catalog.pg_namespace ON pg_proc.pronamespace = pg_namespace.oid
 WHERE
-    pg_function_is_visible(pg_proc.oid)
+    pg_catalog.pg_function_is_visible(pg_proc.oid)
     AND NOT EXISTS (
         SELECT
             *

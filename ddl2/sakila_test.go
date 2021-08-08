@@ -28,6 +28,13 @@ func NEW_ACTOR(alias string) ACTOR {
 
 func (tbl ACTOR) DDL(dialect string, t *T) {
 	if dialect == sq.DialectSQLite {
+		// TODO: t.Trigger(format string, values ...interface{})
+		/*
+		   CREATE TRIGGER {1} AFTER UPDATE ON {2} BEGIN
+		       UPDATE {2} SET last_update = DATETIME('now') WHERE ROWID = NEW.ROWID;
+		   END;
+		*/
+		// t.Trigger(sqliteLastUpdate, sq.Literal("actor_last_update_after_update_trg"), tbl)
 		t.Trigger(t.Sprintf(`
 CREATE TRIGGER actor_last_update_after_update_trg AFTER UPDATE ON {1} BEGIN
     UPDATE {1} SET last_update = DATETIME('now') WHERE ROWID = NEW.ROWID;
