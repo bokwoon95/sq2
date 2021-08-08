@@ -64,7 +64,6 @@ WHERE
 ORDER BY
     table_namespace.nspname
     ,table_info.relname
-    -- ,column_info.attnum
-    ,column_info.attname
+    ,column_info.attnum
 {{- end }}
 ;
