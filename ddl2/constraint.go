@@ -23,7 +23,7 @@ type Constraint struct {
 	MatchOption         string   `json:",omitempty"`
 	CheckExpr           string   `json:",omitempty"`
 	ExclusionOperators  []string `json:",omitempty"`
-	IndexType           string   `json:",omitempty"`
+	ExclusionIndex      string   `json:",omitempty"`
 	Predicate           string   `json:",omitempty"`
 	IsDeferrable        bool     `json:",omitempty"`
 	IsInitiallyDeferred bool     `json:",omitempty"`
@@ -110,11 +110,11 @@ func writeConstraintDefinition(dialect string, buf *bytes.Buffer, constraint Con
 		if dialect != sq.DialectPostgres {
 			return fmt.Errorf("%s does not support EXCLUDE constraints", dialect)
 		}
-		if constraint.IndexType == "" {
+		if constraint.ExclusionIndex == "" {
 			return fmt.Errorf("postgres EXCLUDE constraint requires an index")
 		}
-		if constraint.IndexType != "" {
-			buf.WriteString("EXCLUDE USING " + constraint.IndexType)
+		if constraint.ExclusionIndex != "" {
+			buf.WriteString("EXCLUDE USING " + constraint.ExclusionIndex)
 		}
 		buf.WriteString(" (")
 		for i := range constraint.Columns {
@@ -124,7 +124,7 @@ func writeConstraintDefinition(dialect string, buf *bytes.Buffer, constraint Con
 			if column := constraint.Columns[i]; column != "" {
 				buf.WriteString(column)
 			} else if expr := constraint.Exprs[i]; expr != "" {
-				buf.WriteString("(" + expr + ")")
+				buf.WriteString(expr)
 			} else {
 				return fmt.Errorf("column #%d: no column name or expression provided", i+1)
 			}

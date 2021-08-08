@@ -152,6 +152,7 @@ CREATE TABLE IF NOT EXISTS rental (
     ,last_update TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
 
     ,CONSTRAINT rental_rental_id_pkey PRIMARY KEY (rental_id)
+    ,CONSTRAINT rental_range_excl EXCLUDE USING GIST (inventory_id WITH =, tstzrange(rental_date, return_date, '[]') WITH &&)
 );
 
 CREATE TABLE IF NOT EXISTS staff (

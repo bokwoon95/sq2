@@ -271,16 +271,67 @@ func createOrUpdateConstraint(dialect string, tbl *Table, constraintType, constr
 	return constraintPosition, nil
 }
 
+func createOrUpdateExclusionConstraint(dialect string, tbl *Table, constraintName, exclusionIndex string, fields []sq.Field, operators []string) (constraintPosition int, err error) {
+	if dialect != sq.DialectPostgres {
+		return -1, fmt.Errorf("%s does not support exclusion constraints", dialect)
+	}
+	if constraintName == "" {
+		return -1, fmt.Errorf("constraintName cannot be empty")
+	}
+	columnNames, exprs, err := getColumnNamesAndExprs(dialect, tbl.TableName, fields, true)
+	if err != nil {
+		return -1, err
+	}
+	if constraintPosition = tbl.CachedConstraintPosition(constraintName); constraintPosition >= 0 {
+		constraint := tbl.Constraints[constraintPosition]
+		constraint.TableSchema = tbl.TableSchema
+		constraint.TableName = tbl.TableName
+		constraint.ConstraintType = EXCLUDE
+		constraint.Columns = columnNames
+		constraint.Exprs = exprs
+		constraint.ExclusionOperators = operators
+		constraint.ExclusionIndex = exclusionIndex
+		tbl.Constraints[constraintPosition] = constraint
+	} else {
+		constraintPosition = tbl.AppendConstraint(Constraint{
+			TableSchema:        tbl.TableSchema,
+			TableName:          tbl.TableName,
+			ConstraintName:     constraintName,
+			ConstraintType:     EXCLUDE,
+			Columns:            columnNames,
+			Exprs:              exprs,
+			ExclusionOperators: operators,
+			ExclusionIndex:     exclusionIndex,
+		})
+	}
+	return constraintPosition, nil
+}
+
 type Exclusions []struct {
 	Field    sq.Field
 	Operator string
 }
 
-func (t *T) Exclude(indexType string, exclusions Exclusions) *TConstraint {
+func (t *T) Exclude(exclusionIndex string, exclusions Exclusions) *TConstraint {
+	fields := make([]sq.Field, len(exclusions))
+	operators := make([]string, len(exclusions))
+	for i, exclusion := range exclusions {
+		fields[i] = exclusion.Field
+		operators[i] = exclusion.Operator
+	}
+	columnNames, err := getColumnNames(fields)
+	if err != nil {
+		panicErr(fmt.Errorf("Exclude: %w", err))
+	}
+	constraintName := generateName(EXCLUDE, t.tbl.TableName, columnNames...)
 	tConstraint := &TConstraint{
-		dialect: t.dialect,
-		tbl:     t.tbl,
-		// constraintName: constraintName,
+		dialect:        t.dialect,
+		tbl:            t.tbl,
+		constraintName: constraintName,
+	}
+	tConstraint.constraintPosition, err = createOrUpdateExclusionConstraint(t.dialect, t.tbl, constraintName, exclusionIndex, fields, operators)
+	if err != nil {
+		panicErr(fmt.Errorf("Exclude: %w", err))
 	}
 	return tConstraint
 }
@@ -356,11 +407,22 @@ func (t *T) ForeignKey(fields ...sq.Field) *TConstraint {
 	return tConstraint
 }
 
-func (t *T) NameExclude(constraintName, indexType string, exclusions Exclusions) *TConstraint {
+func (t *T) NameExclude(constraintName, exclusionIndex string, exclusions Exclusions) *TConstraint {
+	var err error
 	tConstraint := &TConstraint{
 		dialect:        t.dialect,
 		tbl:            t.tbl,
 		constraintName: constraintName,
+	}
+	fields := make([]sq.Field, len(exclusions))
+	operators := make([]string, len(exclusions))
+	for i, exclusion := range exclusions {
+		fields[i] = exclusion.Field
+		operators[i] = exclusion.Operator
+	}
+	tConstraint.constraintPosition, err = createOrUpdateExclusionConstraint(t.dialect, t.tbl, constraintName, exclusionIndex, fields, operators)
+	if err != nil {
+		panicErr(fmt.Errorf("Exclude: %w", err))
 	}
 	return tConstraint
 }
@@ -472,6 +534,15 @@ func (t *TConstraint) InitiallyDeferred() *TConstraint {
 	return t
 }
 
+func (t *TConstraint) Where(format string, values ...interface{}) *TConstraint {
+	expr, err := sprintf(t.dialect, format, values, []string{t.tbl.TableName})
+	if err != nil {
+		panicErr(fmt.Errorf("Where: %w", err))
+	}
+	t.tbl.Constraints[t.constraintPosition].Predicate = expr
+	return t
+}
+
 type TIndex struct {
 	dialect       string
 	tbl           *Table
@@ -479,7 +550,8 @@ type TIndex struct {
 	indexPosition int
 }
 
-func getColumnNamesAndExprs(dialect, tableName string, fields []sq.Field) (columnNames, exprs []string, err error) {
+func getColumnNamesAndExprs(dialect, tableName string, fields []sq.Field, dontWrapExpr bool) (columnNames, exprs []string, err error) {
+	// TODO: cleanup the dirty use of an ad-hoc boolean flag "dontWrapExpr". Think of a better way to write it.
 	buf := bufpool.Get().(*bytes.Buffer)
 	args := argspool.Get().([]interface{})
 	defer func() {
@@ -510,7 +582,9 @@ func getColumnNamesAndExprs(dialect, tableName string, fields []sq.Field) (colum
 					return nil, nil, fmt.Errorf("field #%d, :%w", i+1, err)
 				}
 			}
-			expr = "(" + expr + ")"
+			if !dontWrapExpr {
+				expr = "(" + expr + ")"
+			}
 		}
 		columnNames = append(columnNames, columnName)
 		exprs = append(exprs, expr)
@@ -542,7 +616,7 @@ func (tbl *Table) createOrUpdateIndex(indexName string, columns []string, exprs 
 }
 
 func (t *T) Index(fields ...sq.Field) *TIndex {
-	columnNames, exprs, err := getColumnNamesAndExprs(t.dialect, t.tbl.TableName, fields)
+	columnNames, exprs, err := getColumnNamesAndExprs(t.dialect, t.tbl.TableName, fields, false)
 	if err != nil {
 		panicErr(fmt.Errorf("Index: %w", err))
 	}
@@ -560,7 +634,7 @@ func (t *T) Index(fields ...sq.Field) *TIndex {
 }
 
 func (t *T) NameIndex(indexName string, fields ...sq.Field) *TIndex {
-	columnNames, exprs, err := getColumnNamesAndExprs(t.dialect, t.tbl.TableName, fields)
+	columnNames, exprs, err := getColumnNamesAndExprs(t.dialect, t.tbl.TableName, fields, false)
 	if err != nil {
 		panicErr(fmt.Errorf("NameIndex: %w", err))
 	}

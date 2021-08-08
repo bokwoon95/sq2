@@ -134,7 +134,7 @@ func (v *V) Index(fields ...sq.Field) *VIndex {
 	if v.view.IsMaterialized && v.dialect != sq.DialectPostgres {
 		panicErr(fmt.Errorf("%s does not support Materialized Views", v.dialect))
 	}
-	columnNames, exprs, err := getColumnNamesAndExprs(v.dialect, v.view.ViewName, fields)
+	columnNames, exprs, err := getColumnNamesAndExprs(v.dialect, v.view.ViewName, fields, false)
 	if err != nil {
 		panicErr(fmt.Errorf("Index: %w", err))
 	}
@@ -161,7 +161,7 @@ func (v *V) NameIndex(indexName string, fields ...sq.Field) *VIndex {
 	if v.view.IsMaterialized && v.dialect != sq.DialectPostgres {
 		panicErr(fmt.Errorf("NameIndex: %s does not support Materialized Views (which are needed for indexes)", v.dialect))
 	}
-	columnNames, exprs, err := getColumnNamesAndExprs(v.dialect, v.view.ViewName, fields)
+	columnNames, exprs, err := getColumnNamesAndExprs(v.dialect, v.view.ViewName, fields, false)
 	if err != nil {
 		panicErr(fmt.Errorf("NameIndex: %w", err))
 	}
