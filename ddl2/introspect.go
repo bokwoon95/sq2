@@ -516,14 +516,21 @@ func (dbi *DatabaseIntrospector) GetConstraints(ctx context.Context, filter *Fil
 		if rawColumns != "" {
 			constraint.Columns = strings.Split(rawColumns, ",")
 		}
-		if rawExprs != "" {
-			constraint.Exprs = strings.Split(rawExprs, ",")
+		constraint.Exprs = make([]string, len(constraint.Columns))
+		if dbi.dialect == sq.DialectPostgres {
+			exprs := splitArgs(rawExprs)
+			for i, column := range constraint.Columns {
+				if column == "" && len(exprs) > 0 {
+					constraint.Exprs[i] = strings.TrimSpace(exprs[0])
+					exprs = exprs[1:]
+				}
+			}
+			if rawOperators != "" {
+				constraint.ExclusionOperators = strings.Split(rawOperators, ",")
+			}
 		}
 		if rawReferencesColumns != "" {
 			constraint.ReferencesColumns = strings.Split(rawReferencesColumns, ",")
-		}
-		if rawOperators != "" {
-			constraint.ExclusionOperators = strings.Split(rawOperators, ",")
 		}
 		// remove surrounding brackets
 		if last := len(constraint.CheckExpr) - 1; len(constraint.CheckExpr) > 2 && constraint.CheckExpr[0] == '(' && constraint.CheckExpr[last] == ')' {
