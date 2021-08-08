@@ -157,7 +157,10 @@ func Test_SakilaSQLite(t *testing.T) {
 func Test_SakilaPostgres(t *testing.T) {
 	const dialect = sq.DialectPostgres
 	extensions := []string{"btree_gist", "uuid-ossp"}
-	functions, err := FilesToFunctions(sq.DialectPostgres, srcDir, "sql/last_update_trg.sql", "sql/refresh_full_address.sql")
+	functions, err := FilesToFunctions(sq.DialectPostgres, srcDir,
+		"sql/functions/postgres_last_update_trg.sql",
+		"sql/functions/postgres_refresh_full_address.sql",
+	)
 	if err != nil {
 		t.Fatal(testcallers(), err)
 	}
