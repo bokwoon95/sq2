@@ -7,7 +7,7 @@ SELECT
     ,FALSE AS is_materialized
     ,pg_get_viewdef(to_regclass(schemaname || '.' || viewname), true) AS sql
 FROM
-    pg_catalog.pg_views
+    pg_views
 WHERE
     TRUE
     {{ if not .IncludeSystemCatalogs }}AND schemaname <> 'information_schema' AND schemaname NOT LIKE 'pg_%'{{ end }}
@@ -22,7 +22,7 @@ SELECT
     ,TRUE AS is_materialized
     ,pg_get_viewdef(to_regclass(schemaname || '.' || matviewname), true) AS sql
 FROM
-    pg_catalog.pg_matviews
+    pg_matviews
 WHERE
     TRUE
     {{ if not .IncludeSystemCatalogs }}AND schemaname <> 'information_schema' AND schemaname NOT LIKE 'pg_%'{{ end }}

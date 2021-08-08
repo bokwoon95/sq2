@@ -132,9 +132,9 @@ SELECT
     ,pg_constraint.condeferrable AS is_deferrable
     ,pg_constraint.condeferred AS is_initially_deferred
 FROM
-    pg_catalog.pg_constraint
-    JOIN pg_catalog.pg_class ON pg_class.oid = pg_constraint.conrelid
-    JOIN pg_catalog.pg_namespace ON pg_namespace.oid = pg_class.relnamespace
+    pg_constraint
+    JOIN pg_class ON pg_class.oid = pg_constraint.conrelid
+    JOIN pg_namespace ON pg_namespace.oid = pg_class.relnamespace
 WHERE
     pg_constraint.contype = 'c'
     {{ if not .IncludeSystemCatalogs }}AND pg_namespace.nspname <> 'information_schema' AND pg_namespace.nspname NOT LIKE 'pg_%'{{ end }}

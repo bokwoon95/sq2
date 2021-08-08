@@ -17,18 +17,18 @@ FROM (
         ,pg_index.indisunique AS is_unique
         ,pg_index.indnkeyatts AS num_key_columns
         ,COALESCE(pg_attribute.attname, '') AS column_name
-        ,COALESCE(pg_catalog.pg_get_expr(pg_index.indexprs, pg_index.indrelid, TRUE), '') AS exprs
-        ,COALESCE(pg_catalog.pg_get_expr(pg_index.indpred, pg_index.indrelid, TRUE), '') AS predicate
+        ,COALESCE(pg_get_expr(pg_index.indexprs, pg_index.indrelid, TRUE), '') AS exprs
+        ,COALESCE(pg_get_expr(pg_index.indpred, pg_index.indrelid, TRUE), '') AS predicate
         ,columns.seq_in_index
     FROM
-        pg_catalog.pg_index
-        JOIN pg_catalog.pg_class AS index_info ON index_info.oid = pg_index.indexrelid
-        JOIN pg_catalog.pg_class AS table_info ON table_info.oid = pg_index.indrelid
-        JOIN pg_catalog.pg_namespace AS index_namespace ON index_namespace.oid = index_info.relnamespace
-        JOIN pg_catalog.pg_namespace AS table_namespace ON table_namespace.oid = table_info.relnamespace
-        JOIN pg_catalog.pg_am ON pg_am.oid = index_info.relam
+        pg_index
+        JOIN pg_class AS index_info ON index_info.oid = pg_index.indexrelid
+        JOIN pg_class AS table_info ON table_info.oid = pg_index.indrelid
+        JOIN pg_namespace AS index_namespace ON index_namespace.oid = index_info.relnamespace
+        JOIN pg_namespace AS table_namespace ON table_namespace.oid = table_info.relnamespace
+        JOIN pg_am ON pg_am.oid = index_info.relam
         CROSS JOIN unnest(pg_index.indkey) WITH ORDINALITY AS columns(column_oid, seq_in_index)
-        LEFT JOIN pg_catalog.pg_attribute ON pg_attribute.attrelid = pg_index.indrelid AND pg_attribute.attnum = columns.column_oid
+        LEFT JOIN pg_attribute ON pg_attribute.attrelid = pg_index.indrelid AND pg_attribute.attnum = columns.column_oid
     WHERE
         TRUE
         {{ if not .IncludeSystemCatalogs }}AND table_namespace.nspname <> 'information_schema' AND table_namespace.nspname NOT LIKE 'pg_%'{{ end }}

@@ -4,9 +4,9 @@ SELECT
     ,pg_trigger.tgname AS trigger_name
     ,COALESCE(pg_get_triggerdef(pg_trigger.oid, TRUE) || ';', '') AS sql
 FROM
-    pg_catalog.pg_trigger
-    JOIN pg_catalog.pg_class AS table_info ON table_info.oid = pg_trigger.tgrelid
-    JOIN pg_catalog.pg_namespace AS table_namespace ON table_namespace.oid = table_info.relnamespace
+    pg_trigger
+    JOIN pg_class AS table_info ON table_info.oid = pg_trigger.tgrelid
+    JOIN pg_namespace AS table_namespace ON table_namespace.oid = table_info.relnamespace
 WHERE
     NOT pg_trigger.tgisinternal
     {{ if not .IncludeSystemCatalogs }}AND table_namespace.nspname <> 'information_schema' AND table_namespace.nspname NOT LIKE 'pg_%'{{ end }}

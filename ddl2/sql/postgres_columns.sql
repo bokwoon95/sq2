@@ -2,7 +2,7 @@ SELECT
     table_namespace.nspname AS table_schema
     ,table_info.relname AS table_name
     ,column_info.attname AS column_name
-    ,UPPER(pg_catalog.format_type(column_info.atttypid, column_info.atttypmod)) AS column_type
+    ,UPPER(format_type(column_info.atttypid, column_info.atttypmod)) AS column_type
     -- https://stackoverflow.com/a/3351120 precision and scale calculation
     ,CASE column_info.atttypid
         WHEN 21 /*int2*/ THEN 16
@@ -33,7 +33,7 @@ SELECT
     END AS identity
     ,column_info.attnotnull AS is_notnull
     ,CASE column_info.attgenerated
-        WHEN 's' THEN COALESCE(pg_catalog.pg_get_expr(pg_attrdef.adbin, table_info.oid, TRUE), '')
+        WHEN 's' THEN COALESCE(pg_get_expr(pg_attrdef.adbin, table_info.oid, TRUE), '')
         ELSE ''
     END AS generated_expr
     ,COALESCE(column_info.attgenerated = 's', FALSE) AS generated_expr_stored
@@ -43,14 +43,14 @@ SELECT
     END AS collation_name
     ,CASE column_info.attgenerated
         WHEN 's' THEN ''
-        ELSE COALESCE(pg_catalog.pg_get_expr(pg_attrdef.adbin, table_info.oid, TRUE), '')
+        ELSE COALESCE(pg_get_expr(pg_attrdef.adbin, table_info.oid, TRUE), '')
     END AS column_default
 FROM
-    pg_catalog.pg_attribute AS column_info
-    JOIN pg_catalog.pg_class AS table_info ON table_info.relkind = 'r' AND table_info.oid = column_info.attrelid
-    JOIN pg_catalog.pg_namespace AS table_namespace ON table_namespace.oid = table_info.relnamespace
-    LEFT JOIN pg_catalog.pg_attrdef ON pg_attrdef.adrelid = table_info.oid AND pg_attrdef.adnum = column_info.attnum
-    LEFT JOIN pg_catalog.pg_collation ON pg_collation.oid = column_info.attcollation
+    pg_attribute AS column_info
+    JOIN pg_class AS table_info ON table_info.relkind = 'r' AND table_info.oid = column_info.attrelid
+    JOIN pg_namespace AS table_namespace ON table_namespace.oid = table_info.relnamespace
+    LEFT JOIN pg_attrdef ON pg_attrdef.adrelid = table_info.oid AND pg_attrdef.adnum = column_info.attnum
+    LEFT JOIN pg_collation ON pg_collation.oid = column_info.attcollation
 WHERE
     column_info.attnum > 0
     AND NOT column_info.attisdropped

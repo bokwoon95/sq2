@@ -2,8 +2,8 @@ SELECT
     table_namespace.nspname AS table_schema
     ,table_info.relname AS table_name
 FROM
-    pg_catalog.pg_namespace AS table_namespace
-    JOIN pg_catalog.pg_class AS table_info ON table_info.relkind = 'r' AND table_info.relnamespace = table_namespace.oid 
+    pg_namespace AS table_namespace
+    JOIN pg_class AS table_info ON table_info.relkind = 'r' AND table_info.relnamespace = table_namespace.oid 
 WHERE
     TRUE
     {{ if not .IncludeSystemCatalogs }}AND table_namespace.nspname <> 'information_schema' AND table_namespace.nspname NOT LIKE 'pg_%'{{ end }}
