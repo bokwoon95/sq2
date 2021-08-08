@@ -35,7 +35,7 @@ SELECT
     ,table_name
     ,constraint_name
     ,constraint_type
-    ,string_agg(column_name, ',' ORDER BY seq_in_constraint) AS columns
+    ,string_agg(column_name, ',' ORDER BY seq) AS columns
     ,'' AS exprs
     ,'' AS references_schema
     ,'' AS references_table
@@ -61,12 +61,12 @@ FROM (
         ,columns.attname AS column_name
         ,pg_constraint.condeferrable AS is_deferrable
         ,pg_constraint.condeferred AS is_initially_deferred
-        ,c.seq_in_constraint
+        ,c.seq
     FROM
         pg_constraint
         JOIN pg_class AS tables ON tables.oid = pg_constraint.conrelid
         JOIN pg_namespace AS schemas ON schemas.oid = tables.relnamespace
-        CROSS JOIN unnest(pg_constraint.conkey) WITH ORDINALITY AS c(oid, seq_in_constraint)
+        CROSS JOIN unnest(pg_constraint.conkey) WITH ORDINALITY AS c(oid, seq)
         JOIN pg_attribute AS columns ON columns.attrelid = pg_constraint.conrelid AND columns.attnum = c.oid
     WHERE
         pg_constraint.contype IN ('p', 'u')
@@ -91,11 +91,11 @@ SELECT
     ,table_name
     ,constraint_name
     ,constraint_type
-    ,string_agg(column_name, ',' ORDER BY seq_in_constraint) AS columns
+    ,string_agg(column_name, ',' ORDER BY seq) AS columns
     ,'' AS exprs
     ,references_schema
     ,references_table
-    ,string_agg(references_column, ',' ORDER BY seq_in_constraint) AS references_columns
+    ,string_agg(references_column, ',' ORDER BY seq) AS references_columns
     ,update_rule
     ,delete_rule
     ,match_option
@@ -136,15 +136,15 @@ FROM (
         END AS match_option
         ,pg_constraint.condeferrable AS is_deferrable
         ,pg_constraint.condeferred AS is_initially_deferred
-        ,c1.seq_in_constraint
+        ,c1.seq
     FROM
         pg_constraint
         JOIN pg_class AS tables1 ON tables1.oid = pg_constraint.conrelid
         JOIN pg_class AS tables2 ON tables2.oid = pg_constraint.confrelid
         JOIN pg_namespace AS schemas1 ON schemas1.oid = tables1.relnamespace
         JOIN pg_namespace AS schemas2 ON schemas2.oid = tables2.relnamespace
-        CROSS JOIN unnest(pg_constraint.conkey) WITH ORDINALITY AS c1(oid, seq_in_constraint)
-        JOIN unnest(pg_constraint.confkey) WITH ORDINALITY AS c2(oid, seq_in_constraint) ON c2.seq_in_constraint = c1.seq_in_constraint
+        CROSS JOIN unnest(pg_constraint.conkey) WITH ORDINALITY AS c1(oid, seq)
+        JOIN unnest(pg_constraint.confkey) WITH ORDINALITY AS c2(oid, seq) ON c2.seq = c1.seq
         JOIN pg_attribute AS columns1 ON columns1.attrelid = pg_constraint.conrelid AND columns1.attnum = c1.oid
         JOIN pg_attribute AS columns2 ON columns2.attrelid = pg_constraint.confrelid AND columns2.attnum = c2.oid
     WHERE
@@ -225,7 +225,11 @@ SELECT
 FROM
     pg_constraint
     JOIN pg_class AS tables ON tables.oid = pg_constraint.conrelid
+    JOIN pg_class AS indexes ON indexes.oid = pg_constraint.conindid
     JOIN pg_namespace AS schemas ON schemas.oid = tables.relnamespace
+    JOIN pg_index ON pg_index.indexrelid = indexes.oid
+    JOIN pg_am ON pg_am.oid = indexes.relam
+    CROSS JOIN unnest(pg_index.indkey) WITH ORDINALITY AS c(oid, seq)
 WHERE
     pg_constraint.contype = 'c'
     {{ if not .IncludeSystemCatalogs }}AND schemas.nspname <> 'information_schema' AND schemas.nspname NOT LIKE 'pg_%'{{ end }}
