@@ -99,7 +99,7 @@ func Test_SakilaSQLite(t *testing.T) {
 		t.Fatal(testcallers(), err)
 	}
 	gotUpSQL := buf.String()
-	b, err := fs.ReadFile(embeddedFiles, "sql/sqlite_up.sql")
+	b, err := fs.ReadFile(embeddedFiles, "sql/sqlite_sakila_up.sql")
 	if err != nil {
 		t.Fatal(testcallers(), err)
 	}
@@ -125,7 +125,7 @@ func Test_SakilaSQLite(t *testing.T) {
 		t.Fatal(testcallers(), err)
 	}
 	gotIntrospectSQL := buf.String()
-	b, err = fs.ReadFile(embeddedFiles, "sql/sqlite_introspect.sql")
+	b, err = fs.ReadFile(embeddedFiles, "sql/sqlite_sakila_introspect.sql")
 	if err != nil {
 		t.Fatal(testcallers(), err)
 	}
@@ -143,7 +143,7 @@ func Test_SakilaSQLite(t *testing.T) {
 		t.Fatal(testcallers(), err)
 	}
 	gotDownSQL := buf.String()
-	b, err = fs.ReadFile(embeddedFiles, "sql/sqlite_down.sql")
+	b, err = fs.ReadFile(embeddedFiles, "sql/sqlite_sakila_down.sql")
 	if err != nil {
 		t.Fatal(testcallers(), err)
 	}
@@ -266,7 +266,7 @@ func Test_SakilaPostgres(t *testing.T) {
 		t.Fatal(testcallers(), err)
 	}
 	gotUpSQL := buf.String()
-	b, err := fs.ReadFile(embeddedFiles, "sql/postgres_up.sql")
+	b, err := fs.ReadFile(embeddedFiles, "sql/postgres_sakila_up.sql")
 	if err != nil {
 		t.Fatal(testcallers(), err)
 	}
@@ -297,7 +297,7 @@ func Test_SakilaPostgres(t *testing.T) {
 		t.Fatal(testcallers(), err)
 	}
 	gotIntrospectSQL := buf.String()
-	b, err = fs.ReadFile(embeddedFiles, "sql/postgres_introspect.sql")
+	b, err = fs.ReadFile(embeddedFiles, "sql/postgres_sakila_introspect.sql")
 	if err != nil {
 		t.Fatal(testcallers(), err)
 	}
@@ -315,7 +315,7 @@ func Test_SakilaPostgres(t *testing.T) {
 		t.Fatal(testcallers(), err)
 	}
 	gotDownSQL := buf.String()
-	b, err = fs.ReadFile(embeddedFiles, "sql/postgres_down.sql")
+	b, err = fs.ReadFile(embeddedFiles, "sql/postgres_sakila_down.sql")
 	if err != nil {
 		t.Fatal(testcallers(), err)
 	}
@@ -398,7 +398,7 @@ func Test_SakilaMySQL(t *testing.T) {
 		t.Fatal(testcallers(), err)
 	}
 	gotUpSQL := buf.String()
-	b, err := fs.ReadFile(embeddedFiles, "sql/mysql_up.sql")
+	b, err := fs.ReadFile(embeddedFiles, "sql/mysql_sakila_up.sql")
 	if err != nil {
 		t.Fatal(testcallers(), err)
 	}
@@ -424,7 +424,7 @@ func Test_SakilaMySQL(t *testing.T) {
 		t.Fatal(testcallers(), err)
 	}
 	gotIntrospectSQL := buf.String()
-	b, err = fs.ReadFile(embeddedFiles, "sql/mysql_introspect.sql")
+	b, err = fs.ReadFile(embeddedFiles, "sql/mysql_sakila_introspect.sql")
 	if err != nil {
 		t.Fatal(testcallers(), err)
 	}
@@ -442,7 +442,7 @@ func Test_SakilaMySQL(t *testing.T) {
 		t.Fatal(testcallers(), err)
 	}
 	gotDownSQL := buf.String()
-	b, err = fs.ReadFile(embeddedFiles, "sql/mysql_down.sql")
+	b, err = fs.ReadFile(embeddedFiles, "sql/mysql_sakila_down.sql")
 	if err != nil {
 		t.Fatal(testcallers(), err)
 	}
