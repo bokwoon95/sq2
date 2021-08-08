@@ -539,6 +539,10 @@ CREATE TRIGGER rental_last_update_after_update_trg AFTER UPDATE ON {1} BEGIN
 END;`, tbl))
 	}
 	if dialect == sq.DialectPostgres {
+		t.NameExclude("rental_range_excl", "GIST", Exclusions{
+			{tbl.INVENTORY_ID, "="},
+			{sq.Fieldf("tstzrange({}, {}, '[]')", tbl.RENTAL_DATE, tbl.RETURN_DATE), "&&"},
+		})
 		t.Trigger(t.Sprintf(`
 CREATE TRIGGER rental_last_update_before_update_trg BEFORE UPDATE ON {1}
 FOR EACH ROW EXECUTE PROCEDURE last_update_trg();`, tbl))

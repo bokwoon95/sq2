@@ -271,6 +271,20 @@ func createOrUpdateConstraint(dialect string, tbl *Table, constraintType, constr
 	return constraintPosition, nil
 }
 
+type Exclusions []struct {
+	Field    sq.Field
+	Operator string
+}
+
+func (t *T) Exclude(indexType string, exclusions Exclusions) *TConstraint {
+	tConstraint := &TConstraint{
+		dialect: t.dialect,
+		tbl:     t.tbl,
+		// constraintName: constraintName,
+	}
+	return tConstraint
+}
+
 func (t *T) Check(constraintName string, format string, values ...interface{}) *TConstraint {
 	expr, err := sprintf(t.dialect, format, values, []string{t.tbl.TableName})
 	if err != nil {
@@ -338,6 +352,15 @@ func (t *T) ForeignKey(fields ...sq.Field) *TConstraint {
 	tConstraint.constraintPosition, err = createOrUpdateConstraint(t.dialect, t.tbl, FOREIGN_KEY, constraintName, columnNames, "")
 	if err != nil {
 		panicErr(fmt.Errorf("ForeignKey: %w", err))
+	}
+	return tConstraint
+}
+
+func (t *T) NameExclude(constraintName, indexType string, exclusions Exclusions) *TConstraint {
+	tConstraint := &TConstraint{
+		dialect:        t.dialect,
+		tbl:            t.tbl,
+		constraintName: constraintName,
 	}
 	return tConstraint
 }
