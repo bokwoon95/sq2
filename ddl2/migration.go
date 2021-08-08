@@ -547,7 +547,7 @@ func (m *Migration) WriteSQL(w io.Writer) error {
 		m.RenameCommands,
 		m.DropCommands,
 	} {
-		if m.Dialect == sq.DialectMySQL && len(cmds) > 0 && i == 6 {
+		if m.Dialect == sq.DialectMySQL && (i == 3 || i == 7 || i == 8) && len(cmds) > 0 {
 			io.WriteString(w, "\n\nDELIMITER ;;")
 		}
 		for _, cmd := range cmds {
@@ -568,7 +568,7 @@ func (m *Migration) WriteSQL(w io.Writer) error {
 			}
 			query = strings.TrimSpace(query)
 			io.WriteString(w, query)
-			if m.Dialect == sq.DialectMySQL && i == 6 {
+			if m.Dialect == sq.DialectMySQL && (i == 3 || i == 7 || i == 8) {
 				io.WriteString(w, ";;")
 			} else {
 				if last := len(query) - 1; query[last] != ';' {
@@ -576,7 +576,7 @@ func (m *Migration) WriteSQL(w io.Writer) error {
 				}
 			}
 		}
-		if m.Dialect == sq.DialectMySQL && len(cmds) > 0 && i == 6 {
+		if m.Dialect == sq.DialectMySQL && (i == 3 || i == 7 || i == 8) && len(cmds) > 0 {
 			io.WriteString(w, "\n\nDELIMITER ;")
 		}
 	}

@@ -327,99 +327,131 @@ func Test_SakilaPostgres(t *testing.T) {
 	}
 }
 
-func Test_DropPostgres(t *testing.T) {
-	functions, err := FilesToFunctions(sq.DialectPostgres, dataDir, "sql/last_update_trg.sql", "sql/refresh_full_address.sql")
+func Test_SakilaMySQL(t *testing.T) {
+	const dialect = sq.DialectMySQL
+	db, err := sql.Open("mysql", "root:root@tcp(localhost:3312)/db")
 	if err != nil {
 		t.Fatal(testcallers(), err)
 	}
-	db, err := sql.Open("postgres", "postgres://postgres:postgres@localhost:5442/db?sslmode=disable")
+	err = AutoMigrate(dialect, db, DropExtraneous|DropCascade)
 	if err != nil {
 		t.Fatal(testcallers(), err)
 	}
-	gotCatalog, err := NewCatalog(sq.DialectPostgres, WithDB(db, &Filter{SortOutput: true}))
+	dbi, err := NewDatabaseIntrospector(dialect, db, nil)
 	if err != nil {
 		t.Fatal(testcallers(), err)
 	}
-	migration, err := Migrate(DropExtraneous|DropCascade, gotCatalog, Catalog{})
+	tbls, err := dbi.GetTables(context.Background(), nil)
 	if err != nil {
 		t.Fatal(testcallers(), err)
 	}
-	for _, function := range functions {
-		migration.DropCommands = append(migration.DropCommands, &DropFunctionCommand{
-			DropIfExists: true,
-			Function:     function,
-			DropCascade:  true,
-		})
+	if len(tbls) != 0 {
+		t.Fatal(testcallers(), " AutoMigrate did not drop all tables:", fmt.Sprint(tbls))
 	}
-	err = migration.WriteSQL(os.Stdout)
+	views, err := dbi.GetViews(context.Background(), nil)
 	if err != nil {
 		t.Fatal(testcallers(), err)
 	}
-}
-
-func Test_CatalogPostgres(t *testing.T) {
-	functions, err := FilesToFunctions(sq.DialectPostgres, dataDir, "sql/last_update_trg.sql", "sql/refresh_full_address.sql")
-	if err != nil {
-		t.Fatal(testcallers(), err)
+	if len(views) != 0 {
+		t.Fatal(testcallers(), " AutoMigrate did not drop all views:", fmt.Sprint(views))
 	}
-	wantCatalog, err := NewCatalog(sq.DialectPostgres, WithTables(
+	wantCatalog, err := NewCatalog(dialect, WithTables(
 		NEW_ACTOR(""),
-		NEW_CATEGORY(""),
-		NEW_COUNTRY(""),
-		NEW_CITY(""),
 		NEW_ADDRESS(""),
-		NEW_LANGUAGE(""),
+		NEW_CATEGORY(""),
+		NEW_CITY(""),
+		NEW_COUNTRY(""),
+		NEW_CUSTOMER(""),
 		NEW_FILM(""),
-		NEW_FILM_TEXT(""),
 		NEW_FILM_ACTOR(""),
 		NEW_FILM_ACTOR_REVIEW(""),
 		NEW_FILM_CATEGORY(""),
+		NEW_FILM_TEXT(""),
+		NEW_INVENTORY(""),
+		NEW_LANGUAGE(""),
+		NEW_PAYMENT(""),
+		NEW_RENTAL(""),
 		NEW_STAFF(""),
 		NEW_STORE(""),
-		NEW_CUSTOMER(""),
-		NEW_INVENTORY(""),
-		NEW_RENTAL(""),
-		NEW_PAYMENT(""),
 	), WithDDLViews(
 		NEW_ACTOR_INFO(""),
 		NEW_CUSTOMER_LIST(""),
 		NEW_FILM_LIST(""),
+		NEW_FULL_ADDRESS(""),
 		NEW_NICER_BUT_SLOWER_FILM_LIST(""),
 		NEW_SALES_BY_FILM_CATEGORY(""),
 		NEW_SALES_BY_STORE(""),
 		NEW_STAFF_LIST(""),
-		NEW_FULL_ADDRESS(""),
-	), WithFunctions(functions...))
+	))
 	if err != nil {
 		t.Fatal(testcallers(), err)
 	}
-	migration, err := Migrate(CreateMissing, Catalog{}, wantCatalog)
+	upMigration, err := Migrate(CreateMissing|UpdateExisting, Catalog{}, wantCatalog)
 	if err != nil {
 		t.Fatal(testcallers(), err)
 	}
-	err = migration.WriteSQL(os.Stdout)
+	buf := bufpool.Get().(*bytes.Buffer)
+	defer func() {
+		buf.Reset()
+		bufpool.Put(buf)
+	}()
+	err = upMigration.WriteSQL(buf)
 	if err != nil {
 		t.Fatal(testcallers(), err)
 	}
-}
-
-func Test_IntrospectPostgres(t *testing.T) {
-	db, err := sql.Open("postgres", "postgres://postgres:postgres@localhost:5442/db?sslmode=disable")
+	gotUpSQL := buf.String()
+	b, err := fs.ReadFile(dataDir, "testdata/mysql_up.sql")
 	if err != nil {
 		t.Fatal(testcallers(), err)
 	}
-	catalog, err := NewCatalog(sq.DialectPostgres, WithDB(db, &Filter{SortOutput: true}))
-	if err != nil {
-		t.Fatal(testcallers(), err)
+	wantUpSQL := strings.TrimSpace(string(b))
+	if diff := testdiff(gotUpSQL, wantUpSQL); diff != "" {
+		t.Fatal(testcallers(), diff)
 	}
-	migration, err := Migrate(CreateMissing|UpdateExisting, Catalog{}, catalog)
-	if err != nil {
-		t.Fatal(testcallers(), err)
-	}
-	err = migration.WriteSQL(os.Stdout)
-	if err != nil {
-		t.Fatal(testcallers(), err)
-	}
+	// err = upMigration.Exec(db)
+	// if err != nil {
+	// 	t.Fatal(testcallers(), err)
+	// }
+	// gotCatalog, err := NewCatalog(dialect, WithDB(db, &Filter{SortOutput: true}))
+	// if err != nil {
+	// 	t.Fatal(testcallers(), err)
+	// }
+	// introspectMigration, err := Migrate(CreateMissing|UpdateExisting, Catalog{}, gotCatalog)
+	// if err != nil {
+	// 	t.Fatal(testcallers(), err)
+	// }
+	// buf.Reset()
+	// err = introspectMigration.WriteSQL(buf)
+	// if err != nil {
+	// 	t.Fatal(testcallers(), err)
+	// }
+	// gotIntrospectSQL := buf.String()
+	// b, err = fs.ReadFile(dataDir, "testdata/mysql_introspect.sql")
+	// if err != nil {
+	// 	t.Fatal(testcallers(), err)
+	// }
+	// wantIntrospectSQL := strings.TrimSpace(string(b))
+	// if diff := testdiff(gotIntrospectSQL, wantIntrospectSQL); diff != "" {
+	// 	t.Fatal(testcallers(), diff)
+	// }
+	// downMigration, err := Migrate(DropExtraneous|DropCascade, gotCatalog, Catalog{})
+	// if err != nil {
+	// 	t.Fatal(testcallers(), err)
+	// }
+	// buf.Reset()
+	// err = downMigration.WriteSQL(buf)
+	// if err != nil {
+	// 	t.Fatal(testcallers(), err)
+	// }
+	// gotDownSQL := buf.String()
+	// b, err = fs.ReadFile(dataDir, "testdata/mysql_down.sql")
+	// if err != nil {
+	// 	t.Fatal(testcallers(), err)
+	// }
+	// wantDownSQL := strings.TrimSpace(string(b))
+	// if diff := testdiff(gotDownSQL, wantDownSQL); diff != "" {
+	// 	t.Fatal(testcallers(), diff)
+	// }
 }
 
 func Test_DropMySQL(t *testing.T) {

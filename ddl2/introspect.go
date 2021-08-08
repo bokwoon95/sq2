@@ -45,8 +45,8 @@ type Introspector interface {
 type DatabaseIntrospector struct {
 	dialect       string
 	db            sq.DB
-	mu            *sync.RWMutex
 	defaultFilter *Filter
+	mu            *sync.RWMutex
 	templates     map[string]*template.Template
 }
 
@@ -287,6 +287,7 @@ func (dbi *DatabaseIntrospector) GetTables(ctx context.Context, filter *Filter) 
 			return nil, err
 		}
 	case sq.DialectPostgres:
+		// TODO: convert this to use pg_catalog (because faster)
 		rows, err = dbi.queryContext(ctx, dataDir, "sql/postgres_tables.sql", filter)
 		if err != nil {
 			return nil, err
@@ -338,6 +339,7 @@ func (dbi *DatabaseIntrospector) GetColumns(ctx context.Context, filter *Filter)
 			return nil, err
 		}
 	case sq.DialectPostgres:
+		// TODO: convert this to use pg_catalog (because faster)
 		rows, err = dbi.queryContext(ctx, dataDir, "sql/postgres_columns.sql", filter)
 		if err != nil {
 			return nil, err
@@ -458,6 +460,7 @@ func (dbi *DatabaseIntrospector) GetConstraints(ctx context.Context, filter *Fil
 			return nil, err
 		}
 	case sq.DialectPostgres:
+		// TODO: convert this to use pg_catalog (because faster)
 		rows, err = dbi.queryContext(ctx, dataDir, "sql/postgres_constraints.sql", filter)
 		if err != nil {
 			return nil, err
