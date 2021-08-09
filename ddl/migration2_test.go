@@ -215,110 +215,111 @@ func Test_Sakila2Postgres(t *testing.T) {
 		}
 		t.Fatal(testcallers(), " AutoMigrate did not drop all extensions:", fmt.Sprint(exts))
 	}
-	// wantCatalog, err := NewCatalog(dialect, WithTables(
-	// 	NEW_ACTOR(""),
-	// 	NEW_ADDRESS(""),
-	// 	NEW_CATEGORY(""),
-	// 	NEW_CITY(""),
-	// 	NEW_COUNTRY(""),
-	// 	NEW_CUSTOMER(""),
-	// 	NEW_FILM(""),
-	// 	NEW_FILM_ACTOR(""),
-	// 	NEW_FILM_ACTOR_REVIEW(""),
-	// 	NEW_FILM_CATEGORY(""),
-	// 	NEW_FILM_TEXT(""),
-	// 	NEW_INVENTORY(""),
-	// 	NEW_LANGUAGE(""),
-	// 	NEW_PAYMENT(""),
-	// 	NEW_RENTAL(""),
-	// 	NEW_STAFF(""),
-	// 	NEW_STORE(""),
-	// ), WithDDLViews(
-	// 	NEW_ACTOR_INFO(""),
-	// 	NEW_CUSTOMER_LIST(""),
-	// 	NEW_FILM_LIST(""),
-	// 	NEW_FULL_ADDRESS(""),
-	// 	NEW_NICER_BUT_SLOWER_FILM_LIST(""),
-	// 	NEW_SALES_BY_FILM_CATEGORY(""),
-	// 	NEW_SALES_BY_STORE(""),
-	// 	NEW_STAFF_LIST(""),
-	// ), WithFunctions(
-	// 	functions...,
-	// ), WithExtensions(
-	// 	extensions...,
-	// ))
-	// if err != nil {
-	// 	t.Fatal(testcallers(), err)
-	// }
-	// upMigration, err := Migrate(CreateMissing|UpdateExisting, Catalog{}, wantCatalog)
-	// if err != nil {
-	// 	t.Fatal(testcallers(), err)
-	// }
-	// buf := bufpool.Get().(*bytes.Buffer)
-	// defer func() {
-	// 	buf.Reset()
-	// 	bufpool.Put(buf)
-	// }()
-	// err = upMigration.WriteSQL(buf)
-	// if err != nil {
-	// 	t.Fatal(testcallers(), err)
-	// }
-	// gotUpSQL := buf.String()
-	// b, err := fs.ReadFile(embeddedFiles, "sql/postgres_sakila_up.sql")
-	// if err != nil {
-	// 	t.Fatal(testcallers(), err)
-	// }
-	// wantUpSQL := strings.TrimSpace(string(b))
-	// if diff := testdiff(gotUpSQL, wantUpSQL); diff != "" {
-	// 	t.Fatal(testcallers(), diff)
-	// }
-	// err = upMigration.Exec(tx)
-	// if err != nil {
-	// 	t.Fatal(testcallers(), err)
-	// }
-	// gotCatalog, err := NewCatalog(dialect, WithDB(tx, &Filter{SortOutput: true}))
-	// if err != nil {
-	// 	t.Fatal(testcallers(), err)
-	// }
-	// for i, extension := range gotCatalog.Extensions {
-	// 	if n := strings.IndexByte(extension, '@'); n >= 0 {
-	// 		gotCatalog.Extensions[i] = extension[:n]
-	// 	}
-	// }
-	// introspectMigration, err := Migrate(CreateMissing|UpdateExisting, Catalog{}, gotCatalog)
-	// if err != nil {
-	// 	t.Fatal(testcallers(), err)
-	// }
-	// buf.Reset()
-	// err = introspectMigration.WriteSQL(buf)
-	// if err != nil {
-	// 	t.Fatal(testcallers(), err)
-	// }
-	// gotIntrospectSQL := buf.String()
-	// b, err = fs.ReadFile(embeddedFiles, "sql/postgres_sakila_introspect.sql")
-	// if err != nil {
-	// 	t.Fatal(testcallers(), err)
-	// }
-	// wantIntrospectSQL := strings.TrimSpace(string(b))
-	// if diff := testdiff(gotIntrospectSQL, wantIntrospectSQL); diff != "" {
-	// 	t.Fatal(testcallers(), diff)
-	// }
-	// downMigration, err := Migrate(DropExtraneous|DropCascade, gotCatalog, Catalog{})
-	// if err != nil {
-	// 	t.Fatal(testcallers(), err)
-	// }
-	// buf.Reset()
-	// err = downMigration.WriteSQL(buf)
-	// if err != nil {
-	// 	t.Fatal(testcallers(), err)
-	// }
-	// gotDownSQL := buf.String()
-	// b, err = fs.ReadFile(embeddedFiles, "sql/postgres_sakila_down.sql")
-	// if err != nil {
-	// 	t.Fatal(testcallers(), err)
-	// }
-	// wantDownSQL := strings.TrimSpace(string(b))
-	// if diff := testdiff(gotDownSQL, wantDownSQL); diff != "" {
-	// 	t.Fatal(testcallers(), diff)
-	// }
+	wantCatalog, err := NewCatalog(dialect, WithTables(
+		NEW_ACTOR(""),
+		NEW_ADDRESS(""),
+		NEW_CATEGORY(""),
+		NEW_CITY(""),
+		NEW_COUNTRY(""),
+		NEW_CUSTOMER(""),
+		NEW_FILM(""),
+		NEW_FILM_ACTOR(""),
+		NEW_FILM_ACTOR_REVIEW(""),
+		NEW_FILM_CATEGORY(""),
+		NEW_FILM_TEXT(""),
+		NEW_INVENTORY(""),
+		NEW_LANGUAGE(""),
+		NEW_PAYMENT(""),
+		NEW_RENTAL(""),
+		NEW_STAFF(""),
+		NEW_STORE(""),
+	), WithDDLViews(
+		NEW_ACTOR_INFO(""),
+		NEW_CUSTOMER_LIST(""),
+		NEW_FILM_LIST(""),
+		NEW_FULL_ADDRESS(""),
+		NEW_NICER_BUT_SLOWER_FILM_LIST(""),
+		NEW_SALES_BY_FILM_CATEGORY(""),
+		NEW_SALES_BY_STORE(""),
+		NEW_STAFF_LIST(""),
+	), WithFunctions(
+		functions...,
+	), WithExtensions(
+		extensions...,
+	))
+	if err != nil {
+		t.Fatal(testcallers(), err)
+	}
+	upMigration, err := Migrate2(CreateMissing|UpdateExisting, Catalog{}, wantCatalog)
+	if err != nil {
+		t.Fatal(testcallers(), err)
+	}
+	buf := bufpool.Get().(*bytes.Buffer)
+	defer func() {
+		buf.Reset()
+		bufpool.Put(buf)
+	}()
+	err = upMigration.WriteSQL(buf)
+	if err != nil {
+		t.Fatal(testcallers(), err)
+	}
+	gotUpSQL := buf.String()
+	b, err := fs.ReadFile(embeddedFiles, "sql/postgres_sakila_up2.sql")
+	if err != nil {
+		t.Fatal(testcallers(), err)
+	}
+	wantUpSQL := strings.TrimSpace(string(b))
+	if diff := testdiff(gotUpSQL, wantUpSQL); diff != "" {
+		t.Fatal(testcallers(), diff)
+	}
+	err = upMigration.Exec(tx)
+	if err != nil {
+		t.Fatal(testcallers(), err)
+	}
+	gotCatalog, err := NewCatalog(dialect, WithDB(tx, &Filter{SortOutput: true}))
+	if err != nil {
+		t.Fatal(testcallers(), err)
+	}
+	// remove the version numbers
+	for i, extension := range gotCatalog.Extensions {
+		if n := strings.IndexByte(extension, '@'); n >= 0 {
+			gotCatalog.Extensions[i] = extension[:n]
+		}
+	}
+	introspectMigration, err := Migrate2(CreateMissing|UpdateExisting, Catalog{}, gotCatalog)
+	if err != nil {
+		t.Fatal(testcallers(), err)
+	}
+	buf.Reset()
+	err = introspectMigration.WriteSQL(buf)
+	if err != nil {
+		t.Fatal(testcallers(), err)
+	}
+	gotIntrospectSQL := buf.String()
+	b, err = fs.ReadFile(embeddedFiles, "sql/postgres_sakila_introspect2.sql")
+	if err != nil {
+		t.Fatal(testcallers(), err)
+	}
+	wantIntrospectSQL := strings.TrimSpace(string(b))
+	if diff := testdiff(gotIntrospectSQL, wantIntrospectSQL); diff != "" {
+		t.Fatal(testcallers(), diff)
+	}
+	downMigration, err := Migrate2(DropExtraneous|DropCascade, gotCatalog, Catalog{})
+	if err != nil {
+		t.Fatal(testcallers(), err)
+	}
+	buf.Reset()
+	err = downMigration.WriteSQL(buf)
+	if err != nil {
+		t.Fatal(testcallers(), err)
+	}
+	gotDownSQL := buf.String()
+	b, err = fs.ReadFile(embeddedFiles, "sql/postgres_sakila_down.sql")
+	if err != nil {
+		t.Fatal(testcallers(), err)
+	}
+	wantDownSQL := strings.TrimSpace(string(b))
+	if diff := testdiff(gotDownSQL, wantDownSQL); diff != "" {
+		t.Fatal(testcallers(), diff)
+	}
 }

@@ -282,6 +282,7 @@ func Test_SakilaPostgres(t *testing.T) {
 	if err != nil {
 		t.Fatal(testcallers(), err)
 	}
+	// remove the version numbers
 	for i, extension := range gotCatalog.Extensions {
 		if n := strings.IndexByte(extension, '@'); n >= 0 {
 			gotCatalog.Extensions[i] = extension[:n]
