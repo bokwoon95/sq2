@@ -1001,13 +1001,13 @@ func (view FULL_ADDRESS) DDL(dialect string, v *V) {
 		),
 	)
 	v.Index(view.COUNTRY_ID, view.CITY_ID, view.ADDRESS_ID).Unique().Include(view.COUNTRY, view.CITY, view.ADDRESS, view.ADDRESS2)
-	v.Trigger(v.Sprintf(`
+	v.Trigger(`
 CREATE TRIGGER address_refresh_full_address_trg AFTER INSERT OR UPDATE OR DELETE OR TRUNCATE ON {}
-FOR EACH STATEMENT EXECUTE PROCEDURE refresh_full_address();`, ADDRESS))
-	v.Trigger(v.Sprintf(`
+FOR EACH STATEMENT EXECUTE PROCEDURE refresh_full_address();`, ADDRESS)
+	v.Trigger(`
 CREATE TRIGGER city_refresh_full_address_trg AFTER INSERT OR UPDATE OR DELETE OR TRUNCATE ON {}
-FOR EACH STATEMENT EXECUTE PROCEDURE refresh_full_address();`, CITY))
-	v.Trigger(v.Sprintf(`
+FOR EACH STATEMENT EXECUTE PROCEDURE refresh_full_address();`, CITY)
+	v.Trigger(`
 CREATE TRIGGER country_refresh_full_address_trg AFTER INSERT OR UPDATE OR DELETE OR TRUNCATE ON {}
-FOR EACH STATEMENT EXECUTE PROCEDURE refresh_full_address();`, COUNTRY))
+FOR EACH STATEMENT EXECUTE PROCEDURE refresh_full_address();`, COUNTRY)
 }
