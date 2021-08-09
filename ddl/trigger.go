@@ -107,22 +107,3 @@ func (cmd DropTriggerCommand) AppendSQL(dialect string, buf *bytes.Buffer, args 
 	}
 	return nil
 }
-
-type RenameTriggerCommand struct {
-	TableSchema  string
-	TableName    string
-	TriggerName  string
-	RenameToName string
-}
-
-func (cmd RenameTriggerCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
-	if dialect == sq.DialectSQLite || dialect == sq.DialectMySQL {
-		return fmt.Errorf("%s does not support renaming triggers", dialect)
-	}
-	buf.WriteString("ALTER TRIGGER " + sq.QuoteIdentifier(dialect, cmd.TriggerName) + " ON ")
-	if cmd.TableSchema != "" {
-		buf.WriteString(sq.QuoteIdentifier(dialect, cmd.TableSchema) + ".")
-	}
-	buf.WriteString(sq.QuoteIdentifier(dialect, cmd.TableName) + " RENAME TO " + sq.QuoteIdentifier(dialect, cmd.RenameToName))
-	return nil
-}

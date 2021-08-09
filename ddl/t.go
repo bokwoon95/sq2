@@ -771,27 +771,27 @@ func (tbl *Table) LoadTable(dialect string, table sq.SchemaTable) (err error) {
 				}
 			}
 		case "primarykey":
-			err = tbl.LoadConstraintConfig(dialect, PRIMARY_KEY, tbl.TableSchema, tbl.TableName, nil, modifier[1])
+			err = tbl.loadConstraintConfig(dialect, PRIMARY_KEY, tbl.TableSchema, tbl.TableName, nil, modifier[1])
 			if err != nil {
 				return fmt.Errorf("%s: %s", qualifiedTable, err.Error())
 			}
 		case "references":
-			err = tbl.LoadConstraintConfig(dialect, FOREIGN_KEY, tbl.TableSchema, tbl.TableName, nil, modifier[1])
+			err = tbl.loadConstraintConfig(dialect, FOREIGN_KEY, tbl.TableSchema, tbl.TableName, nil, modifier[1])
 			if err != nil {
 				return fmt.Errorf("%s: %s", qualifiedTable, err.Error())
 			}
 		case "unique":
-			err = tbl.LoadConstraintConfig(dialect, UNIQUE, tbl.TableSchema, tbl.TableName, nil, modifier[1])
+			err = tbl.loadConstraintConfig(dialect, UNIQUE, tbl.TableSchema, tbl.TableName, nil, modifier[1])
 			if err != nil {
 				return fmt.Errorf("%s: %s", qualifiedTable, err.Error())
 			}
 		case "check":
-			err = tbl.LoadConstraintConfig(dialect, CHECK, tbl.TableSchema, tbl.TableName, nil, modifier[1])
+			err = tbl.loadConstraintConfig(dialect, CHECK, tbl.TableSchema, tbl.TableName, nil, modifier[1])
 			if err != nil {
 				return fmt.Errorf("%s: %s", qualifiedTable, err.Error())
 			}
 		case "index":
-			err = tbl.LoadIndexConfig(dialect, tbl.TableSchema, tbl.TableName, nil, modifier[1])
+			err = tbl.loadIndexConfig(dialect, tbl.TableSchema, tbl.TableName, nil, modifier[1])
 			if err != nil {
 				return fmt.Errorf("%s: %s", qualifiedTable, err.Error())
 			}
@@ -825,7 +825,7 @@ func (tbl *Table) LoadTable(dialect string, table sq.SchemaTable) (err error) {
 		}
 		columnType := defaultColumnType(dialect, field)
 		config := tableType.Field(i).Tag.Get("ddl")
-		err = tbl.LoadColumnConfig(dialect, columnName, columnType, config)
+		err = tbl.loadColumnConfig(dialect, columnName, columnType, config)
 		if err != nil {
 			return err
 		}

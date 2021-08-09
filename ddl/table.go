@@ -193,7 +193,7 @@ func (tbl *Table) RefreshTriggerCache() {
 	}
 }
 
-func (tbl *Table) LoadIndexConfig(dialect, tableSchema, tableName string, columns []string, config string) error {
+func (tbl *Table) loadIndexConfig(dialect, tableSchema, tableName string, columns []string, config string) error {
 	indexName, modifiers, modifierPositions, err := tokenizeValue(config)
 	if err != nil {
 		return err
@@ -251,7 +251,7 @@ func (tbl *Table) LoadIndexConfig(dialect, tableSchema, tableName string, column
 	return nil
 }
 
-func (tbl *Table) LoadConstraintConfig(dialect, constraintType, tableSchema, tableName string, columns []string, config string) error {
+func (tbl *Table) loadConstraintConfig(dialect, constraintType, tableSchema, tableName string, columns []string, config string) error {
 	value, modifiers, modifierPositions, err := tokenizeValue(config)
 	if err != nil {
 		return err
@@ -361,7 +361,7 @@ func (tbl *Table) LoadConstraintConfig(dialect, constraintType, tableSchema, tab
 	return nil
 }
 
-func (tbl *Table) LoadColumnConfig(dialect, columnName, columnType, config string) error {
+func (tbl *Table) loadColumnConfig(dialect, columnName, columnType, config string) error {
 	qualifiedColumn := tbl.TableSchema + "." + tbl.TableName + "." + columnName
 	if tbl.TableSchema == "" {
 		qualifiedColumn = qualifiedColumn[1:]
@@ -437,27 +437,27 @@ func (tbl *Table) LoadColumnConfig(dialect, columnName, columnType, config strin
 				column.ColumnDefault = modifier[1]
 			}
 		case "primarykey":
-			err = tbl.LoadConstraintConfig(dialect, PRIMARY_KEY, column.TableSchema, column.TableName, []string{column.ColumnName}, modifier[1])
+			err = tbl.loadConstraintConfig(dialect, PRIMARY_KEY, column.TableSchema, column.TableName, []string{column.ColumnName}, modifier[1])
 			if err != nil {
 				return fmt.Errorf("%s: %s", qualifiedColumn, err.Error())
 			}
 		case "references":
-			err = tbl.LoadConstraintConfig(dialect, FOREIGN_KEY, column.TableSchema, column.TableName, []string{column.ColumnName}, modifier[1])
+			err = tbl.loadConstraintConfig(dialect, FOREIGN_KEY, column.TableSchema, column.TableName, []string{column.ColumnName}, modifier[1])
 			if err != nil {
 				return fmt.Errorf("%s: %s", qualifiedColumn, err.Error())
 			}
 		case "unique":
-			err = tbl.LoadConstraintConfig(dialect, UNIQUE, column.TableSchema, column.TableName, []string{column.ColumnName}, modifier[1])
+			err = tbl.loadConstraintConfig(dialect, UNIQUE, column.TableSchema, column.TableName, []string{column.ColumnName}, modifier[1])
 			if err != nil {
 				return fmt.Errorf("%s: %s", qualifiedColumn, err.Error())
 			}
 		case "check":
-			err = tbl.LoadConstraintConfig(dialect, CHECK, column.TableSchema, column.TableName, []string{column.ColumnName}, modifier[1])
+			err = tbl.loadConstraintConfig(dialect, CHECK, column.TableSchema, column.TableName, []string{column.ColumnName}, modifier[1])
 			if err != nil {
 				return fmt.Errorf("%s: %s", qualifiedColumn, err.Error())
 			}
 		case "index":
-			err = tbl.LoadIndexConfig(dialect, column.TableSchema, column.TableName, []string{column.ColumnName}, modifier[1])
+			err = tbl.loadIndexConfig(dialect, column.TableSchema, column.TableName, []string{column.ColumnName}, modifier[1])
 			if err != nil {
 				return fmt.Errorf("%s: %s", qualifiedColumn, err.Error())
 			}
@@ -487,11 +487,7 @@ type CreateTableCommand struct {
 	CreateIndexCommands []CreateIndexCommand // mysql-only
 }
 
-func (cmd *CreateTableCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
-	if cmd == nil {
-		buf.WriteString("SELECT 1")
-		return nil
-	}
+func (cmd CreateTableCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
 	if cmd.Table.TableName == "" {
 		return fmt.Errorf("CREATE TABLE: table has no name")
 	}
@@ -614,7 +610,7 @@ type AlterTableCommand struct {
 	DropIndexCommands       []DropIndexCommand   // mysql-only
 }
 
-func (cmd *AlterTableCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
+func (cmd AlterTableCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
 	buf.WriteString("ALTER TABLE ")
 	if cmd.AlterIfExists {
 		if dialect != sq.DialectPostgres {
