@@ -804,7 +804,7 @@ type DropTableCommand struct {
 	DropCascade  bool
 }
 
-func (cmd *DropTableCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
+func (cmd DropTableCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
 	buf.WriteString("DROP TABLE ")
 	if cmd.DropIfExists {
 		buf.WriteString("IF EXISTS")

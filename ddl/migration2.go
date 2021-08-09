@@ -124,6 +124,12 @@ func (m *Migration2) WriteSQL(w io.Writer) error {
 			return err
 		}
 	}
+	for _, cmd := range m.DropTableCmds {
+		err = writeCmd(cmd, false)
+		if err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
