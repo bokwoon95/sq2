@@ -22,20 +22,24 @@ const (
 )
 
 type Migration struct {
-	Dialect                     string
-	CurrentSchema               string
-	SchemaCommands              []Command
-	ExtensionCommands           []Command
-	EnumCommands                []Command
-	IndependentFunctionCommands []Command
-	TableCommands               []Command
-	ViewCommands                []Command
-	IndexCommands               []Command
-	FunctionCommands            []Command
-	TriggerCommands             []Command
-	ForeignKeyCommands          []Command
-	RenameCommands              []Command
-	DropCommands                []Command
+	Dialect             string
+	CurrentSchema       string
+	CreateSchemaCmds    []CreateSchemaCommand
+	CreateExtensionCmds []CreateExtensionCommand
+	CreateFunctionCmds  []CreateFunctionCommand
+	CreateTableCmds     []CreateTableCommand
+	AlterTableCmds      []AlterTableCommand // add & alter columns | add & alter constraints | add indexes
+	CreateViewCmds      []CreateViewCommand
+	CreateIndexCmds     []CreateIndexCommand
+	CreateTriggerCmds   []CreateTriggerCommand
+	AddForeignKeyCmds   []AlterTableCommand
+	DropViewCmds        []DropViewCommand
+	DropTableCmds       []DropTableCommand
+	DropTriggerCmds     []DropTriggerCommand
+	DropIndexCmds       []DropIndexCommand
+	AlterTableDropCmds  []AlterTableCommand
+	DropFunctionCmds    []DropFunctionCommand
+	DropExtensionCmds   []DropExtensionCommand
 }
 
 func AutoMigrate(dialect string, db sq.DB, migrationMode MigrationMode, catalogOpts ...CatalogOption) error {
@@ -58,8 +62,8 @@ func AutoMigrate(dialect string, db sq.DB, migrationMode MigrationMode, catalogO
 	return nil
 }
 
-func Migrate(mode MigrationMode, gotCatalog, wantCatalog Catalog) (Migration, error) {
-	m := Migration{
+func Migrate(mode MigrationMode, gotCatalog, wantCatalog Catalog) (*Migration, error) {
+	m := &Migration{
 		Dialect:       gotCatalog.Dialect,
 		CurrentSchema: gotCatalog.CurrentSchema,
 	}
@@ -72,9 +76,8 @@ func Migrate(mode MigrationMode, gotCatalog, wantCatalog Catalog) (Migration, er
 	if m.Dialect == "" {
 		m.Dialect = wantCatalog.Dialect
 	}
-	var err error
-	if mode&CreateMissing != 0 {
-		if m.Dialect == sq.DialectPostgres {
+	if mode&CreateMissing != 0 || mode&UpdateExisting != 0 {
+		if m.Dialect == sq.DialectPostgres && mode&CreateMissing != 0 {
 			for _, wantExtension := range wantCatalog.Extensions {
 				if n := gotCatalog.CachedExtensionPosition(wantExtension); n >= 0 {
 					continue
@@ -83,407 +86,336 @@ func Migrate(mode MigrationMode, gotCatalog, wantCatalog Catalog) (Migration, er
 					CreateIfNotExists: true,
 					Extension:         wantExtension,
 				}
-				m.ExtensionCommands = append(m.ExtensionCommands, createExtensionCmd)
+				m.CreateExtensionCmds = append(m.CreateExtensionCmds, createExtensionCmd)
 			}
 		}
 		for _, wantSchema := range wantCatalog.Schemas {
 			if wantSchema.Ignore {
 				continue
 			}
-			err = migrateSchema(&m, mode, gotCatalog, wantSchema)
-			if err != nil {
-				return m, err
+			if wantSchema.SchemaName == "" {
+				wantSchema.SchemaName = m.CurrentSchema
+			}
+			gotSchema := Schema{
+				SchemaName: wantSchema.SchemaName,
+			}
+			if n := gotCatalog.CachedSchemaPosition(wantSchema.SchemaName); n >= 0 {
+				gotSchema = gotCatalog.Schemas[n]
+			} else if mode&CreateMissing != 0 {
+				if wantSchema.SchemaName != "" {
+					createSchemaCmd := CreateSchemaCommand{
+						CreateIfNotExists: true,
+						SchemaName:        wantSchema.SchemaName,
+					}
+					m.CreateSchemaCmds = append(m.CreateSchemaCmds, createSchemaCmd)
+				}
+			}
+			for _, wantTable := range wantSchema.Tables {
+				if wantTable.Ignore {
+					continue
+				}
+				tableExists := false
+				createTableCmd := CreateTableCommand{
+					CreateIfNotExists:  true,
+					IncludeConstraints: true,
+				}
+				alterTableCmd := AlterTableCommand{
+					TableSchema:   wantTable.TableSchema,
+					TableName:     wantTable.TableName,
+					AlterIfExists: m.Dialect == sq.DialectPostgres,
+				}
+				addForeignKeyCmd := alterTableCmd
+				gotTable := Table{
+					TableSchema: wantTable.TableSchema,
+					TableName:   wantTable.TableName,
+				}
+				if n := gotSchema.CachedTablePosition(wantTable.TableName); n >= 0 {
+					tableExists = true
+					gotTable = gotSchema.Tables[n]
+				} else if mode&CreateMissing != 0 {
+					createTableCmd.Table = wantTable
+				}
+				if tableExists {
+					for _, wantColumn := range wantTable.Columns {
+						if wantColumn.Ignore {
+							continue
+						}
+						gotColumn := Column{
+							TableSchema: wantColumn.TableSchema,
+							TableName:   wantColumn.TableName,
+							ColumnName:  wantColumn.ColumnName,
+						}
+						if n := gotTable.CachedColumnPosition(wantColumn.ColumnName); n >= 0 {
+							if mode&UpdateExisting != 0 {
+								gotColumn = gotTable.Columns[n]
+								alterColumnCmd, isDifferent := diffColumn(m.Dialect, gotColumn, wantColumn)
+								if isDifferent {
+									if m.Dialect == sq.DialectMySQL {
+										alterColumnCmd.Column = wantColumn
+									}
+									alterTableCmd.AlterColumnCmds = append(alterTableCmd.AlterColumnCmds, alterColumnCmd)
+								}
+							}
+						} else if mode&CreateMissing != 0 {
+							addColumnCmd := AddColumnCommand{
+								AddIfNotExists: m.Dialect == sq.DialectPostgres,
+								Column:         wantColumn,
+							}
+							alterTableCmd.AddColumnCmds = append(alterTableCmd.AddColumnCmds, addColumnCmd)
+						}
+					}
+				}
+				if m.Dialect != sq.DialectSQLite {
+					for _, wantConstraint := range wantTable.Constraints {
+						if wantConstraint.Ignore {
+							continue
+						}
+						if n := gotTable.CachedConstraintPosition(wantConstraint.ConstraintName); n >= 0 {
+							continue
+						}
+						addConstraintCmd := AddConstraintCommand{
+							Constraint: wantConstraint,
+						}
+						if addConstraintCmd.Constraint.ConstraintType == FOREIGN_KEY {
+							addForeignKeyCmd.AddConstraintCmds = append(addForeignKeyCmd.AddConstraintCmds, addConstraintCmd)
+						} else if tableExists || !createTableCmd.IncludeConstraints {
+							alterTableCmd.AddConstraintCmds = append(alterTableCmd.AddConstraintCmds, addConstraintCmd)
+						}
+					}
+				}
+				for _, wantIndex := range wantTable.Indexes {
+					if wantIndex.Ignore {
+						continue
+					}
+					if n := gotTable.CachedIndexPosition(wantIndex.IndexName); n >= 0 {
+						continue
+					}
+					createIndexCmd := CreateIndexCommand{
+						CreateIfNotExists: m.Dialect != sq.DialectMySQL,
+						Index:             wantIndex,
+					}
+					if m.Dialect == sq.DialectMySQL {
+						if !tableExists {
+							createTableCmd.CreateIndexCmds = append(createTableCmd.CreateIndexCmds, createIndexCmd)
+						} else {
+							alterTableCmd.CreateIndexCmds = append(alterTableCmd.CreateIndexCmds, createIndexCmd)
+						}
+					} else {
+						m.CreateIndexCmds = append(m.CreateIndexCmds, createIndexCmd)
+					}
+				}
+				for _, wantTrigger := range wantTable.Triggers {
+					if wantTrigger.Ignore {
+						continue
+					}
+					if n := gotTable.CachedTriggerPosition(wantTrigger.TriggerName); n >= 0 {
+						continue
+					}
+					createTriggerCmd := CreateTriggerCommand{
+						Trigger: wantTrigger,
+					}
+					m.CreateTriggerCmds = append(m.CreateTriggerCmds, createTriggerCmd)
+				}
+				if !tableExists {
+					m.CreateTableCmds = append(m.CreateTableCmds, createTableCmd)
+				}
+				if m.Dialect == sq.DialectSQLite {
+					m.AlterTableCmds = append(m.AlterTableCmds, decomposeAlterTableCommandSQLite2(alterTableCmd)...)
+				} else if len(alterTableCmd.AddColumnCmds) > 0 ||
+					len(alterTableCmd.AlterColumnCmds) > 0 ||
+					len(alterTableCmd.AddConstraintCmds) > 0 ||
+					len(alterTableCmd.AlterConstraintCmds) > 0 ||
+					len(alterTableCmd.CreateIndexCmds) > 0 {
+					m.AlterTableCmds = append(m.AlterTableCmds, alterTableCmd)
+				}
+				if len(addForeignKeyCmd.AddConstraintCmds) > 0 {
+					m.AddForeignKeyCmds = append(m.AddForeignKeyCmds, addForeignKeyCmd)
+				}
+			}
+			for _, wantView := range wantSchema.Views {
+				if wantView.Ignore {
+					continue
+				}
+				if n := gotSchema.CachedViewPosition(wantView.ViewName); n >= 0 {
+					continue
+				}
+				createViewCmd := CreateViewCommand{
+					CreateOrReplace:   m.Dialect == sq.DialectMySQL || (m.Dialect == sq.DialectPostgres && !wantView.IsMaterialized),
+					CreateIfNotExists: m.Dialect == sq.DialectSQLite || (m.Dialect == sq.DialectPostgres && wantView.IsMaterialized),
+					View:              wantView,
+				}
+				m.CreateViewCmds = append(m.CreateViewCmds, createViewCmd)
+				if createViewCmd.View.IsMaterialized && m.Dialect == sq.DialectPostgres {
+					for _, wantIndex := range wantView.Indexes {
+						if wantIndex.Ignore {
+							continue
+						}
+						createIndexCmd := CreateIndexCommand{
+							CreateIfNotExists: true,
+							Index:             wantIndex,
+						}
+						m.CreateIndexCmds = append(m.CreateIndexCmds, createIndexCmd)
+					}
+					for _, wantTrigger := range wantView.Triggers {
+						if wantTrigger.Ignore {
+							continue
+						}
+						createTriggerCmd := CreateTriggerCommand{
+							Trigger: wantTrigger,
+						}
+						m.CreateTriggerCmds = append(m.CreateTriggerCmds, createTriggerCmd)
+					}
+				}
+			}
+			if m.Dialect != sq.DialectSQLite {
+				for _, wantFunction := range wantSchema.Functions {
+					if wantFunction.Ignore {
+						continue
+					}
+					if positions := gotSchema.CachedFunctionPositions(wantFunction.FunctionName); len(positions) > 0 {
+						continue
+					}
+					createFunctionCmd := CreateFunctionCommand{
+						Function: wantFunction,
+					}
+					m.CreateFunctionCmds = append(m.CreateFunctionCmds, createFunctionCmd)
+				}
 			}
 		}
 	}
 	if mode&DropExtraneous != 0 {
-		err = dropExtraneousObjects(&m, mode, gotCatalog, wantCatalog)
-		if err != nil {
-			return m, err
+		dropTableCmd := DropTableCommand{
+			DropIfExists: true,
+			DropCascade:  mode&DropCascade != 0,
 		}
-	}
-	return m, nil
-}
-
-func migrateSchema(m *Migration, mode MigrationMode, gotCatalog Catalog, wantSchema Schema) error {
-	if mode&CreateMissing == 0 {
-		return nil
-	}
-	var err error
-	var gotSchema Schema
-	if wantSchema.SchemaName == "" {
-		wantSchema.SchemaName = m.CurrentSchema
-	}
-	if n := gotCatalog.CachedSchemaPosition(wantSchema.SchemaName); n >= 0 {
-		gotSchema = gotCatalog.Schemas[n]
-	} else {
-		gotSchema.SchemaName = wantSchema.SchemaName
-		if gotSchema.SchemaName != "" {
-			createSchemaCmd := CreateSchemaCommand{
-				CreateIfNotExists: true,
-				SchemaName:        wantSchema.SchemaName,
+		dropViewCmd := DropViewCommand{
+			DropIfExists: true,
+			DropCascade:  mode&DropCascade != 0,
+		}
+		dropMatViewCmd := DropViewCommand{
+			DropIfExists:   true,
+			IsMaterialized: true,
+			DropCascade:    mode&DropCascade != 0,
+		}
+		dropExtensionCmd := DropExtensionCommand{
+			DropIfExists: true,
+			DropCascade:  mode&DropCascade != 0,
+		}
+		var alterTableCmds []AlterTableCommand
+		// drop extensions
+		for _, gotExtension := range gotCatalog.Extensions {
+			if strings.HasPrefix(gotExtension, "plpgsql") {
+				// we never want to drop the plpgsql extension since postgres
+				// enables it by default
+				continue
 			}
-			m.SchemaCommands = append(m.SchemaCommands, createSchemaCmd)
+			if n := wantCatalog.CachedExtensionPosition(gotExtension); n >= 0 {
+				continue
+			}
+			dropExtensionCmd.Extensions = append(dropExtensionCmd.Extensions, gotExtension)
 		}
-	}
-	for _, wantTable := range wantSchema.Tables {
-		if wantTable.Ignore {
-			continue
+		if len(dropExtensionCmd.Extensions) > 0 {
+			m.DropExtensionCmds = append(m.DropExtensionCmds, dropExtensionCmd)
 		}
-		err = migrateTable(m, mode, gotSchema, wantTable)
-		if err != nil {
-			return err
-		}
-	}
-	for _, wantView := range wantSchema.Views {
-		if wantView.Ignore {
-			continue
-		}
-		if n := gotSchema.CachedViewPosition(wantView.ViewName); n >= 0 {
-			continue
-		}
-		createViewCmd := CreateViewCommand{View: wantView}
-		if m.Dialect == sq.DialectMySQL || (m.Dialect == sq.DialectPostgres && !wantView.IsMaterialized) {
-			createViewCmd.CreateOrReplace = true
-		}
-		if m.Dialect == sq.DialectSQLite || (m.Dialect == sq.DialectPostgres && wantView.IsMaterialized) {
-			createViewCmd.CreateIfNotExists = true
-		}
-		m.ViewCommands = append(m.ViewCommands, createViewCmd)
-		if wantView.IsMaterialized && m.Dialect == sq.DialectPostgres {
-			for _, wantIndex := range wantView.Indexes {
-				if wantIndex.Ignore {
+		for _, gotSchema := range gotCatalog.Schemas {
+			if gotSchema.Ignore {
+				continue
+			}
+			wantSchema := Schema{
+				SchemaName: gotSchema.SchemaName,
+			}
+			if n := wantCatalog.CachedSchemaPosition(gotSchema.SchemaName); n >= 0 {
+				wantSchema = wantCatalog.Schemas[n]
+			}
+			// drop tables
+			for _, gotTable := range gotSchema.Tables {
+				if gotTable.Ignore {
 					continue
 				}
-				createIndexCmd := CreateIndexCommand{CreateIfNotExists: true, Index: wantIndex}
-				m.IndexCommands = append(m.IndexCommands, createIndexCmd)
-			}
-			for _, wantTrigger := range wantView.Triggers {
-				if wantTrigger.Ignore {
+				wantTable := Table{
+					TableSchema: gotTable.TableSchema,
+					TableName:   gotTable.TableName,
+				}
+				if n := wantSchema.CachedTablePosition(gotTable.TableName); n >= 0 {
+					wantTable = wantSchema.Tables[n]
+				} else {
+					dropTableCmd.TableSchemas = append(dropTableCmd.TableSchemas, gotTable.TableSchema)
+					dropTableCmd.TableNames = append(dropTableCmd.TableNames, gotTable.TableName)
 					continue
 				}
-				createTriggerCmd := &CreateTriggerCommand{Trigger: wantTrigger}
-				m.TriggerCommands = append(m.TriggerCommands, createTriggerCmd)
-			}
-		}
-	}
-	if m.Dialect == sq.DialectPostgres || m.Dialect == sq.DialectMySQL {
-		for _, wantFunction := range wantSchema.Functions {
-			if wantFunction.Ignore {
-				continue
-			}
-			if positions := gotSchema.CachedFunctionPositions(wantFunction.FunctionName); len(positions) > 0 {
-				continue
-			}
-			createFunctionCmd := &CreateFunctionCommand{Function: wantFunction}
-			if wantFunction.IsIndependent {
-				m.IndependentFunctionCommands = append(m.IndependentFunctionCommands, createFunctionCmd)
-			} else {
-				m.FunctionCommands = append(m.FunctionCommands, createFunctionCmd)
-			}
-		}
-	}
-	return nil
-}
-
-func migrateTable(m *Migration, mode MigrationMode, gotSchema Schema, wantTable Table) error {
-	var gotTable Table
-	var createTableCmd *CreateTableCommand
-	var alterTableCmd *AlterTableCommand
-	var fkeyCmd *AlterTableCommand
-	if n := gotSchema.CachedTablePosition(wantTable.TableName); n >= 0 {
-		gotTable = gotSchema.Tables[n]
-		for _, wantColumn := range wantTable.Columns {
-			if wantColumn.Ignore {
-				continue
-			}
-			addColumnCmd, alterColumnCmd := migrateColumn(m.Dialect, mode, gotTable, wantColumn)
-			if addColumnCmd != nil || alterColumnCmd != nil {
-				if alterTableCmd == nil {
-					alterTableCmd = &AlterTableCommand{TableSchema: wantTable.TableSchema, TableName: wantTable.TableName}
+				alterTableCmd := AlterTableCommand{
+					TableSchema: gotTable.TableSchema,
+					TableName:   gotTable.TableName,
 				}
-				if addColumnCmd != nil {
-					alterTableCmd.AddColumnCmds = append(alterTableCmd.AddColumnCmds, *addColumnCmd)
-				}
-				if alterColumnCmd != nil {
-					alterTableCmd.AlterColumnCmds = append(alterTableCmd.AlterColumnCmds, *alterColumnCmd)
-				}
-			}
-		}
-	} else {
-		gotTable.TableSchema = wantTable.TableSchema
-		gotTable.TableName = wantTable.TableName
-		createTableCmd = &CreateTableCommand{
-			CreateIfNotExists:  true,
-			IncludeConstraints: true,
-			Table:              wantTable,
-		}
-	}
-	if m.Dialect != sq.DialectSQLite {
-		for _, wantConstraint := range wantTable.Constraints {
-			if wantConstraint.Ignore {
-				continue
-			}
-			if n := gotTable.CachedConstraintPosition(wantConstraint.ConstraintName); n >= 0 {
-				continue
-			}
-			addConstraintCmd := AddConstraintCommand{Constraint: wantConstraint}
-			switch wantConstraint.ConstraintType {
-			case FOREIGN_KEY:
-				if fkeyCmd == nil {
-					fkeyCmd = &AlterTableCommand{TableSchema: wantTable.TableSchema, TableName: wantTable.TableName}
-				}
-				fkeyCmd.AddConstraintCmds = append(fkeyCmd.AddConstraintCmds, addConstraintCmd)
-			default:
-				if createTableCmd == nil || createTableCmd.IncludeConstraints {
-					continue
-				}
-				if alterTableCmd == nil {
-					alterTableCmd = &AlterTableCommand{TableSchema: wantTable.TableSchema, TableName: wantTable.TableName}
-				}
-				alterTableCmd.AddConstraintCmds = append(alterTableCmd.AddConstraintCmds, addConstraintCmd)
-			}
-		}
-	}
-	for _, wantIndex := range wantTable.Indexes {
-		if wantIndex.Ignore {
-			continue
-		}
-		if n := gotTable.CachedIndexPosition(wantIndex.IndexName); n >= 0 {
-			continue
-		}
-		createIndexCmd := CreateIndexCommand{Index: wantIndex}
-		switch m.Dialect {
-		case sq.DialectMySQL:
-			if createTableCmd != nil {
-				createTableCmd.CreateIndexCmds = append(createTableCmd.CreateIndexCmds, createIndexCmd)
-			} else {
-				if alterTableCmd == nil {
-					alterTableCmd = &AlterTableCommand{TableSchema: wantTable.TableSchema, TableName: wantTable.TableName}
-				}
-				alterTableCmd.CreateIndexCmds = append(alterTableCmd.CreateIndexCmds, createIndexCmd)
-			}
-		default:
-			createIndexCmd.CreateIfNotExists = true
-			m.IndexCommands = append(m.IndexCommands, &createIndexCmd)
-		}
-	}
-	for _, wantTrigger := range wantTable.Triggers {
-		if wantTrigger.Ignore {
-			continue
-		}
-		if n := gotTable.CachedTriggerPosition(wantTrigger.TriggerName); n >= 0 {
-			continue
-		}
-		createTriggerCmd := CreateTriggerCommand{Trigger: wantTrigger}
-		m.TriggerCommands = append(m.TriggerCommands, createTriggerCmd)
-	}
-	if createTableCmd != nil {
-		m.TableCommands = append(m.TableCommands, createTableCmd)
-	}
-	if alterTableCmd != nil {
-		switch m.Dialect {
-		case sq.DialectSQLite:
-			alterTableCmds := decomposeAlterTableCommandSQLite(alterTableCmd)
-			m.TableCommands = append(m.TableCommands, alterTableCmds...)
-		case sq.DialectPostgres:
-			alterTableCmd.AlterIfExists = true
-			m.TableCommands = append(m.TableCommands, alterTableCmd)
-		case sq.DialectMySQL:
-			m.TableCommands = append(m.TableCommands, alterTableCmd)
-		}
-	}
-	if fkeyCmd != nil {
-		switch m.Dialect {
-		case sq.DialectPostgres:
-			fkeyCmd.AlterIfExists = true
-			m.ForeignKeyCommands = append(m.ForeignKeyCommands, fkeyCmd)
-		case sq.DialectMySQL:
-			m.ForeignKeyCommands = append(m.ForeignKeyCommands, fkeyCmd)
-		}
-	}
-	return nil
-}
-
-// TODO: move the initial addColumnCmd check into the caller. this function
-// should only be responsible for diffing a column, and it does that by
-// modifying a passed in column pointer.
-func migrateColumn(dialect string, mode MigrationMode, gotTable Table, wantColumn Column) (*AddColumnCommand, *AlterColumnCommand) {
-	n := gotTable.CachedColumnPosition(wantColumn.ColumnName)
-	if n < 0 {
-		addColumnCmd := &AddColumnCommand{Column: wantColumn}
-		if dialect == sq.DialectPostgres {
-			addColumnCmd.AddIfNotExists = true
-		}
-		return addColumnCmd, nil
-	}
-	if dialect == sq.DialectSQLite || mode&UpdateExisting == 0 {
-		return nil, nil
-	}
-	var columnModified bool
-	gotColumn := gotTable.Columns[n]
-	alterColumnCmd := &AlterColumnCommand{Column: Column{
-		TableSchema: wantColumn.TableSchema,
-		TableName:   wantColumn.TableName,
-		ColumnName:  wantColumn.ColumnName,
-	}}
-	if !datatypeEq(dialect, gotColumn.ColumnType, wantColumn.ColumnType) {
-		columnModified = true
-		alterColumnCmd.Column.ColumnType = wantColumn.ColumnType
-	}
-	if gotColumn.IsNotNull && !wantColumn.IsNotNull {
-		columnModified = true
-		alterColumnCmd.DropNotNull = true
-	} else if !gotColumn.IsNotNull && wantColumn.IsNotNull {
-		columnModified = true
-		alterColumnCmd.Column.IsNotNull = true
-	}
-	if gotColumn.ColumnDefault != "" && wantColumn.ColumnDefault == "" {
-		columnModified = true
-		alterColumnCmd.DropDefault = true
-	} else if gotColumn.ColumnDefault == "" && wantColumn.ColumnDefault != "" {
-		columnModified = true
-		alterColumnCmd.Column.ColumnDefault = wantColumn.ColumnDefault
-	}
-	if dialect == sq.DialectPostgres {
-		if gotColumn.Identity != "" && wantColumn.Identity == "" {
-			columnModified = true
-			alterColumnCmd.DropIdentity = true
-			alterColumnCmd.DropIdentityIfExists = true
-		} else if gotColumn.Identity == "" && wantColumn.Identity != "" {
-			columnModified = true
-			alterColumnCmd.Column.Identity = wantColumn.Identity
-		}
-	}
-	if columnModified {
-		return nil, alterColumnCmd
-	}
-	return nil, nil
-}
-
-// TODO: implement this function
-func datatypeEq(dialect, typeA, typeB string) bool {
-	return strings.EqualFold(typeA, typeB)
-}
-
-func dropExtraneousObjects(m *Migration, mode MigrationMode, gotCatalog, wantCatalog Catalog) error {
-	dropTableCmd := DropTableCommand{
-		DropIfExists: true,
-		DropCascade:  mode&DropCascade != 0,
-	}
-	dropViewCmd := DropViewCommand{
-		DropIfExists: true,
-		DropCascade:  mode&DropCascade != 0,
-	}
-	dropMatViewCmd := DropViewCommand{
-		DropIfExists:   true,
-		IsMaterialized: true,
-		DropCascade:    mode&DropCascade != 0,
-	}
-	dropExtensionCmd := DropExtensionCommand{
-		DropIfExists: true,
-		DropCascade:  mode&DropCascade != 0,
-	}
-	var alterTableCmds []AlterTableCommand // drop columns, drop constraints, drop indexes (mysql only)
-	var dropIndexCmds []Command
-	var dropTriggerCmds []Command
-	var dropFunctionCmds []Command
-	// drop extensions
-	for _, gotExtension := range gotCatalog.Extensions {
-		if strings.HasPrefix(gotExtension, "plpgsql") {
-			continue
-		}
-		if n := wantCatalog.CachedExtensionPosition(gotExtension); n >= 0 {
-			continue
-		}
-		dropExtensionCmd.Extensions = append(dropExtensionCmd.Extensions, gotExtension)
-	}
-	for _, gotSchema := range gotCatalog.Schemas {
-		wantSchema := Schema{SchemaName: gotSchema.SchemaName}
-		if n := wantCatalog.CachedSchemaPosition(gotSchema.SchemaName); n >= 0 {
-			wantSchema = wantCatalog.Schemas[n]
-		}
-		// drop tables
-		for _, gotTable := range gotSchema.Tables {
-			wantTable := Table{TableSchema: gotTable.TableSchema, TableName: gotTable.TableName}
-			if n := wantSchema.CachedTablePosition(gotTable.TableName); n >= 0 {
-				wantTable = wantSchema.Tables[n]
-			} else {
-				dropTableCmd.TableSchemas = append(dropTableCmd.TableSchemas, gotTable.TableSchema)
-				dropTableCmd.TableNames = append(dropTableCmd.TableNames, gotTable.TableName)
-				continue
-			}
-			alterTableCmd := AlterTableCommand{
-				TableSchema: gotTable.TableSchema,
-				TableName:   gotTable.TableName,
-			}
-			// drop columns
-			for _, gotColumn := range gotTable.Columns {
-				if n := wantTable.CachedColumnPosition(gotColumn.ColumnName); n < 0 {
-					dropColumnCmd := DropColumnCommand{ColumnName: gotColumn.ColumnName}
-					if m.Dialect == sq.DialectPostgres {
-						dropColumnCmd.DropIfExists = true
-						dropColumnCmd.DropCascade = true
+				// drop columns
+				for _, gotColumn := range gotTable.Columns {
+					if n := wantTable.CachedColumnPosition(gotColumn.ColumnName); n >= 0 {
+						continue
+					}
+					dropColumnCmd := DropColumnCommand{
+						DropIfExists: m.Dialect == sq.DialectPostgres,
+						ColumnName:   gotColumn.ColumnName,
+						DropCascade:  m.Dialect == sq.DialectPostgres,
 					}
 					alterTableCmd.DropColumnCmds = append(alterTableCmd.DropColumnCmds, dropColumnCmd)
 				}
-			}
-			// drop constraints
-			if m.Dialect != sq.DialectSQLite {
-				for _, gotConstraint := range gotTable.Constraints {
-					if n := wantTable.CachedConstraintPosition(gotConstraint.ConstraintName); n < 0 {
-						dropConstraintCmd := DropConstraintCommand{ConstraintName: gotConstraint.ConstraintName}
-						if m.Dialect == sq.DialectPostgres {
-							dropConstraintCmd.DropIfExists = true
-							dropConstraintCmd.DropCascade = true
+				// drop constraints
+				if m.Dialect != sq.DialectSQLite {
+					for _, gotConstraint := range gotTable.Constraints {
+						if n := wantTable.CachedConstraintPosition(gotConstraint.ConstraintName); n >= 0 {
+							continue
+						}
+						dropConstraintCmd := DropConstraintCommand{
+							DropIfExists:   m.Dialect == sq.DialectPostgres,
+							ConstraintName: gotConstraint.ConstraintName,
+							DropCascade:    m.Dialect == sq.DialectPostgres,
 						}
 						alterTableCmd.DropConstraintCmds = append(alterTableCmd.DropConstraintCmds, dropConstraintCmd)
 					}
 				}
-			}
-			// drop indexes
-			for _, gotIndex := range gotTable.Indexes {
-				if n := wantTable.CachedIndexPosition(gotIndex.IndexName); n < 0 {
-					dropIndexCmd := DropIndexCommand{
-						TableSchema: gotIndex.TableSchema,
-						TableName:   gotIndex.TableName,
-						IndexName:   gotIndex.IndexName,
+				// drop indexes
+				for _, gotIndex := range gotTable.Indexes {
+					if n := wantTable.CachedIndexPosition(gotIndex.IndexName); n >= 0 {
+						continue
 					}
-					switch m.Dialect {
-					case sq.DialectSQLite:
-						dropIndexCmd.DropIfExists = true
-						dropIndexCmd.DropCascade = true
-						dropIndexCmds = append(dropIndexCmds, &dropIndexCmd)
-					case sq.DialectPostgres:
-						dropIndexCmd.DropIfExists = true
-						dropIndexCmds = append(dropIndexCmds, &dropIndexCmd)
-					case sq.DialectMySQL:
+					dropIndexCmd := DropIndexCommand{
+						DropIfExists: m.Dialect == sq.DialectPostgres || m.Dialect == sq.DialectSQLite,
+						TableSchema:  gotIndex.TableSchema,
+						TableName:    gotIndex.TableName,
+						IndexName:    gotIndex.IndexName,
+						DropCascade:  m.Dialect == sq.DialectPostgres,
+					}
+					if m.Dialect == sq.DialectMySQL {
 						alterTableCmd.DropIndexCmds = append(alterTableCmd.DropIndexCmds, dropIndexCmd)
+					} else {
+						m.DropIndexCmds = append(m.DropIndexCmds, dropIndexCmd)
 					}
 				}
-			}
-			// drop triggers
-			for _, gotTrigger := range gotTable.Triggers {
-				if n := wantTable.CachedTriggerPosition(gotTrigger.TriggerName); n < 0 {
+				// drop triggers
+				for _, gotTrigger := range gotTable.Triggers {
+					if n := wantTable.CachedTriggerPosition(gotTrigger.TriggerName); n >= 0 {
+						continue
+					}
 					dropTriggerCmd := DropTriggerCommand{
 						DropIfExists: true,
 						TableSchema:  gotTrigger.TableSchema,
 						TableName:    gotTrigger.TableName,
 						TriggerName:  gotTrigger.TriggerName,
+						DropCascade:  m.Dialect == sq.DialectPostgres,
 					}
-					if m.Dialect == sq.DialectPostgres {
-						dropTriggerCmd.DropCascade = true
-					}
-					dropTriggerCmds = append(dropTriggerCmds, &dropTriggerCmd)
+					m.DropTriggerCmds = append(m.DropTriggerCmds, dropTriggerCmd)
+				}
+				if len(alterTableCmd.DropColumnCmds) > 0 ||
+					len(alterTableCmd.DropConstraintCmds) > 0 ||
+					len(alterTableCmd.DropIndexCmds) > 0 {
+					alterTableCmds = append(alterTableCmds, alterTableCmd)
 				}
 			}
-			if len(alterTableCmd.DropColumnCmds) > 0 || len(alterTableCmd.DropConstraintCmds) > 0 || len(alterTableCmd.DropIndexCmds) > 0 {
-				alterTableCmds = append(alterTableCmds, alterTableCmd)
-			}
-		}
-		// drop views
-		for _, gotView := range gotSchema.Views {
-			if n := wantSchema.CachedViewPosition(gotView.ViewName); n < 0 {
+			// drop views
+			for _, gotView := range gotSchema.Views {
+				if n := wantSchema.CachedViewPosition(gotView.ViewName); n >= 0 {
+					continue
+				}
 				if gotView.IsMaterialized {
 					dropMatViewCmd.ViewSchemas = append(dropMatViewCmd.ViewSchemas, gotView.ViewSchema)
 					dropMatViewCmd.ViewNames = append(dropMatViewCmd.ViewNames, gotView.ViewName)
@@ -492,95 +424,273 @@ func dropExtraneousObjects(m *Migration, mode MigrationMode, gotCatalog, wantCat
 					dropViewCmd.ViewNames = append(dropViewCmd.ViewNames, gotView.ViewName)
 				}
 			}
-		}
-		// drop functions
-		for _, gotFunction := range gotSchema.Functions {
-			if positions := wantSchema.CachedFunctionPositions(gotFunction.FunctionName); len(positions) == 0 {
-				dropFunctionCmds = append(dropFunctionCmds, DropFunctionCommand{
+			// drop functions
+			for _, gotFunction := range gotSchema.Functions {
+				if positions := wantSchema.CachedFunctionPositions(gotFunction.FunctionName); len(positions) > 0 {
+					continue
+				}
+				dropFunctionCmd := DropFunctionCommand{
 					DropIfExists: true,
 					Function:     gotFunction,
 					DropCascade:  true,
-				})
+				}
+				m.DropFunctionCmds = append(m.DropFunctionCmds, dropFunctionCmd)
+			}
+		}
+		if m.Dialect == sq.DialectSQLite {
+			m.DropViewCmds = append(m.DropViewCmds, decomposeDropViewCommandSQLite2(dropViewCmd)...)
+			m.DropTableCmds = append(m.DropTableCmds, decomposeDropTableCommandSQLite2(dropTableCmd)...)
+			for _, alterTableCmd := range alterTableCmds {
+				m.AlterTableDropCmds = append(m.AlterTableDropCmds, decomposeAlterTableCommandSQLite2(alterTableCmd)...)
+			}
+		} else {
+			for _, alterTableCmd := range alterTableCmds {
+				m.AlterTableDropCmds = append(m.AlterTableDropCmds, alterTableCmd)
+			}
+			if len(dropViewCmd.ViewNames) > 0 {
+				m.DropViewCmds = append(m.DropViewCmds, dropViewCmd)
+			}
+			if len(dropMatViewCmd.ViewNames) > 0 {
+				m.DropViewCmds = append(m.DropViewCmds, dropMatViewCmd)
+			}
+			if len(dropTableCmd.TableNames) > 0 {
+				m.DropTableCmds = append(m.DropTableCmds, dropTableCmd)
 			}
 		}
 	}
-	m.DropCommands = append(m.DropCommands, dropTriggerCmds...)
-	m.DropCommands = append(m.DropCommands, dropIndexCmds...)
-	switch m.Dialect {
-	case sq.DialectSQLite:
-		for _, alterTableCmd := range alterTableCmds {
-			m.DropCommands = append(m.DropCommands, decomposeAlterTableCommandSQLite(&alterTableCmd)...)
-		}
-		m.DropCommands = append(m.DropCommands, decomposeDropViewCommandSQLite(&dropViewCmd)...)
-		m.DropCommands = append(m.DropCommands, decomposeDropTableCommandSQLite(&dropTableCmd)...)
-	default:
-		for _, alterTableCmd := range alterTableCmds {
-			m.DropCommands = append(m.DropCommands, &alterTableCmd)
-		}
-		if len(dropViewCmd.ViewNames) > 0 {
-			m.DropCommands = append(m.DropCommands, &dropViewCmd)
-		}
-		if len(dropMatViewCmd.ViewNames) > 0 {
-			m.DropCommands = append(m.DropCommands, &dropMatViewCmd)
-		}
-		if len(dropTableCmd.TableNames) > 0 {
-			m.DropCommands = append(m.DropCommands, &dropTableCmd)
+	return m, nil
+}
+
+func diffColumn(dialect string, gotColumn, wantColumn Column) (alterColumnCmd AlterColumnCommand, isDifferent bool) {
+	// do we SET DATA TYPE?
+	if !strings.EqualFold(gotColumn.ColumnType, wantColumn.ColumnType) {
+		isDifferent = true
+		alterColumnCmd.Column.ColumnType = wantColumn.ColumnType
+	}
+	// do we DROP NOT NULL?
+	if gotColumn.IsNotNull && !wantColumn.IsNotNull {
+		isDifferent = true
+		alterColumnCmd.DropNotNull = true
+	} else
+	// do we SET NOT NULL?
+	if !gotColumn.IsNotNull && wantColumn.IsNotNull {
+		isDifferent = true
+		alterColumnCmd.Column.IsNotNull = true
+	}
+	// do we DROP DEFAULT?
+	if gotColumn.ColumnDefault != "" && wantColumn.ColumnDefault == "" {
+		isDifferent = true
+		alterColumnCmd.DropDefault = true
+	} else
+	// do we SET DEFAULT?
+	if gotColumn.ColumnDefault == "" && wantColumn.ColumnDefault != "" {
+		isDifferent = true
+		alterColumnCmd.Column.ColumnDefault = wantColumn.ColumnDefault
+	}
+	if dialect == sq.DialectPostgres {
+		// do we DROP IDENTITY?
+		if gotColumn.Identity != "" && wantColumn.Identity == "" {
+			isDifferent = true
+			alterColumnCmd.DropIdentity = true
+			alterColumnCmd.DropIdentityIfExists = true
+		} else
+		// do we ADD GENERATED AS $IDENTITY?
+		if gotColumn.Identity == "" && wantColumn.Identity != "" {
+			isDifferent = true
+			alterColumnCmd.Column.Identity = wantColumn.Identity
 		}
 	}
-	m.DropCommands = append(m.DropCommands, dropFunctionCmds...)
-	if len(dropExtensionCmd.Extensions) > 0 {
-		m.DropCommands = append(m.DropCommands, &dropExtensionCmd)
-	}
-	return nil
+	return alterColumnCmd, isDifferent
 }
 
 func (m *Migration) WriteSQL(w io.Writer) error {
+	var err error
 	var written bool
-	for i, cmds := range [][]Command{
-		m.SchemaCommands,
-		m.ExtensionCommands,
-		m.EnumCommands,
-		m.IndependentFunctionCommands,
-		m.TableCommands,
-		m.ViewCommands,
-		m.IndexCommands,
-		m.FunctionCommands,
-		m.TriggerCommands,
-		m.ForeignKeyCommands,
-		m.RenameCommands,
-		m.DropCommands,
-	} {
-		if m.Dialect == sq.DialectMySQL && (i == 3 || i == 7 || i == 8) && len(cmds) > 0 {
-			io.WriteString(w, "\n\nDELIMITER ;;")
+	writeCmd := func(cmd Command, isMySQLFunction bool) error {
+		query, args, _, err := sq.ToSQL(m.Dialect, cmd)
+		if err != nil {
+			return fmt.Errorf("building command (%s): %w", query, err)
 		}
-		for _, cmd := range cmds {
-			query, args, _, err := sq.ToSQL(m.Dialect, cmd)
+		if len(args) > 0 {
+			query, err = sq.Sprintf(m.Dialect, query, args)
 			if err != nil {
 				return fmt.Errorf("building command (%s): %w", query, err)
 			}
-			if len(args) > 0 {
-				query, err = sq.Sprintf(m.Dialect, query, args)
-				if err != nil {
-					return fmt.Errorf("building command (%s): %w", query, err)
-				}
-			}
-			if !written {
-				written = true
-			} else {
-				io.WriteString(w, "\n\n")
-			}
-			query = strings.TrimSpace(query)
-			io.WriteString(w, query)
-			if m.Dialect == sq.DialectMySQL && (i == 3 || i == 7 || i == 8) {
-				io.WriteString(w, ";;")
-			} else {
-				if last := len(query) - 1; query[last] != ';' {
-					io.WriteString(w, ";")
-				}
+		}
+		if !written {
+			written = true
+		} else {
+			io.WriteString(w, "\n\n")
+		}
+		query = strings.TrimSpace(query)
+		io.WriteString(w, query)
+		if isMySQLFunction {
+			io.WriteString(w, ";;")
+		} else {
+			if last := len(query) - 1; query[last] != ';' {
+				io.WriteString(w, ";")
 			}
 		}
-		if m.Dialect == sq.DialectMySQL && (i == 3 || i == 7 || i == 8) && len(cmds) > 0 {
+		return nil
+	}
+	for _, cmd := range m.CreateSchemaCmds {
+		if cmd.Ignore {
+			continue
+		}
+		err = writeCmd(cmd, false)
+		if err != nil {
+			return err
+		}
+	}
+	for _, cmd := range m.CreateExtensionCmds {
+		if cmd.Ignore {
+			continue
+		}
+		err = writeCmd(cmd, false)
+		if err != nil {
+			return err
+		}
+	}
+	if len(m.CreateFunctionCmds) > 0 {
+		if m.Dialect == sq.DialectMySQL {
+			io.WriteString(w, "\n\nDELIMITER ;;")
+		}
+		for _, cmd := range m.CreateFunctionCmds {
+			if cmd.Ignore {
+				continue
+			}
+			err = writeCmd(cmd, m.Dialect == sq.DialectMySQL)
+			if err != nil {
+				return err
+			}
+		}
+		if m.Dialect == sq.DialectMySQL {
 			io.WriteString(w, "\n\nDELIMITER ;")
+		}
+	}
+	for _, cmd := range m.CreateTableCmds {
+		if cmd.Ignore {
+			continue
+		}
+		err = writeCmd(cmd, false)
+		if err != nil {
+			return err
+		}
+	}
+	for _, cmd := range m.AlterTableCmds {
+		if cmd.Ignore {
+			continue
+		}
+		err = writeCmd(cmd, false)
+		if err != nil {
+			return err
+		}
+	}
+	for _, cmd := range m.CreateViewCmds {
+		if cmd.Ignore {
+			continue
+		}
+		err = writeCmd(cmd, false)
+		if err != nil {
+			return err
+		}
+	}
+	for _, cmd := range m.CreateIndexCmds {
+		if cmd.Ignore {
+			continue
+		}
+		err = writeCmd(cmd, false)
+		if err != nil {
+			return err
+		}
+	}
+	if len(m.CreateTriggerCmds) > 0 {
+		if m.Dialect == sq.DialectMySQL {
+			io.WriteString(w, "\n\nDELIMITER ;;")
+		}
+		for _, cmd := range m.CreateTriggerCmds {
+			if cmd.Ignore {
+				continue
+			}
+			err = writeCmd(cmd, m.Dialect == sq.DialectMySQL)
+			if err != nil {
+				return err
+			}
+		}
+		if m.Dialect == sq.DialectMySQL {
+			io.WriteString(w, "\n\nDELIMITER ;")
+		}
+	}
+	for _, cmd := range m.AddForeignKeyCmds {
+		if cmd.Ignore {
+			continue
+		}
+		err = writeCmd(cmd, false)
+		if err != nil {
+			return err
+		}
+	}
+	for _, cmd := range m.DropViewCmds {
+		if cmd.Ignore {
+			continue
+		}
+		err = writeCmd(cmd, false)
+		if err != nil {
+			return err
+		}
+	}
+	for _, cmd := range m.DropTableCmds {
+		if cmd.Ignore {
+			continue
+		}
+		err = writeCmd(cmd, false)
+		if err != nil {
+			return err
+		}
+	}
+	for _, cmd := range m.DropTriggerCmds {
+		if cmd.Ignore {
+			continue
+		}
+		err = writeCmd(cmd, false)
+		if err != nil {
+			return err
+		}
+	}
+	for _, cmd := range m.DropIndexCmds {
+		if cmd.Ignore {
+			continue
+		}
+		err = writeCmd(cmd, false)
+		if err != nil {
+			return err
+		}
+	}
+	for _, cmd := range m.AlterTableDropCmds {
+		if cmd.Ignore {
+			continue
+		}
+		err = writeCmd(cmd, false)
+		if err != nil {
+			return err
+		}
+	}
+	for _, cmd := range m.DropFunctionCmds {
+		if cmd.Ignore {
+			continue
+		}
+		err = writeCmd(cmd, false)
+		if err != nil {
+			return err
+		}
+	}
+	for _, cmd := range m.DropExtensionCmds {
+		if cmd.Ignore {
+			continue
+		}
+		err = writeCmd(cmd, false)
+		if err != nil {
+			return err
 		}
 	}
 	return nil
@@ -591,30 +701,160 @@ func (m *Migration) Exec(db sq.DB) error {
 }
 
 func (m *Migration) ExecContext(ctx context.Context, db sq.DB) error {
-	for _, cmds := range [][]Command{
-		m.SchemaCommands,
-		m.ExtensionCommands,
-		m.EnumCommands,
-		m.IndependentFunctionCommands,
-		m.TableCommands,
-		m.ViewCommands,
-		m.IndexCommands,
-		m.FunctionCommands,
-		m.TriggerCommands,
-		m.ForeignKeyCommands,
-		m.RenameCommands,
-		m.DropCommands,
-	} {
-		for i, cmd := range cmds {
-			_ = i
-			query, args, _, err := sq.ToSQL(m.Dialect, cmd)
-			if err != nil {
-				return fmt.Errorf("building command (%s): %w", query, err)
-			}
-			_, err = db.ExecContext(ctx, query, args...)
-			if err != nil {
-				return fmt.Errorf("executing command (%s): %w", query, err)
-			}
+	var err error
+	execCmd := func(cmd Command) error {
+		query, args, _, err := sq.ToSQL(m.Dialect, cmd)
+		if err != nil {
+			return fmt.Errorf("building command (%s): %w", query, err)
+		}
+		_, err = db.ExecContext(ctx, query, args...)
+		if err != nil {
+			return fmt.Errorf("executing command (%s): %w", query, err)
+		}
+		return nil
+	}
+	for _, cmd := range m.CreateSchemaCmds {
+		if cmd.Ignore {
+			continue
+		}
+		err = execCmd(cmd)
+		if err != nil {
+			return err
+		}
+	}
+	for _, cmd := range m.CreateExtensionCmds {
+		if cmd.Ignore {
+			continue
+		}
+		err = execCmd(cmd)
+		if err != nil {
+			return err
+		}
+	}
+	for _, cmd := range m.CreateFunctionCmds {
+		if cmd.Ignore {
+			continue
+		}
+		err = execCmd(cmd)
+		if err != nil {
+			return err
+		}
+	}
+	for _, cmd := range m.CreateTableCmds {
+		if cmd.Ignore {
+			continue
+		}
+		err = execCmd(cmd)
+		if err != nil {
+			return err
+		}
+	}
+	for _, cmd := range m.AlterTableCmds {
+		if cmd.Ignore {
+			continue
+		}
+		err = execCmd(cmd)
+		if err != nil {
+			return err
+		}
+	}
+	for _, cmd := range m.CreateViewCmds {
+		if cmd.Ignore {
+			continue
+		}
+		err = execCmd(cmd)
+		if err != nil {
+			return err
+		}
+	}
+	for _, cmd := range m.CreateIndexCmds {
+		if cmd.Ignore {
+			continue
+		}
+		err = execCmd(cmd)
+		if err != nil {
+			return err
+		}
+	}
+	for _, cmd := range m.CreateTriggerCmds {
+		if cmd.Ignore {
+			continue
+		}
+		err = execCmd(cmd)
+		if err != nil {
+			return err
+		}
+	}
+	for _, cmd := range m.AddForeignKeyCmds {
+		if cmd.Ignore {
+			continue
+		}
+		err = execCmd(cmd)
+		if err != nil {
+			return err
+		}
+	}
+	for _, cmd := range m.DropViewCmds {
+		if cmd.Ignore {
+			continue
+		}
+		err = execCmd(cmd)
+		if err != nil {
+			return err
+		}
+	}
+	for _, cmd := range m.DropTableCmds {
+		if cmd.Ignore {
+			continue
+		}
+		err = execCmd(cmd)
+		if err != nil {
+			return err
+		}
+	}
+	for _, cmd := range m.DropTriggerCmds {
+		if cmd.Ignore {
+			continue
+		}
+		err = execCmd(cmd)
+		if err != nil {
+			return err
+		}
+	}
+	for _, cmd := range m.DropIndexCmds {
+		if cmd.Ignore {
+			continue
+		}
+		err = execCmd(cmd)
+		if err != nil {
+			return err
+		}
+	}
+	for _, cmd := range m.AlterTableDropCmds {
+		if cmd.Ignore {
+			continue
+		}
+		err = execCmd(cmd)
+		if err != nil {
+			return err
+		}
+	}
+	for _, cmd := range m.DropFunctionCmds {
+		if cmd.Ignore {
+			continue
+		}
+		err = execCmd(cmd)
+		if err != nil {
+			return err
+		}
+	}
+	for _, cmd := range m.DropExtensionCmds {
+		if cmd.Ignore {
+			continue
+		}
+		err = execCmd(cmd)
+		if err != nil {
+			return err
 		}
 	}
 	return nil
