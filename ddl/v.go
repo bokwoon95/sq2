@@ -93,12 +93,16 @@ func (v *V) AsQuery(query sq.Query) {
 	}
 }
 
-func (v *V) Trigger(sql string) {
+func (v *V) Trigger(format string, values ...interface{}) {
 	if v.dialect != sq.DialectPostgres {
 		return
 	}
+	sql, err := sprintf(v.dialect, format, values, nil)
+	if err != nil {
+		panicErr(fmt.Errorf("Trigger: %w", err))
+	}
 	trigger := Trigger{SQL: strings.TrimSpace(sql)}
-	err := trigger.populateTriggerInfo(v.dialect)
+	err = trigger.populateTriggerInfo(v.dialect)
 	if err != nil {
 		panicErr(fmt.Errorf("Trigger: %w", err))
 	}
