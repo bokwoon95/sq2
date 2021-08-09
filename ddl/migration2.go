@@ -519,12 +519,18 @@ func (m *Migration2) WriteSQL(w io.Writer) error {
 		return nil
 	}
 	for _, cmd := range m.CreateSchemaCmds {
+		if cmd.Ignore {
+			continue
+		}
 		err = writeCmd(cmd, false)
 		if err != nil {
 			return err
 		}
 	}
 	for _, cmd := range m.CreateExtensionCmds {
+		if cmd.Ignore {
+			continue
+		}
 		err = writeCmd(cmd, false)
 		if err != nil {
 			return err
@@ -535,6 +541,9 @@ func (m *Migration2) WriteSQL(w io.Writer) error {
 			io.WriteString(w, "\n\nDELIMITER ;;")
 		}
 		for _, cmd := range m.CreateFunctionCmds {
+			if cmd.Ignore {
+				continue
+			}
 			err = writeCmd(cmd, m.Dialect == sq.DialectMySQL)
 			if err != nil {
 				return err
@@ -545,24 +554,36 @@ func (m *Migration2) WriteSQL(w io.Writer) error {
 		}
 	}
 	for _, cmd := range m.CreateTableCmds {
+		if cmd.Ignore {
+			continue
+		}
 		err = writeCmd(cmd, false)
 		if err != nil {
 			return err
 		}
 	}
 	for _, cmd := range m.AlterTableCmds {
+		if cmd.Ignore {
+			continue
+		}
 		err = writeCmd(cmd, false)
 		if err != nil {
 			return err
 		}
 	}
 	for _, cmd := range m.CreateViewCmds {
+		if cmd.Ignore {
+			continue
+		}
 		err = writeCmd(cmd, false)
 		if err != nil {
 			return err
 		}
 	}
 	for _, cmd := range m.CreateIndexCmds {
+		if cmd.Ignore {
+			continue
+		}
 		err = writeCmd(cmd, false)
 		if err != nil {
 			return err
@@ -573,6 +594,9 @@ func (m *Migration2) WriteSQL(w io.Writer) error {
 			io.WriteString(w, "\n\nDELIMITER ;;")
 		}
 		for _, cmd := range m.CreateTriggerCmds {
+			if cmd.Ignore {
+				continue
+			}
 			err = writeCmd(cmd, m.Dialect == sq.DialectMySQL)
 			if err != nil {
 				return err
@@ -583,48 +607,72 @@ func (m *Migration2) WriteSQL(w io.Writer) error {
 		}
 	}
 	for _, cmd := range m.AddForeignKeyCmds {
+		if cmd.Ignore {
+			continue
+		}
 		err = writeCmd(cmd, false)
 		if err != nil {
 			return err
 		}
 	}
 	for _, cmd := range m.DropViewCmds {
+		if cmd.Ignore {
+			continue
+		}
 		err = writeCmd(cmd, false)
 		if err != nil {
 			return err
 		}
 	}
 	for _, cmd := range m.DropTableCmds {
+		if cmd.Ignore {
+			continue
+		}
 		err = writeCmd(cmd, false)
 		if err != nil {
 			return err
 		}
 	}
 	for _, cmd := range m.DropTriggerCmds {
+		if cmd.Ignore {
+			continue
+		}
 		err = writeCmd(cmd, false)
 		if err != nil {
 			return err
 		}
 	}
 	for _, cmd := range m.DropIndexCmds {
+		if cmd.Ignore {
+			continue
+		}
 		err = writeCmd(cmd, false)
 		if err != nil {
 			return err
 		}
 	}
 	for _, cmd := range m.AlterTableDropCmds {
+		if cmd.Ignore {
+			continue
+		}
 		err = writeCmd(cmd, false)
 		if err != nil {
 			return err
 		}
 	}
 	for _, cmd := range m.DropFunctionCmds {
+		if cmd.Ignore {
+			continue
+		}
 		err = writeCmd(cmd, false)
 		if err != nil {
 			return err
 		}
 	}
 	for _, cmd := range m.DropExtensionCmds {
+		if cmd.Ignore {
+			continue
+		}
 		err = writeCmd(cmd, false)
 		if err != nil {
 			return err
@@ -651,96 +699,144 @@ func (m *Migration2) ExecContext(ctx context.Context, db sq.DB) error {
 		return nil
 	}
 	for _, cmd := range m.CreateSchemaCmds {
+		if cmd.Ignore {
+			continue
+		}
 		err = execCmd(cmd)
 		if err != nil {
 			return err
 		}
 	}
 	for _, cmd := range m.CreateExtensionCmds {
+		if cmd.Ignore {
+			continue
+		}
 		err = execCmd(cmd)
 		if err != nil {
 			return err
 		}
 	}
 	for _, cmd := range m.CreateFunctionCmds {
+		if cmd.Ignore {
+			continue
+		}
 		err = execCmd(cmd)
 		if err != nil {
 			return err
 		}
 	}
 	for _, cmd := range m.CreateTableCmds {
+		if cmd.Ignore {
+			continue
+		}
 		err = execCmd(cmd)
 		if err != nil {
 			return err
 		}
 	}
 	for _, cmd := range m.AlterTableCmds {
+		if cmd.Ignore {
+			continue
+		}
 		err = execCmd(cmd)
 		if err != nil {
 			return err
 		}
 	}
 	for _, cmd := range m.CreateViewCmds {
+		if cmd.Ignore {
+			continue
+		}
 		err = execCmd(cmd)
 		if err != nil {
 			return err
 		}
 	}
 	for _, cmd := range m.CreateIndexCmds {
+		if cmd.Ignore {
+			continue
+		}
 		err = execCmd(cmd)
 		if err != nil {
 			return err
 		}
 	}
 	for _, cmd := range m.CreateTriggerCmds {
+		if cmd.Ignore {
+			continue
+		}
 		err = execCmd(cmd)
 		if err != nil {
 			return err
 		}
 	}
 	for _, cmd := range m.AddForeignKeyCmds {
+		if cmd.Ignore {
+			continue
+		}
 		err = execCmd(cmd)
 		if err != nil {
 			return err
 		}
 	}
 	for _, cmd := range m.DropViewCmds {
+		if cmd.Ignore {
+			continue
+		}
 		err = execCmd(cmd)
 		if err != nil {
 			return err
 		}
 	}
 	for _, cmd := range m.DropTableCmds {
+		if cmd.Ignore {
+			continue
+		}
 		err = execCmd(cmd)
 		if err != nil {
 			return err
 		}
 	}
 	for _, cmd := range m.DropTriggerCmds {
+		if cmd.Ignore {
+			continue
+		}
 		err = execCmd(cmd)
 		if err != nil {
 			return err
 		}
 	}
 	for _, cmd := range m.DropIndexCmds {
+		if cmd.Ignore {
+			continue
+		}
 		err = execCmd(cmd)
 		if err != nil {
 			return err
 		}
 	}
 	for _, cmd := range m.AlterTableDropCmds {
+		if cmd.Ignore {
+			continue
+		}
 		err = execCmd(cmd)
 		if err != nil {
 			return err
 		}
 	}
 	for _, cmd := range m.DropFunctionCmds {
+		if cmd.Ignore {
+			continue
+		}
 		err = execCmd(cmd)
 		if err != nil {
 			return err
 		}
 	}
 	for _, cmd := range m.DropExtensionCmds {
+		if cmd.Ignore {
+			continue
+		}
 		err = execCmd(cmd)
 		if err != nil {
 			return err
