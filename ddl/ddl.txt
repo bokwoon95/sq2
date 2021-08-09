@@ -10,34 +10,6 @@ introspect.go
 catalog.go
 migration_commands.go
 
-type Migration struct {
-    Dialect string
-    CreateSchemas []CreateSchemaCommand
-    CreateExtensions []CreateExtensionCommand
-    // CreateEnums goes here
-    CreateFunctions []CreateFunctionCommand
-    CreateTables []CreateTableCommand
-    AlterTables []AlterTableCommand // add column | alter column | add constraint
-    CreateViews []CreateViewCommand
-    CreateIndexes []CreateIndexCommand
-    CreateTriggers []CreateTriggerCommand
-    CreateForeignKeys []AlterTableCommand
-    DropViews []DropViewCommand
-    DropTables []DropTableCommand
-    DropTriggers []DropTriggerCommand
-    DropIndexes []DropIndexCommand
-    DropConstraints []DropConstraintCommand
-    DropColumns []DropColumnCommand
-    DropFunctions []DropFunctionCommand
-    // DropEnums goes here
-    DropExtensions []DropExtensionCommand
-}
-remove unused commands (e.g. the RenameX commands)
-if we're looping over value structs, there should be an 'Ignore' field in each
-Command so that the user can nullify a command without resorting to subslicing
-tricks. For example, if they want to blot out all index commands on a certain
-table (loop over each index command, set the ignore flag where necessary)
-
 bah gawd. types. domains. enums.
 ALSO: functions may be user-defined aggregate functions or user-defined windows
 
