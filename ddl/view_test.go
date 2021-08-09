@@ -111,7 +111,7 @@ func Test_CreateViewCommand(t *testing.T) {
 		t.Parallel()
 		var tt TT
 		tt.dialect = sq.DialectPostgres
-		tt.item = &CreateViewCommand{
+		tt.item = CreateViewCommand{
 			CreateOrReplace: true,
 			View: View{
 				ViewSchema: "some table",
@@ -127,7 +127,7 @@ func Test_CreateViewCommand(t *testing.T) {
 		t.Parallel()
 		var tt TT
 		tt.dialect = sq.DialectPostgres
-		tt.item = &CreateViewCommand{
+		tt.item = CreateViewCommand{
 			CreateIfNotExists: true,
 			View: View{
 				IsMaterialized: true,

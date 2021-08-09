@@ -853,3 +853,15 @@ func decomposeDropTableCommandSQLite(dropTableCmd *DropTableCommand) []Command {
 	}
 	return cmds
 }
+
+func decomposeDropTableCommandSQLite2(dropTableCmd DropTableCommand) []DropTableCommand {
+	dropTableCmds := make([]DropTableCommand, 0, len(dropTableCmd.TableNames))
+	for i, tableName := range dropTableCmd.TableNames {
+		dropTableCmds = append(dropTableCmds, DropTableCommand{
+			DropIfExists: dropTableCmd.DropIfExists,
+			TableSchemas: []string{dropTableCmd.TableSchemas[i]},
+			TableNames:   []string{tableName},
+		})
+	}
+	return dropTableCmds
+}

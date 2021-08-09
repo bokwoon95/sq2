@@ -142,7 +142,7 @@ func migrateSchema(m *Migration, mode MigrationMode, gotCatalog Catalog, wantSch
 		if n := gotSchema.CachedViewPosition(wantView.ViewName); n >= 0 {
 			continue
 		}
-		createViewCmd := &CreateViewCommand{View: wantView}
+		createViewCmd := CreateViewCommand{View: wantView}
 		if m.Dialect == sq.DialectMySQL || (m.Dialect == sq.DialectPostgres && !wantView.IsMaterialized) {
 			createViewCmd.CreateOrReplace = true
 		}

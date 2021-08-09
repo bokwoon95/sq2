@@ -135,7 +135,7 @@ type CreateViewCommand struct {
 	View              View
 }
 
-func (cmd *CreateViewCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
+func (cmd CreateViewCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
 	buf.WriteString("CREATE ")
 	if cmd.CreateOrReplace {
 		if dialect == sq.DialectPostgres && cmd.View.IsMaterialized {
@@ -231,4 +231,16 @@ func decomposeDropViewCommandSQLite(dropViewCmd *DropViewCommand) []Command {
 		cmds[i] = &dropTableCmds[i]
 	}
 	return cmds
+}
+
+func decomposeDropViewCommandSQLite2(dropViewCmd DropViewCommand) []DropViewCommand {
+	dropViewCmds := make([]DropViewCommand, 0, len(dropViewCmd.ViewNames))
+	for i, viewName := range dropViewCmd.ViewNames {
+		dropViewCmds = append(dropViewCmds, DropViewCommand{
+			DropIfExists: dropViewCmd.DropIfExists,
+			ViewSchemas:  []string{dropViewCmd.ViewSchemas[i]},
+			ViewNames:    []string{viewName},
+		})
+	}
+	return dropViewCmds
 }
