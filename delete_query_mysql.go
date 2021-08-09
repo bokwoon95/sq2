@@ -1,10 +1,24 @@
 package sq
 
-type MySQLDeleteQuery struct {
-	DeleteQuery
-}
+import "bytes"
+
+type MySQLDeleteQuery DeleteQuery
 
 var _ Query = MySQLDeleteQuery{}
+
+func (q MySQLDeleteQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
+	return DeleteQuery(q).AppendSQL(dialect, buf, args, params)
+}
+
+func (q MySQLDeleteQuery) SetFetchableFields(fields []Field) (Query, error) {
+	return DeleteQuery(q).SetFetchableFields(fields)
+}
+
+func (q MySQLDeleteQuery) GetFetchableFields() ([]Field, error) {
+	return DeleteQuery(q).GetFetchableFields()
+}
+
+func (q MySQLDeleteQuery) GetDialect() string { return q.Dialect }
 
 func (d MySQLDialect) DeleteWith(ctes ...CTE) MySQLDeleteQuery {
 	var q MySQLDeleteQuery

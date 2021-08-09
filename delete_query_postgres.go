@@ -1,10 +1,24 @@
 package sq
 
-type PostgresDeleteQuery struct {
-	DeleteQuery
-}
+import "bytes"
+
+type PostgresDeleteQuery DeleteQuery
 
 var _ Query = PostgresDeleteQuery{}
+
+func (q PostgresDeleteQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
+	return DeleteQuery(q).AppendSQL(dialect, buf, args, params)
+}
+
+func (q PostgresDeleteQuery) SetFetchableFields(fields []Field) (Query, error) {
+	return DeleteQuery(q).SetFetchableFields(fields)
+}
+
+func (q PostgresDeleteQuery) GetFetchableFields() ([]Field, error) {
+	return DeleteQuery(q).GetFetchableFields()
+}
+
+func (q PostgresDeleteQuery) GetDialect() string { return q.Dialect }
 
 func (d PostgresDialect) DeleteWith(ctes ...CTE) PostgresDeleteQuery {
 	var q PostgresDeleteQuery

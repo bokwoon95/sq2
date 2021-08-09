@@ -1,10 +1,24 @@
 package sq
 
-type SQLiteDeleteQuery struct {
-	DeleteQuery
-}
+import "bytes"
+
+type SQLiteDeleteQuery DeleteQuery
 
 var _ Query = SQLiteDeleteQuery{}
+
+func (q SQLiteDeleteQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
+	return DeleteQuery(q).AppendSQL(dialect, buf, args, params)
+}
+
+func (q SQLiteDeleteQuery) SetFetchableFields(fields []Field) (Query, error) {
+	return DeleteQuery(q).SetFetchableFields(fields)
+}
+
+func (q SQLiteDeleteQuery) GetFetchableFields() ([]Field, error) {
+	return DeleteQuery(q).GetFetchableFields()
+}
+
+func (q SQLiteDeleteQuery) GetDialect() string { return q.Dialect }
 
 func (d SQLiteDialect) DeleteWith(ctes ...CTE) SQLiteDeleteQuery {
 	var q SQLiteDeleteQuery
