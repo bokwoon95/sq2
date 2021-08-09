@@ -133,9 +133,13 @@ type CreateViewCommand struct {
 	CreateOrReplace   bool
 	CreateIfNotExists bool
 	View              View
+	Ignore            bool
 }
 
 func (cmd CreateViewCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
+	if cmd.Ignore {
+		return nil
+	}
 	buf.WriteString("CREATE ")
 	if cmd.CreateOrReplace {
 		if dialect == sq.DialectPostgres && cmd.View.IsMaterialized {
@@ -172,9 +176,13 @@ type DropViewCommand struct {
 	ViewSchemas    []string
 	ViewNames      []string
 	DropCascade    bool
+	Ignore         bool
 }
 
 func (cmd DropViewCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
+	if cmd.Ignore {
+		return nil
+	}
 	buf.WriteString("DROP ")
 	if cmd.IsMaterialized {
 		if dialect != sq.DialectPostgres {

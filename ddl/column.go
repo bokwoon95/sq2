@@ -34,9 +34,13 @@ type AddColumnCommand struct {
 	CheckExprs       []string
 	ReferencesTable  string
 	ReferencesColumn string
+	Ignore           bool
 }
 
 func (cmd AddColumnCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
+	if cmd.Ignore {
+		return nil
+	}
 	buf.WriteString("ADD COLUMN ")
 	if cmd.AddIfNotExists {
 		if dialect != sq.DialectPostgres {
@@ -153,9 +157,13 @@ type AlterColumnCommand struct {
 	DropIdentityIfExists bool
 	DropAutoincrement    bool
 	UsingExpr            string
+	Ignore               bool
 }
 
 func (cmd AlterColumnCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
+	if cmd.Ignore {
+		return nil
+	}
 	switch dialect {
 	case sq.DialectSQLite:
 		return fmt.Errorf("sqlite does not support altering columns after table creation")
@@ -230,9 +238,13 @@ type DropColumnCommand struct {
 	DropIfExists bool
 	ColumnName   string
 	DropCascade  bool
+	Ignore       bool
 }
 
 func (cmd DropColumnCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
+	if cmd.Ignore {
+		return nil
+	}
 	buf.WriteString("DROP COLUMN ")
 	if cmd.DropIfExists {
 		if dialect != sq.DialectPostgres {

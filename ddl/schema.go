@@ -156,9 +156,13 @@ func (s *Schema) RefreshFunctionCache() {
 type CreateSchemaCommand struct {
 	CreateIfNotExists bool
 	SchemaName        string
+	Ignore            bool
 }
 
 func (cmd CreateSchemaCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
+	if cmd.Ignore {
+		return nil
+	}
 	if dialect == sq.DialectSQLite {
 		return fmt.Errorf("sqlite does not support CREATE SCHEMA")
 	}

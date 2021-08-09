@@ -69,9 +69,13 @@ LOOP:
 
 type CreateTriggerCommand struct {
 	Trigger Trigger
+	Ignore  bool
 }
 
 func (cmd CreateTriggerCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
+	if cmd.Ignore {
+		return nil
+	}
 	buf.WriteString(cmd.Trigger.SQL)
 	return nil
 }
@@ -82,9 +86,13 @@ type DropTriggerCommand struct {
 	TableName    string
 	TriggerName  string
 	DropCascade  bool
+	Ignore       bool
 }
 
 func (cmd DropTriggerCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
+	if cmd.Ignore {
+		return nil
+	}
 	buf.WriteString("DROP TRIGGER ")
 	if cmd.DropIfExists {
 		buf.WriteString("IF EXISTS ")

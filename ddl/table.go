@@ -485,9 +485,13 @@ type CreateTableCommand struct {
 	IncludeConstraints bool
 	Table              Table
 	CreateIndexCmds    []CreateIndexCommand // mysql-only
+	Ignore             bool
 }
 
 func (cmd CreateTableCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
+	if cmd.Ignore {
+		return nil
+	}
 	if cmd.Table.TableName == "" {
 		return fmt.Errorf("CREATE TABLE: table has no name")
 	}
@@ -608,9 +612,13 @@ type AlterTableCommand struct {
 	DropConstraintCmds  []DropConstraintCommand
 	CreateIndexCmds     []CreateIndexCommand // mysql-only
 	DropIndexCmds       []DropIndexCommand   // mysql-only
+	Ignore              bool
 }
 
 func (cmd AlterTableCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
+	if cmd.Ignore {
+		return nil
+	}
 	buf.WriteString("ALTER TABLE ")
 	if cmd.AlterIfExists {
 		if dialect != sq.DialectPostgres {
@@ -760,9 +768,13 @@ type RenameTableCommand struct {
 	TableNames      []string
 	RenameToSchemas []string
 	RenameToNames   []string
+	Ignore          bool
 }
 
 func (cmd *RenameTableCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
+	if cmd.Ignore {
+		return nil
+	}
 	if len(cmd.TableNames) > 1 && dialect != sq.DialectMySQL {
 		return fmt.Errorf("%s does not support renaming multiple tables in one command", dialect)
 	}
@@ -802,9 +814,13 @@ type DropTableCommand struct {
 	TableSchemas []string
 	TableNames   []string
 	DropCascade  bool
+	Ignore       bool
 }
 
 func (cmd DropTableCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
+	if cmd.Ignore {
+		return nil
+	}
 	buf.WriteString("DROP TABLE ")
 	if cmd.DropIfExists {
 		buf.WriteString("IF EXISTS")

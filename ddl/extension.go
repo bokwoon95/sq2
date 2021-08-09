@@ -12,9 +12,13 @@ type CreateExtensionCommand struct {
 	CreateIfNotExists bool
 	Extension         string
 	CreateCascade     bool
+	Ignore            bool
 }
 
 func (cmd CreateExtensionCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
+	if cmd.Ignore {
+		return nil
+	}
 	if dialect != sq.DialectPostgres {
 		return fmt.Errorf("%w dialect=%s feature=extensions", ErrUnsupportedFeature, dialect)
 	}
@@ -43,9 +47,13 @@ type DropExtensionCommand struct {
 	DropIfExists bool
 	Extensions   []string
 	DropCascade  bool
+	Ignore       bool
 }
 
 func (cmd DropExtensionCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
+	if cmd.Ignore {
+		return nil
+	}
 	if dialect != sq.DialectPostgres {
 		return fmt.Errorf("%w dialect=%s feature=extensions", ErrUnsupportedFeature, dialect)
 	}

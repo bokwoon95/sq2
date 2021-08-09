@@ -34,9 +34,13 @@ type AddConstraintCommand struct {
 	Constraint Constraint
 	IndexName  string
 	IsNotValid bool
+	Ignore     bool
 }
 
 func (cmd AddConstraintCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
+	if cmd.Ignore {
+		return nil
+	}
 	if dialect == sq.DialectSQLite {
 		return fmt.Errorf("sqlite does not allow constraints to be added after table creation")
 	}
@@ -170,9 +174,13 @@ type AlterConstraintCommand struct {
 	AlterDeferrable     bool
 	IsDeferrable        bool
 	IsInitiallyDeferred bool
+	Ignore              bool
 }
 
 func (cmd AlterConstraintCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
+	if cmd.Ignore {
+		return nil
+	}
 	if dialect == sq.DialectMySQL {
 		return fmt.Errorf("mysql ALTER CONSTRAINT not supported by this library")
 	}
@@ -200,9 +208,13 @@ type DropConstraintCommand struct {
 	DropIfExists   bool
 	ConstraintName string
 	DropCascade    bool
+	Ignore         bool
 }
 
 func (cmd DropConstraintCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
+	if cmd.Ignore {
+		return nil
+	}
 	if dialect == sq.DialectSQLite {
 		return fmt.Errorf("sqlite does not support DROP CONSTRAINT")
 	}

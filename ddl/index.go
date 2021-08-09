@@ -26,9 +26,13 @@ type CreateIndexCommand struct {
 	CreateConcurrently bool
 	CreateIfNotExists  bool
 	Index              Index
+	Ignore             bool
 }
 
 func (cmd CreateIndexCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
+	if cmd.Ignore {
+		return nil
+	}
 	if dialect != sq.DialectMySQL {
 		buf.WriteString("CREATE ")
 	}
@@ -106,9 +110,13 @@ type DropIndexCommand struct {
 	TableName        string
 	IndexName        string
 	DropCascade      bool
+	Ignore           bool
 }
 
 func (cmd DropIndexCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
+	if cmd.Ignore {
+		return nil
+	}
 	buf.WriteString("DROP INDEX ")
 	if cmd.DropConcurrently {
 		if dialect != sq.DialectPostgres {

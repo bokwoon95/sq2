@@ -177,9 +177,13 @@ func FilesToFunctions(dialect string, fsys fs.FS, filenames ...string) ([]Functi
 
 type CreateFunctionCommand struct {
 	Function Function
+	Ignore   bool
 }
 
 func (cmd CreateFunctionCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
+	if cmd.Ignore {
+		return nil
+	}
 	if dialect == sq.DialectSQLite {
 		return fmt.Errorf("sqlite does not support functions")
 	}
@@ -191,9 +195,13 @@ type DropFunctionCommand struct {
 	DropIfExists bool
 	Function     Function
 	DropCascade  bool
+	Ignore       bool
 }
 
 func (cmd DropFunctionCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
+	if cmd.Ignore {
+		return nil
+	}
 	if dialect == sq.DialectSQLite {
 		return fmt.Errorf("sqlite does not support functions")
 	}

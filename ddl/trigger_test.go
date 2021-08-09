@@ -20,7 +20,7 @@ func Test_Trigger(t *testing.T) {
 		if err != nil {
 			t.Fatal(testcallers(), err)
 		}
-		sql, _, _, err := sq.ToSQL(tt.dialect, CreateTriggerCommand{tt.item})
+		sql, _, _, err := sq.ToSQL(tt.dialect, CreateTriggerCommand{Trigger: tt.item})
 		if err != nil {
 			t.Fatal(testcallers(), err)
 		}

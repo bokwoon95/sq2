@@ -23,7 +23,7 @@ func Test_Function(t *testing.T) {
 		if err != nil {
 			t.Fatal(testcallers(), err)
 		}
-		sql, _, _, err := sq.ToSQL(tt.dialect, CreateFunctionCommand{tt.item})
+		sql, _, _, err := sq.ToSQL(tt.dialect, CreateFunctionCommand{Function: tt.item})
 		if err != nil {
 			t.Fatal(testcallers(), err)
 		}
