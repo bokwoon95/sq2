@@ -48,6 +48,7 @@ func (tbl ACTOR) DDL(dialect string, t *T) {
 CREATE TRIGGER actor_last_update_after_update_trg AFTER UPDATE ON {1} BEGIN
     UPDATE {1} SET last_update = DATETIME('now') WHERE ROWID = NEW.ROWID;
 END;`, tbl))
+		t.Trigger(sqliteLastUpdateTriggerFmt, sq.Literal("actor_last_update_after_update_trg"), tbl)
 	}
 	if dialect == sq.DialectPostgres {
 		t.Trigger(t.Sprintf(`
