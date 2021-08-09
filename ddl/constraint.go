@@ -222,16 +222,3 @@ func (cmd DropConstraintCommand) AppendSQL(dialect string, buf *bytes.Buffer, ar
 	}
 	return nil
 }
-
-type RenameConstraintCommand struct {
-	ConstraintName string
-	RenameToName   string
-}
-
-func (cmd RenameConstraintCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
-	if dialect == sq.DialectSQLite || dialect == sq.DialectMySQL {
-		return fmt.Errorf("%s does not support renaming constraints", dialect)
-	}
-	buf.WriteString("RENAME CONSTRAINT " + sq.QuoteIdentifier(dialect, cmd.ConstraintName) + " TO " + sq.QuoteIdentifier(dialect, cmd.RenameToName))
-	return nil
-}

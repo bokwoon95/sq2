@@ -609,10 +609,9 @@ type AlterTableCommand struct {
 	AlterColumnCommands []AlterColumnCommand
 	DropColumnCommands  []DropColumnCommand
 	// Constraints
-	AddConstraintCommands    []AddConstraintCommand
-	AlterConstraintCommands  []AlterConstraintCommand
-	RenameConstraintCommands []RenameConstraintCommand
-	DropConstraintCommands   []DropConstraintCommand
+	AddConstraintCommands   []AddConstraintCommand
+	AlterConstraintCommands []AlterConstraintCommand
+	DropConstraintCommands  []DropConstraintCommand
 	// Indexes (mysql-only)
 	CreateIndexCommands []CreateIndexCommand
 	RenameIndexCommands []RenameIndexCommand
@@ -674,13 +673,6 @@ func (cmd *AlterTableCommand) AppendSQL(dialect string, buf *bytes.Buffer, args 
 		err := dropColumnCmd.AppendSQL(dialect, buf, args, params)
 		if err != nil {
 			return fmt.Errorf("ALTER TABLE DROP COLUMN %s: %w", dropColumnCmd.ColumnName, err)
-		}
-	}
-	for _, renameConstraintCmd := range cmd.RenameConstraintCommands {
-		writeNewLine()
-		err := renameConstraintCmd.AppendSQL(dialect, buf, args, params)
-		if err != nil {
-			return fmt.Errorf("ALTER TABLE RENAME CONSTRAINT %s: %w", renameConstraintCmd.ConstraintName, err)
 		}
 	}
 	// DROP CONSTRAINT comes before ADD CONSTRAINT because that's the only way

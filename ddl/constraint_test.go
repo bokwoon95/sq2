@@ -299,7 +299,7 @@ func Test_AddConstraintCommnd(t *testing.T) {
 			Constraint: Constraint{
 				ConstraintName:     "customer_email_excl",
 				ConstraintType:     EXCLUDE,
-				ExclusionIndex:          "GIST",
+				ExclusionIndex:     "GIST",
 				Columns:            []string{"email"},
 				ExclusionOperators: []string{""},
 			},
@@ -585,65 +585,6 @@ func Test_DropConstraintCommnd(t *testing.T) {
 		tt.item = DropConstraintCommand{
 			ConstraintName: "city_country_id_fkey",
 			DropCascade:    true,
-		}
-		_, _, _, err := sq.ToSQL(tt.dialect, tt.item)
-		if err == nil {
-			t.Fatal(testcallers(), "expected error but got nil")
-		}
-	})
-}
-
-func Test_RenameConstraintCommnd(t *testing.T) {
-	type TT struct {
-		dialect   string
-		item      Command
-		wantQuery string
-		wantArgs  []interface{}
-	}
-
-	assert := func(t *testing.T, tt TT) {
-		gotQuery, gotArgs, _, err := sq.ToSQL(tt.dialect, tt.item)
-		if err != nil {
-			t.Fatal(testcallers(), err)
-		}
-		if diff := testdiff(gotQuery, tt.wantQuery); diff != "" {
-			t.Error(testcallers(), diff)
-		}
-		if diff := testdiff(gotArgs, tt.wantArgs); diff != "" {
-			t.Error(testcallers(), diff)
-		}
-	}
-
-	t.Run("quoted identifier", func(t *testing.T) {
-		t.Parallel()
-		var tt TT
-		tt.item = RenameConstraintCommand{
-			ConstraintName: "bad constraint name",
-			RenameToName:   "4lso bad constraint name",
-		}
-		tt.wantQuery = `RENAME CONSTRAINT "bad constraint name" TO "4lso bad constraint name"`
-		assert(t, tt)
-	})
-
-	t.Run("(dialect == postgres)", func(t *testing.T) {
-		t.Parallel()
-		var tt TT
-		tt.dialect = sq.DialectPostgres
-		tt.item = RenameConstraintCommand{
-			ConstraintName: "city_country_id_fkey",
-			RenameToName:   "fk_city_country_id",
-		}
-		tt.wantQuery = "RENAME CONSTRAINT city_country_id_fkey TO fk_city_country_id"
-		assert(t, tt)
-	})
-
-	t.Run("(dialect == sqlite)", func(t *testing.T) {
-		t.Parallel()
-		var tt TT
-		tt.dialect = sq.DialectSQLite
-		tt.item = RenameConstraintCommand{
-			ConstraintName: "city_country_id_fkey",
-			RenameToName:   "fk_city_country_id",
 		}
 		_, _, _, err := sq.ToSQL(tt.dialect, tt.item)
 		if err == nil {
