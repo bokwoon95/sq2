@@ -1000,14 +1000,12 @@ func (view FULL_ADDRESS) DDL(dialect string, v *V) {
 			ADDRESS.LAST_UPDATE,
 		),
 	)
+	const triggerFmt = `
+CREATE TRIGGER {1} AFTER INSERT OR UPDATE OR DELETE OR TRUNCATE ON {2}
+FOR EACH STATEMENT EXECUTE PROCEDURE refresh_full_address();
+`
 	v.Index(view.COUNTRY_ID, view.CITY_ID, view.ADDRESS_ID).Unique().Include(view.COUNTRY, view.CITY, view.ADDRESS, view.ADDRESS2)
-	v.Trigger(`
-CREATE TRIGGER address_refresh_full_address_trg AFTER INSERT OR UPDATE OR DELETE OR TRUNCATE ON {}
-FOR EACH STATEMENT EXECUTE PROCEDURE refresh_full_address();`, ADDRESS)
-	v.Trigger(`
-CREATE TRIGGER city_refresh_full_address_trg AFTER INSERT OR UPDATE OR DELETE OR TRUNCATE ON {}
-FOR EACH STATEMENT EXECUTE PROCEDURE refresh_full_address();`, CITY)
-	v.Trigger(`
-CREATE TRIGGER country_refresh_full_address_trg AFTER INSERT OR UPDATE OR DELETE OR TRUNCATE ON {}
-FOR EACH STATEMENT EXECUTE PROCEDURE refresh_full_address();`, COUNTRY)
+	v.Trigger(triggerFmt, sq.Literal("address_refresh_full_address_trg"), ADDRESS)
+	v.Trigger(triggerFmt, sq.Literal("city_refresh_full_address_trg"), CITY)
+	v.Trigger(triggerFmt, sq.Literal("country_refresh_full_address_trg"), COUNTRY)
 }
