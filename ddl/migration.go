@@ -79,7 +79,7 @@ func Migrate(mode MigrationMode, gotCatalog, wantCatalog Catalog) (Migration, er
 				if n := gotCatalog.CachedExtensionPosition(wantExtension); n >= 0 {
 					continue
 				}
-				createExtensionCmd := &CreateExtensionCommand{
+				createExtensionCmd := CreateExtensionCommand{
 					CreateIfNotExists: true,
 					Extension:         wantExtension,
 				}

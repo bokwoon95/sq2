@@ -14,7 +14,7 @@ type CreateExtensionCommand struct {
 	CreateCascade     bool
 }
 
-func (cmd *CreateExtensionCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
+func (cmd CreateExtensionCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
 	if dialect != sq.DialectPostgres {
 		return fmt.Errorf("%w dialect=%s feature=extensions", ErrUnsupportedFeature, dialect)
 	}
@@ -45,7 +45,7 @@ type DropExtensionCommand struct {
 	DropCascade  bool
 }
 
-func (cmd *DropExtensionCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
+func (cmd DropExtensionCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
 	if dialect != sq.DialectPostgres {
 		return fmt.Errorf("%w dialect=%s feature=extensions", ErrUnsupportedFeature, dialect)
 	}
