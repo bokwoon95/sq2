@@ -12,9 +12,7 @@ func Test_Function(t *testing.T) {
 		item               Function
 		wantFunctionSchema string
 		wantFunctionName   string
-		wantArgModes       []string
-		wantArgNames       []string
-		wantArgTypes       []string
+		wantRawArgs        string
 		wantReturnType     string
 	}
 
@@ -36,13 +34,7 @@ func Test_Function(t *testing.T) {
 		if diff := testdiff(tt.item.FunctionName, tt.wantFunctionName); diff != "" {
 			t.Error(testcallers(), diff)
 		}
-		if diff := testdiff(tt.item.ArgModes, tt.wantArgModes); diff != "" {
-			t.Error(testcallers(), diff)
-		}
-		if diff := testdiff(tt.item.ArgNames, tt.wantArgNames); diff != "" {
-			t.Error(testcallers(), diff)
-		}
-		if diff := testdiff(tt.item.ArgTypes, tt.wantArgTypes); diff != "" {
+		if diff := testdiff(tt.item.RawArgs, tt.wantRawArgs); diff != "" {
 			t.Error(testcallers(), diff)
 		}
 		if diff := testdiff(tt.item.ReturnType, tt.wantReturnType); diff != "" {
@@ -77,9 +69,7 @@ func Test_Function(t *testing.T) {
 		tt.item.SQL = `CREATE FUNCTION app.tf1 (integer, in numeric = 3.14) RETURNS integer LANGUAGE sql AS $$ lorem ipsum $$`
 		tt.wantFunctionSchema = "app"
 		tt.wantFunctionName = "tf1"
-		tt.wantArgModes = []string{"", "in"}
-		tt.wantArgNames = []string{"", ""}
-		tt.wantArgTypes = []string{"integer", "numeric"}
+		tt.wantRawArgs = "integer, in numeric = 3.14"
 		tt.wantReturnType = "integer"
 		assert(t, tt)
 	})
@@ -90,9 +80,7 @@ func Test_Function(t *testing.T) {
 		tt.dialect = sq.DialectPostgres
 		tt.item.SQL = `CREATE OR REPLACE FUNCTION double_salary(emp) RETURNS numeric AS $$ lorem ipsum $$ LANGUAGE sql`
 		tt.wantFunctionName = "double_salary"
-		tt.wantArgModes = []string{""}
-		tt.wantArgNames = []string{""}
-		tt.wantArgTypes = []string{"emp"}
+		tt.wantRawArgs = "emp"
 		tt.wantReturnType = "numeric"
 		assert(t, tt)
 	})
@@ -103,9 +91,7 @@ func Test_Function(t *testing.T) {
 		tt.dialect = sq.DialectPostgres
 		tt.item.SQL = `CREATE FUNCTION sum_n_product (int, y int =25, OUT sum int DEFAULT 3, OUT product int=22)`
 		tt.wantFunctionName = "sum_n_product"
-		tt.wantArgModes = []string{"", "", "OUT", "OUT"}
-		tt.wantArgNames = []string{"", "y", "sum", "product"}
-		tt.wantArgTypes = []string{"int", "int", "int", "int"}
+		tt.wantRawArgs = "int, y int =25, OUT sum int DEFAULT 3, OUT product int=22"
 		tt.wantReturnType = ""
 		assert(t, tt)
 	})
@@ -116,9 +102,7 @@ func Test_Function(t *testing.T) {
 		tt.dialect = sq.DialectPostgres
 		tt.item.SQL = `CREATE FUNCTION make_array(anyelement, anyelement) RETURNS anyarray AS LANGUAGE plpgsql $$ lorem ipsum $$`
 		tt.wantFunctionName = "make_array"
-		tt.wantArgModes = []string{"", ""}
-		tt.wantArgNames = []string{"", ""}
-		tt.wantArgTypes = []string{"anyelement", "anyelement"}
+		tt.wantRawArgs = "anyelement, anyelement"
 		tt.wantReturnType = "anyarray"
 		assert(t, tt)
 	})
@@ -131,9 +115,8 @@ func Test_Function(t *testing.T) {
 CREATE OR REPLACE FUNCTION years_compare( IN year1 integer DEFAULT NULL,
                                           year2 IN integer DEFAULT NULL ) RETURNS BOOLEAN AS $$ lorem ipsum $$ language SQL`
 		tt.wantFunctionName = "years_compare"
-		tt.wantArgModes = []string{"IN", "IN"}
-		tt.wantArgNames = []string{"year1", "year2"}
-		tt.wantArgTypes = []string{"integer", "integer"}
+		tt.wantRawArgs = `IN year1 integer DEFAULT NULL,
+                                          year2 IN integer DEFAULT NULL`
 		tt.wantReturnType = "BOOLEAN"
 		assert(t, tt)
 	})
@@ -144,9 +127,7 @@ CREATE OR REPLACE FUNCTION years_compare( IN year1 integer DEFAULT NULL,
 		tt.dialect = sq.DialectPostgres
 		tt.item.SQL = `create function foo(bar varchar , baz varchar='qux') returns varchar AS $$ lorem ipsum $$ language sql`
 		tt.wantFunctionName = "foo"
-		tt.wantArgModes = []string{"", ""}
-		tt.wantArgNames = []string{"bar", "baz"}
-		tt.wantArgTypes = []string{"varchar", "varchar"}
+		tt.wantRawArgs = "bar varchar , baz varchar='qux'"
 		tt.wantReturnType = "varchar"
 		assert(t, tt)
 	})
@@ -157,9 +138,7 @@ CREATE OR REPLACE FUNCTION years_compare( IN year1 integer DEFAULT NULL,
 		tt.dialect = sq.DialectPostgres
 		tt.item.SQL = `CREATE FUNCTION get_count_of_earners(salary_val IN decimal, alphabets []TEXT='{"a", "b", "c"}', names VARIADIC [][]text = ARRAY[ARRAY['a', 'b'], ARRAY['c', 'd']]) RETURNS integer AS $$ lorem ipsum $$ language plpgsql`
 		tt.wantFunctionName = "get_count_of_earners"
-		tt.wantArgModes = []string{"IN", "", "VARIADIC"}
-		tt.wantArgNames = []string{"salary_val", "alphabets", "names"}
-		tt.wantArgTypes = []string{"decimal", "[]TEXT", "[][]text"}
+		tt.wantRawArgs = `salary_val IN decimal, alphabets []TEXT='{"a", "b", "c"}', names VARIADIC [][]text = ARRAY[ARRAY['a', 'b'], ARRAY['c', 'd']]`
 		tt.wantReturnType = "integer"
 		assert(t, tt)
 	})
@@ -188,39 +167,6 @@ CREATE OR REPLACE FUNCTION years_compare( IN year1 integer DEFAULT NULL,
 		var tt TT
 		tt.dialect = sq.DialectPostgres
 		tt.item.SQL = `CREATE FUNCTION temp(`
-		err := tt.item.populateFunctionInfo(tt.dialect)
-		if err == nil {
-			t.Fatal(testcallers(), "expected error but got nil")
-		}
-	})
-
-	t.Run("(dialect == postgres) empty args", func(t *testing.T) {
-		t.Parallel()
-		var tt TT
-		tt.dialect = sq.DialectPostgres
-		tt.item.SQL = `CREATE FUNCTION temp(,,,)`
-		err := tt.item.populateFunctionInfo(tt.dialect)
-		if err == nil {
-			t.Fatal(testcallers(), "expected error but got nil")
-		}
-	})
-
-	t.Run("(dialect == postgres) invalid args", func(t *testing.T) {
-		t.Parallel()
-		var tt TT
-		tt.dialect = sq.DialectPostgres
-		tt.item.SQL = `CREATE FUNCTION temp(   DEFAULT 'test',='test')`
-		err := tt.item.populateFunctionInfo(tt.dialect)
-		if err == nil {
-			t.Fatal(testcallers(), "expected error but got nil")
-		}
-	})
-
-	t.Run("(dialect == postgres) invalid function", func(t *testing.T) {
-		t.Parallel()
-		var tt TT
-		tt.dialect = sq.DialectPostgres
-		tt.item.SQL = `CREATE temp()`
 		err := tt.item.populateFunctionInfo(tt.dialect)
 		if err == nil {
 			t.Fatal(testcallers(), "expected error but got nil")
@@ -258,10 +204,7 @@ func Test_DropFunctionCommand(t *testing.T) {
 			Function: Function{
 				FunctionSchema: "public",
 				FunctionName:   "my_function",
-				Args:           "TEXT, INT",
-				ArgNames:       []string{"IN", "IN"},
-				ArgModes:       []string{"arg_str", "arg_num"},
-				ArgTypes:       []string{"TEXT", "INT"},
+				RawArgs:        "TEXT, INT",
 			},
 			DropCascade: true,
 		}

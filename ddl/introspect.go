@@ -789,7 +789,7 @@ func (dbi *DatabaseIntrospector) GetFunctions(ctx context.Context, filter *Filte
 				&function.FunctionSchema,
 				&function.FunctionName,
 				&function.SQL,
-				&function.Args,
+				&function.RawArgs,
 				&function.ReturnType,
 			)
 			if err != nil {
