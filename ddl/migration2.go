@@ -30,117 +30,6 @@ type Migration2 struct {
 	DropExtensionCmds   []DropExtensionCommand
 }
 
-func (m *Migration2) WriteSQL(w io.Writer) error {
-	var err error
-	var written bool
-	writeCmd := func(cmd Command, isMySQLFunction bool) error {
-		query, args, _, err := sq.ToSQL(m.Dialect, cmd)
-		if err != nil {
-			return fmt.Errorf("building command (%s): %w", query, err)
-		}
-		if len(args) > 0 {
-			query, err = sq.Sprintf(m.Dialect, query, args)
-			if err != nil {
-				return fmt.Errorf("building command (%s): %w", query, err)
-			}
-		}
-		if !written {
-			written = true
-		} else {
-			io.WriteString(w, "\n\n")
-		}
-		query = strings.TrimSpace(query)
-		io.WriteString(w, query)
-		if isMySQLFunction {
-			io.WriteString(w, ";;")
-		} else {
-			if last := len(query) - 1; query[last] != ';' {
-				io.WriteString(w, ";")
-			}
-		}
-		return nil
-	}
-	for _, cmd := range m.CreateSchemaCmds {
-		err = writeCmd(cmd, false)
-		if err != nil {
-			return err
-		}
-	}
-	for _, cmd := range m.CreateExtensionCmds {
-		err = writeCmd(cmd, false)
-		if err != nil {
-			return err
-		}
-	}
-	if len(m.CreateFunctionCmds) > 0 {
-		io.WriteString(w, "\n\nDELIMITER ;;")
-		for _, cmd := range m.CreateFunctionCmds {
-			err = writeCmd(cmd, m.Dialect == sq.DialectMySQL)
-			if err != nil {
-				return err
-			}
-		}
-		io.WriteString(w, "\n\nDELIMITER ;")
-	}
-	for _, cmd := range m.CreateTableCmds {
-		err = writeCmd(cmd, false)
-		if err != nil {
-			return err
-		}
-	}
-	for _, cmd := range m.AlterTableCmds {
-		err = writeCmd(cmd, false)
-		if err != nil {
-			return err
-		}
-	}
-	for _, cmd := range m.CreateViewCmds {
-		err = writeCmd(cmd, false)
-		if err != nil {
-			return err
-		}
-	}
-	for _, cmd := range m.CreateIndexCmds {
-		err = writeCmd(cmd, false)
-		if err != nil {
-			return err
-		}
-	}
-	for _, cmd := range m.CreateTriggerCmds {
-		err = writeCmd(cmd, false)
-		if err != nil {
-			return err
-		}
-	}
-	for _, cmd := range m.AddForeignKeyCmds {
-		err = writeCmd(cmd, false)
-		if err != nil {
-			return err
-		}
-	}
-	for _, cmd := range m.DropViewCmds {
-		err = writeCmd(cmd, false)
-		if err != nil {
-			return err
-		}
-	}
-	for _, cmd := range m.DropTableCmds {
-		err = writeCmd(cmd, false)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func (m *Migration2) Exec(db sq.DB) error {
-	return m.ExecContext(context.Background(), db)
-}
-
-func (m *Migration2) ExecContext(ctx context.Context, db sq.DB) error {
-	return nil
-}
-
 func Migrate2(mode MigrationMode, gotCatalog, wantCatalog Catalog) (*Migration2, error) {
 	m := &Migration2{
 		Dialect:       gotCatalog.Dialect,
@@ -577,4 +466,265 @@ func diffColumn(dialect string, gotColumn, wantColumn Column) (alterColumnCmd Al
 		}
 	}
 	return alterColumnCmd, isDifferent
+}
+
+func (m *Migration2) WriteSQL(w io.Writer) error {
+	var err error
+	var written bool
+	writeCmd := func(cmd Command, isMySQLFunction bool) error {
+		query, args, _, err := sq.ToSQL(m.Dialect, cmd)
+		if err != nil {
+			return fmt.Errorf("building command (%s): %w", query, err)
+		}
+		if len(args) > 0 {
+			query, err = sq.Sprintf(m.Dialect, query, args)
+			if err != nil {
+				return fmt.Errorf("building command (%s): %w", query, err)
+			}
+		}
+		if !written {
+			written = true
+		} else {
+			io.WriteString(w, "\n\n")
+		}
+		query = strings.TrimSpace(query)
+		io.WriteString(w, query)
+		if isMySQLFunction {
+			io.WriteString(w, ";;")
+		} else {
+			if last := len(query) - 1; query[last] != ';' {
+				io.WriteString(w, ";")
+			}
+		}
+		return nil
+	}
+	for _, cmd := range m.CreateSchemaCmds {
+		err = writeCmd(cmd, false)
+		if err != nil {
+			return err
+		}
+	}
+	for _, cmd := range m.CreateExtensionCmds {
+		err = writeCmd(cmd, false)
+		if err != nil {
+			return err
+		}
+	}
+	if len(m.CreateFunctionCmds) > 0 {
+		if m.Dialect == sq.DialectMySQL {
+			io.WriteString(w, "\n\nDELIMITER ;;")
+		}
+		for _, cmd := range m.CreateFunctionCmds {
+			err = writeCmd(cmd, m.Dialect == sq.DialectMySQL)
+			if err != nil {
+				return err
+			}
+		}
+		if m.Dialect == sq.DialectMySQL {
+			io.WriteString(w, "\n\nDELIMITER ;")
+		}
+	}
+	for _, cmd := range m.CreateTableCmds {
+		err = writeCmd(cmd, false)
+		if err != nil {
+			return err
+		}
+	}
+	for _, cmd := range m.AlterTableCmds {
+		err = writeCmd(cmd, false)
+		if err != nil {
+			return err
+		}
+	}
+	for _, cmd := range m.CreateViewCmds {
+		err = writeCmd(cmd, false)
+		if err != nil {
+			return err
+		}
+	}
+	for _, cmd := range m.CreateIndexCmds {
+		err = writeCmd(cmd, false)
+		if err != nil {
+			return err
+		}
+	}
+	if len(m.CreateTriggerCmds) > 0 {
+		if m.Dialect == sq.DialectMySQL {
+			io.WriteString(w, "\n\nDELIMITER ;;")
+		}
+		for _, cmd := range m.CreateTriggerCmds {
+			err = writeCmd(cmd, m.Dialect == sq.DialectMySQL)
+			if err != nil {
+				return err
+			}
+		}
+		if m.Dialect == sq.DialectMySQL {
+			io.WriteString(w, "\n\nDELIMITER ;")
+		}
+	}
+	for _, cmd := range m.AddForeignKeyCmds {
+		err = writeCmd(cmd, false)
+		if err != nil {
+			return err
+		}
+	}
+	for _, cmd := range m.DropViewCmds {
+		err = writeCmd(cmd, false)
+		if err != nil {
+			return err
+		}
+	}
+	for _, cmd := range m.DropTableCmds {
+		err = writeCmd(cmd, false)
+		if err != nil {
+			return err
+		}
+	}
+	for _, cmd := range m.DropTriggerCmds {
+		err = writeCmd(cmd, false)
+		if err != nil {
+			return err
+		}
+	}
+	for _, cmd := range m.DropIndexCmds {
+		err = writeCmd(cmd, false)
+		if err != nil {
+			return err
+		}
+	}
+	for _, cmd := range m.AlterTableDropCmds {
+		err = writeCmd(cmd, false)
+		if err != nil {
+			return err
+		}
+	}
+	for _, cmd := range m.DropFunctionCmds {
+		err = writeCmd(cmd, false)
+		if err != nil {
+			return err
+		}
+	}
+	for _, cmd := range m.DropExtensionCmds {
+		err = writeCmd(cmd, false)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (m *Migration2) Exec(db sq.DB) error {
+	return m.ExecContext(context.Background(), db)
+}
+
+func (m *Migration2) ExecContext(ctx context.Context, db sq.DB) error {
+	var err error
+	execCmd := func(cmd Command) error {
+		query, args, _, err := sq.ToSQL(m.Dialect, cmd)
+		if err != nil {
+			return fmt.Errorf("building command (%s): %w", query, err)
+		}
+		_, err = db.ExecContext(ctx, query, args...)
+		if err != nil {
+			return fmt.Errorf("executing command (%s): %w", query, err)
+		}
+		return nil
+	}
+	for _, cmd := range m.CreateSchemaCmds {
+		err = execCmd(cmd)
+		if err != nil {
+			return err
+		}
+	}
+	for _, cmd := range m.CreateExtensionCmds {
+		err = execCmd(cmd)
+		if err != nil {
+			return err
+		}
+	}
+	for _, cmd := range m.CreateFunctionCmds {
+		err = execCmd(cmd)
+		if err != nil {
+			return err
+		}
+	}
+	for _, cmd := range m.CreateTableCmds {
+		err = execCmd(cmd)
+		if err != nil {
+			return err
+		}
+	}
+	for _, cmd := range m.AlterTableCmds {
+		err = execCmd(cmd)
+		if err != nil {
+			return err
+		}
+	}
+	for _, cmd := range m.CreateViewCmds {
+		err = execCmd(cmd)
+		if err != nil {
+			return err
+		}
+	}
+	for _, cmd := range m.CreateIndexCmds {
+		err = execCmd(cmd)
+		if err != nil {
+			return err
+		}
+	}
+	for _, cmd := range m.CreateTriggerCmds {
+		err = execCmd(cmd)
+		if err != nil {
+			return err
+		}
+	}
+	for _, cmd := range m.AddForeignKeyCmds {
+		err = execCmd(cmd)
+		if err != nil {
+			return err
+		}
+	}
+	for _, cmd := range m.DropViewCmds {
+		err = execCmd(cmd)
+		if err != nil {
+			return err
+		}
+	}
+	for _, cmd := range m.DropTableCmds {
+		err = execCmd(cmd)
+		if err != nil {
+			return err
+		}
+	}
+	for _, cmd := range m.DropTriggerCmds {
+		err = execCmd(cmd)
+		if err != nil {
+			return err
+		}
+	}
+	for _, cmd := range m.DropIndexCmds {
+		err = execCmd(cmd)
+		if err != nil {
+			return err
+		}
+	}
+	for _, cmd := range m.AlterTableDropCmds {
+		err = execCmd(cmd)
+		if err != nil {
+			return err
+		}
+	}
+	for _, cmd := range m.DropFunctionCmds {
+		err = execCmd(cmd)
+		if err != nil {
+			return err
+		}
+	}
+	for _, cmd := range m.DropExtensionCmds {
+		err = execCmd(cmd)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
