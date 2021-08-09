@@ -299,8 +299,8 @@ func (tbl FILM_ACTOR_REVIEW) DDL(dialect string, t *T) {
 		t.Trigger(sqliteLastUpdateTriggerFmt, sq.Literal("film_actor_review_last_update_after_update_trg"), tbl)
 	}
 	if dialect == sq.DialectPostgres {
-		t.NameIndex("film_actor_review_review_title_idx", sq.Literal(t.Sprintf("{} text_pattern_ops", tbl.REVIEW_TITLE)))
-		t.NameIndex("film_actor_review_review_body_idx", sq.Literal(t.Sprintf(`{} COLLATE "C"`, tbl.REVIEW_BODY)))
+		t.NameIndex("film_actor_review_review_title_idx", sq.Literal("review_title text_pattern_ops"))
+		t.NameIndex("film_actor_review_review_body_idx", sq.Literal(`review_body COLLATE "C"`))
 		t.NameIndex("film_actor_review_misc",
 			tbl.FILM_ID,
 			sq.Fieldf("SUBSTR({}, 2, 10)", tbl.REVIEW_BODY),
@@ -364,15 +364,10 @@ func NEW_STAFF(alias string) STAFF {
 
 func (tbl STAFF) DDL(dialect string, t *T) {
 	if dialect == sq.DialectSQLite {
-		t.Trigger(t.Sprintf(`
-CREATE TRIGGER staff_last_update_after_update_trg AFTER UPDATE ON {1} BEGIN
-    UPDATE {1} SET last_update = DATETIME('now') WHERE ROWID = NEW.ROWID;
-END;`, tbl))
+		t.Trigger(sqliteLastUpdateTriggerFmt, sq.Literal("staff_last_update_after_update_trg"), tbl)
 	}
 	if dialect == sq.DialectPostgres {
-		t.Trigger(t.Sprintf(`
-CREATE TRIGGER staff_last_update_before_update_trg BEFORE UPDATE ON {1}
-FOR EACH ROW EXECUTE PROCEDURE last_update_trg();`, tbl))
+		t.Trigger(postgresLastUpdateTriggerFmt, sq.Literal("staff_last_update_before_update_trg"), tbl)
 	}
 }
 
@@ -392,15 +387,10 @@ func NEW_STORE(alias string) STORE {
 
 func (tbl STORE) DDL(dialect string, t *T) {
 	if dialect == sq.DialectSQLite {
-		t.Trigger(t.Sprintf(`
-CREATE TRIGGER store_last_update_after_update_trg AFTER UPDATE ON {1} BEGIN
-    UPDATE {1} SET last_update = DATETIME('now') WHERE ROWID = NEW.ROWID;
-END;`, tbl))
+		t.Trigger(sqliteLastUpdateTriggerFmt, sq.Literal("store_last_update_after_update_trg"), tbl)
 	}
 	if dialect == sq.DialectPostgres {
-		t.Trigger(t.Sprintf(`
-CREATE TRIGGER store_last_update_before_update_trg BEFORE UPDATE ON {1}
-FOR EACH ROW EXECUTE PROCEDURE last_update_trg();`, tbl))
+		t.Trigger(postgresLastUpdateTriggerFmt, sq.Literal("store_last_update_before_update_trg"), tbl)
 	}
 }
 
@@ -426,15 +416,10 @@ func NEW_CUSTOMER(alias string) CUSTOMER {
 
 func (tbl CUSTOMER) DDL(dialect string, t *T) {
 	if dialect == sq.DialectSQLite {
-		t.Trigger(t.Sprintf(`
-CREATE TRIGGER customer_last_update_after_update_trg AFTER UPDATE ON {1} BEGIN
-    UPDATE {1} SET last_update = DATETIME('now') WHERE ROWID = NEW.ROWID;
-END;`, tbl))
+		t.Trigger(sqliteLastUpdateTriggerFmt, sq.Literal("customer_last_update_after_update_trg"), tbl)
 	}
 	if dialect == sq.DialectPostgres {
-		t.Trigger(t.Sprintf(`
-CREATE TRIGGER customer_last_update_before_update_trg BEFORE UPDATE ON {1}
-FOR EACH ROW EXECUTE PROCEDURE last_update_trg();`, tbl))
+		t.Trigger(postgresLastUpdateTriggerFmt, sq.Literal("customer_last_update_before_update_trg"), tbl)
 	}
 }
 
@@ -454,15 +439,10 @@ func NEW_INVENTORY(alias string) INVENTORY {
 
 func (tbl INVENTORY) DDL(dialect string, t *T) {
 	if dialect == sq.DialectSQLite {
-		t.Trigger(t.Sprintf(`
-CREATE TRIGGER inventory_last_update_after_update_trg AFTER UPDATE ON {1} BEGIN
-    UPDATE {1} SET last_update = DATETIME('now') WHERE ROWID = NEW.ROWID;
-END;`, tbl))
+		t.Trigger(sqliteLastUpdateTriggerFmt, sq.Literal("inventory_last_update_after_update_trg"), tbl)
 	}
 	if dialect == sq.DialectPostgres {
-		t.Trigger(t.Sprintf(`
-CREATE TRIGGER inventory_last_update_before_update_trg BEFORE UPDATE ON {1}
-FOR EACH ROW EXECUTE PROCEDURE last_update_trg();`, tbl))
+		t.Trigger(postgresLastUpdateTriggerFmt, sq.Literal("inventory_last_update_before_update_trg"), tbl)
 	}
 }
 
@@ -485,19 +465,14 @@ func NEW_RENTAL(alias string) RENTAL {
 
 func (tbl RENTAL) DDL(dialect string, t *T) {
 	if dialect == sq.DialectSQLite {
-		t.Trigger(t.Sprintf(`
-CREATE TRIGGER rental_last_update_after_update_trg AFTER UPDATE ON {1} BEGIN
-    UPDATE {1} SET last_update = DATETIME('now') WHERE ROWID = NEW.ROWID;
-END;`, tbl))
+		t.Trigger(sqliteLastUpdateTriggerFmt, sq.Literal("rental_last_update_after_update_trg"), tbl)
 	}
 	if dialect == sq.DialectPostgres {
 		t.NameExclude("rental_range_excl", "GIST", Exclusions{
 			{tbl.INVENTORY_ID, "="},
 			{sq.Fieldf("tstzrange({}, {}, '[]')", tbl.RENTAL_DATE, tbl.RETURN_DATE), "&&"},
 		})
-		t.Trigger(t.Sprintf(`
-CREATE TRIGGER rental_last_update_before_update_trg BEFORE UPDATE ON {1}
-FOR EACH ROW EXECUTE PROCEDURE last_update_trg();`, tbl))
+		t.Trigger(postgresLastUpdateTriggerFmt, sq.Literal("rental_last_update_before_update_trg"), tbl)
 	}
 }
 
