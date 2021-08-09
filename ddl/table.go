@@ -481,10 +481,10 @@ func (tbl *Table) loadColumnConfig(dialect, columnName, columnType, config strin
 }
 
 type CreateTableCommand struct {
-	CreateIfNotExists   bool
-	IncludeConstraints  bool
-	Table               Table
-	CreateIndexCommands []CreateIndexCommand // mysql-only
+	CreateIfNotExists  bool
+	IncludeConstraints bool
+	Table              Table
+	CreateIndexCmds    []CreateIndexCommand // mysql-only
 }
 
 func (cmd CreateTableCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
@@ -576,11 +576,11 @@ func (cmd CreateTableCommand) AppendSQL(dialect string, buf *bytes.Buffer, args 
 			}
 		}
 	}
-	if len(cmd.CreateIndexCommands) > 0 {
+	if len(cmd.CreateIndexCmds) > 0 {
 		if dialect != sq.DialectMySQL {
 			return fmt.Errorf("%s does not allow defining indexes inside CREATE TABLE", dialect)
 		}
-		for i, createIndexCmd := range cmd.CreateIndexCommands {
+		for i, createIndexCmd := range cmd.CreateIndexCmds {
 			if !newlineWritten {
 				buf.WriteString("\n")
 				newlineWritten = true
@@ -597,17 +597,17 @@ func (cmd CreateTableCommand) AppendSQL(dialect string, buf *bytes.Buffer, args 
 }
 
 type AlterTableCommand struct {
-	AlterIfExists           bool
-	TableSchema             string
-	TableName               string
-	AddColumnCommands       []AddColumnCommand
-	AlterColumnCommands     []AlterColumnCommand
-	DropColumnCommands      []DropColumnCommand
-	AddConstraintCommands   []AddConstraintCommand
-	AlterConstraintCommands []AlterConstraintCommand
-	DropConstraintCommands  []DropConstraintCommand
-	CreateIndexCommands     []CreateIndexCommand // mysql-only
-	DropIndexCommands       []DropIndexCommand   // mysql-only
+	AlterIfExists       bool
+	TableSchema         string
+	TableName           string
+	AddColumnCmds       []AddColumnCommand
+	AlterColumnCmds     []AlterColumnCommand
+	DropColumnCmds      []DropColumnCommand
+	AddConstraintCmds   []AddConstraintCommand
+	AlterConstraintCmds []AlterConstraintCommand
+	DropConstraintCmds  []DropConstraintCommand
+	CreateIndexCmds     []CreateIndexCommand // mysql-only
+	DropIndexCmds       []DropIndexCommand   // mysql-only
 }
 
 func (cmd AlterTableCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
@@ -623,8 +623,8 @@ func (cmd AlterTableCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *
 	}
 	buf.WriteString(sq.QuoteIdentifier(dialect, cmd.TableName))
 	if dialect == sq.DialectSQLite {
-		columnCmdCount := len(cmd.AddColumnCommands) + len(cmd.AlterColumnCommands) + len(cmd.DropColumnCommands)
-		indexCmdCount := len(cmd.CreateIndexCommands) + len(cmd.DropIndexCommands)
+		columnCmdCount := len(cmd.AddColumnCmds) + len(cmd.AlterColumnCmds) + len(cmd.DropColumnCmds)
+		indexCmdCount := len(cmd.CreateIndexCmds) + len(cmd.DropIndexCmds)
 		if columnCmdCount > 1 {
 			return fmt.Errorf("sqlite ALTER TABLE only supports one column modification")
 		}
@@ -632,7 +632,7 @@ func (cmd AlterTableCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *
 			return fmt.Errorf("sqlite ALTER TABLE does not support indexes")
 		}
 	} else if dialect == sq.DialectPostgres {
-		indexCmdCount := len(cmd.DropIndexCommands) + len(cmd.CreateIndexCommands)
+		indexCmdCount := len(cmd.DropIndexCmds) + len(cmd.CreateIndexCmds)
 		if indexCmdCount > 0 {
 			return fmt.Errorf("postgres ALTER TABLE does not support indexes")
 		}
@@ -646,21 +646,21 @@ func (cmd AlterTableCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *
 			buf.WriteString("\n    ,")
 		}
 	}
-	for _, addColumnCmd := range cmd.AddColumnCommands {
+	for _, addColumnCmd := range cmd.AddColumnCmds {
 		writeNewLine()
 		err := addColumnCmd.AppendSQL(dialect, buf, args, params)
 		if err != nil {
 			return fmt.Errorf("ALTER TABLE ADD COLUMN %s: %w", addColumnCmd.Column.ColumnName, err)
 		}
 	}
-	for _, alterColumnCmd := range cmd.AlterColumnCommands {
+	for _, alterColumnCmd := range cmd.AlterColumnCmds {
 		writeNewLine()
 		err := alterColumnCmd.AppendSQL(dialect, buf, args, params)
 		if err != nil {
 			return fmt.Errorf("ALTER TABLE ALTER COLUMN %s: %w", alterColumnCmd.Column.ColumnName, err)
 		}
 	}
-	for _, dropColumnCmd := range cmd.DropColumnCommands {
+	for _, dropColumnCmd := range cmd.DropColumnCmds {
 		writeNewLine()
 		err := dropColumnCmd.AppendSQL(dialect, buf, args, params)
 		if err != nil {
@@ -670,28 +670,28 @@ func (cmd AlterTableCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *
 	// DROP CONSTRAINT comes before ADD CONSTRAINT because that's the only way
 	// MySQL can rename constraints: by dropping and re-adding them in the same
 	// command.
-	for _, dropConstraintCmd := range cmd.DropConstraintCommands {
+	for _, dropConstraintCmd := range cmd.DropConstraintCmds {
 		writeNewLine()
 		err := dropConstraintCmd.AppendSQL(dialect, buf, args, params)
 		if err != nil {
 			return fmt.Errorf("ALTER TABLE DROP CONSTRAINT %s: %w", dropConstraintCmd.ConstraintName, err)
 		}
 	}
-	for _, addConstraintCmd := range cmd.AddConstraintCommands {
+	for _, addConstraintCmd := range cmd.AddConstraintCmds {
 		writeNewLine()
 		err := addConstraintCmd.AppendSQL(dialect, buf, args, params)
 		if err != nil {
 			return fmt.Errorf("ALTER TABLE ADD CONSTRAINT %s: %w", addConstraintCmd.Constraint.ConstraintName, err)
 		}
 	}
-	for _, alterConstraintCmd := range cmd.AlterConstraintCommands {
+	for _, alterConstraintCmd := range cmd.AlterConstraintCmds {
 		writeNewLine()
 		err := alterConstraintCmd.AppendSQL(dialect, buf, args, params)
 		if err != nil {
 			return fmt.Errorf("ALTER TABLE ALTER CONSTRAINT %s: %w", alterConstraintCmd.ConstraintName, err)
 		}
 	}
-	for _, createIndexCmd := range cmd.CreateIndexCommands {
+	for _, createIndexCmd := range cmd.CreateIndexCmds {
 		writeNewLine()
 		if dialect == sq.DialectMySQL {
 			buf.WriteString("ADD ")
@@ -701,7 +701,7 @@ func (cmd AlterTableCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *
 			return fmt.Errorf("ALTER TABLE INDEX %s: %w", createIndexCmd.Index.IndexName, err)
 		}
 	}
-	for _, dropIndexCmd := range cmd.DropIndexCommands {
+	for _, dropIndexCmd := range cmd.DropIndexCmds {
 		writeNewLine()
 		err := dropIndexCmd.AppendSQL(dialect, buf, args, params)
 		if err != nil {
@@ -712,20 +712,39 @@ func (cmd AlterTableCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *
 	return nil
 }
 
-func decomposeAlterTableCommandSQLite(alterTableCmd *AlterTableCommand) []Command {
-	alterTableCmds := make([]AlterTableCommand, 0, len(alterTableCmd.AddColumnCommands)+len(alterTableCmd.DropColumnCommands))
-	for _, addColumnCmd := range alterTableCmd.AddColumnCommands {
+func decomposeAlterTableCommandSQLite2(alterTableCmd AlterTableCommand) []AlterTableCommand {
+	alterTableCmds := make([]AlterTableCommand, 0, len(alterTableCmd.AddColumnCmds)+len(alterTableCmd.DropColumnCmds))
+	for _, addColumnCmd := range alterTableCmd.AddColumnCmds {
 		alterTableCmds = append(alterTableCmds, AlterTableCommand{
-			TableSchema:       alterTableCmd.TableSchema,
-			TableName:         alterTableCmd.TableName,
-			AddColumnCommands: []AddColumnCommand{addColumnCmd},
+			TableSchema:   alterTableCmd.TableSchema,
+			TableName:     alterTableCmd.TableName,
+			AddColumnCmds: []AddColumnCommand{addColumnCmd},
 		})
 	}
-	for _, dropColumnCmd := range alterTableCmd.DropColumnCommands {
+	for _, dropColumnCmd := range alterTableCmd.DropColumnCmds {
 		alterTableCmds = append(alterTableCmds, AlterTableCommand{
-			TableSchema:        alterTableCmd.TableSchema,
-			TableName:          alterTableCmd.TableName,
-			DropColumnCommands: []DropColumnCommand{dropColumnCmd},
+			TableSchema:    alterTableCmd.TableSchema,
+			TableName:      alterTableCmd.TableName,
+			DropColumnCmds: []DropColumnCommand{dropColumnCmd},
+		})
+	}
+	return alterTableCmds
+}
+
+func decomposeAlterTableCommandSQLite(alterTableCmd *AlterTableCommand) []Command {
+	alterTableCmds := make([]AlterTableCommand, 0, len(alterTableCmd.AddColumnCmds)+len(alterTableCmd.DropColumnCmds))
+	for _, addColumnCmd := range alterTableCmd.AddColumnCmds {
+		alterTableCmds = append(alterTableCmds, AlterTableCommand{
+			TableSchema:   alterTableCmd.TableSchema,
+			TableName:     alterTableCmd.TableName,
+			AddColumnCmds: []AddColumnCommand{addColumnCmd},
+		})
+	}
+	for _, dropColumnCmd := range alterTableCmd.DropColumnCmds {
+		alterTableCmds = append(alterTableCmds, AlterTableCommand{
+			TableSchema:    alterTableCmd.TableSchema,
+			TableName:      alterTableCmd.TableName,
+			DropColumnCmds: []DropColumnCommand{dropColumnCmd},
 		})
 	}
 	cmds := make([]Command, len(alterTableCmds))

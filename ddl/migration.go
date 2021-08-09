@@ -203,10 +203,10 @@ func migrateTable(m *Migration, mode MigrationMode, gotSchema Schema, wantTable 
 					alterTableCmd = &AlterTableCommand{TableSchema: wantTable.TableSchema, TableName: wantTable.TableName}
 				}
 				if addColumnCmd != nil {
-					alterTableCmd.AddColumnCommands = append(alterTableCmd.AddColumnCommands, *addColumnCmd)
+					alterTableCmd.AddColumnCmds = append(alterTableCmd.AddColumnCmds, *addColumnCmd)
 				}
 				if alterColumnCmd != nil {
-					alterTableCmd.AlterColumnCommands = append(alterTableCmd.AlterColumnCommands, *alterColumnCmd)
+					alterTableCmd.AlterColumnCmds = append(alterTableCmd.AlterColumnCmds, *alterColumnCmd)
 				}
 			}
 		}
@@ -233,7 +233,7 @@ func migrateTable(m *Migration, mode MigrationMode, gotSchema Schema, wantTable 
 				if fkeyCmd == nil {
 					fkeyCmd = &AlterTableCommand{TableSchema: wantTable.TableSchema, TableName: wantTable.TableName}
 				}
-				fkeyCmd.AddConstraintCommands = append(fkeyCmd.AddConstraintCommands, addConstraintCmd)
+				fkeyCmd.AddConstraintCmds = append(fkeyCmd.AddConstraintCmds, addConstraintCmd)
 			default:
 				if createTableCmd == nil || createTableCmd.IncludeConstraints {
 					continue
@@ -241,7 +241,7 @@ func migrateTable(m *Migration, mode MigrationMode, gotSchema Schema, wantTable 
 				if alterTableCmd == nil {
 					alterTableCmd = &AlterTableCommand{TableSchema: wantTable.TableSchema, TableName: wantTable.TableName}
 				}
-				alterTableCmd.AddConstraintCommands = append(alterTableCmd.AddConstraintCommands, addConstraintCmd)
+				alterTableCmd.AddConstraintCmds = append(alterTableCmd.AddConstraintCmds, addConstraintCmd)
 			}
 		}
 	}
@@ -256,12 +256,12 @@ func migrateTable(m *Migration, mode MigrationMode, gotSchema Schema, wantTable 
 		switch m.Dialect {
 		case sq.DialectMySQL:
 			if createTableCmd != nil {
-				createTableCmd.CreateIndexCommands = append(createTableCmd.CreateIndexCommands, createIndexCmd)
+				createTableCmd.CreateIndexCmds = append(createTableCmd.CreateIndexCmds, createIndexCmd)
 			} else {
 				if alterTableCmd == nil {
 					alterTableCmd = &AlterTableCommand{TableSchema: wantTable.TableSchema, TableName: wantTable.TableName}
 				}
-				alterTableCmd.CreateIndexCommands = append(alterTableCmd.CreateIndexCommands, createIndexCmd)
+				alterTableCmd.CreateIndexCmds = append(alterTableCmd.CreateIndexCmds, createIndexCmd)
 			}
 		default:
 			createIndexCmd.CreateIfNotExists = true
@@ -425,7 +425,7 @@ func dropExtraneousObjects(m *Migration, mode MigrationMode, gotCatalog, wantCat
 						dropColumnCmd.DropIfExists = true
 						dropColumnCmd.DropCascade = true
 					}
-					alterTableCmd.DropColumnCommands = append(alterTableCmd.DropColumnCommands, dropColumnCmd)
+					alterTableCmd.DropColumnCmds = append(alterTableCmd.DropColumnCmds, dropColumnCmd)
 				}
 			}
 			// drop constraints
@@ -437,7 +437,7 @@ func dropExtraneousObjects(m *Migration, mode MigrationMode, gotCatalog, wantCat
 							dropConstraintCmd.DropIfExists = true
 							dropConstraintCmd.DropCascade = true
 						}
-						alterTableCmd.DropConstraintCommands = append(alterTableCmd.DropConstraintCommands, dropConstraintCmd)
+						alterTableCmd.DropConstraintCmds = append(alterTableCmd.DropConstraintCmds, dropConstraintCmd)
 					}
 				}
 			}
@@ -458,7 +458,7 @@ func dropExtraneousObjects(m *Migration, mode MigrationMode, gotCatalog, wantCat
 						dropIndexCmd.DropIfExists = true
 						dropIndexCmds = append(dropIndexCmds, &dropIndexCmd)
 					case sq.DialectMySQL:
-						alterTableCmd.DropIndexCommands = append(alterTableCmd.DropIndexCommands, dropIndexCmd)
+						alterTableCmd.DropIndexCmds = append(alterTableCmd.DropIndexCmds, dropIndexCmd)
 					}
 				}
 			}
@@ -477,7 +477,7 @@ func dropExtraneousObjects(m *Migration, mode MigrationMode, gotCatalog, wantCat
 					dropTriggerCmds = append(dropTriggerCmds, &dropTriggerCmd)
 				}
 			}
-			if len(alterTableCmd.DropColumnCommands) > 0 || len(alterTableCmd.DropConstraintCommands) > 0 || len(alterTableCmd.DropIndexCommands) > 0 {
+			if len(alterTableCmd.DropColumnCmds) > 0 || len(alterTableCmd.DropConstraintCmds) > 0 || len(alterTableCmd.DropIndexCmds) > 0 {
 				alterTableCmds = append(alterTableCmds, alterTableCmd)
 			}
 		}

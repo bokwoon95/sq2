@@ -232,28 +232,3 @@ func decomposeDropViewCommandSQLite(dropViewCmd *DropViewCommand) []Command {
 	}
 	return cmds
 }
-
-type RenameViewCommand struct {
-	AlterViewIfExists bool
-	ViewSchema        string
-	ViewName          string
-	RenameToName      string
-}
-
-func (cmd RenameViewCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
-	if dialect == sq.DialectSQLite {
-		return fmt.Errorf("sqlite does not support renaming views")
-	}
-	buf.WriteString("ALTER VIEW ")
-	if cmd.AlterViewIfExists {
-		if dialect != sq.DialectPostgres {
-			return fmt.Errorf("%s does not support ALTER VIEW IF EXISTS", dialect)
-		}
-		buf.WriteString("IF EXISTS ")
-	}
-	if cmd.ViewSchema != "" {
-		buf.WriteString(sq.QuoteIdentifier(dialect, cmd.ViewSchema) + ".")
-	}
-	buf.WriteString(sq.QuoteIdentifier(dialect, cmd.ViewName) + " RENAME TO " + sq.QuoteIdentifier(dialect, cmd.RenameToName))
-	return nil
-}
