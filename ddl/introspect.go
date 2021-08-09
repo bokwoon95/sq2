@@ -287,7 +287,6 @@ func (dbi *DatabaseIntrospector) GetTables(ctx context.Context, filter *Filter) 
 			return nil, err
 		}
 	case sq.DialectPostgres:
-		// TODO: convert this to use pg_catalog (because faster)
 		rows, err = dbi.queryContext(ctx, embeddedFiles, "sql/postgres_tables.sql", filter)
 		if err != nil {
 			return nil, err
@@ -435,7 +434,6 @@ func (dbi *DatabaseIntrospector) GetConstraints(ctx context.Context, filter *Fil
 			return nil, err
 		}
 	case sq.DialectPostgres:
-		// TODO: convert this to use pg_catalog (because faster)
 		rows, err = dbi.queryContext(ctx, embeddedFiles, "sql/postgres_constraints.sql", filter)
 		if err != nil {
 			return nil, err

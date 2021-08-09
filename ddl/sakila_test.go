@@ -26,6 +26,15 @@ func NEW_ACTOR(alias string) ACTOR {
 	return tbl
 }
 
+const sqliteLastUpdateTriggerFmt = `
+CREATE TRIGGER {1} AFTER UPDATE ON {2} BEGIN
+    UPDATE {2} SET last_update = DATETIME('now') WHERE ROWID = NEW.ROWID;
+END;`
+
+const postgresLastUpdateTriggerFmt = `
+CREATE TRIGGER {1} BEFORE UPDATE ON {2}
+FOR EACH ROW EXECUTE PROCEDURE last_update_trg();`
+
 func (tbl ACTOR) DDL(dialect string, t *T) {
 	if dialect == sq.DialectSQLite {
 		// TODO: t.Trigger(format string, values ...interface{})

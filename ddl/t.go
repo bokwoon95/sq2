@@ -694,9 +694,13 @@ type TTrigger struct {
 	triggerPosition int
 }
 
-func (t *T) Trigger(sql string) {
+func (t *T) Trigger(format string, values ...interface{}) {
+	sql, err := sprintf(t.dialect, format, values, nil)
+	if err != nil {
+		panicErr(fmt.Errorf("Trigger: %w", err))
+	}
 	trigger := Trigger{SQL: strings.TrimSpace(sql)}
-	err := trigger.populateTriggerInfo(t.dialect)
+	err = trigger.populateTriggerInfo(t.dialect)
 	if err != nil {
 		panicErr(fmt.Errorf("Trigger: %w", err))
 	}

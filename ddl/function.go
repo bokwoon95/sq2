@@ -18,7 +18,6 @@ type Function struct {
 	Ignore         bool   `json:",omitempty"`
 }
 
-// TODO: deprecate ArgModes, ArgNames, ArgTypes, IsIndependent
 func (fun *Function) populateFunctionInfo(dialect string) error {
 	const (
 		PRE_FUNCTION = iota
