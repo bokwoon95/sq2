@@ -27,7 +27,7 @@ func (v *V) IsMaterialized() {
 	}
 }
 
-func (v *V) AsQuery(query sq.Query) {
+func (v *V) SetQuery(query sq.Query) {
 	if query == nil {
 		panicErr(fmt.Errorf("query is nil"))
 	}
