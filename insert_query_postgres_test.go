@@ -1,9 +1,7 @@
-package sq_test
+package sq
 
 import (
 	"testing"
-
-	. "github.com/bokwoon95/sq"
 )
 
 func Test_PostgresInsertQuery(t *testing.T) {

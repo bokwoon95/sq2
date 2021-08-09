@@ -1,9 +1,7 @@
-package sq_test
+package sq
 
 import (
 	"testing"
-
-	. "github.com/bokwoon95/sq"
 )
 
 func Test_MySQLInsertQuery(t *testing.T) {
