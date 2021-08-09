@@ -22,6 +22,7 @@ type Function struct {
 	Ignore         bool     `json:",omitempty"`
 }
 
+// TODO: deprecate ArgModes, ArgNames, ArgTypes, IsIndependent
 func (fun *Function) populateFunctionInfo(dialect string) error {
 	const (
 		PRE_FUNCTION = iota
@@ -192,7 +193,7 @@ type DropFunctionCommand struct {
 	DropCascade  bool
 }
 
-func (cmd *DropFunctionCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
+func (cmd DropFunctionCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
 	if dialect == sq.DialectSQLite {
 		return fmt.Errorf("sqlite does not support functions")
 	}
@@ -210,26 +211,5 @@ func (cmd *DropFunctionCommand) AppendSQL(dialect string, buf *bytes.Buffer, arg
 	if cmd.DropCascade {
 		buf.WriteString(" CASCADE")
 	}
-	return nil
-}
-
-type RenameFunctionCommand struct {
-	Function     Function
-	RenameToName string
-}
-
-func (cmd *RenameFunctionCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
-	if dialect == sq.DialectSQLite || dialect == sq.DialectMySQL {
-		return fmt.Errorf("%s does not support renaming functions", dialect)
-	}
-	buf.WriteString("ALTER FUNCTION ")
-	if cmd.Function.FunctionSchema != "" {
-		buf.WriteString(sq.QuoteIdentifier(dialect, cmd.Function.FunctionSchema) + ".")
-	}
-	buf.WriteString(sq.QuoteIdentifier(dialect, cmd.Function.FunctionName))
-	if dialect == sq.DialectPostgres {
-		buf.WriteString("(" + strings.Join(cmd.Function.ArgTypes, ", ") + ")")
-	}
-	buf.WriteString(" RENAME TO " + sq.QuoteIdentifier(dialect, cmd.RenameToName))
 	return nil
 }

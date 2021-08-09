@@ -253,7 +253,7 @@ func Test_DropFunctionCommand(t *testing.T) {
 		t.Parallel()
 		var tt TT
 		tt.dialect = sq.DialectPostgres
-		tt.item = &DropFunctionCommand{
+		tt.item = DropFunctionCommand{
 			DropIfExists: true,
 			Function: Function{
 				FunctionSchema: "public",
@@ -273,73 +273,8 @@ func Test_DropFunctionCommand(t *testing.T) {
 		t.Parallel()
 		var tt TT
 		tt.dialect = sq.DialectSQLite
-		tt.item = &DropFunctionCommand{
+		tt.item = DropFunctionCommand{
 			Function: Function{FunctionName: "my_function"},
-		}
-		_, _, _, err := sq.ToSQL(tt.dialect, tt.item)
-		if err == nil {
-			t.Fatal(testcallers(), "expected error but got nil")
-		}
-	})
-}
-
-func Test_RenameFunctionCommand(t *testing.T) {
-	type TT struct {
-		dialect   string
-		item      Command
-		wantQuery string
-		wantArgs  []interface{}
-	}
-
-	assert := func(t *testing.T, tt TT) {
-		gotQuery, gotArgs, _, err := sq.ToSQL(tt.dialect, tt.item)
-		if err != nil {
-			t.Fatal(testcallers(), err)
-		}
-		if diff := testdiff(gotQuery, tt.wantQuery); diff != "" {
-			t.Error(testcallers(), diff)
-		}
-		if diff := testdiff(gotArgs, tt.wantArgs); diff != "" {
-			t.Error(testcallers(), diff)
-		}
-	}
-
-	t.Run("(dialect == postgres)", func(t *testing.T) {
-		t.Parallel()
-		var tt TT
-		tt.dialect = sq.DialectPostgres
-		tt.item = &RenameFunctionCommand{
-			Function: Function{
-				FunctionSchema: "public",
-				FunctionName:   "my_function",
-			},
-			RenameToName: "my_new_function",
-		}
-		tt.wantQuery = `ALTER FUNCTION public.my_function() RENAME TO my_new_function`
-		assert(t, tt)
-	})
-
-	t.Run("(dialect == sqlite)", func(t *testing.T) {
-		t.Parallel()
-		var tt TT
-		tt.dialect = sq.DialectSQLite
-		tt.item = &RenameFunctionCommand{
-			Function:     Function{FunctionName: "my_function"},
-			RenameToName: "my_new_function",
-		}
-		_, _, _, err := sq.ToSQL(tt.dialect, tt.item)
-		if err == nil {
-			t.Fatal(testcallers(), "expected error but got nil")
-		}
-	})
-
-	t.Run("(dialect == mysql)", func(t *testing.T) {
-		t.Parallel()
-		var tt TT
-		tt.dialect = sq.DialectMySQL
-		tt.item = &RenameFunctionCommand{
-			Function:     Function{FunctionName: "my_function"},
-			RenameToName: "my_new_function",
 		}
 		_, _, _, err := sq.ToSQL(tt.dialect, tt.item)
 		if err == nil {

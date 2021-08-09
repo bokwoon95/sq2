@@ -496,7 +496,7 @@ func dropExtraneousObjects(m *Migration, mode MigrationMode, gotCatalog, wantCat
 		// drop functions
 		for _, gotFunction := range gotSchema.Functions {
 			if positions := wantSchema.CachedFunctionPositions(gotFunction.FunctionName); len(positions) == 0 {
-				dropFunctionCmds = append(dropFunctionCmds, &DropFunctionCommand{
+				dropFunctionCmds = append(dropFunctionCmds, DropFunctionCommand{
 					DropIfExists: true,
 					Function:     gotFunction,
 					DropCascade:  true,
