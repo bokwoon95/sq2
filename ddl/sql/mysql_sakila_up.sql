@@ -71,7 +71,7 @@ CREATE TABLE IF NOT EXISTS customer (
 );
 
 CREATE TABLE IF NOT EXISTS film (
-    film_id INTEGER
+    film_id INT AUTO_INCREMENT
     ,title VARCHAR(255) NOT NULL
     ,description TEXT
     ,release_year INT
@@ -178,7 +178,7 @@ CREATE TABLE IF NOT EXISTS rental (
 );
 
 CREATE TABLE IF NOT EXISTS staff (
-    staff_id INTEGER
+    staff_id INT AUTO_INCREMENT
     ,first_name VARCHAR(45) NOT NULL
     ,last_name VARCHAR(45) NOT NULL
     ,address_id INT NOT NULL

@@ -162,7 +162,7 @@ func (tbl LANGUAGE) DDL(dialect string, t *T) {
 
 type FILM struct {
 	sq.TableInfo
-	FILM_ID              sq.NumberField `ddl:"type=INTEGER primarykey"`
+	FILM_ID              sq.NumberField `ddl:"sqlite:type=INTEGER primarykey auto_increment identity"`
 	TITLE                sq.StringField `ddl:"notnull index"`
 	DESCRIPTION          sq.StringField `ddl:"type=TEXT"`
 	RELEASE_YEAR         sq.NumberField
@@ -343,7 +343,7 @@ func (tbl FILM_CATEGORY) DDL(dialect string, t *T) {
 
 type STAFF struct {
 	sq.TableInfo
-	STAFF_ID    sq.NumberField  `ddl:"type=INTEGER primarykey"`
+	STAFF_ID    sq.NumberField  `ddl:"sqlite:type=INTEGER primarykey auto_increment identity"`
 	FIRST_NAME  sq.StringField  `ddl:"mysql:type=VARCHAR(45) notnull"`
 	LAST_NAME   sq.StringField  `ddl:"mysql:type=VARCHAR(45) notnull"`
 	ADDRESS_ID  sq.NumberField  `ddl:"notnull references={address.address_id onupdate=cascade ondelete=restrict}"`

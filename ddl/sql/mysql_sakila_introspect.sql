@@ -75,7 +75,7 @@ CREATE TABLE IF NOT EXISTS db.customer (
 );
 
 CREATE TABLE IF NOT EXISTS db.film (
-    film_id INT NOT NULL
+    film_id INT NOT NULL AUTO_INCREMENT
     ,title VARCHAR(255) NOT NULL COLLATE utf8mb4_0900_ai_ci
     ,description TEXT NOT NULL COLLATE utf8mb4_0900_ai_ci
     ,release_year INT NOT NULL
@@ -189,7 +189,7 @@ CREATE TABLE IF NOT EXISTS db.rental (
 );
 
 CREATE TABLE IF NOT EXISTS db.staff (
-    staff_id INT NOT NULL
+    staff_id INT NOT NULL AUTO_INCREMENT
     ,first_name VARCHAR(45) NOT NULL COLLATE utf8mb4_0900_ai_ci
     ,last_name VARCHAR(45) NOT NULL COLLATE utf8mb4_0900_ai_ci
     ,address_id INT NOT NULL
