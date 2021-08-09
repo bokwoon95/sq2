@@ -1,10 +1,24 @@
 package sq
 
-type PostgresInsertQuery struct {
-	InsertQuery
-}
+import "bytes"
+
+type PostgresInsertQuery InsertQuery
 
 var _ Query = PostgresInsertQuery{}
+
+func (q PostgresInsertQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
+	return InsertQuery(q).AppendSQL(dialect, buf, args, params)
+}
+
+func (q PostgresInsertQuery) SetFetchableFields(fields []Field) (Query, error) {
+	return InsertQuery(q).SetFetchableFields(fields)
+}
+
+func (q PostgresInsertQuery) GetFetchableFields() ([]Field, error) {
+	return InsertQuery(q).GetFetchableFields()
+}
+
+func (q PostgresInsertQuery) GetDialect() string { return q.Dialect }
 
 func (d PostgresDialect) InsertWith(ctes ...CTE) PostgresInsertQuery {
 	var q PostgresInsertQuery

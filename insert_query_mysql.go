@@ -1,10 +1,24 @@
 package sq
 
-type MySQLInsertQuery struct {
-	InsertQuery
-}
+import "bytes"
+
+type MySQLInsertQuery InsertQuery
 
 var _ Query = MySQLInsertQuery{}
+
+func (q MySQLInsertQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
+	return InsertQuery(q).AppendSQL(dialect, buf, args, params)
+}
+
+func (q MySQLInsertQuery) SetFetchableFields(fields []Field) (Query, error) {
+	return InsertQuery(q).SetFetchableFields(fields)
+}
+
+func (q MySQLInsertQuery) GetFetchableFields() ([]Field, error) {
+	return InsertQuery(q).GetFetchableFields()
+}
+
+func (q MySQLInsertQuery) GetDialect() string { return q.Dialect }
 
 func (d MySQLDialect) InsertInto(table SchemaTable) MySQLInsertQuery {
 	var q MySQLInsertQuery
