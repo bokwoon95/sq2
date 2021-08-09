@@ -4,6 +4,15 @@ import (
 	"github.com/bokwoon95/sq"
 )
 
+const sqliteLastUpdateTriggerFmt = `
+CREATE TRIGGER {1} AFTER UPDATE ON {2} BEGIN
+    UPDATE {2} SET last_update = DATETIME('now') WHERE ROWID = NEW.ROWID;
+END;`
+
+const postgresLastUpdateTriggerFmt = `
+CREATE TRIGGER {1} BEFORE UPDATE ON {2}
+FOR EACH ROW EXECUTE PROCEDURE last_update_trg();`
+
 type ACTOR struct {
 	sq.TableInfo
 	ACTOR_ID           sq.NumberField `ddl:"sqlite:type=INTEGER primarykey auto_increment autoincrement identity"`
@@ -26,34 +35,12 @@ func NEW_ACTOR(alias string) ACTOR {
 	return tbl
 }
 
-const sqliteLastUpdateTriggerFmt = `
-CREATE TRIGGER {1} AFTER UPDATE ON {2} BEGIN
-    UPDATE {2} SET last_update = DATETIME('now') WHERE ROWID = NEW.ROWID;
-END;`
-
-const postgresLastUpdateTriggerFmt = `
-CREATE TRIGGER {1} BEFORE UPDATE ON {2}
-FOR EACH ROW EXECUTE PROCEDURE last_update_trg();`
-
 func (tbl ACTOR) DDL(dialect string, t *T) {
 	if dialect == sq.DialectSQLite {
-		// TODO: t.Trigger(format string, values ...interface{})
-		/*
-		   CREATE TRIGGER {1} AFTER UPDATE ON {2} BEGIN
-		       UPDATE {2} SET last_update = DATETIME('now') WHERE ROWID = NEW.ROWID;
-		   END;
-		*/
-		// t.Trigger(sqliteLastUpdate, sq.Literal("actor_last_update_after_update_trg"), tbl)
-		t.Trigger(t.Sprintf(`
-CREATE TRIGGER actor_last_update_after_update_trg AFTER UPDATE ON {1} BEGIN
-    UPDATE {1} SET last_update = DATETIME('now') WHERE ROWID = NEW.ROWID;
-END;`, tbl))
 		t.Trigger(sqliteLastUpdateTriggerFmt, sq.Literal("actor_last_update_after_update_trg"), tbl)
 	}
 	if dialect == sq.DialectPostgres {
-		t.Trigger(t.Sprintf(`
-CREATE TRIGGER actor_last_update_before_update_trg BEFORE UPDATE ON {1}
-FOR EACH ROW EXECUTE PROCEDURE last_update_trg();`, tbl))
+		t.Trigger(postgresLastUpdateTriggerFmt, sq.Literal("actor_last_update_before_update_trg"), tbl)
 	}
 }
 
@@ -72,15 +59,10 @@ func NEW_CATEGORY(alias string) CATEGORY {
 
 func (tbl CATEGORY) DDL(dialect string, t *T) {
 	if dialect == sq.DialectSQLite {
-		t.Trigger(t.Sprintf(`
-CREATE TRIGGER category_last_update_after_update_trg AFTER UPDATE ON {1} BEGIN
-    UPDATE {1} SET last_update = DATETIME('now') WHERE ROWID = NEW.ROWID;
-END;`, tbl))
+		t.Trigger(sqliteLastUpdateTriggerFmt, sq.Literal("category_last_update_after_update_trg"), tbl)
 	}
 	if dialect == sq.DialectPostgres {
-		t.Trigger(t.Sprintf(`
-CREATE TRIGGER category_last_update_before_update_trg BEFORE UPDATE ON {1}
-FOR EACH ROW EXECUTE PROCEDURE last_update_trg();`, tbl))
+		t.Trigger(postgresLastUpdateTriggerFmt, sq.Literal("category_last_update_before_update_trg"), tbl)
 	}
 }
 

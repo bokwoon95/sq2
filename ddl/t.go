@@ -103,6 +103,7 @@ func sprintf(dialect string, format string, values []interface{}, excludedTableQ
 	return str, nil
 }
 
+// TODO: deprecate this function
 func (t *T) Sprintf(format string, values ...interface{}) string {
 	expr, err := sprintf(t.dialect, format, values, []string{t.tbl.TableName})
 	// TODO: is excluding the table name okay here? What if I use a Sprintf in a
