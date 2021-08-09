@@ -5,7 +5,8 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"os"
+	"io/fs"
+	"strings"
 	"testing"
 
 	"github.com/bokwoon95/sq"
@@ -90,62 +91,61 @@ func Test_Sakila2SQLite(t *testing.T) {
 		buf.Reset()
 		bufpool.Put(buf)
 	}()
-	upMigration.WriteSQL(os.Stdout)
-	// err = upMigration.WriteSQL(buf)
-	// if err != nil {
-	// 	t.Fatal(testcallers(), err)
-	// }
-	// gotUpSQL := buf.String()
-	// b, err := fs.ReadFile(embeddedFiles, "sql/sqlite_sakila_up.sql")
-	// if err != nil {
-	// 	t.Fatal(testcallers(), err)
-	// }
-	// wantUpSQL := strings.TrimSpace(string(b))
-	// if diff := testdiff(gotUpSQL, wantUpSQL); diff != "" {
-	// 	t.Fatal(testcallers(), diff)
-	// }
+	err = upMigration.WriteSQL(buf)
+	if err != nil {
+		t.Fatal(testcallers(), err)
+	}
+	gotUpSQL := buf.String()
+	b, err := fs.ReadFile(embeddedFiles, "sql/sqlite_sakila_up.sql")
+	if err != nil {
+		t.Fatal(testcallers(), err)
+	}
+	wantUpSQL := strings.TrimSpace(string(b))
+	if diff := testdiff(gotUpSQL, wantUpSQL); diff != "" {
+		t.Fatal(testcallers(), diff)
+	}
 	err = upMigration.Exec(tx)
 	if err != nil {
 		t.Fatal(testcallers(), err)
 	}
-	// gotCatalog, err := NewCatalog(dialect, WithDB(tx, &Filter{SortOutput: true}))
-	// if err != nil {
-	// 	t.Fatal(testcallers(), err)
-	// }
-	// introspectMigration, err := Migrate(CreateMissing|UpdateExisting, Catalog{}, gotCatalog)
-	// if err != nil {
-	// 	t.Fatal(testcallers(), err)
-	// }
-	// buf.Reset()
-	// err = introspectMigration.WriteSQL(buf)
-	// if err != nil {
-	// 	t.Fatal(testcallers(), err)
-	// }
-	// gotIntrospectSQL := buf.String()
-	// b, err = fs.ReadFile(embeddedFiles, "sql/sqlite_sakila_introspect.sql")
-	// if err != nil {
-	// 	t.Fatal(testcallers(), err)
-	// }
-	// wantIntrospectSQL := strings.TrimSpace(string(b))
-	// if diff := testdiff(gotIntrospectSQL, wantIntrospectSQL); diff != "" {
-	// 	t.Fatal(testcallers(), diff)
-	// }
-	// downMigration, err := Migrate(DropExtraneous|DropCascade, gotCatalog, Catalog{})
-	// if err != nil {
-	// 	t.Fatal(testcallers(), err)
-	// }
-	// buf.Reset()
-	// err = downMigration.WriteSQL(buf)
-	// if err != nil {
-	// 	t.Fatal(testcallers(), err)
-	// }
-	// gotDownSQL := buf.String()
-	// b, err = fs.ReadFile(embeddedFiles, "sql/sqlite_sakila_down.sql")
-	// if err != nil {
-	// 	t.Fatal(testcallers(), err)
-	// }
-	// wantDownSQL := strings.TrimSpace(string(b))
-	// if diff := testdiff(gotDownSQL, wantDownSQL); diff != "" {
-	// 	t.Fatal(testcallers(), diff)
-	// }
+	gotCatalog, err := NewCatalog(dialect, WithDB(tx, &Filter{SortOutput: true}))
+	if err != nil {
+		t.Fatal(testcallers(), err)
+	}
+	introspectMigration, err := Migrate(CreateMissing|UpdateExisting, Catalog{}, gotCatalog)
+	if err != nil {
+		t.Fatal(testcallers(), err)
+	}
+	buf.Reset()
+	err = introspectMigration.WriteSQL(buf)
+	if err != nil {
+		t.Fatal(testcallers(), err)
+	}
+	gotIntrospectSQL := buf.String()
+	b, err = fs.ReadFile(embeddedFiles, "sql/sqlite_sakila_introspect.sql")
+	if err != nil {
+		t.Fatal(testcallers(), err)
+	}
+	wantIntrospectSQL := strings.TrimSpace(string(b))
+	if diff := testdiff(gotIntrospectSQL, wantIntrospectSQL); diff != "" {
+		t.Fatal(testcallers(), diff)
+	}
+	downMigration, err := Migrate(DropExtraneous|DropCascade, gotCatalog, Catalog{})
+	if err != nil {
+		t.Fatal(testcallers(), err)
+	}
+	buf.Reset()
+	err = downMigration.WriteSQL(buf)
+	if err != nil {
+		t.Fatal(testcallers(), err)
+	}
+	gotDownSQL := buf.String()
+	b, err = fs.ReadFile(embeddedFiles, "sql/sqlite_sakila_down.sql")
+	if err != nil {
+		t.Fatal(testcallers(), err)
+	}
+	wantDownSQL := strings.TrimSpace(string(b))
+	if diff := testdiff(gotDownSQL, wantDownSQL); diff != "" {
+		t.Fatal(testcallers(), diff)
+	}
 }
