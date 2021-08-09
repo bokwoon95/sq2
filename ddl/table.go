@@ -605,10 +605,9 @@ type AlterTableCommand struct {
 	TableSchema   string
 	TableName     string
 	// Columns
-	AddColumnCommands    []AddColumnCommand
-	AlterColumnCommands  []AlterColumnCommand
-	RenameColumnCommands []RenameColumnCommand
-	DropColumnCommands   []DropColumnCommand
+	AddColumnCommands   []AddColumnCommand
+	AlterColumnCommands []AlterColumnCommand
+	DropColumnCommands  []DropColumnCommand
 	// Constraints
 	AddConstraintCommands    []AddConstraintCommand
 	AlterConstraintCommands  []AlterConstraintCommand
@@ -642,16 +641,7 @@ func (cmd *AlterTableCommand) AppendSQL(dialect string, buf *bytes.Buffer, args 
 			return fmt.Errorf("sqlite ALTER TABLE does not support indexes")
 		}
 	} else if dialect == sq.DialectPostgres {
-		renameCmdCount := len(cmd.RenameColumnCommands) + len(cmd.RenameConstraintCommands)
-		cmdCount := len(cmd.AddColumnCommands) + len(cmd.DropColumnCommands) + len(cmd.AlterColumnCommands) +
-			len(cmd.AddConstraintCommands) + len(cmd.DropConstraintCommands) + len(cmd.AlterConstraintCommands)
 		indexCmdCount := len(cmd.RenameIndexCommands) + len(cmd.DropIndexCommands) + len(cmd.CreateIndexCommands)
-		if renameCmdCount > 1 {
-			return fmt.Errorf("postgres ALTER TABLE only supports one RENAME COLUMN or RENAME CONSTRAINT")
-		}
-		if renameCmdCount == 1 && cmdCount > 1 {
-			return fmt.Errorf("postgres ALTER TABLE does not support mixing RENAME commands with other commands")
-		}
 		if indexCmdCount > 0 {
 			return fmt.Errorf("postgres ALTER TABLE does not support indexes")
 		}
@@ -677,13 +667,6 @@ func (cmd *AlterTableCommand) AppendSQL(dialect string, buf *bytes.Buffer, args 
 		err := alterColumnCmd.AppendSQL(dialect, buf, args, params)
 		if err != nil {
 			return fmt.Errorf("ALTER TABLE ALTER COLUMN %s: %w", alterColumnCmd.Column.ColumnName, err)
-		}
-	}
-	for _, renameColumnCmd := range cmd.RenameColumnCommands {
-		writeNewLine()
-		err := renameColumnCmd.AppendSQL(dialect, buf, args, params)
-		if err != nil {
-			return fmt.Errorf("ALTER TABLE RENAME COLUMN %s: %w", renameColumnCmd.ColumnName, err)
 		}
 	}
 	for _, dropColumnCmd := range cmd.DropColumnCommands {
@@ -753,7 +736,7 @@ func (cmd *AlterTableCommand) AppendSQL(dialect string, buf *bytes.Buffer, args 
 }
 
 func decomposeAlterTableCommandSQLite(alterTableCmd *AlterTableCommand) []Command {
-	alterTableCmds := make([]AlterTableCommand, 0, len(alterTableCmd.AddColumnCommands)+len(alterTableCmd.DropColumnCommands)+len(alterTableCmd.RenameColumnCommands))
+	alterTableCmds := make([]AlterTableCommand, 0, len(alterTableCmd.AddColumnCommands)+len(alterTableCmd.DropColumnCommands))
 	for _, addColumnCmd := range alterTableCmd.AddColumnCommands {
 		alterTableCmds = append(alterTableCmds, AlterTableCommand{
 			TableSchema:       alterTableCmd.TableSchema,
@@ -766,13 +749,6 @@ func decomposeAlterTableCommandSQLite(alterTableCmd *AlterTableCommand) []Comman
 			TableSchema:        alterTableCmd.TableSchema,
 			TableName:          alterTableCmd.TableName,
 			DropColumnCommands: []DropColumnCommand{dropColumnCmd},
-		})
-	}
-	for _, renameColumnCmd := range alterTableCmd.RenameColumnCommands {
-		alterTableCmds = append(alterTableCmds, AlterTableCommand{
-			TableSchema:          alterTableCmd.TableSchema,
-			TableName:            alterTableCmd.TableName,
-			RenameColumnCommands: []RenameColumnCommand{renameColumnCmd},
 		})
 	}
 	cmds := make([]Command, len(alterTableCmds))

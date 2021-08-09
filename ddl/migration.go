@@ -305,6 +305,9 @@ func migrateTable(m *Migration, mode MigrationMode, gotSchema Schema, wantTable 
 	return nil
 }
 
+// TODO: move the initial addColumnCmd check into the caller. this function
+// should only be responsible for diffing a column, and it does that by
+// modifying a passed in column pointer.
 func migrateColumn(dialect string, mode MigrationMode, gotTable Table, wantColumn Column) (*AddColumnCommand, *AlterColumnCommand) {
 	n := gotTable.CachedColumnPosition(wantColumn.ColumnName)
 	if n < 0 {
