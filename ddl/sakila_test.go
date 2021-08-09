@@ -81,15 +81,10 @@ func NEW_COUNTRY(alias string) COUNTRY {
 
 func (tbl COUNTRY) DDL(dialect string, t *T) {
 	if dialect == sq.DialectSQLite {
-		t.Trigger(t.Sprintf(`
-CREATE TRIGGER country_last_update_after_update_trg AFTER UPDATE ON {1} BEGIN
-    UPDATE {1} SET last_update = DATETIME('now') WHERE ROWID = NEW.ROWID;
-END;`, tbl))
+		t.Trigger(sqliteLastUpdateTriggerFmt, sq.Literal("country_last_update_after_update_trg"), tbl)
 	}
 	if dialect == sq.DialectPostgres {
-		t.Trigger(t.Sprintf(`
-CREATE TRIGGER country_last_update_before_update_trg BEFORE UPDATE ON {1}
-FOR EACH ROW EXECUTE PROCEDURE last_update_trg();`, tbl))
+		t.Trigger(postgresLastUpdateTriggerFmt, sq.Literal("country_last_update_before_update_trg"), tbl)
 	}
 }
 
@@ -109,15 +104,10 @@ func NEW_CITY(alias string) CITY {
 
 func (tbl CITY) DDL(dialect string, t *T) {
 	if dialect == sq.DialectSQLite {
-		t.Trigger(t.Sprintf(`
-CREATE TRIGGER city_last_update_after_update_trg AFTER UPDATE ON {1} BEGIN
-    UPDATE {1} SET last_update = DATETIME('now') WHERE ROWID = NEW.ROWID;
-END;`, tbl))
+		t.Trigger(sqliteLastUpdateTriggerFmt, sq.Literal("city_last_update_after_update_trg"), tbl)
 	}
 	if dialect == sq.DialectPostgres {
-		t.Trigger(t.Sprintf(`
-CREATE TRIGGER city_last_update_before_update_trg BEFORE UPDATE ON {1}
-FOR EACH ROW EXECUTE PROCEDURE last_update_trg();`, tbl))
+		t.Trigger(postgresLastUpdateTriggerFmt, sq.Literal("city_last_update_before_update_trg"), tbl)
 	}
 }
 
