@@ -174,7 +174,7 @@ type DropViewCommand struct {
 	DropCascade    bool
 }
 
-func (cmd *DropViewCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
+func (cmd DropViewCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
 	buf.WriteString("DROP ")
 	if cmd.IsMaterialized {
 		if dialect != sq.DialectPostgres {

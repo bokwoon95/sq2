@@ -100,6 +100,30 @@ func (m *Migration2) WriteSQL(w io.Writer) error {
 			return err
 		}
 	}
+	for _, cmd := range m.CreateIndexCmds {
+		err = writeCmd(cmd, false)
+		if err != nil {
+			return err
+		}
+	}
+	for _, cmd := range m.CreateTriggerCmds {
+		err = writeCmd(cmd, false)
+		if err != nil {
+			return err
+		}
+	}
+	for _, cmd := range m.AddForeignKeyCmds {
+		err = writeCmd(cmd, false)
+		if err != nil {
+			return err
+		}
+	}
+	for _, cmd := range m.DropViewCmds {
+		err = writeCmd(cmd, false)
+		if err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
