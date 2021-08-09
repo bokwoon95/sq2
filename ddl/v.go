@@ -113,14 +113,6 @@ func (v *V) Trigger(format string, values ...interface{}) {
 	}
 }
 
-func (v *V) Sprintf(format string, values ...interface{}) string {
-	str, err := sprintf(v.dialect, format, values, nil)
-	if err != nil {
-		panicErr(fmt.Errorf("Sprintf: %w", err))
-	}
-	return str
-}
-
 type VIndex struct {
 	dialect       string
 	view          *View
