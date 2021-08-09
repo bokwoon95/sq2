@@ -30,6 +30,26 @@ type Migration2 struct {
 	DropExtensionCmds   []DropExtensionCommand
 }
 
+func AutoMigrate2(dialect string, db sq.DB, migrationMode MigrationMode, catalogOpts ...CatalogOption) error {
+	gotCatalog, err := NewCatalog(dialect, WithDB(db, nil))
+	if err != nil {
+		return fmt.Errorf("introspecting db: %w", err)
+	}
+	wantCatalog, err := NewCatalog(dialect, catalogOpts...)
+	if err != nil {
+		return fmt.Errorf("building catalog: %w", err)
+	}
+	migration, err := Migrate2(migrationMode, gotCatalog, wantCatalog)
+	if err != nil {
+		return fmt.Errorf("building migration: %w", err)
+	}
+	err = migration.Exec(db)
+	if err != nil {
+		return fmt.Errorf("executing migration: %w", err)
+	}
+	return nil
+}
+
 func Migrate2(mode MigrationMode, gotCatalog, wantCatalog Catalog) (*Migration2, error) {
 	m := &Migration2{
 		Dialect:       gotCatalog.Dialect,
