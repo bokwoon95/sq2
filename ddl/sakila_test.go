@@ -131,15 +131,10 @@ func NEW_ADDRESS(alias string) ADDRESS {
 
 func (tbl ADDRESS) DDL(dialect string, t *T) {
 	if dialect == sq.DialectSQLite {
-		t.Trigger(t.Sprintf(`
-CREATE TRIGGER address_last_update_after_update_trg AFTER UPDATE ON {1} BEGIN
-    UPDATE {1} SET last_update = DATETIME('now') WHERE ROWID = NEW.ROWID;
-END;`, tbl))
+		t.Trigger(sqliteLastUpdateTriggerFmt, sq.Literal("address_last_update_after_update_trg"), tbl)
 	}
 	if dialect == sq.DialectPostgres {
-		t.Trigger(t.Sprintf(`
-CREATE TRIGGER city_last_update_before_update_trg BEFORE UPDATE ON {1}
-FOR EACH ROW EXECUTE PROCEDURE last_update_trg();`, tbl))
+		t.Trigger(postgresLastUpdateTriggerFmt, sq.Literal("city_last_update_before_update_trg"), tbl)
 	}
 }
 
@@ -158,15 +153,10 @@ func NEW_LANGUAGE(alias string) LANGUAGE {
 
 func (tbl LANGUAGE) DDL(dialect string, t *T) {
 	if dialect == sq.DialectSQLite {
-		t.Trigger(t.Sprintf(`
-CREATE TRIGGER language_last_update_after_update_trg AFTER UPDATE ON {1} BEGIN
-    UPDATE {1} SET last_update = DATETIME('now') WHERE ROWID = NEW.ROWID;
-END;`, tbl))
+		t.Trigger(sqliteLastUpdateTriggerFmt, sq.Literal("language_last_update_after_update_trg"), tbl)
 	}
 	if dialect == sq.DialectPostgres {
-		t.Trigger(t.Sprintf(`
-CREATE TRIGGER language_last_update_before_update_trg BEFORE UPDATE ON {1}
-FOR EACH ROW EXECUTE PROCEDURE last_update_trg();`, tbl))
+		t.Trigger(postgresLastUpdateTriggerFmt, sq.Literal("language_last_update_before_update_trg"), tbl)
 	}
 }
 
@@ -201,49 +191,44 @@ func (tbl FILM) DDL(dialect string, t *T) {
 		t.Check("film_rating_check", "{} IN ('G','PG','PG-13','R','NC-17')", tbl.RATING)
 	}
 	if dialect == sq.DialectSQLite {
-		t.Trigger(t.Sprintf(`
-CREATE TRIGGER film_last_update_after_update_trg AFTER UPDATE ON {1} BEGIN
-    UPDATE {1} SET last_update = DATETIME('now') WHERE ROWID = NEW.ROWID;
-END;`, tbl))
-		t.Trigger(t.Sprintf(`
+		t.Trigger(sqliteLastUpdateTriggerFmt, sq.Literal("film_last_update_after_update_trg"), tbl)
+		t.Trigger(`
 CREATE TRIGGER film_fts5_after_insert_trg AFTER INSERT ON {1} BEGIN
     INSERT INTO film_text (ROWID, title, description) VALUES (NEW.film_id, NEW.title, NEW.description);
-END; `, tbl))
-		t.Trigger(t.Sprintf(`
+END; `, tbl)
+		t.Trigger(`
 CREATE TRIGGER film_fts5_after_delete_trg AFTER DELETE ON {1} BEGIN
     INSERT INTO film_text (film_text, ROWID, title, description) VALUES ('delete', OLD.film_id, OLD.title, OLD.description);
-END;`, tbl))
-		t.Trigger(t.Sprintf(`
+END;`, tbl)
+		t.Trigger(`
 CREATE TRIGGER film_fts5_after_update_trg AFTER UPDATE ON {1} BEGIN
     INSERT INTO film_text (film_text, ROWID, title, description) VALUES ('delete', OLD.film_id, OLD.title, OLD.description);
     INSERT INTO film_text (film_text, ROWID, title, description) VALUES (NEW.film_id, NEW.title, NEW.description);
-END;`, tbl))
+END;`, tbl)
 	}
 	if dialect == sq.DialectPostgres {
-		t.Trigger(t.Sprintf(`
-CREATE TRIGGER film_last_update_before_update_trg BEFORE UPDATE ON {1}
-FOR EACH ROW EXECUTE PROCEDURE last_update_trg();`, tbl))
-		t.Trigger(t.Sprintf(`
+		t.Trigger(postgresLastUpdateTriggerFmt, sq.Literal("film_last_update_before_update_trg"), tbl)
+		t.Trigger(`
 CREATE TRIGGER film_fulltext_before_insert_update_trg BEFORE INSERT OR UPDATE ON {1}
-FOR EACH ROW EXECUTE PROCEDURE tsvector_update_trigger(fulltext, 'pg_catalog.english', title, description);`, tbl))
+FOR EACH ROW EXECUTE PROCEDURE tsvector_update_trigger(fulltext, 'pg_catalog.english', title, description);`, tbl)
 	}
 	if dialect == sq.DialectMySQL {
-		t.Trigger(t.Sprintf(`
+		t.Trigger(`
 CREATE TRIGGER film_after_insert_trg AFTER INSERT ON film FOR EACH ROW BEGIN
     INSERT INTO film_text (film_id, title, description) VALUES (NEW.film_id, NEW.title, NEW.description);
-END`))
-		t.Trigger(t.Sprintf(`
+END`)
+		t.Trigger(`
 CREATE TRIGGER film_after_update_trg AFTER UPDATE ON film FOR EACH ROW BEGIN
     IF OLD.title <> NEW.title OR OLD.description <> NEW.description THEN
         UPDATE film_text
         SET title = NEW.title, description = NEW.description, film_id = NEW.film_id
         WHERE film_id = OLD.film_id;
     END IF;
-END`))
-		t.Trigger(t.Sprintf(`
+END`)
+		t.Trigger(`
 CREATE TRIGGER film_after_delete_trg AFTER DELETE ON film FOR EACH ROW BEGIN
     DELETE FROM film_text WHERE film_id = OLD.film_id;
-END`))
+END`)
 	}
 }
 
@@ -275,15 +260,10 @@ func NEW_FILM_ACTOR(alias string) FILM_ACTOR {
 
 func (tbl FILM_ACTOR) DDL(dialect string, t *T) {
 	if dialect == sq.DialectSQLite {
-		t.Trigger(t.Sprintf(`
-CREATE TRIGGER film_actor_last_update_after_update_trg AFTER UPDATE ON {1} BEGIN
-    UPDATE {1} SET last_update = DATETIME('now') WHERE ROWID = NEW.ROWID;
-END;`, tbl))
+		t.Trigger(sqliteLastUpdateTriggerFmt, sq.Literal("film_actor_last_update_after_update_trg"), tbl)
 	}
 	if dialect == sq.DialectPostgres {
-		t.Trigger(t.Sprintf(`
-CREATE TRIGGER film_actor_last_update_before_update_trg BEFORE UPDATE ON {1}
-FOR EACH ROW EXECUTE PROCEDURE last_update_trg();`, tbl))
+		t.Trigger(postgresLastUpdateTriggerFmt, sq.Literal("film_actor_last_update_before_update_trg"), tbl)
 	}
 }
 
@@ -316,10 +296,7 @@ func (tbl FILM_ACTOR_REVIEW) DDL(dialect string, t *T) {
 			sq.Fieldf("{} || {}", tbl.REVIEW_TITLE, " abcd"),
 			sq.Fieldf("CAST(JSON_EXTRACT({}, {}) AS INT)", tbl.METADATA, "$.score"),
 		).Where("{} IS NULL", tbl.LAST_DELETE)
-		t.Trigger(t.Sprintf(`
-CREATE TRIGGER film_actor_review_last_update_after_update_trg AFTER UPDATE ON {1} BEGIN
-    UPDATE {1} SET last_update = DATETIME('now') WHERE ROWID = NEW.ROWID;
-END;`, tbl))
+		t.Trigger(sqliteLastUpdateTriggerFmt, sq.Literal("film_actor_review_last_update_after_update_trg"), tbl)
 	}
 	if dialect == sq.DialectPostgres {
 		t.NameIndex("film_actor_review_review_title_idx", sq.Literal(t.Sprintf("{} text_pattern_ops", tbl.REVIEW_TITLE)))
@@ -330,9 +307,7 @@ END;`, tbl))
 			sq.Fieldf("{} || {}", tbl.REVIEW_TITLE, " abcd"),
 			sq.Fieldf("({}->>{})::INT", tbl.METADATA, "score"),
 		).Include(tbl.ACTOR_ID, tbl.LAST_UPDATE).Where("{} IS NULL", tbl.LAST_DELETE)
-		t.Trigger(t.Sprintf(`
-CREATE TRIGGER film_actor_review_last_update_before_update_trg BEFORE UPDATE ON {1}
-FOR EACH ROW EXECUTE PROCEDURE last_update_trg();`, tbl))
+		t.Trigger(postgresLastUpdateTriggerFmt, sq.Literal("film_actor_review_last_update_before_update_trg"), tbl)
 	}
 	if dialect == sq.DialectMySQL {
 		t.NameIndex("film_actor_review_misc",
@@ -359,15 +334,10 @@ func NEW_FILM_CATEGORY(alias string) FILM_CATEGORY {
 
 func (tbl FILM_CATEGORY) DDL(dialect string, t *T) {
 	if dialect == sq.DialectSQLite {
-		t.Trigger(t.Sprintf(`
-CREATE TRIGGER film_category_last_update_after_update_trg AFTER UPDATE ON {1} BEGIN
-    UPDATE {1} SET last_update = DATETIME('now') WHERE ROWID = NEW.ROWID;
-END;`, tbl))
+		t.Trigger(sqliteLastUpdateTriggerFmt, sq.Literal("film_category_last_update_after_update_trg"), tbl)
 	}
 	if dialect == sq.DialectPostgres {
-		t.Trigger(t.Sprintf(`
-CREATE TRIGGER film_category_last_update_before_update_trg BEFORE UPDATE ON {1}
-FOR EACH ROW EXECUTE PROCEDURE last_update_trg();`, tbl))
+		t.Trigger(postgresLastUpdateTriggerFmt, sq.Literal("film_category_last_update_before_update_trg"), tbl)
 	}
 }
 
