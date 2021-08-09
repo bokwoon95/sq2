@@ -1,9 +1,16 @@
 package sq_test
 
 import (
+	"os"
+	"testing"
+
 	"github.com/bokwoon95/sq"
 	"github.com/bokwoon95/sq/ddl"
 )
+
+func TestMain(m *testing.M) {
+	os.Exit(m.Run())
+}
 
 const sqliteLastUpdateTriggerFmt = `
 CREATE TRIGGER {1} AFTER UPDATE ON {2} BEGIN
