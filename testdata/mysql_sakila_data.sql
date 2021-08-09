@@ -1,21 +1,3 @@
-DELETE FROM payment;
-DELETE FROM rental;
-DELETE FROM inventory;
-DELETE FROM customer;
-UPDATE staff SET store_id = NULL;
-DELETE FROM store;
-DELETE FROM staff;
-DELETE FROM film_text;
-DELETE FROM film_category;
-DELETE FROM film_actor;
-DELETE FROM film;
-DELETE FROM language;
-DELETE FROM address;
-DELETE FROM city;
-DELETE FROM country;
-DELETE FROM category;
-DELETE FROM actor;
-
 INSERT INTO actor
     (actor_id,first_name,last_name,last_update)
 VALUES

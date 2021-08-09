@@ -92,7 +92,7 @@ func NewLogger(out io.Writer, logflag int, resultsLimit int) Logger {
 }
 
 var (
-	defaultLogger = NewLogger(os.Stdout, Linterpolate|Lcaller|Lcolor, 5)
+	defaultLogger = NewLogger(os.Stdout, Linterpolate|Lcolor, 5)
 	verboseLogger = NewLogger(os.Stdout, Lbeforeafter|Lcaller|Lcolor|Lresults, 5)
 )
 
