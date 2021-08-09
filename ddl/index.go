@@ -28,7 +28,7 @@ type CreateIndexCommand struct {
 	Index              Index
 }
 
-func (cmd *CreateIndexCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
+func (cmd CreateIndexCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
 	if dialect != sq.DialectMySQL {
 		buf.WriteString("CREATE ")
 	}
@@ -131,33 +131,6 @@ func (cmd DropIndexCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *[
 			return fmt.Errorf("%s does not support DROP INDEX CASCADE", dialect)
 		}
 		buf.WriteString(" CASCADE")
-	}
-	return nil
-}
-
-type RenameIndexCommand struct {
-	AlterIfExists bool
-	TableSchema   string
-	TableName     string
-	IndexName     string
-	RenameToName  string
-}
-
-func (cmd RenameIndexCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
-	switch dialect {
-	case sq.DialectSQLite:
-		return fmt.Errorf("sqlite does not support renaming indexes")
-	case sq.DialectMySQL:
-		buf.WriteString("RENAME INDEX " + sq.QuoteIdentifier(dialect, cmd.IndexName) + " TO " + sq.QuoteIdentifier(dialect, cmd.RenameToName))
-	default:
-		buf.WriteString("ALTER INDEX ")
-		if cmd.AlterIfExists {
-			buf.WriteString("IF EXISTS ")
-		}
-		if cmd.TableSchema != "" {
-			buf.WriteString(sq.QuoteIdentifier(dialect, cmd.TableSchema) + ".")
-		}
-		buf.WriteString(sq.QuoteIdentifier(dialect, cmd.IndexName) + " RENAME TO " + sq.QuoteIdentifier(dialect, cmd.RenameToName))
 	}
 	return nil
 }

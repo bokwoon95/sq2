@@ -6,7 +6,7 @@ type Migration2 struct {
 	CreateExtensions  []CreateExtensionCommand
 	CreateFunctions   []CreateFunctionCommand
 	CreateTables      []CreateTableCommand
-	AlterTables       []AlterTableCommand
+	AlterTables       []AlterTableCommand // add & alter columns | add & alter constraints | add indexes
 	CreateViews       []CreateViewCommand
 	CreateIndexes     []CreateIndexCommand
 	CreateTriggers    []CreateTriggerCommand

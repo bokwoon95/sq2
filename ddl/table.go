@@ -614,7 +614,6 @@ type AlterTableCommand struct {
 	DropConstraintCommands  []DropConstraintCommand
 	// Indexes (mysql-only)
 	CreateIndexCommands []CreateIndexCommand
-	RenameIndexCommands []RenameIndexCommand
 	DropIndexCommands   []DropIndexCommand
 }
 
@@ -640,7 +639,7 @@ func (cmd *AlterTableCommand) AppendSQL(dialect string, buf *bytes.Buffer, args 
 			return fmt.Errorf("sqlite ALTER TABLE does not support indexes")
 		}
 	} else if dialect == sq.DialectPostgres {
-		indexCmdCount := len(cmd.RenameIndexCommands) + len(cmd.DropIndexCommands) + len(cmd.CreateIndexCommands)
+		indexCmdCount := len(cmd.DropIndexCommands) + len(cmd.CreateIndexCommands)
 		if indexCmdCount > 0 {
 			return fmt.Errorf("postgres ALTER TABLE does not support indexes")
 		}
@@ -707,13 +706,6 @@ func (cmd *AlterTableCommand) AppendSQL(dialect string, buf *bytes.Buffer, args 
 		err := createIndexCmd.AppendSQL(dialect, buf, args, params)
 		if err != nil {
 			return fmt.Errorf("ALTER TABLE INDEX %s: %w", createIndexCmd.Index.IndexName, err)
-		}
-	}
-	for _, renameIndexCmd := range cmd.RenameIndexCommands {
-		writeNewLine()
-		err := renameIndexCmd.AppendSQL(dialect, buf, args, params)
-		if err != nil {
-			return fmt.Errorf("ALTER TABLE RENAME INDEX %s: %w", renameIndexCmd.IndexName, err)
 		}
 	}
 	for _, dropIndexCmd := range cmd.DropIndexCommands {

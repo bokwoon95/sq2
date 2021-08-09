@@ -31,7 +31,7 @@ func Test_CreateIndexCommnd(t *testing.T) {
 		t.Parallel()
 		var tt TT
 		tt.dialect = sq.DialectPostgres
-		tt.item = &CreateIndexCommand{
+		tt.item = CreateIndexCommand{
 			CreateConcurrently: true,
 			CreateIfNotExists:  true,
 			Index: Index{
@@ -56,7 +56,7 @@ func Test_CreateIndexCommnd(t *testing.T) {
 		t.Parallel()
 		var tt TT
 		tt.dialect = sq.DialectSQLite
-		tt.item = &CreateIndexCommand{
+		tt.item = CreateIndexCommand{
 			Index: Index{
 				TableSchema: "my_schema",
 				TableName:   "my_table",
@@ -74,7 +74,7 @@ func Test_CreateIndexCommnd(t *testing.T) {
 		t.Parallel()
 		var tt TT
 		tt.dialect = sq.DialectMySQL
-		tt.item = &CreateIndexCommand{
+		tt.item = CreateIndexCommand{
 			Index: Index{
 				TableSchema: "my_table",
 				TableName:   "my_table",
@@ -91,7 +91,7 @@ func Test_CreateIndexCommnd(t *testing.T) {
 		t.Parallel()
 		var tt TT
 		tt.dialect = sq.DialectMySQL
-		tt.item = &CreateIndexCommand{
+		tt.item = CreateIndexCommand{
 			CreateConcurrently: true,
 			Index: Index{
 				TableName: "my_table",
@@ -109,7 +109,7 @@ func Test_CreateIndexCommnd(t *testing.T) {
 		t.Parallel()
 		var tt TT
 		tt.dialect = sq.DialectSQLite
-		tt.item = &CreateIndexCommand{
+		tt.item = CreateIndexCommand{
 			Index: Index{
 				TableName: "my_table",
 				IndexName: "my_index",
@@ -127,7 +127,7 @@ func Test_CreateIndexCommnd(t *testing.T) {
 		t.Parallel()
 		var tt TT
 		tt.dialect = sq.DialectMySQL
-		tt.item = &CreateIndexCommand{
+		tt.item = CreateIndexCommand{
 			Index: Index{
 				TableName:      "my_table",
 				IndexName:      "my_index",
@@ -145,7 +145,7 @@ func Test_CreateIndexCommnd(t *testing.T) {
 		t.Parallel()
 		var tt TT
 		tt.dialect = sq.DialectMySQL
-		tt.item = &CreateIndexCommand{
+		tt.item = CreateIndexCommand{
 			Index: Index{
 				TableName: "my_table",
 				IndexName: "my_index",
@@ -251,73 +251,6 @@ func Test_DropIndexCommnd(t *testing.T) {
 			TableName:   "some table name",
 			IndexName:   "some index name",
 			DropCascade: true,
-		}
-		_, _, _, err := sq.ToSQL(tt.dialect, tt.item)
-		if err == nil {
-			t.Fatal(testcallers(), "expected error but got nil")
-		}
-	})
-}
-
-func Test_RenameIndexCommnd(t *testing.T) {
-	type TT struct {
-		dialect   string
-		item      Command
-		wantQuery string
-		wantArgs  []interface{}
-	}
-
-	assert := func(t *testing.T, tt TT) {
-		gotQuery, gotArgs, _, err := sq.ToSQL(tt.dialect, tt.item)
-		if err != nil {
-			t.Fatal(testcallers(), err)
-		}
-		if diff := testdiff(gotQuery, tt.wantQuery); diff != "" {
-			t.Error(testcallers(), diff)
-		}
-		if diff := testdiff(gotArgs, tt.wantArgs); diff != "" {
-			t.Error(testcallers(), diff)
-		}
-	}
-
-	t.Run("(dialect == postgres)", func(t *testing.T) {
-		t.Parallel()
-		var tt TT
-		tt.dialect = sq.DialectPostgres
-		tt.item = RenameIndexCommand{
-			AlterIfExists: true,
-			TableSchema:   "some table schema",
-			TableName:     "some table name",
-			IndexName:     "old index name",
-			RenameToName:  "new index name",
-		}
-		tt.wantQuery = `ALTER INDEX IF EXISTS "some table schema"."old index name" RENAME TO "new index name"`
-		assert(t, tt)
-	})
-
-	t.Run("(dialect == mysql)", func(t *testing.T) {
-		t.Parallel()
-		var tt TT
-		tt.dialect = sq.DialectMySQL
-		tt.item = RenameIndexCommand{
-			TableSchema:  "some table schema",
-			TableName:    "some table name",
-			IndexName:    "old index name",
-			RenameToName: "new index name",
-		}
-		tt.wantQuery = "RENAME INDEX `old index name` TO `new index name`"
-		assert(t, tt)
-	})
-
-	t.Run("(dialect == sqlite)", func(t *testing.T) {
-		t.Parallel()
-		var tt TT
-		tt.dialect = sq.DialectSQLite
-		tt.item = RenameIndexCommand{
-			TableSchema:  "some table schema",
-			TableName:    "some table name",
-			IndexName:    "old index name",
-			RenameToName: "new index name",
 		}
 		_, _, _, err := sq.ToSQL(tt.dialect, tt.item)
 		if err == nil {

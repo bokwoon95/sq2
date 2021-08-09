@@ -155,7 +155,7 @@ func migrateSchema(m *Migration, mode MigrationMode, gotCatalog Catalog, wantSch
 				if wantIndex.Ignore {
 					continue
 				}
-				createIndexCmd := &CreateIndexCommand{CreateIfNotExists: true, Index: wantIndex}
+				createIndexCmd := CreateIndexCommand{CreateIfNotExists: true, Index: wantIndex}
 				m.IndexCommands = append(m.IndexCommands, createIndexCmd)
 			}
 			for _, wantTrigger := range wantView.Triggers {
