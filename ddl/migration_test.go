@@ -215,7 +215,7 @@ func Test_SakilaPostgres(t *testing.T) {
 		if strings.HasPrefix(ext, "plpgsql") {
 			continue
 		}
-		t.Fatal(testcallers(), " AutoMigrate did not drop all extensions:", fmt.Sprint(funs))
+		t.Fatal(testcallers(), " AutoMigrate did not drop all extensions:", fmt.Sprint(exts))
 	}
 	wantCatalog, err := NewCatalog(dialect, WithTables(
 		NEW_ACTOR(""),

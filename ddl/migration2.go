@@ -302,6 +302,9 @@ func Migrate2(mode MigrationMode, gotCatalog, wantCatalog Catalog) (*Migration2,
 			}
 			dropExtensionCmd.Extensions = append(dropExtensionCmd.Extensions, gotExtension)
 		}
+		if len(dropExtensionCmd.Extensions) > 0 {
+			m.DropExtensionCmds = append(m.DropExtensionCmds, dropExtensionCmd)
+		}
 		for _, gotSchema := range gotCatalog.Schemas {
 			if gotSchema.Ignore {
 				continue
