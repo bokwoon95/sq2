@@ -1,10 +1,24 @@
 package sq
 
-type SQLiteSelectQuery struct {
-	SelectQuery
-}
+import "bytes"
+
+type SQLiteSelectQuery SelectQuery
 
 var _ Query = SQLiteSelectQuery{}
+
+func (q SQLiteSelectQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
+	return SelectQuery(q).AppendSQL(dialect, buf, args, params)
+}
+
+func (q SQLiteSelectQuery) SetFetchableFields(fields []Field) (Query, error) {
+	return SelectQuery(q).SetFetchableFields(fields)
+}
+
+func (q SQLiteSelectQuery) GetFetchableFields() ([]Field, error) {
+	return SelectQuery(q).GetFetchableFields()
+}
+
+func (q SQLiteSelectQuery) GetDialect() string { return q.Dialect }
 
 func (d SQLiteDialect) From(table Table) SQLiteSelectQuery {
 	var q SQLiteSelectQuery

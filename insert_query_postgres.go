@@ -60,7 +60,8 @@ func (q PostgresInsertQuery) Valuesx(mapper func(*Column) error) PostgresInsertQ
 }
 
 func (q PostgresInsertQuery) Select(query PostgresSelectQuery) PostgresInsertQuery {
-	q.SelectQuery = &query.SelectQuery
+	selectQuery := SelectQuery(query)
+	q.SelectQuery = &selectQuery
 	return q
 }
 

@@ -60,7 +60,8 @@ func (q SQLiteInsertQuery) Valuesx(mapper func(*Column) error) SQLiteInsertQuery
 }
 
 func (q SQLiteInsertQuery) Select(query SQLiteSelectQuery) SQLiteInsertQuery {
-	q.SelectQuery = &query.SelectQuery
+	selectQuery := SelectQuery(query)
+	q.SelectQuery = &selectQuery
 	return q
 }
 

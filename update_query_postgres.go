@@ -1,10 +1,24 @@
 package sq
 
-type PostgresUpdateQuery struct {
-	UpdateQuery
-}
+import "bytes"
+
+type PostgresUpdateQuery UpdateQuery
 
 var _ Query = PostgresUpdateQuery{}
+
+func (q PostgresUpdateQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
+	return UpdateQuery(q).AppendSQL(dialect, buf, args, params)
+}
+
+func (q PostgresUpdateQuery) SetFetchableFields(fields []Field) (Query, error) {
+	return UpdateQuery(q).SetFetchableFields(fields)
+}
+
+func (q PostgresUpdateQuery) GetFetchableFields() ([]Field, error) {
+	return UpdateQuery(q).GetFetchableFields()
+}
+
+func (q PostgresUpdateQuery) GetDialect() string { return q.Dialect }
 
 func (d PostgresDialect) UpdateWith(ctes ...CTE) PostgresUpdateQuery {
 	var q PostgresUpdateQuery

@@ -57,7 +57,8 @@ func (q MySQLInsertQuery) As(rowAlias string, columnAliases ...string) MySQLInse
 }
 
 func (q MySQLInsertQuery) Select(query MySQLSelectQuery) MySQLInsertQuery {
-	q.SelectQuery = &query.SelectQuery
+	selectQuery := SelectQuery(query)
+	q.SelectQuery = &selectQuery
 	return q
 }
 

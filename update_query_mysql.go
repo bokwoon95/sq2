@@ -1,10 +1,24 @@
 package sq
 
-type MySQLUpdateQuery struct {
-	UpdateQuery
-}
+import "bytes"
+
+type MySQLUpdateQuery UpdateQuery
 
 var _ Query = MySQLUpdateQuery{}
+
+func (q MySQLUpdateQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
+	return UpdateQuery(q).AppendSQL(dialect, buf, args, params)
+}
+
+func (q MySQLUpdateQuery) SetFetchableFields(fields []Field) (Query, error) {
+	return UpdateQuery(q).SetFetchableFields(fields)
+}
+
+func (q MySQLUpdateQuery) GetFetchableFields() ([]Field, error) {
+	return UpdateQuery(q).GetFetchableFields()
+}
+
+func (q MySQLUpdateQuery) GetDialect() string { return q.Dialect }
 
 func (d MySQLDialect) UpdateWith(ctes ...CTE) MySQLUpdateQuery {
 	var q MySQLUpdateQuery

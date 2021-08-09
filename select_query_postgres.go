@@ -1,10 +1,24 @@
 package sq
 
-type PostgresSelectQuery struct {
-	SelectQuery
-}
+import "bytes"
+
+type PostgresSelectQuery SelectQuery
 
 var _ Query = PostgresSelectQuery{}
+
+func (q PostgresSelectQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
+	return SelectQuery(q).AppendSQL(dialect, buf, args, params)
+}
+
+func (q PostgresSelectQuery) SetFetchableFields(fields []Field) (Query, error) {
+	return SelectQuery(q).SetFetchableFields(fields)
+}
+
+func (q PostgresSelectQuery) GetFetchableFields() ([]Field, error) {
+	return SelectQuery(q).GetFetchableFields()
+}
+
+func (q PostgresSelectQuery) GetDialect() string { return q.Dialect }
 
 func (d PostgresDialect) From(table Table) PostgresSelectQuery {
 	var q PostgresSelectQuery

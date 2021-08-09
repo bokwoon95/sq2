@@ -1,10 +1,24 @@
 package sq
 
-type MySQLSelectQuery struct {
-	SelectQuery
-}
+import "bytes"
+
+type MySQLSelectQuery SelectQuery
 
 var _ Query = MySQLSelectQuery{}
+
+func (q MySQLSelectQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
+	return SelectQuery(q).AppendSQL(dialect, buf, args, params)
+}
+
+func (q MySQLSelectQuery) SetFetchableFields(fields []Field) (Query, error) {
+	return SelectQuery(q).SetFetchableFields(fields)
+}
+
+func (q MySQLSelectQuery) GetFetchableFields() ([]Field, error) {
+	return SelectQuery(q).GetFetchableFields()
+}
+
+func (q MySQLSelectQuery) GetDialect() string { return q.Dialect }
 
 func (d MySQLDialect) From(table Table) MySQLSelectQuery {
 	var q MySQLSelectQuery
