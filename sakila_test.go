@@ -1,6 +1,6 @@
 package sq
 
-type ACTOR struct {
+type xACTOR struct {
 	TableInfo
 	ACTOR_ID           NumberField
 	FIRST_NAME         StringField
@@ -10,8 +10,8 @@ type ACTOR struct {
 	LAST_UPDATE        TimeField
 }
 
-func NEW_ACTOR(alias string) ACTOR {
-	var tbl ACTOR
+func xNEW_ACTOR(alias string) xACTOR {
+	var tbl xACTOR
 	tbl.TableInfo = TableInfo{TableName: "actor", TableAlias: alias}
 	tbl.ACTOR_ID = NewNumberField("actor_id", tbl.TableInfo)
 	tbl.FIRST_NAME = NewStringField("first_name", tbl.TableInfo)
@@ -22,15 +22,15 @@ func NEW_ACTOR(alias string) ACTOR {
 	return tbl
 }
 
-type CATEGORY struct {
+type xCATEGORY struct {
 	TableInfo
 	CATEGORY_ID NumberField
 	NAME        StringField
 	LAST_UPDATE TimeField
 }
 
-func NEW_CATEGORY(alias string) CATEGORY {
-	var tbl CATEGORY
+func xNEW_CATEGORY(alias string) xCATEGORY {
+	var tbl xCATEGORY
 	tbl.TableInfo = TableInfo{TableName: "category", TableAlias: alias}
 	tbl.CATEGORY_ID = NewNumberField("category_id", tbl.TableInfo)
 	tbl.NAME = NewStringField("name", tbl.TableInfo)
@@ -38,15 +38,15 @@ func NEW_CATEGORY(alias string) CATEGORY {
 	return tbl
 }
 
-type COUNTRY struct {
+type xCOUNTRY struct {
 	TableInfo
 	COUNTRY_ID  NumberField
 	COUNTRY     StringField
 	LAST_UPDATE TimeField
 }
 
-func NEW_COUNTRY(alias string) COUNTRY {
-	var tbl COUNTRY
+func xNEW_COUNTRY(alias string) xCOUNTRY {
+	var tbl xCOUNTRY
 	tbl.TableInfo = TableInfo{TableName: "country", TableAlias: alias}
 	tbl.COUNTRY_ID = NewNumberField("country_id", tbl.TableInfo)
 	tbl.COUNTRY = NewStringField("country", tbl.TableInfo)
@@ -54,7 +54,7 @@ func NEW_COUNTRY(alias string) COUNTRY {
 	return tbl
 }
 
-type CITY struct {
+type xCITY struct {
 	TableInfo
 	CITY_ID     NumberField
 	CITY        StringField
@@ -62,8 +62,8 @@ type CITY struct {
 	LAST_UPDATE TimeField
 }
 
-func NEW_CITY(alias string) CITY {
-	var tbl CITY
+func xNEW_CITY(alias string) xCITY {
+	var tbl xCITY
 	tbl.TableInfo = TableInfo{TableName: "city", TableAlias: alias}
 	tbl.CITY_ID = NewNumberField("city_id", tbl.TableInfo)
 	tbl.CITY = NewStringField("city", tbl.TableInfo)
@@ -72,7 +72,7 @@ func NEW_CITY(alias string) CITY {
 	return tbl
 }
 
-type ADDRESS struct {
+type xADDRESS struct {
 	TableInfo
 	ADDRESS_ID  NumberField
 	ADDRESS     StringField
@@ -84,8 +84,8 @@ type ADDRESS struct {
 	LAST_UPDATE TimeField
 }
 
-func NEW_ADDRESS(alias string) ADDRESS {
-	var tbl ADDRESS
+func xNEW_ADDRESS(alias string) xADDRESS {
+	var tbl xADDRESS
 	tbl.TableInfo = TableInfo{TableName: "address", TableAlias: alias}
 	tbl.ADDRESS_ID = NewNumberField("address_id", tbl.TableInfo)
 	tbl.ADDRESS = NewStringField("address", tbl.TableInfo)
@@ -98,15 +98,15 @@ func NEW_ADDRESS(alias string) ADDRESS {
 	return tbl
 }
 
-type LANGUAGE struct {
+type xLANGUAGE struct {
 	TableInfo
 	LANGUAGE_ID NumberField
 	NAME        StringField
 	LAST_UPDATE TimeField
 }
 
-func NEW_LANGUAGE(alias string) LANGUAGE {
-	var tbl LANGUAGE
+func xNEW_LANGUAGE(alias string) xLANGUAGE {
+	var tbl xLANGUAGE
 	tbl.TableInfo = TableInfo{TableName: "language", TableAlias: alias}
 	tbl.LANGUAGE_ID = NewNumberField("language_id", tbl.TableInfo)
 	tbl.NAME = NewStringField("name", tbl.TableInfo)
@@ -114,7 +114,7 @@ func NEW_LANGUAGE(alias string) LANGUAGE {
 	return tbl
 }
 
-type FILM struct {
+type xFILM struct {
 	TableInfo
 	FILM_ID              NumberField
 	TITLE                StringField
@@ -132,8 +132,8 @@ type FILM struct {
 	FULLTEXT             StringField
 }
 
-func NEW_FILM(alias string) FILM {
-	var tbl FILM
+func xNEW_FILM(alias string) xFILM {
+	var tbl xFILM
 	tbl.TableInfo = TableInfo{TableName: "film", TableAlias: alias}
 	tbl.FILM_ID = NewNumberField("film_id", tbl.TableInfo)
 	tbl.TITLE = NewStringField("title", tbl.TableInfo)
@@ -152,15 +152,15 @@ func NEW_FILM(alias string) FILM {
 	return tbl
 }
 
-type FILM_TEXT struct {
+type xFILM_TEXT struct {
 	TableInfo
 	FILM_ID     NumberField
 	TITLE       StringField
 	DESCRIPTION StringField
 }
 
-func NEW_FILM_TEXT(alias string) FILM_TEXT {
-	var tbl FILM_TEXT
+func xNEW_FILM_TEXT(alias string) xFILM_TEXT {
+	var tbl xFILM_TEXT
 	tbl.TableInfo = TableInfo{TableName: "film_text", TableAlias: alias}
 	tbl.FILM_ID = NewNumberField("film_id", tbl.TableInfo)
 	tbl.TITLE = NewStringField("title", tbl.TableInfo)
@@ -168,15 +168,15 @@ func NEW_FILM_TEXT(alias string) FILM_TEXT {
 	return tbl
 }
 
-type FILM_ACTOR struct {
+type xFILM_ACTOR struct {
 	TableInfo
 	ACTOR_ID    NumberField
 	FILM_ID     NumberField
 	LAST_UPDATE TimeField
 }
 
-func NEW_FILM_ACTOR(alias string) FILM_ACTOR {
-	var tbl FILM_ACTOR
+func xNEW_FILM_ACTOR(alias string) xFILM_ACTOR {
+	var tbl xFILM_ACTOR
 	tbl.TableInfo = TableInfo{TableName: "film_actor", TableAlias: alias}
 	tbl.ACTOR_ID = NewNumberField("actor_id", tbl.TableInfo)
 	tbl.FILM_ID = NewNumberField("film_id", tbl.TableInfo)
@@ -184,15 +184,15 @@ func NEW_FILM_ACTOR(alias string) FILM_ACTOR {
 	return tbl
 }
 
-type FILM_CATEGORY struct {
+type xFILM_CATEGORY struct {
 	TableInfo
 	FILM_ID     NumberField
 	CATEGORY_ID NumberField
 	LAST_UPDATE TimeField
 }
 
-func NEW_FILM_CATEGORY(alias string) FILM_CATEGORY {
-	var tbl FILM_CATEGORY
+func xNEW_FILM_CATEGORY(alias string) xFILM_CATEGORY {
+	var tbl xFILM_CATEGORY
 	tbl.TableInfo = TableInfo{TableName: "film_category", TableAlias: alias}
 	tbl.FILM_ID = NewNumberField("film_id", tbl.TableInfo)
 	tbl.CATEGORY_ID = NewNumberField("category_id", tbl.TableInfo)
@@ -200,7 +200,7 @@ func NEW_FILM_CATEGORY(alias string) FILM_CATEGORY {
 	return tbl
 }
 
-type STAFF struct {
+type xSTAFF struct {
 	TableInfo
 	STAFF_ID    NumberField
 	FIRST_NAME  StringField
@@ -215,8 +215,8 @@ type STAFF struct {
 	PICTURE     BlobField
 }
 
-func NEW_STAFF(alias string) STAFF {
-	var tbl STAFF
+func xNEW_STAFF(alias string) xSTAFF {
+	var tbl xSTAFF
 	tbl.TableInfo = TableInfo{TableName: "staff", TableAlias: alias}
 	tbl.STAFF_ID = NewNumberField("staff_id", tbl.TableInfo)
 	tbl.FIRST_NAME = NewStringField("first_name", tbl.TableInfo)
@@ -232,7 +232,7 @@ func NEW_STAFF(alias string) STAFF {
 	return tbl
 }
 
-type STORE struct {
+type xSTORE struct {
 	TableInfo
 	STORE_ID         NumberField
 	MANAGER_STAFF_ID NumberField
@@ -240,8 +240,8 @@ type STORE struct {
 	LAST_UPDATE      TimeField
 }
 
-func NEW_STORE(alias string) STORE {
-	var tbl STORE
+func xNEW_STORE(alias string) xSTORE {
+	var tbl xSTORE
 	tbl.TableInfo = TableInfo{TableName: "store", TableAlias: alias}
 	tbl.STORE_ID = NewNumberField("store_id", tbl.TableInfo)
 	tbl.MANAGER_STAFF_ID = NewNumberField("manager_staff_id", tbl.TableInfo)
@@ -250,7 +250,7 @@ func NEW_STORE(alias string) STORE {
 	return tbl
 }
 
-type CUSTOMER struct {
+type xCUSTOMER struct {
 	TableInfo
 	CUSTOMER_ID NumberField
 	STORE_ID    NumberField
@@ -264,8 +264,8 @@ type CUSTOMER struct {
 	LAST_UPDATE TimeField
 }
 
-func NEW_CUSTOMER(alias string) CUSTOMER {
-	var tbl CUSTOMER
+func xNEW_CUSTOMER(alias string) xCUSTOMER {
+	var tbl xCUSTOMER
 	tbl.TableInfo = TableInfo{TableName: "customer", TableAlias: alias}
 	tbl.CUSTOMER_ID = NewNumberField("customer_id", tbl.TableInfo)
 	tbl.STORE_ID = NewNumberField("store_id", tbl.TableInfo)
@@ -280,7 +280,7 @@ func NEW_CUSTOMER(alias string) CUSTOMER {
 	return tbl
 }
 
-type INVENTORY struct {
+type xINVENTORY struct {
 	TableInfo
 	INVENTORY_ID NumberField
 	FILM_ID      NumberField
@@ -288,8 +288,8 @@ type INVENTORY struct {
 	LAST_UPDATE  TimeField
 }
 
-func NEW_INVENTORY(alias string) INVENTORY {
-	var tbl INVENTORY
+func xNEW_INVENTORY(alias string) xINVENTORY {
+	var tbl xINVENTORY
 	tbl.TableInfo = TableInfo{TableName: "inventory", TableAlias: alias}
 	tbl.INVENTORY_ID = NewNumberField("inventory_id", tbl.TableInfo)
 	tbl.FILM_ID = NewNumberField("film_id", tbl.TableInfo)
@@ -298,7 +298,7 @@ func NEW_INVENTORY(alias string) INVENTORY {
 	return tbl
 }
 
-type RENTAL struct {
+type xRENTAL struct {
 	TableInfo
 	RENTAL_ID    NumberField
 	RENTAL_DATE  TimeField
@@ -309,8 +309,8 @@ type RENTAL struct {
 	LAST_UPDATE  TimeField
 }
 
-func NEW_RENTAL(alias string) RENTAL {
-	var tbl RENTAL
+func xNEW_RENTAL(alias string) xRENTAL {
+	var tbl xRENTAL
 	tbl.TableInfo = TableInfo{TableName: "rental", TableAlias: alias}
 	tbl.RENTAL_ID = NewNumberField("rental_id", tbl.TableInfo)
 	tbl.RENTAL_DATE = NewTimeField("rental_date", tbl.TableInfo)
@@ -322,7 +322,7 @@ func NEW_RENTAL(alias string) RENTAL {
 	return tbl
 }
 
-type PAYMENT struct {
+type xPAYMENT struct {
 	TableInfo
 	PAYMENT_ID   NumberField
 	CUSTOMER_ID  NumberField
@@ -332,8 +332,8 @@ type PAYMENT struct {
 	PAYMENT_DATE TimeField
 }
 
-func NEW_PAYMENT(alias string) PAYMENT {
-	var tbl PAYMENT
+func xNEW_PAYMENT(alias string) xPAYMENT {
+	var tbl xPAYMENT
 	tbl.TableInfo = TableInfo{TableName: "payment", TableAlias: alias}
 	tbl.PAYMENT_ID = NewNumberField("payment_id", tbl.TableInfo)
 	tbl.CUSTOMER_ID = NewNumberField("customer_id", tbl.TableInfo)

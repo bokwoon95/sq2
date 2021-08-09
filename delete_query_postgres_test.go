@@ -28,7 +28,7 @@ func Test_PostgresDeleteQuery(t *testing.T) {
 	t.Run("joins", func(t *testing.T) {
 		t.Parallel()
 		var tt TT
-		ACTOR := NEW_ACTOR("a")
+		ACTOR := xNEW_ACTOR("a")
 		tt.item = Postgres.
 			DeleteFrom(ACTOR).
 			DeleteFrom(ACTOR).
@@ -56,7 +56,7 @@ func Test_PostgresDeleteQuery(t *testing.T) {
 	t.Run("delete with join", func(t *testing.T) {
 		t.Parallel()
 		var tt TT
-		FILM, LANGUAGE, INVENTORY := NEW_FILM("f"), NEW_LANGUAGE("l"), NEW_INVENTORY("i")
+		FILM, LANGUAGE, INVENTORY := xNEW_FILM("f"), xNEW_LANGUAGE("l"), xNEW_INVENTORY("i")
 		lang := NewCTE("lang", nil, Postgres.
 			Select(LANGUAGE.LANGUAGE_ID, LANGUAGE.NAME).
 			From(LANGUAGE).

@@ -28,7 +28,7 @@ func Test_SQLiteInsertQuery(t *testing.T) {
 	t.Run("simple", func(t *testing.T) {
 		t.Parallel()
 		var tt TT
-		ACTOR := NEW_ACTOR("a")
+		ACTOR := xNEW_ACTOR("a")
 		tt.item = SQLite.
 			InsertInto(ACTOR).
 			InsertInto(ACTOR).
@@ -46,7 +46,7 @@ func Test_SQLiteInsertQuery(t *testing.T) {
 	t.Run("INSERT with RETURNING", func(t *testing.T) {
 		t.Parallel()
 		var tt TT
-		ACTOR := NEW_ACTOR("a")
+		ACTOR := xNEW_ACTOR("a")
 		tt.item = SQLite.
 			InsertWith(NewCTE("cte", []string{"n"}, Queryf("SELECT 1"))).
 			InsertInto(ACTOR).
@@ -71,7 +71,7 @@ func Test_SQLiteInsertQuery(t *testing.T) {
 	t.Run("INSERT ignore duplicates", func(t *testing.T) {
 		t.Parallel()
 		var tt TT
-		ACTOR := NEW_ACTOR("a")
+		ACTOR := xNEW_ACTOR("a")
 		tt.item = SQLite.
 			InsertWith(NewCTE("cte", []string{"n"}, Queryf("SELECT 1"))).
 			InsertInto(ACTOR).
@@ -102,7 +102,7 @@ func Test_SQLiteInsertQuery(t *testing.T) {
 	t.Run("upsert", func(t *testing.T) {
 		t.Parallel()
 		var tt TT
-		ACTOR := NEW_ACTOR("a")
+		ACTOR := xNEW_ACTOR("a")
 		tt.item = SQLite.
 			InsertWith(NewCTE("cte", []string{"n"}, Queryf("SELECT 1"))).
 			InsertInto(ACTOR).
@@ -135,7 +135,7 @@ func Test_SQLiteInsertQuery(t *testing.T) {
 	t.Run("INSERT from SELECT", func(t *testing.T) {
 		t.Parallel()
 		var tt TT
-		ACTOR1, ACTOR2 := NEW_ACTOR("a1"), NEW_ACTOR("a2")
+		ACTOR1, ACTOR2 := xNEW_ACTOR("a1"), xNEW_ACTOR("a2")
 		tt.item = SQLite.
 			InsertWith(NewCTE("cte", []string{"n"}, Queryf("SELECT 1"))).
 			InsertInto(ACTOR1).

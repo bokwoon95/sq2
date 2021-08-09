@@ -37,7 +37,7 @@ func Test_PredicateCases(t *testing.T) {
 	t.Run("1 case", func(t *testing.T) {
 		t.Parallel()
 		var tt TT
-		ACTOR := NEW_ACTOR("a")
+		ACTOR := xNEW_ACTOR("a")
 		tt.item = CaseWhen(ACTOR.ACTOR_ID.IsNull(), 5)
 		tt.wantQuery = "CASE WHEN a.actor_id IS NULL THEN ? END"
 		tt.wantArgs = []interface{}{5}
@@ -47,7 +47,7 @@ func Test_PredicateCases(t *testing.T) {
 	t.Run("2 cases", func(t *testing.T) {
 		t.Parallel()
 		var tt TT
-		ACTOR := NEW_ACTOR("a")
+		ACTOR := xNEW_ACTOR("a")
 		tt.item = CaseWhen(ACTOR.ACTOR_ID.IsNull(), 5).When(ACTOR.FIRST_NAME.EqString("abc"), ACTOR.LAST_NAME).As("alias")
 		tt.wantQuery = "CASE WHEN a.actor_id IS NULL THEN ? WHEN a.first_name = ? THEN a.last_name END"
 		tt.wantArgs = []interface{}{5, "abc"}
@@ -57,7 +57,7 @@ func Test_PredicateCases(t *testing.T) {
 	t.Run("2 cases, fallback", func(t *testing.T) {
 		t.Parallel()
 		var tt TT
-		ACTOR := NEW_ACTOR("a")
+		ACTOR := xNEW_ACTOR("a")
 		tt.item = CaseWhen(ACTOR.ACTOR_ID.IsNull(), 5).When(ACTOR.FIRST_NAME.EqString("abc"), ACTOR.LAST_NAME).Else(6789)
 		tt.wantQuery = "CASE WHEN a.actor_id IS NULL THEN ? WHEN a.first_name = ? THEN a.last_name ELSE ? END"
 		tt.wantArgs = []interface{}{5, "abc", 6789}
@@ -97,7 +97,7 @@ func Test_SimpleCases(t *testing.T) {
 
 	t.Run("expression only", func(t *testing.T) {
 		t.Parallel()
-		a := NEW_ACTOR("a")
+		a := xNEW_ACTOR("a")
 		_, _, _, err := ToSQLExclude("", Case(a.ACTOR_ID), nil)
 		if err == nil {
 			t.Fatal(Callers(), "expected error but got nil")
@@ -107,7 +107,7 @@ func Test_SimpleCases(t *testing.T) {
 	t.Run("expression, 1 case", func(t *testing.T) {
 		t.Parallel()
 		var tt TT
-		ACTOR := NEW_ACTOR("a")
+		ACTOR := xNEW_ACTOR("a")
 		tt.item = Case(ACTOR.ACTOR_ID).When(99, 97)
 		tt.wantQuery = "CASE a.actor_id WHEN ? THEN ? END"
 		tt.wantArgs = []interface{}{99, 97}
@@ -117,7 +117,7 @@ func Test_SimpleCases(t *testing.T) {
 	t.Run("expression, 2 cases", func(t *testing.T) {
 		t.Parallel()
 		var tt TT
-		ACTOR := NEW_ACTOR("a")
+		ACTOR := xNEW_ACTOR("a")
 		tt.item = Case(ACTOR.ACTOR_ID).When(99, 97).When(ACTOR.FIRST_NAME, ACTOR.LAST_NAME).As("alias")
 		tt.wantQuery = "CASE a.actor_id WHEN ? THEN ? WHEN a.first_name THEN a.last_name END"
 		tt.wantArgs = []interface{}{99, 97}
@@ -127,7 +127,7 @@ func Test_SimpleCases(t *testing.T) {
 	t.Run("expression, 2 cases, fallback", func(t *testing.T) {
 		t.Parallel()
 		var tt TT
-		ACTOR := NEW_ACTOR("a")
+		ACTOR := xNEW_ACTOR("a")
 		tt.item = Case(ACTOR.ACTOR_ID).When(99, 97).When(ACTOR.FIRST_NAME, ACTOR.LAST_NAME).Else("abcde")
 		tt.wantQuery = "CASE a.actor_id WHEN ? THEN ? WHEN a.first_name THEN a.last_name ELSE ? END"
 		tt.wantArgs = []interface{}{99, 97, "abcde"}

@@ -28,7 +28,7 @@ func Test_MySQLDeleteQuery(t *testing.T) {
 	t.Run("joins", func(t *testing.T) {
 		t.Parallel()
 		var tt TT
-		ACTOR := NEW_ACTOR("")
+		ACTOR := xNEW_ACTOR("")
 		tt.item = MySQL.
 			DeleteFrom(ACTOR).
 			With(NewCTE("cte", []string{"n"}, Queryf("SELECT 1"))).
@@ -55,7 +55,7 @@ func Test_MySQLDeleteQuery(t *testing.T) {
 	t.Run("delete with join", func(t *testing.T) {
 		t.Parallel()
 		var tt TT
-		FILM, LANGUAGE, INVENTORY := NEW_FILM("f"), NEW_LANGUAGE("l"), NEW_INVENTORY("i")
+		FILM, LANGUAGE, INVENTORY := xNEW_FILM("f"), xNEW_LANGUAGE("l"), xNEW_INVENTORY("i")
 		lang := NewCTE("lang", nil, MySQL.
 			Select(LANGUAGE.LANGUAGE_ID, LANGUAGE.NAME).
 			From(LANGUAGE).
@@ -86,7 +86,7 @@ func Test_MySQLDeleteQuery(t *testing.T) {
 	t.Run("Multi-table DELETE", func(t *testing.T) {
 		t.Parallel()
 		var tt TT
-		ADDRESS, CITY, COUNTRY := NEW_ADDRESS("a"), NEW_CITY("ci"), NEW_COUNTRY("co")
+		ADDRESS, CITY, COUNTRY := xNEW_ADDRESS("a"), xNEW_CITY("ci"), xNEW_COUNTRY("co")
 		tt.item = MySQL.
 			DeleteFrom(ADDRESS, CITY, COUNTRY).
 			Using(ADDRESS).
@@ -105,7 +105,7 @@ func Test_MySQLDeleteQuery(t *testing.T) {
 	t.Run("ORDER BY LIMIT", func(t *testing.T) {
 		t.Parallel()
 		var tt TT
-		ACTOR := NEW_ACTOR("a")
+		ACTOR := xNEW_ACTOR("a")
 		tt.item = MySQL.DeleteFrom(ACTOR).OrderBy(ACTOR.ACTOR_ID).Limit(0)
 		tt.wantQuery = "DELETE FROM actor AS a ORDER BY a.actor_id LIMIT ?"
 		tt.wantArgs = []interface{}{int64(0)}

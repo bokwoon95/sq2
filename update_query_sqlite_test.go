@@ -28,7 +28,7 @@ func Test_SQLiteUpdateQuery(t *testing.T) {
 	t.Run("joins", func(t *testing.T) {
 		t.Parallel()
 		var tt TT
-		ACTOR := NEW_ACTOR("")
+		ACTOR := xNEW_ACTOR("")
 		tt.item = SQLite.
 			Update(ACTOR).
 			With(NewCTE("cte", []string{"n"}, Queryf("SELECT 1"))).
@@ -55,7 +55,7 @@ func Test_SQLiteUpdateQuery(t *testing.T) {
 	t.Run("simple", func(t *testing.T) {
 		t.Parallel()
 		var tt TT
-		ACTOR := NEW_ACTOR("a")
+		ACTOR := xNEW_ACTOR("a")
 		tt.item = SQLite.
 			UpdateWith(NewCTE("cte", []string{"n"}, Queryf("SELECT 1"))).
 			Update(ACTOR).
@@ -81,7 +81,7 @@ func Test_SQLiteUpdateQuery(t *testing.T) {
 	t.Run("Multi-table UPDATE", func(t *testing.T) {
 		t.Parallel()
 		var tt TT
-		ADDRESS, CITY, COUNTRY := NEW_ADDRESS("a"), NEW_CITY("ci"), NEW_COUNTRY("co")
+		ADDRESS, CITY, COUNTRY := xNEW_ADDRESS("a"), xNEW_CITY("ci"), xNEW_COUNTRY("co")
 		tt.item = MySQL.
 			Update(ADDRESS).
 			Join(CITY, CITY.CITY_ID.Eq(ADDRESS.CITY_ID)).

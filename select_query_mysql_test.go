@@ -28,7 +28,7 @@ func Test_MySQLSelectQuery(t *testing.T) {
 	t.Run("filler v1", func(t *testing.T) {
 		t.Parallel()
 		var tt TT
-		ACTOR := NEW_ACTOR("a")
+		ACTOR := xNEW_ACTOR("a")
 		tt.item = MySQL.
 			SelectWith(NewCTE("cte", []string{"n"}, Queryf("SELECT 1"))).
 			Select(ACTOR.ACTOR_ID).
@@ -40,7 +40,7 @@ func Test_MySQLSelectQuery(t *testing.T) {
 	t.Run("filler v2", func(t *testing.T) {
 		t.Parallel()
 		var tt TT
-		ACTOR := NEW_ACTOR("a")
+		ACTOR := xNEW_ACTOR("a")
 		tt.item = MySQL.
 			SelectDistinct(ACTOR.ACTOR_ID).
 			SelectDistinct(ACTOR.ACTOR_ID).
@@ -52,7 +52,7 @@ func Test_MySQLSelectQuery(t *testing.T) {
 	t.Run("joins", func(t *testing.T) {
 		t.Parallel()
 		var tt TT
-		ACTOR := NEW_ACTOR("a")
+		ACTOR := xNEW_ACTOR("a")
 		tt.item = MySQL.
 			SelectOne().
 			From(ACTOR).
@@ -79,7 +79,7 @@ func Test_MySQLSelectQuery(t *testing.T) {
 	t.Run("simple", func(t *testing.T) {
 		t.Parallel()
 		var tt TT
-		ACTOR := NEW_ACTOR("a")
+		ACTOR := xNEW_ACTOR("a")
 		tt.item = MySQL.
 			From(ACTOR).
 			Select(ACTOR.ACTOR_ID, ACTOR.FIRST_NAME, ACTOR.LAST_NAME).

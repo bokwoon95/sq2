@@ -28,7 +28,7 @@ func Test_MySQLUpdateQuery(t *testing.T) {
 	t.Run("joins", func(t *testing.T) {
 		t.Parallel()
 		var tt TT
-		ACTOR := NEW_ACTOR("a")
+		ACTOR := xNEW_ACTOR("a")
 		tt.item = MySQL.
 			Update(ACTOR).
 			With(NewCTE("cte", []string{"n"}, Queryf("SELECT 1"))).
@@ -57,7 +57,7 @@ func Test_MySQLUpdateQuery(t *testing.T) {
 	t.Run("simple", func(t *testing.T) {
 		t.Parallel()
 		var tt TT
-		ACTOR := NEW_ACTOR("a")
+		ACTOR := xNEW_ACTOR("a")
 		tt.item = MySQL.
 			UpdateWith(NewCTE("cte", []string{"n"}, Queryf("SELECT 1"))).
 			Update(ACTOR).

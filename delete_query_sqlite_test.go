@@ -28,7 +28,7 @@ func Test_SQLiteDeleteQuery(t *testing.T) {
 	t.Run("filler", func(t *testing.T) {
 		t.Parallel()
 		var tt TT
-		ACTOR := NEW_ACTOR("a")
+		ACTOR := xNEW_ACTOR("a")
 		tt.item = SQLite.
 			DeleteFrom(ACTOR).
 			DeleteFrom(ACTOR).
@@ -40,7 +40,7 @@ func Test_SQLiteDeleteQuery(t *testing.T) {
 	t.Run("delete with join", func(t *testing.T) {
 		t.Parallel()
 		var tt TT
-		FILM1, FILM2, LANGUAGE, INVENTORY := NEW_FILM("f1"), NEW_FILM("f2"), NEW_LANGUAGE("l"), NEW_INVENTORY("i")
+		FILM1, FILM2, LANGUAGE, INVENTORY := xNEW_FILM("f1"), xNEW_FILM("f2"), xNEW_LANGUAGE("l"), xNEW_INVENTORY("i")
 		lang := NewCTE("lang", nil, SQLite.
 			Select(LANGUAGE.LANGUAGE_ID, LANGUAGE.NAME).
 			From(LANGUAGE).
@@ -80,7 +80,7 @@ func Test_SQLiteDeleteQuery(t *testing.T) {
 	t.Run("ORDER BY LIMIT OFFSET", func(t *testing.T) {
 		t.Parallel()
 		var tt TT
-		ACTOR := NEW_ACTOR("a")
+		ACTOR := xNEW_ACTOR("a")
 		tt.item = SQLite.DeleteFrom(ACTOR).OrderBy(ACTOR.ACTOR_ID).Limit(0).Offset(10)
 		tt.wantQuery = "DELETE FROM actor AS a ORDER BY a.actor_id LIMIT $1 OFFSET $2"
 		tt.wantArgs = []interface{}{int64(0), int64(10)}

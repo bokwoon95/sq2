@@ -8,7 +8,7 @@ import (
 func Test_SelectQuery(t *testing.T) {
 	t.Run("DistinctOnFields dialect != postgres", func(t *testing.T) {
 		t.Parallel()
-		ACTOR := NEW_ACTOR("a")
+		ACTOR := xNEW_ACTOR("a")
 		var q SelectQuery
 		q.Dialect = DialectMySQL
 		q.DistinctOnFields = Fields{ACTOR.ACTOR_ID, ACTOR.FIRST_NAME}
@@ -21,7 +21,7 @@ func Test_SelectQuery(t *testing.T) {
 
 	t.Run("Distinct + DistinctOnFields", func(t *testing.T) {
 		t.Parallel()
-		ACTOR := NEW_ACTOR("a")
+		ACTOR := xNEW_ACTOR("a")
 		var q SelectQuery
 		q.Dialect = DialectPostgres
 		q.Distinct = true
@@ -35,7 +35,7 @@ func Test_SelectQuery(t *testing.T) {
 
 	t.Run("DistinctOnFields faulty sql", func(t *testing.T) {
 		t.Parallel()
-		ACTOR := NEW_ACTOR("a")
+		ACTOR := xNEW_ACTOR("a")
 		var q SelectQuery
 		q.Dialect = DialectPostgres
 		q.DistinctOnFields = Fields{FaultySQL{}}
@@ -68,7 +68,7 @@ func Test_SelectQuery(t *testing.T) {
 
 	t.Run("FromTable faulty sql", func(t *testing.T) {
 		t.Parallel()
-		ACTOR := NEW_ACTOR("a")
+		ACTOR := xNEW_ACTOR("a")
 		var q SelectQuery
 		q.SelectFields = AliasFields{ACTOR.ACTOR_ID}
 		q.FromTable = FaultySQL{}
@@ -80,7 +80,7 @@ func Test_SelectQuery(t *testing.T) {
 
 	t.Run("JoinTables without FromTable", func(t *testing.T) {
 		t.Parallel()
-		ACTOR := NEW_ACTOR("a")
+		ACTOR := xNEW_ACTOR("a")
 		var q SelectQuery
 		q.SelectFields = AliasFields{ACTOR.ACTOR_ID}
 		q.JoinTables = append(q.JoinTables, Join(ACTOR, Eq(1, 1)))
@@ -92,7 +92,7 @@ func Test_SelectQuery(t *testing.T) {
 
 	t.Run("JoinTables faulty sql", func(t *testing.T) {
 		t.Parallel()
-		ACTOR := NEW_ACTOR("a")
+		ACTOR := xNEW_ACTOR("a")
 		var q SelectQuery
 		q.SelectFields = AliasFields{ACTOR.ACTOR_ID}
 		q.FromTable = ACTOR
@@ -105,7 +105,7 @@ func Test_SelectQuery(t *testing.T) {
 
 	t.Run("WherePredicate faulty sql", func(t *testing.T) {
 		t.Parallel()
-		ACTOR := NEW_ACTOR("a")
+		ACTOR := xNEW_ACTOR("a")
 		var q SelectQuery
 		q.SelectFields = AliasFields{ACTOR.ACTOR_ID}
 		q.FromTable = ACTOR
@@ -118,7 +118,7 @@ func Test_SelectQuery(t *testing.T) {
 
 	t.Run("GroupByFields faulty sql", func(t *testing.T) {
 		t.Parallel()
-		ACTOR := NEW_ACTOR("a")
+		ACTOR := xNEW_ACTOR("a")
 		var q SelectQuery
 		q.SelectFields = AliasFields{ACTOR.ACTOR_ID}
 		q.FromTable = ACTOR
@@ -131,7 +131,7 @@ func Test_SelectQuery(t *testing.T) {
 
 	t.Run("HavingPredicate faulty sql", func(t *testing.T) {
 		t.Parallel()
-		ACTOR := NEW_ACTOR("a")
+		ACTOR := xNEW_ACTOR("a")
 		var q SelectQuery
 		q.SelectFields = AliasFields{ACTOR.ACTOR_ID}
 		q.FromTable = ACTOR
@@ -144,7 +144,7 @@ func Test_SelectQuery(t *testing.T) {
 
 	t.Run("OrderByFields faulty sql", func(t *testing.T) {
 		t.Parallel()
-		ACTOR := NEW_ACTOR("a")
+		ACTOR := xNEW_ACTOR("a")
 		var q SelectQuery
 		q.SelectFields = AliasFields{ACTOR.ACTOR_ID}
 		q.FromTable = ACTOR
@@ -157,7 +157,7 @@ func Test_SelectQuery(t *testing.T) {
 
 	t.Run("FetchableFields", func(t *testing.T) {
 		t.Parallel()
-		ACTOR := NEW_ACTOR("a")
+		ACTOR := xNEW_ACTOR("a")
 		var q SelectQuery
 		query, err := q.SetFetchableFields(Fields{ACTOR.ACTOR_ID, ACTOR.FIRST_NAME, ACTOR.LAST_NAME})
 		if err != nil {

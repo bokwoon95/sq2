@@ -50,7 +50,7 @@ func Test_UpdateQuery(t *testing.T) {
 
 	t.Run("missing Assignments", func(t *testing.T) {
 		t.Parallel()
-		ACTOR := NEW_ACTOR("")
+		ACTOR := xNEW_ACTOR("")
 		var q UpdateQuery
 		q.UpdateTable = ACTOR
 		_, _, _, err := ToSQL("", q)
@@ -61,7 +61,7 @@ func Test_UpdateQuery(t *testing.T) {
 
 	t.Run("Assignments faulty sql, dialect != mysql", func(t *testing.T) {
 		t.Parallel()
-		ACTOR := NEW_ACTOR("")
+		ACTOR := xNEW_ACTOR("")
 		var q UpdateQuery
 		q.Dialect = DialectPostgres
 		q.UpdateTable = ACTOR
@@ -74,7 +74,7 @@ func Test_UpdateQuery(t *testing.T) {
 
 	t.Run("FromTable dialect == mysql", func(t *testing.T) {
 		t.Parallel()
-		ACTOR := NEW_ACTOR("")
+		ACTOR := xNEW_ACTOR("")
 		var q UpdateQuery
 		q.Dialect = DialectMySQL
 		q.UpdateTable = ACTOR
@@ -88,7 +88,7 @@ func Test_UpdateQuery(t *testing.T) {
 
 	t.Run("FromTable faulty sql", func(t *testing.T) {
 		t.Parallel()
-		ACTOR := NEW_ACTOR("")
+		ACTOR := xNEW_ACTOR("")
 		var q UpdateQuery
 		q.Dialect = DialectPostgres
 		q.UpdateTable = ACTOR
@@ -102,7 +102,7 @@ func Test_UpdateQuery(t *testing.T) {
 
 	t.Run("JoinTables without FromTable, dialect != mysql", func(t *testing.T) {
 		t.Parallel()
-		ACTOR := NEW_ACTOR("")
+		ACTOR := xNEW_ACTOR("")
 		var q UpdateQuery
 		q.Dialect = DialectPostgres
 		q.UpdateTable = ACTOR
@@ -116,7 +116,7 @@ func Test_UpdateQuery(t *testing.T) {
 
 	t.Run("JoinTables faulty sql", func(t *testing.T) {
 		t.Parallel()
-		ACTOR := NEW_ACTOR("")
+		ACTOR := xNEW_ACTOR("")
 		var q UpdateQuery
 		q.Dialect = DialectPostgres
 		q.UpdateTable = ACTOR
@@ -131,7 +131,7 @@ func Test_UpdateQuery(t *testing.T) {
 
 	t.Run("Assignments faulty sql, dialect == mysql", func(t *testing.T) {
 		t.Parallel()
-		ACTOR := NEW_ACTOR("")
+		ACTOR := xNEW_ACTOR("")
 		var q UpdateQuery
 		q.Dialect = DialectMySQL
 		q.UpdateTable = ACTOR
@@ -144,7 +144,7 @@ func Test_UpdateQuery(t *testing.T) {
 
 	t.Run("WherePredicate faulty sql", func(t *testing.T) {
 		t.Parallel()
-		ACTOR := NEW_ACTOR("")
+		ACTOR := xNEW_ACTOR("")
 		var q UpdateQuery
 		q.UpdateTable = ACTOR
 		q.Assignments = Assignments{Assign(ACTOR.ACTOR_ID, 1)}
@@ -157,7 +157,7 @@ func Test_UpdateQuery(t *testing.T) {
 
 	t.Run("OrderByFields dialect != mysql && dialect != sqlite", func(t *testing.T) {
 		t.Parallel()
-		ACTOR := NEW_ACTOR("")
+		ACTOR := xNEW_ACTOR("")
 		var q UpdateQuery
 		q.Dialect = DialectPostgres
 		q.UpdateTable = ACTOR
@@ -171,7 +171,7 @@ func Test_UpdateQuery(t *testing.T) {
 
 	t.Run("OrderByFields faulty sql", func(t *testing.T) {
 		t.Parallel()
-		ACTOR := NEW_ACTOR("")
+		ACTOR := xNEW_ACTOR("")
 		var q UpdateQuery
 		q.Dialect = DialectMySQL
 		q.UpdateTable = ACTOR
@@ -185,7 +185,7 @@ func Test_UpdateQuery(t *testing.T) {
 
 	t.Run("RowLimit dialect != mysql && dialect != sqlite", func(t *testing.T) {
 		t.Parallel()
-		ACTOR := NEW_ACTOR("")
+		ACTOR := xNEW_ACTOR("")
 		var q UpdateQuery
 		q.Dialect = DialectPostgres
 		q.UpdateTable = ACTOR
@@ -199,7 +199,7 @@ func Test_UpdateQuery(t *testing.T) {
 
 	t.Run("RowOffset dialect != sqlite", func(t *testing.T) {
 		t.Parallel()
-		ACTOR := NEW_ACTOR("")
+		ACTOR := xNEW_ACTOR("")
 		var q UpdateQuery
 		q.Dialect = DialectMySQL
 		q.UpdateTable = ACTOR
@@ -213,7 +213,7 @@ func Test_UpdateQuery(t *testing.T) {
 
 	t.Run("ReturningFields dialect != postgres && dialect != sqlite", func(t *testing.T) {
 		t.Parallel()
-		ACTOR := NEW_ACTOR("")
+		ACTOR := xNEW_ACTOR("")
 		var q UpdateQuery
 		q.Dialect = DialectMySQL
 		q.UpdateTable = ACTOR
@@ -227,7 +227,7 @@ func Test_UpdateQuery(t *testing.T) {
 
 	t.Run("FetchableFields dialect == postgres", func(t *testing.T) {
 		t.Parallel()
-		ACTOR := NEW_ACTOR("")
+		ACTOR := xNEW_ACTOR("")
 		var q UpdateQuery
 		q.Dialect = DialectPostgres
 		query, err := q.SetFetchableFields(Fields{ACTOR.ACTOR_ID, ACTOR.FIRST_NAME, ACTOR.LAST_NAME})
@@ -247,7 +247,7 @@ func Test_UpdateQuery(t *testing.T) {
 
 	t.Run("FetchableFields dialect != postgres", func(t *testing.T) {
 		t.Parallel()
-		ACTOR := NEW_ACTOR("")
+		ACTOR := xNEW_ACTOR("")
 		var q UpdateQuery
 		q.Dialect = DialectMySQL
 		_, err := q.SetFetchableFields(Fields{ACTOR.ACTOR_ID, ACTOR.FIRST_NAME, ACTOR.LAST_NAME})

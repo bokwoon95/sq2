@@ -60,7 +60,7 @@ func Test_InsertQuery(t *testing.T) {
 
 	t.Run("IntoTable alias, dialect == mysql", func(t *testing.T) {
 		t.Parallel()
-		ACTOR := NEW_ACTOR("a")
+		ACTOR := xNEW_ACTOR("a")
 		var q InsertQuery
 		q.Dialect = DialectMySQL
 		q.IntoTable = ACTOR
@@ -72,7 +72,7 @@ func Test_InsertQuery(t *testing.T) {
 
 	t.Run("InsertColumns faulty sql", func(t *testing.T) {
 		t.Parallel()
-		ACTOR := NEW_ACTOR("")
+		ACTOR := xNEW_ACTOR("")
 		var q InsertQuery
 		q.IntoTable = ACTOR
 		q.InsertColumns = Fields{FaultySQL{}}
@@ -84,7 +84,7 @@ func Test_InsertQuery(t *testing.T) {
 
 	t.Run("RowValues faulty sql", func(t *testing.T) {
 		t.Parallel()
-		ACTOR := NEW_ACTOR("")
+		ACTOR := xNEW_ACTOR("")
 		var q InsertQuery
 		q.IntoTable = ACTOR
 		q.RowValues = RowValues{{FaultySQL{}}}
@@ -96,7 +96,7 @@ func Test_InsertQuery(t *testing.T) {
 
 	t.Run("RowAlias dialect != mysql", func(t *testing.T) {
 		t.Parallel()
-		ACTOR := NEW_ACTOR("")
+		ACTOR := xNEW_ACTOR("")
 		var q InsertQuery
 		q.Dialect = DialectPostgres
 		q.IntoTable = ACTOR
@@ -111,7 +111,7 @@ func Test_InsertQuery(t *testing.T) {
 
 	t.Run("SelectQuery faulty sql", func(t *testing.T) {
 		t.Parallel()
-		ACTOR := NEW_ACTOR("")
+		ACTOR := xNEW_ACTOR("")
 		var q InsertQuery
 		q.IntoTable = ACTOR
 		q.SelectQuery = &SelectQuery{SelectFields: AliasFields{FaultySQL{}}}
@@ -123,7 +123,7 @@ func Test_InsertQuery(t *testing.T) {
 
 	t.Run("missing RowValues and SelectQuery", func(t *testing.T) {
 		t.Parallel()
-		ACTOR := NEW_ACTOR("")
+		ACTOR := xNEW_ACTOR("")
 		var q InsertQuery
 		q.IntoTable = ACTOR
 		_, _, _, err := ToSQL("", q)
@@ -134,7 +134,7 @@ func Test_InsertQuery(t *testing.T) {
 
 	t.Run("ConflictConstraint dialect != postgres", func(t *testing.T) {
 		t.Parallel()
-		ACTOR := NEW_ACTOR("")
+		ACTOR := xNEW_ACTOR("")
 		var q InsertQuery
 		q.Dialect = DialectSQLite
 		q.IntoTable = ACTOR
@@ -149,7 +149,7 @@ func Test_InsertQuery(t *testing.T) {
 
 	t.Run("ConflictFields faulty sql", func(t *testing.T) {
 		t.Parallel()
-		ACTOR := NEW_ACTOR("")
+		ACTOR := xNEW_ACTOR("")
 		var q InsertQuery
 		q.Dialect = DialectPostgres
 		q.IntoTable = ACTOR
@@ -164,7 +164,7 @@ func Test_InsertQuery(t *testing.T) {
 
 	t.Run("ConflictPredicate faulty sql", func(t *testing.T) {
 		t.Parallel()
-		ACTOR := NEW_ACTOR("")
+		ACTOR := xNEW_ACTOR("")
 		var q InsertQuery
 		q.Dialect = DialectPostgres
 		q.IntoTable = ACTOR
@@ -180,7 +180,7 @@ func Test_InsertQuery(t *testing.T) {
 
 	t.Run("Resolution faulty sql", func(t *testing.T) {
 		t.Parallel()
-		ACTOR := NEW_ACTOR("")
+		ACTOR := xNEW_ACTOR("")
 		var q InsertQuery
 		q.Dialect = DialectPostgres
 		q.IntoTable = ACTOR
@@ -196,7 +196,7 @@ func Test_InsertQuery(t *testing.T) {
 
 	t.Run("ResolutionPredicate faulty sql, dialect == mysql", func(t *testing.T) {
 		t.Parallel()
-		ACTOR := NEW_ACTOR("")
+		ACTOR := xNEW_ACTOR("")
 		var q InsertQuery
 		q.Dialect = DialectMySQL
 		q.IntoTable = ACTOR
@@ -211,7 +211,7 @@ func Test_InsertQuery(t *testing.T) {
 
 	t.Run("ResolutionPredicate faulty sql", func(t *testing.T) {
 		t.Parallel()
-		ACTOR := NEW_ACTOR("")
+		ACTOR := xNEW_ACTOR("")
 		var q InsertQuery
 		q.Dialect = DialectPostgres
 		q.IntoTable = ACTOR
@@ -228,7 +228,7 @@ func Test_InsertQuery(t *testing.T) {
 
 	t.Run("ReturningFields dialect != postgres && dialect != sqlite", func(t *testing.T) {
 		t.Parallel()
-		ACTOR := NEW_ACTOR("")
+		ACTOR := xNEW_ACTOR("")
 		var q InsertQuery
 		q.Dialect = DialectMySQL
 		q.IntoTable = ACTOR
@@ -243,7 +243,7 @@ func Test_InsertQuery(t *testing.T) {
 
 	t.Run("ReturningFields faulty sql", func(t *testing.T) {
 		t.Parallel()
-		ACTOR := NEW_ACTOR("")
+		ACTOR := xNEW_ACTOR("")
 		var q InsertQuery
 		q.Dialect = DialectPostgres
 		q.IntoTable = ACTOR
@@ -258,7 +258,7 @@ func Test_InsertQuery(t *testing.T) {
 
 	t.Run("FetchableFields dialect == postgres", func(t *testing.T) {
 		t.Parallel()
-		ACTOR := NEW_ACTOR("")
+		ACTOR := xNEW_ACTOR("")
 		var q InsertQuery
 		q.Dialect = DialectPostgres
 		query, err := q.SetFetchableFields(Fields{ACTOR.ACTOR_ID, ACTOR.FIRST_NAME, ACTOR.LAST_NAME})
@@ -278,7 +278,7 @@ func Test_InsertQuery(t *testing.T) {
 
 	t.Run("FetchableFields dialect != postgres", func(t *testing.T) {
 		t.Parallel()
-		ACTOR := NEW_ACTOR("")
+		ACTOR := xNEW_ACTOR("")
 		var q InsertQuery
 		q.Dialect = DialectMySQL
 		_, err := q.SetFetchableFields(Fields{ACTOR.ACTOR_ID, ACTOR.FIRST_NAME, ACTOR.LAST_NAME})

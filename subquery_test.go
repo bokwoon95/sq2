@@ -35,7 +35,7 @@ func TestSubquery(t *testing.T) {
 	t.Run("basic subquery", func(t *testing.T) {
 		t.Parallel()
 		var tt TT
-		RENTAL, STAFF := NEW_RENTAL(""), NEW_STAFF("s")
+		RENTAL, STAFF := xNEW_RENTAL(""), xNEW_STAFF("s")
 		subquery_rental := NewSubquery("subquery_rental", Postgres.
 			Select(
 				RENTAL.STAFF_ID,

@@ -48,7 +48,7 @@ func Test_DeleteQuery(t *testing.T) {
 
 	t.Run("UsingTable dialect == sqlite", func(t *testing.T) {
 		t.Parallel()
-		ACTOR := NEW_ACTOR("")
+		ACTOR := xNEW_ACTOR("")
 		var q DeleteQuery
 		q.Dialect = DialectSQLite
 		q.FromTables = append(q.FromTables, ACTOR)
@@ -61,7 +61,7 @@ func Test_DeleteQuery(t *testing.T) {
 
 	t.Run("UsingTable faulty sql", func(t *testing.T) {
 		t.Parallel()
-		ACTOR := NEW_ACTOR("")
+		ACTOR := xNEW_ACTOR("")
 		var q DeleteQuery
 		q.FromTables = append(q.FromTables, ACTOR)
 		q.UsingTable = FaultySQL{}
@@ -73,7 +73,7 @@ func Test_DeleteQuery(t *testing.T) {
 
 	t.Run("JoinTables dialect == sqlite", func(t *testing.T) {
 		t.Parallel()
-		ACTOR := NEW_ACTOR("")
+		ACTOR := xNEW_ACTOR("")
 		var q DeleteQuery
 		q.Dialect = DialectSQLite
 		q.FromTables = append(q.FromTables, ACTOR)
@@ -86,7 +86,7 @@ func Test_DeleteQuery(t *testing.T) {
 
 	t.Run("JoinTables without UsingTable", func(t *testing.T) {
 		t.Parallel()
-		ACTOR := NEW_ACTOR("")
+		ACTOR := xNEW_ACTOR("")
 		var q DeleteQuery
 		q.FromTables = append(q.FromTables, ACTOR)
 		q.JoinTables = append(q.JoinTables, Join(ACTOR))
@@ -98,7 +98,7 @@ func Test_DeleteQuery(t *testing.T) {
 
 	t.Run("JoinTables faulty sql", func(t *testing.T) {
 		t.Parallel()
-		ACTOR := NEW_ACTOR("")
+		ACTOR := xNEW_ACTOR("")
 		var q DeleteQuery
 		q.FromTables = append(q.FromTables, ACTOR)
 		q.UsingTable = ACTOR
@@ -111,7 +111,7 @@ func Test_DeleteQuery(t *testing.T) {
 
 	t.Run("WherePredicate faulty sql", func(t *testing.T) {
 		t.Parallel()
-		ACTOR := NEW_ACTOR("")
+		ACTOR := xNEW_ACTOR("")
 		var q DeleteQuery
 		q.FromTables = append(q.FromTables, ACTOR)
 		q.WherePredicate = And(FaultySQL{})
@@ -123,7 +123,7 @@ func Test_DeleteQuery(t *testing.T) {
 
 	t.Run("OrderByFields dialect != mysql && dialect != sqlite", func(t *testing.T) {
 		t.Parallel()
-		ACTOR := NEW_ACTOR("")
+		ACTOR := xNEW_ACTOR("")
 		var q DeleteQuery
 		q.Dialect = DialectPostgres
 		q.FromTables = append(q.FromTables, ACTOR)
@@ -136,7 +136,7 @@ func Test_DeleteQuery(t *testing.T) {
 
 	t.Run("OrderByFields with multi-table DELETE", func(t *testing.T) {
 		t.Parallel()
-		ACTOR := NEW_ACTOR("")
+		ACTOR := xNEW_ACTOR("")
 		var q DeleteQuery
 		q.Dialect = DialectMySQL
 		q.FromTables = append(q.FromTables, ACTOR)
@@ -151,7 +151,7 @@ func Test_DeleteQuery(t *testing.T) {
 
 	t.Run("OrderByFields faulty sql", func(t *testing.T) {
 		t.Parallel()
-		ACTOR := NEW_ACTOR("")
+		ACTOR := xNEW_ACTOR("")
 		var q DeleteQuery
 		q.Dialect = DialectMySQL
 		q.FromTables = append(q.FromTables, ACTOR)
@@ -164,7 +164,7 @@ func Test_DeleteQuery(t *testing.T) {
 
 	t.Run("RowLimit dialect != mysql && dialect != sqlite", func(t *testing.T) {
 		t.Parallel()
-		ACTOR := NEW_ACTOR("")
+		ACTOR := xNEW_ACTOR("")
 		var q DeleteQuery
 		q.Dialect = DialectPostgres
 		q.FromTables = append(q.FromTables, ACTOR)
@@ -177,7 +177,7 @@ func Test_DeleteQuery(t *testing.T) {
 
 	t.Run("RowLimit with multi-table DELETE", func(t *testing.T) {
 		t.Parallel()
-		ACTOR := NEW_ACTOR("")
+		ACTOR := xNEW_ACTOR("")
 		var q DeleteQuery
 		q.Dialect = DialectMySQL
 		q.FromTables = append(q.FromTables, ACTOR)
@@ -192,7 +192,7 @@ func Test_DeleteQuery(t *testing.T) {
 
 	t.Run("ReturningFields dialect != postgres && dialect != sqlite", func(t *testing.T) {
 		t.Parallel()
-		ACTOR := NEW_ACTOR("")
+		ACTOR := xNEW_ACTOR("")
 		var q DeleteQuery
 		q.Dialect = DialectMySQL
 		q.FromTables = append(q.FromTables, ACTOR)
@@ -205,7 +205,7 @@ func Test_DeleteQuery(t *testing.T) {
 
 	t.Run("ReturningFields faulty sql", func(t *testing.T) {
 		t.Parallel()
-		ACTOR := NEW_ACTOR("")
+		ACTOR := xNEW_ACTOR("")
 		var q DeleteQuery
 		q.Dialect = DialectPostgres
 		q.FromTables = append(q.FromTables, ACTOR)
@@ -218,7 +218,7 @@ func Test_DeleteQuery(t *testing.T) {
 
 	t.Run("FetchableFields dialect == postgres", func(t *testing.T) {
 		t.Parallel()
-		ACTOR := NEW_ACTOR("")
+		ACTOR := xNEW_ACTOR("")
 		var q DeleteQuery
 		q.Dialect = DialectPostgres
 		query, err := q.SetFetchableFields(Fields{ACTOR.ACTOR_ID, ACTOR.FIRST_NAME, ACTOR.LAST_NAME})
@@ -238,7 +238,7 @@ func Test_DeleteQuery(t *testing.T) {
 
 	t.Run("FetchableFields dialect != postgres", func(t *testing.T) {
 		t.Parallel()
-		ACTOR := NEW_ACTOR("")
+		ACTOR := xNEW_ACTOR("")
 		var q DeleteQuery
 		q.Dialect = DialectMySQL
 		_, err := q.SetFetchableFields(Fields{ACTOR.ACTOR_ID, ACTOR.FIRST_NAME, ACTOR.LAST_NAME})
