@@ -158,7 +158,7 @@ type CreateSchemaCommand struct {
 	SchemaName        string
 }
 
-func (cmd *CreateSchemaCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
+func (cmd CreateSchemaCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
 	if dialect == sq.DialectSQLite {
 		return fmt.Errorf("sqlite does not support CREATE SCHEMA")
 	}
@@ -168,15 +168,4 @@ func (cmd *CreateSchemaCommand) AppendSQL(dialect string, buf *bytes.Buffer, arg
 	}
 	buf.WriteString(cmd.SchemaName)
 	return nil
-}
-
-type DropSchemaCommand struct {
-	DropIfExists bool
-	SchemaName   string
-	DropCascade  bool
-}
-
-type RenameSchemaCommand struct {
-	SchemaName   string
-	RenameToName string
 }

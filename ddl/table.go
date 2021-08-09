@@ -601,20 +601,17 @@ func (cmd *CreateTableCommand) AppendSQL(dialect string, buf *bytes.Buffer, args
 }
 
 type AlterTableCommand struct {
-	AlterIfExists bool
-	TableSchema   string
-	TableName     string
-	// Columns
-	AddColumnCommands   []AddColumnCommand
-	AlterColumnCommands []AlterColumnCommand
-	DropColumnCommands  []DropColumnCommand
-	// Constraints
+	AlterIfExists           bool
+	TableSchema             string
+	TableName               string
+	AddColumnCommands       []AddColumnCommand
+	AlterColumnCommands     []AlterColumnCommand
+	DropColumnCommands      []DropColumnCommand
 	AddConstraintCommands   []AddConstraintCommand
 	AlterConstraintCommands []AlterConstraintCommand
 	DropConstraintCommands  []DropConstraintCommand
-	// Indexes (mysql-only)
-	CreateIndexCommands []CreateIndexCommand
-	DropIndexCommands   []DropIndexCommand
+	CreateIndexCommands     []CreateIndexCommand // mysql-only
+	DropIndexCommands       []DropIndexCommand   // mysql-only
 }
 
 func (cmd *AlterTableCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {

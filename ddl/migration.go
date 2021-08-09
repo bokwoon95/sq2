@@ -119,7 +119,7 @@ func migrateSchema(m *Migration, mode MigrationMode, gotCatalog Catalog, wantSch
 	} else {
 		gotSchema.SchemaName = wantSchema.SchemaName
 		if gotSchema.SchemaName != "" {
-			createSchemaCmd := &CreateSchemaCommand{
+			createSchemaCmd := CreateSchemaCommand{
 				CreateIfNotExists: true,
 				SchemaName:        wantSchema.SchemaName,
 			}
