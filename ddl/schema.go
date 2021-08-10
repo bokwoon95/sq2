@@ -12,6 +12,7 @@ type Schema struct {
 	Tables        []Table    `json:",omitempty"`
 	Views         []View     `json:",omitempty"`
 	Functions     []Function `json:",omitempty"`
+	Comment       string     `json:",omitempty"`
 	Ignore        bool       `json:",omitempty"`
 	tableCache    map[string]int
 	viewCache     map[string]int

@@ -45,12 +45,14 @@ SELECT
         WHEN 's' THEN ''
         ELSE COALESCE(pg_get_expr(pg_attrdef.adbin, pg_attrdef.adrelid, TRUE), '')
     END AS column_default
+    ,COALESCE(comments.description, '') AS column_comment
 FROM
     pg_attribute AS columns
     JOIN pg_class AS tables ON tables.relkind = 'r' AND tables.oid = columns.attrelid
     JOIN pg_namespace AS schemas ON schemas.oid = tables.relnamespace
     LEFT JOIN pg_attrdef ON pg_attrdef.adrelid = tables.oid AND pg_attrdef.adnum = columns.attnum
     LEFT JOIN pg_collation ON pg_collation.oid = columns.attcollation
+    LEFT JOIN pg_description AS comments ON comments.objoid = tables.oid AND comments.objsubid = columns.attnum
 WHERE
     columns.attnum > 0
     AND NOT columns.attisdropped

@@ -18,6 +18,7 @@ type Table struct {
 	VirtualTable     string       `json:",omitempty"`
 	VirtualTableArgs []string     `json:",omitempty"`
 	SQL              string       `json:",omitempty"`
+	Comment          string       `json:",omitempty"`
 	Ignore           bool         `json:",omitempty"`
 	columnCache      map[string]int
 	constraintCache  map[string]int
@@ -201,6 +202,9 @@ func (tbl *Table) loadIndexConfig(dialect, tableSchema, tableName string, column
 	if n, ok := modifierPositions["cols"]; ok {
 		columns = strings.Split(modifiers[n][1], ",")
 	}
+	if len(columns) == 0 {
+		return nil
+	}
 	if indexName == "." {
 		indexName = ""
 	}
@@ -267,6 +271,9 @@ func (tbl *Table) loadConstraintConfig(dialect, constraintType, tableSchema, tab
 	}
 	if n, ok := modifierPositions["cols"]; ok {
 		columns = strings.Split(modifiers[n][1], ",")
+	}
+	if len(columns) == 0 {
+		return nil
 	}
 	if constraintName == "." {
 		constraintName = ""

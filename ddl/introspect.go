@@ -19,6 +19,7 @@ var ErrUnsupportedFeature = errors.New("dialect does not support this feature")
 
 type Filter struct {
 	IncludeSystemCatalogs bool
+	IncludeComments       bool
 	SortOutput            bool
 	WithSchemas           []string
 	WithoutSchemas        []string
@@ -384,6 +385,7 @@ func (dbi *DatabaseIntrospector) GetColumns(ctx context.Context, filter *Filter)
 				&column.GeneratedExprStored,
 				&column.CollationName,
 				&column.ColumnDefault,
+				&column.ColumnComment,
 			)
 			if err != nil {
 				return nil, fmt.Errorf("scanning Column: %w", err)
@@ -403,6 +405,7 @@ func (dbi *DatabaseIntrospector) GetColumns(ctx context.Context, filter *Filter)
 				&column.GeneratedExprStored,
 				&column.CollationName,
 				&column.ColumnDefault,
+				&column.ColumnComment,
 			)
 			if err != nil {
 				return nil, fmt.Errorf("scanning Column: %w", err)

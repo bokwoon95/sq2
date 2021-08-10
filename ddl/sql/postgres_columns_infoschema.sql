@@ -12,6 +12,7 @@ SELECT
     ,COALESCE(c.is_generated = 'ALWAYS', FALSE) AS generated_expr_stored
     ,COALESCE(c.collation_name, '') AS collation_name
     ,COALESCE(c.column_default, '') AS column_default
+    ,'' AS column_comment
 FROM
     information_schema.columns AS c
     JOIN information_schema.tables AS t USING (table_schema, table_name)

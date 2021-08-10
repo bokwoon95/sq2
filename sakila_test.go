@@ -1156,3 +1156,28 @@ FOR EACH STATEMENT EXECUTE PROCEDURE refresh_full_address();
 	v.Trigger(triggerFmt, sq.Literal("city_refresh_full_address_trg"), CITY)
 	v.Trigger(triggerFmt, sq.Literal("country_refresh_full_address_trg"), COUNTRY)
 }
+
+type Program struct {
+	sq.TableInfo `sq:"name=program"`
+	ProgramID    sq.NumberField `sq:"program_id" ddl:"type=BIGINT primarykey"`
+	Name         sq.StringField `sq:"name" ddl:"type=CHAR(20)"`
+}
+
+type Price struct {
+	sq.TableInfo `sq:"name=price"`
+	PriceID      sq.NumberField `sq:"name=price_id" ddl:"type=BIGINT primarykey"`
+	ProgramID    sq.NumberField `sq:"name=program_id" ddl:"references=program.program_id"`
+	FromDate     sq.TimeField   `sq:"name=from_date"`
+	ToDate       sq.TimeField   `sq:"name=to_date"`
+}
+
+type Order struct {
+	sq.TableInfo `sq:"name=order"`
+	State        sq.StringField `sq:"name=state" ddl:"type=CHAR(20)"`
+}
+
+type PriceOrder struct {
+	sq.TableInfo `sq:"name=price_order" ddl:"primarykey={. col=price_id,order_id}"`
+	PriceID      sq.NumberField `sq:"name=price_id" ddl:"references=price.price_id"`
+	OrderID      sq.NumberField `sq:"name=order_id" ddl:"references=order.order_id"`
+}

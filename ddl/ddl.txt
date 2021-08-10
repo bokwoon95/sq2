@@ -18,7 +18,12 @@ investigate postgres table partitions
 bah gawd. types. domains. enums.
 ALSO: functions may be user-defined aggregate functions or user-defined windows
 
+add comments to introspect functions
+postgres comments are stored in pg_description
+
 // pass a tx in explicitly to run everything in a transaction
+
+implement WriteStructs(*WriteStructOptions)
 
 001.up.sql
 001.down.sql

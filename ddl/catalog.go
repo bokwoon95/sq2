@@ -16,6 +16,7 @@ type Catalog struct {
 	CurrentSchema  string   `json:",omitempty"`
 	Extensions     []string `json:",omitempty"`
 	Schemas        []Schema `json:",omitempty"`
+	Comment        string   `json:",omitempty"`
 	schemaCache    map[string]int
 	extensionCache map[string]int
 }

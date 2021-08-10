@@ -19,6 +19,7 @@ type Index struct {
 	IncludeColumns []string `json:",omitempty"`
 	Predicate      string   `json:",omitempty"`
 	SQL            string   `json:",omitempty"`
+	Comment        string   `json:",omitempty"`
 	Ignore         bool     `json:",omitempty"`
 }
 

@@ -14,6 +14,7 @@ type View struct {
 	Indexes        []Index   `json:",omitempty"`
 	Triggers       []Trigger `json:",omitempty"`
 	SQL            string    `json:",omitempty"`
+	Comment        string    `json:",omitempty"`
 	Ignore         bool      `json:",omitempty"`
 	indexCache     map[string]int
 	triggerCache   map[[3]string]int

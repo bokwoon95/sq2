@@ -13,6 +13,7 @@ type Trigger struct {
 	TableName   string `json:",omitempty"`
 	TriggerName string `json:",omitempty"`
 	SQL         string `json:",omitempty"`
+	Comment     string `json:",omitempty"`
 	Ignore      bool   `json:",omitempty"`
 }
 

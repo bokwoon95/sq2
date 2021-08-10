@@ -25,6 +25,7 @@ type Column struct {
 	GeneratedExprStored      bool   `json:",omitempty"`
 	CollationName            string `json:",omitempty"`
 	ColumnDefault            string `json:",omitempty"`
+	ColumnComment            string `json:",omitempty"`
 	Ignore                   bool   `json:",omitempty"`
 }
 

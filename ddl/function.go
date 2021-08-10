@@ -15,6 +15,7 @@ type Function struct {
 	RawArgs        string `json:",omitempty"`
 	ReturnType     string `json:",omitempty"`
 	SQL            string `json:",omitempty"`
+	Comment        string `json:",omitempty"`
 	Ignore         bool   `json:",omitempty"`
 }
 
