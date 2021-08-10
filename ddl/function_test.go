@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/bokwoon95/sq"
+	"github.com/bokwoon95/sq/internal/testutil"
 )
 
 func Test_Function(t *testing.T) {
@@ -19,26 +20,26 @@ func Test_Function(t *testing.T) {
 	assert := func(t *testing.T, tt TT) {
 		err := tt.item.populateFunctionInfo(tt.dialect)
 		if err != nil {
-			t.Fatal(testcallers(), err)
+			t.Fatal(testutil.Callers(), err)
 		}
 		sql, _, _, err := sq.ToSQL(tt.dialect, CreateFunctionCommand{Function: tt.item})
 		if err != nil {
-			t.Fatal(testcallers(), err)
+			t.Fatal(testutil.Callers(), err)
 		}
-		if diff := testdiff(sql, tt.item.SQL); diff != "" {
-			t.Error(testcallers(), diff)
+		if diff := testutil.Diff(sql, tt.item.SQL); diff != "" {
+			t.Error(testutil.Callers(), diff)
 		}
-		if diff := testdiff(tt.item.FunctionSchema, tt.wantFunctionSchema); diff != "" {
-			t.Error(testcallers(), diff)
+		if diff := testutil.Diff(tt.item.FunctionSchema, tt.wantFunctionSchema); diff != "" {
+			t.Error(testutil.Callers(), diff)
 		}
-		if diff := testdiff(tt.item.FunctionName, tt.wantFunctionName); diff != "" {
-			t.Error(testcallers(), diff)
+		if diff := testutil.Diff(tt.item.FunctionName, tt.wantFunctionName); diff != "" {
+			t.Error(testutil.Callers(), diff)
 		}
-		if diff := testdiff(tt.item.RawArgs, tt.wantRawArgs); diff != "" {
-			t.Error(testcallers(), diff)
+		if diff := testutil.Diff(tt.item.RawArgs, tt.wantRawArgs); diff != "" {
+			t.Error(testutil.Callers(), diff)
 		}
-		if diff := testdiff(tt.item.ReturnType, tt.wantReturnType); diff != "" {
-			t.Error(testcallers(), diff)
+		if diff := testutil.Diff(tt.item.ReturnType, tt.wantReturnType); diff != "" {
+			t.Error(testutil.Callers(), diff)
 		}
 	}
 
@@ -158,7 +159,7 @@ CREATE OR REPLACE FUNCTION years_compare( IN year1 integer DEFAULT NULL,
 		tt.item.SQL = `CREATE FUNCTION temp`
 		err := tt.item.populateFunctionInfo(tt.dialect)
 		if err == nil {
-			t.Fatal(testcallers(), "expected error but got nil")
+			t.Fatal(testutil.Callers(), "expected error but got nil")
 		}
 	})
 
@@ -169,7 +170,7 @@ CREATE OR REPLACE FUNCTION years_compare( IN year1 integer DEFAULT NULL,
 		tt.item.SQL = `CREATE FUNCTION temp(`
 		err := tt.item.populateFunctionInfo(tt.dialect)
 		if err == nil {
-			t.Fatal(testcallers(), "expected error but got nil")
+			t.Fatal(testutil.Callers(), "expected error but got nil")
 		}
 	})
 }
@@ -185,13 +186,13 @@ func Test_DropFunctionCommand(t *testing.T) {
 	assert := func(t *testing.T, tt TT) {
 		gotQuery, gotArgs, _, err := sq.ToSQL(tt.dialect, tt.item)
 		if err != nil {
-			t.Fatal(testcallers(), err)
+			t.Fatal(testutil.Callers(), err)
 		}
-		if diff := testdiff(gotQuery, tt.wantQuery); diff != "" {
-			t.Error(testcallers(), diff)
+		if diff := testutil.Diff(gotQuery, tt.wantQuery); diff != "" {
+			t.Error(testutil.Callers(), diff)
 		}
-		if diff := testdiff(gotArgs, tt.wantArgs); diff != "" {
-			t.Error(testcallers(), diff)
+		if diff := testutil.Diff(gotArgs, tt.wantArgs); diff != "" {
+			t.Error(testutil.Callers(), diff)
 		}
 	}
 
@@ -221,7 +222,7 @@ func Test_DropFunctionCommand(t *testing.T) {
 		}
 		_, _, _, err := sq.ToSQL(tt.dialect, tt.item)
 		if err == nil {
-			t.Fatal(testcallers(), "expected error but got nil")
+			t.Fatal(testutil.Callers(), "expected error but got nil")
 		}
 	})
 }

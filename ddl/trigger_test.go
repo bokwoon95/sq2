@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/bokwoon95/sq"
+	"github.com/bokwoon95/sq/internal/testutil"
 )
 
 func Test_Trigger(t *testing.T) {
@@ -18,23 +19,23 @@ func Test_Trigger(t *testing.T) {
 	assert := func(t *testing.T, tt TT) {
 		err := tt.item.populateTriggerInfo(tt.dialect)
 		if err != nil {
-			t.Fatal(testcallers(), err)
+			t.Fatal(testutil.Callers(), err)
 		}
 		sql, _, _, err := sq.ToSQL(tt.dialect, CreateTriggerCommand{Trigger: tt.item})
 		if err != nil {
-			t.Fatal(testcallers(), err)
+			t.Fatal(testutil.Callers(), err)
 		}
-		if diff := testdiff(sql, tt.item.SQL); diff != "" {
-			t.Error(testcallers(), diff)
+		if diff := testutil.Diff(sql, tt.item.SQL); diff != "" {
+			t.Error(testutil.Callers(), diff)
 		}
-		if diff := testdiff(tt.item.TableSchema, tt.wantTableSchema); diff != "" {
-			t.Error(testcallers(), diff)
+		if diff := testutil.Diff(tt.item.TableSchema, tt.wantTableSchema); diff != "" {
+			t.Error(testutil.Callers(), diff)
 		}
-		if diff := testdiff(tt.item.TableName, tt.wantTableName); diff != "" {
-			t.Error(testcallers(), diff)
+		if diff := testutil.Diff(tt.item.TableName, tt.wantTableName); diff != "" {
+			t.Error(testutil.Callers(), diff)
 		}
-		if diff := testdiff(tt.item.TriggerName, tt.wantTriggerName); diff != "" {
-			t.Error(testcallers(), diff)
+		if diff := testutil.Diff(tt.item.TriggerName, tt.wantTriggerName); diff != "" {
+			t.Error(testutil.Callers(), diff)
 		}
 	}
 
@@ -84,7 +85,7 @@ END`
 		tt.item.SQL = `the quick brown fox jumped over the lazy dog`
 		err := tt.item.populateTriggerInfo(tt.dialect)
 		if err == nil {
-			t.Fatal(testcallers(), "expected error but got nil")
+			t.Fatal(testutil.Callers(), "expected error but got nil")
 		}
 	})
 }
@@ -100,13 +101,13 @@ func Test_DropTriggerCommand(t *testing.T) {
 	assert := func(t *testing.T, tt TT) {
 		gotQuery, gotArgs, _, err := sq.ToSQL(tt.dialect, tt.item)
 		if err != nil {
-			t.Fatal(testcallers(), err)
+			t.Fatal(testutil.Callers(), err)
 		}
-		if diff := testdiff(gotQuery, tt.wantQuery); diff != "" {
-			t.Error(testcallers(), diff)
+		if diff := testutil.Diff(gotQuery, tt.wantQuery); diff != "" {
+			t.Error(testutil.Callers(), diff)
 		}
-		if diff := testdiff(gotArgs, tt.wantArgs); diff != "" {
-			t.Error(testcallers(), diff)
+		if diff := testutil.Diff(gotArgs, tt.wantArgs); diff != "" {
+			t.Error(testutil.Callers(), diff)
 		}
 	}
 

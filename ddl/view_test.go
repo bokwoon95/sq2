@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/bokwoon95/sq"
+	"github.com/bokwoon95/sq/internal/testutil"
 )
 
 func Test_View(t *testing.T) {
@@ -12,8 +13,8 @@ func Test_View(t *testing.T) {
 		var view View
 		assertPosition := func(name string, wantPosition int) {
 			gotPosition := view.CachedIndexPosition(name)
-			if diff := testdiff(gotPosition, wantPosition); diff != "" {
-				t.Error(testcallers(), diff)
+			if diff := testutil.Diff(gotPosition, wantPosition); diff != "" {
+				t.Error(testutil.Callers(), diff)
 			}
 		}
 		view.AppendIndex(Index{IndexName: "A"})
@@ -38,8 +39,8 @@ func Test_View(t *testing.T) {
 		var view View
 		assertPosition := func(schema, tableName, triggerName string, wantPosition int) {
 			gotPosition := view.CachedTriggerPosition(schema, tableName, triggerName)
-			if diff := testdiff(gotPosition, wantPosition); diff != "" {
-				t.Error(testcallers(), diff)
+			if diff := testutil.Diff(gotPosition, wantPosition); diff != "" {
+				t.Error(testutil.Callers(), diff)
 			}
 		}
 		view.AppendTrigger(Trigger{TableSchema: "A", TableName: "B", TriggerName: "C"})
@@ -67,15 +68,15 @@ func Test_View(t *testing.T) {
 		createOrUpdateIndex := func(indexName string, columns, exprs []string, wantPosition int) {
 			gotPosition, err := view.createOrUpdateIndex(indexName, columns, exprs)
 			if err != nil {
-				t.Fatal(testcallers(), err)
+				t.Fatal(testutil.Callers(), err)
 			}
-			if diff := testdiff(gotPosition, wantPosition); diff != "" {
-				t.Error(testcallers(), diff)
+			if diff := testutil.Diff(gotPosition, wantPosition); diff != "" {
+				t.Error(testutil.Callers(), diff)
 			}
 		}
 		_, err := view.createOrUpdateIndex("", nil, nil)
 		if err == nil {
-			t.Error(testcallers(), "expected error but got nil")
+			t.Error(testutil.Callers(), "expected error but got nil")
 		}
 		createOrUpdateIndex("A", nil, nil, 0)
 		createOrUpdateIndex("B", nil, nil, 1)
@@ -97,13 +98,13 @@ func Test_CreateViewCommand(t *testing.T) {
 	assert := func(t *testing.T, tt TT) {
 		gotQuery, gotArgs, _, err := sq.ToSQL(tt.dialect, tt.item)
 		if err != nil {
-			t.Fatal(testcallers(), err)
+			t.Fatal(testutil.Callers(), err)
 		}
-		if diff := testdiff(gotQuery, tt.wantQuery); diff != "" {
-			t.Error(testcallers(), diff)
+		if diff := testutil.Diff(gotQuery, tt.wantQuery); diff != "" {
+			t.Error(testutil.Callers(), diff)
 		}
-		if diff := testdiff(gotArgs, tt.wantArgs); diff != "" {
-			t.Error(testcallers(), diff)
+		if diff := testutil.Diff(gotArgs, tt.wantArgs); diff != "" {
+			t.Error(testutil.Callers(), diff)
 		}
 	}
 

@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/bokwoon95/sq"
+	"github.com/bokwoon95/sq/internal/testutil"
 )
 
 func Test_lexModifiers(t *testing.T) {
@@ -16,13 +17,13 @@ func Test_lexModifiers(t *testing.T) {
 	assert := func(t *testing.T, tt TT) {
 		gotModifiers, gotModifierIndex, err := tokenizeModifiers(tt.config)
 		if err != nil {
-			t.Fatal(testcallers(), err)
+			t.Fatal(testutil.Callers(), err)
 		}
-		if diff := testdiff(tt.wantModifiers, gotModifiers); diff != "" {
-			t.Error(testcallers(), diff)
+		if diff := testutil.Diff(tt.wantModifiers, gotModifiers); diff != "" {
+			t.Error(testutil.Callers(), diff)
 		}
-		if diff := testdiff(tt.wantModifierIndex, gotModifierIndex); diff != "" {
-			t.Error(testcallers(), diff)
+		if diff := testutil.Diff(tt.wantModifierIndex, gotModifierIndex); diff != "" {
+			t.Error(testutil.Callers(), diff)
 		}
 	}
 
@@ -83,16 +84,16 @@ func Test_lexValue(t *testing.T) {
 	assert := func(t *testing.T, tt TT) {
 		gotValue, gotModifiers, gotModifierIndex, err := tokenizeValue(tt.config)
 		if err != nil {
-			t.Fatal(testcallers(), err)
+			t.Fatal(testutil.Callers(), err)
 		}
-		if diff := testdiff(tt.wantValue, gotValue); diff != "" {
-			t.Error(testcallers(), diff)
+		if diff := testutil.Diff(tt.wantValue, gotValue); diff != "" {
+			t.Error(testutil.Callers(), diff)
 		}
-		if diff := testdiff(tt.wantModifiers, gotModifiers); diff != "" {
-			t.Error(testcallers(), diff)
+		if diff := testutil.Diff(tt.wantModifiers, gotModifiers); diff != "" {
+			t.Error(testutil.Callers(), diff)
 		}
-		if diff := testdiff(tt.wantModifierIndex, gotModifierIndex); diff != "" {
-			t.Error(testcallers(), diff)
+		if diff := testutil.Diff(tt.wantModifierIndex, gotModifierIndex); diff != "" {
+			t.Error(testutil.Callers(), diff)
 		}
 	}
 
@@ -167,22 +168,22 @@ func Test_popWords(t *testing.T) {
 
 	assert := func(t *testing.T, tt TT) {
 		gotWords, gotRest, _ := popIdentifierTokens(tt.dialect, tt.s, tt.num)
-		if diff := testdiff(gotWords, tt.wantWords); diff != "" {
-			t.Error(testcallers(), diff)
+		if diff := testutil.Diff(gotWords, tt.wantWords); diff != "" {
+			t.Error(testutil.Callers(), diff)
 		}
-		if diff := testdiff(gotRest, tt.wantRest); diff != "" {
-			t.Error(testcallers(), diff)
+		if diff := testutil.Diff(gotRest, tt.wantRest); diff != "" {
+			t.Error(testutil.Callers(), diff)
 		}
 	}
 
 	t.Run("empty (popWord)", func(t *testing.T) {
 		t.Parallel()
 		gotWord, gotRest, _ := popIdentifierToken("", "")
-		if diff := testdiff(gotWord, ""); diff != "" {
-			t.Error(testcallers(), diff)
+		if diff := testutil.Diff(gotWord, ""); diff != "" {
+			t.Error(testutil.Callers(), diff)
 		}
-		if diff := testdiff(gotRest, ""); diff != "" {
-			t.Error(testcallers(), diff)
+		if diff := testutil.Diff(gotRest, ""); diff != "" {
+			t.Error(testutil.Callers(), diff)
 		}
 	})
 
@@ -237,8 +238,8 @@ func Test_splitArgs(t *testing.T) {
 			` alphabets []TEXT='{"a", "b", "c"}'`,
 			" names VARIADIC [][]text = ARRAY[ARRAY['a', 'b'], ARRAY['c', 'd']]",
 		}
-		if diff := testdiff(gotArgs, wantArgs); diff != "" {
-			t.Error(testcallers(), diff)
+		if diff := testutil.Diff(gotArgs, wantArgs); diff != "" {
+			t.Error(testutil.Callers(), diff)
 		}
 	})
 }
