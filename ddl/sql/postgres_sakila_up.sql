@@ -111,8 +111,8 @@ CREATE TABLE IF NOT EXISTS film_actor_review (
     ,review_title TEXT NOT NULL DEFAULT '' COLLATE "C"
     ,review_body TEXT NOT NULL DEFAULT ''
     ,metadata JSONB
-    ,last_update TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
-    ,last_delete TIMESTAMPTZ
+    ,last_update TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    ,delete_date TIMESTAMPTZ
 
     ,CONSTRAINT film_actor_review_film_id_actor_id_pkey PRIMARY KEY (film_id, actor_id)
     ,CONSTRAINT film_actor_review_check CHECK (LENGTH(review_body) > LENGTH(review_title))
@@ -234,7 +234,7 @@ CREATE INDEX IF NOT EXISTS film_actor_review_review_title_idx ON film_actor_revi
 
 CREATE INDEX IF NOT EXISTS film_actor_review_review_body_idx ON film_actor_review (review_body COLLATE "C");
 
-CREATE INDEX IF NOT EXISTS film_actor_review_misc ON film_actor_review (film_id, (SUBSTR(review_body, 2, 10)), (review_title || ' abcd'), ((metadata->>'score')::INT)) INCLUDE (actor_id, last_update) WHERE last_delete IS NULL;
+CREATE INDEX IF NOT EXISTS film_actor_review_misc ON film_actor_review (film_id, (SUBSTR(review_body, 2, 10)), (review_title || ' abcd'), ((metadata->>'score')::INT)) INCLUDE (actor_id, last_update) WHERE delete_date IS NULL;
 
 CREATE INDEX IF NOT EXISTS inventory_store_id_film_id_idx ON inventory (store_id, film_id);
 
@@ -329,7 +329,7 @@ ALTER TABLE IF EXISTS film_actor
     ,ADD CONSTRAINT film_actor_actor_id_fkey FOREIGN KEY (actor_id) REFERENCES actor (actor_id) ON UPDATE CASCADE ON DELETE RESTRICT;
 
 ALTER TABLE IF EXISTS film_actor_review
-    ADD CONSTRAINT film_actor_review_film_id_actor_id_fkey FOREIGN KEY (film_id, actor_id) REFERENCES film_actor (film_id, actor_id) ON UPDATE CASCADE ON DELETE RESTRICT;
+    ADD CONSTRAINT film_actor_review_film_id_actor_id_fkey FOREIGN KEY (film_id, actor_id) REFERENCES film_actor (film_id, actor_id) ON UPDATE CASCADE DEFERRABLE INITIALLY DEFERRED;
 
 ALTER TABLE IF EXISTS film_category
     ADD CONSTRAINT film_category_film_id_fkey FOREIGN KEY (film_id) REFERENCES film (film_id) ON UPDATE CASCADE ON DELETE RESTRICT

@@ -94,11 +94,11 @@ CREATE TABLE IF NOT EXISTS film_actor_review (
     ,review_title TEXT NOT NULL DEFAULT '' COLLATE nocase
     ,review_body TEXT NOT NULL DEFAULT ''
     ,metadata JSON
-    ,last_update DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
-    ,last_delete DATETIME
+    ,last_update DATETIME NOT NULL DEFAULT (DATETIME('now'))
+    ,delete_date DATETIME
 
     ,CONSTRAINT film_actor_review_film_id_actor_id_pkey PRIMARY KEY (film_id, actor_id)
-    ,CONSTRAINT film_actor_review_film_id_actor_id_fkey FOREIGN KEY (film_id, actor_id) REFERENCES film_actor (film_id, actor_id) ON UPDATE CASCADE ON DELETE RESTRICT
+    ,CONSTRAINT film_actor_review_film_id_actor_id_fkey FOREIGN KEY (film_id, actor_id) REFERENCES film_actor (film_id, actor_id) ON UPDATE CASCADE DEFERRABLE INITIALLY DEFERRED
     ,CONSTRAINT film_actor_review_check CHECK (LENGTH(review_body) > LENGTH(review_title))
 );
 
@@ -226,7 +226,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS film_actor_actor_id_film_id_idx ON film_actor 
 
 CREATE INDEX IF NOT EXISTS film_actor_film_id_idx ON film_actor (film_id);
 
-CREATE INDEX IF NOT EXISTS film_actor_review_misc ON film_actor_review (film_id, (SUBSTR(review_body, 2, 10)), (review_title || ' abcd'), (CAST(JSON_EXTRACT(metadata, '$.score') AS INT))) WHERE last_delete IS NULL;
+CREATE INDEX IF NOT EXISTS film_actor_review_misc ON film_actor_review (film_id, (SUBSTR(review_body, 2, 10)), (review_title || ' abcd'), (CAST(JSON_EXTRACT(metadata, '$.score') AS INT))) WHERE delete_date IS NULL;
 
 CREATE INDEX IF NOT EXISTS inventory_store_id_film_id_idx ON inventory (store_id, film_id);
 

@@ -274,8 +274,8 @@ type FILM_ACTOR_REVIEW struct {
 	REVIEW_TITLE sq.StringField `ddl:"mysql:type=VARCHAR(50) notnull default='' sqlite:collate=nocase postgres:collate=C mysql:collate=latin1_swedish_ci"`
 	REVIEW_BODY  sq.StringField `ddl:"notnull default=''"`
 	METADATA     sq.JSONField
-	LAST_UPDATE  sq.TimeField `ddl:"notnull default=CURRENT_TIMESTAMP onupdatecurrenttimestamp"`
-	LAST_DELETE  sq.TimeField
+	LAST_UPDATE  sq.TimeField `ddl:"notnull default=CURRENT_TIMESTAMP postgres:default=NOW() sqlite:default=DATETIME('now') onupdatecurrenttimestamp"`
+	DELETE_DATE  sq.TimeField
 }
 
 func NEW_FILM_ACTOR_REVIEW(alias string) FILM_ACTOR_REVIEW {
@@ -287,7 +287,7 @@ func NEW_FILM_ACTOR_REVIEW(alias string) FILM_ACTOR_REVIEW {
 func (tbl FILM_ACTOR_REVIEW) DDL(dialect string, t *T) {
 	FILM_ACTOR := NEW_FILM_ACTOR("")
 	t.PrimaryKey(tbl.FILM_ID, tbl.ACTOR_ID)
-	t.ForeignKey(tbl.FILM_ID, tbl.ACTOR_ID).References(FILM_ACTOR, FILM_ACTOR.FILM_ID, FILM_ACTOR.ACTOR_ID).OnUpdate(CASCADE).OnDelete(RESTRICT)
+	t.ForeignKey(tbl.FILM_ID, tbl.ACTOR_ID).References(FILM_ACTOR, FILM_ACTOR.FILM_ID, FILM_ACTOR.ACTOR_ID).OnUpdate(CASCADE).Deferrable().InitiallyDeferred()
 	t.Check("film_actor_review_check", "LENGTH({}) > LENGTH({})", tbl.REVIEW_BODY, tbl.REVIEW_TITLE)
 	if dialect == sq.DialectSQLite {
 		t.NameIndex("film_actor_review_misc",
@@ -295,7 +295,7 @@ func (tbl FILM_ACTOR_REVIEW) DDL(dialect string, t *T) {
 			sq.Fieldf("SUBSTR({}, 2, 10)", tbl.REVIEW_BODY),
 			sq.Fieldf("{} || {}", tbl.REVIEW_TITLE, " abcd"),
 			sq.Fieldf("CAST(JSON_EXTRACT({}, {}) AS INT)", tbl.METADATA, "$.score"),
-		).Where("{} IS NULL", tbl.LAST_DELETE)
+		).Where("{} IS NULL", tbl.DELETE_DATE)
 		t.Trigger(sqliteLastUpdateTriggerFmt, sq.Literal("film_actor_review_last_update_after_update_trg"), tbl)
 	}
 	if dialect == sq.DialectPostgres {
@@ -306,7 +306,7 @@ func (tbl FILM_ACTOR_REVIEW) DDL(dialect string, t *T) {
 			sq.Fieldf("SUBSTR({}, 2, 10)", tbl.REVIEW_BODY),
 			sq.Fieldf("{} || {}", tbl.REVIEW_TITLE, " abcd"),
 			sq.Fieldf("({}->>{})::INT", tbl.METADATA, "score"),
-		).Include(tbl.ACTOR_ID, tbl.LAST_UPDATE).Where("{} IS NULL", tbl.LAST_DELETE)
+		).Include(tbl.ACTOR_ID, tbl.LAST_UPDATE).Where("{} IS NULL", tbl.DELETE_DATE)
 		t.Trigger(postgresLastUpdateTriggerFmt, sq.Literal("film_actor_review_last_update_before_update_trg"), tbl)
 	}
 	if dialect == sq.DialectMySQL {

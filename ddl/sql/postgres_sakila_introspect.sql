@@ -121,8 +121,8 @@ CREATE TABLE IF NOT EXISTS public.film_actor_review (
     ,review_title TEXT NOT NULL DEFAULT ''::text COLLATE "C"
     ,review_body TEXT NOT NULL DEFAULT ''::text
     ,metadata JSONB
-    ,last_update TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
-    ,last_delete TIMESTAMP WITH TIME ZONE
+    ,last_update TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now()
+    ,delete_date TIMESTAMP WITH TIME ZONE
 
     ,CONSTRAINT film_actor_review_check CHECK (length(review_body) > length(review_title))
     ,CONSTRAINT film_actor_review_film_id_actor_id_pkey PRIMARY KEY (film_id, actor_id)
@@ -359,7 +359,7 @@ CREATE INDEX IF NOT EXISTS film_actor_film_id_idx ON public.film_actor (film_id)
 
 CREATE UNIQUE INDEX IF NOT EXISTS film_actor_review_film_id_actor_id_pkey ON public.film_actor_review (film_id, actor_id);
 
-CREATE INDEX IF NOT EXISTS film_actor_review_misc ON public.film_actor_review (film_id, (substr(review_body, 2, 10)), (review_title || ' abcd'::text), ((metadata ->> 'score'::text)::integer)) INCLUDE (actor_id, last_update) WHERE last_delete IS NULL;
+CREATE INDEX IF NOT EXISTS film_actor_review_misc ON public.film_actor_review (film_id, (substr(review_body, 2, 10)), (review_title || ' abcd'::text), ((metadata ->> 'score'::text)::integer)) INCLUDE (actor_id, last_update) WHERE delete_date IS NULL;
 
 CREATE INDEX IF NOT EXISTS film_actor_review_review_body_idx ON public.film_actor_review (review_body);
 
@@ -453,7 +453,7 @@ ALTER TABLE IF EXISTS public.film_actor
     ,ADD CONSTRAINT film_actor_film_id_fkey FOREIGN KEY (film_id) REFERENCES public.film (film_id) ON UPDATE CASCADE ON DELETE RESTRICT;
 
 ALTER TABLE IF EXISTS public.film_actor_review
-    ADD CONSTRAINT film_actor_review_film_id_actor_id_fkey FOREIGN KEY (film_id, actor_id) REFERENCES public.film_actor (film_id, actor_id) ON UPDATE CASCADE ON DELETE RESTRICT;
+    ADD CONSTRAINT film_actor_review_film_id_actor_id_fkey FOREIGN KEY (film_id, actor_id) REFERENCES public.film_actor (film_id, actor_id) ON UPDATE CASCADE ON DELETE NO ACTION DEFERRABLE INITIALLY DEFERRED;
 
 ALTER TABLE IF EXISTS public.film_category
     ADD CONSTRAINT film_category_category_id_fkey FOREIGN KEY (category_id) REFERENCES public.category (category_id) ON UPDATE CASCADE ON DELETE RESTRICT

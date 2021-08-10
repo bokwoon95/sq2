@@ -113,7 +113,7 @@ CREATE TABLE IF NOT EXISTS db.film_actor_review (
     ,review_body VARCHAR(255) NOT NULL COLLATE utf8mb4_0900_ai_ci
     ,metadata JSON NOT NULL
     ,last_update DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-    ,last_delete DATETIME NOT NULL
+    ,delete_date DATETIME NOT NULL
 
     ,CONSTRAINT film_actor_review_check CHECK (length(`review_body`) > length(`review_title`))
     ,PRIMARY KEY (film_id, actor_id)
@@ -272,7 +272,7 @@ ALTER TABLE db.film_actor
     ,ADD CONSTRAINT film_actor_film_id_fkey FOREIGN KEY (film_id) REFERENCES db.film (film_id) ON UPDATE CASCADE ON DELETE RESTRICT;
 
 ALTER TABLE db.film_actor_review
-    ADD CONSTRAINT film_actor_review_film_id_actor_id_fkey FOREIGN KEY (film_id, actor_id) REFERENCES db.film_actor (film_id, actor_id) ON UPDATE CASCADE ON DELETE RESTRICT;
+    ADD CONSTRAINT film_actor_review_film_id_actor_id_fkey FOREIGN KEY (film_id, actor_id) REFERENCES db.film_actor (film_id, actor_id) ON UPDATE CASCADE ON DELETE NO ACTION;
 
 ALTER TABLE db.film_category
     ADD CONSTRAINT film_category_category_id_fkey FOREIGN KEY (category_id) REFERENCES db.category (category_id) ON UPDATE CASCADE ON DELETE RESTRICT
