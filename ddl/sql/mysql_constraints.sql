@@ -12,7 +12,7 @@ SELECT
     ,COALESCE(group_concat(kcu.referenced_column_name ORDER BY kcu.ordinal_position), '') AS references_columns
     ,COALESCE(rc.update_rule, '') AS update_rule
     ,COALESCE(rc.delete_rule, '') AS delete_rule
-    ,COALESCE(rc.match_option, '') AS match_option
+    ,CASE rc.match_option WHEN 'NONE' THEN '' ELSE COALESCE(CONCAT('MATCH ', rc.match_option), '') END AS match_option
     ,'' AS check_expr
 FROM
     information_schema.table_constraints AS tc

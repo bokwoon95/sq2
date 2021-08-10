@@ -255,47 +255,47 @@ END;;
 DELIMITER ;
 
 ALTER TABLE db.address
-    ADD CONSTRAINT address_city_id_fkey FOREIGN KEY (city_id) REFERENCES db.city (city_id) NONE ON UPDATE CASCADE ON DELETE RESTRICT;
+    ADD CONSTRAINT address_city_id_fkey FOREIGN KEY (city_id) REFERENCES db.city (city_id) ON UPDATE CASCADE ON DELETE RESTRICT;
 
 ALTER TABLE db.city
-    ADD CONSTRAINT city_country_id_fkey FOREIGN KEY (country_id) REFERENCES db.country (country_id) NONE ON UPDATE CASCADE ON DELETE NO ACTION;
+    ADD CONSTRAINT city_country_id_fkey FOREIGN KEY (country_id) REFERENCES db.country (country_id) ON UPDATE CASCADE ON DELETE RESTRICT;
 
 ALTER TABLE db.customer
-    ADD CONSTRAINT customer_address_id_fkey FOREIGN KEY (address_id) REFERENCES db.address (address_id) NONE ON UPDATE CASCADE ON DELETE RESTRICT;
+    ADD CONSTRAINT customer_address_id_fkey FOREIGN KEY (address_id) REFERENCES db.address (address_id) ON UPDATE CASCADE ON DELETE RESTRICT;
 
 ALTER TABLE db.film
-    ADD CONSTRAINT film_language_id_fkey FOREIGN KEY (language_id) REFERENCES db.language (language_id) NONE ON UPDATE CASCADE ON DELETE RESTRICT
-    ,ADD CONSTRAINT film_original_language_id_fkey FOREIGN KEY (original_language_id) REFERENCES db.language (language_id) NONE ON UPDATE CASCADE ON DELETE RESTRICT;
+    ADD CONSTRAINT film_language_id_fkey FOREIGN KEY (language_id) REFERENCES db.language (language_id) ON UPDATE CASCADE ON DELETE RESTRICT
+    ,ADD CONSTRAINT film_original_language_id_fkey FOREIGN KEY (original_language_id) REFERENCES db.language (language_id) ON UPDATE CASCADE ON DELETE RESTRICT;
 
 ALTER TABLE db.film_actor
-    ADD CONSTRAINT film_actor_actor_id_fkey FOREIGN KEY (actor_id) REFERENCES db.actor (actor_id) NONE ON UPDATE CASCADE ON DELETE RESTRICT
-    ,ADD CONSTRAINT film_actor_film_id_fkey FOREIGN KEY (film_id) REFERENCES db.film (film_id) NONE ON UPDATE CASCADE ON DELETE RESTRICT;
+    ADD CONSTRAINT film_actor_actor_id_fkey FOREIGN KEY (actor_id) REFERENCES db.actor (actor_id) ON UPDATE CASCADE ON DELETE RESTRICT
+    ,ADD CONSTRAINT film_actor_film_id_fkey FOREIGN KEY (film_id) REFERENCES db.film (film_id) ON UPDATE CASCADE ON DELETE RESTRICT;
 
 ALTER TABLE db.film_actor_review
-    ADD CONSTRAINT film_actor_review_film_id_actor_id_fkey FOREIGN KEY (film_id, actor_id) REFERENCES db.film_actor (film_id, actor_id) NONE ON UPDATE CASCADE ON DELETE RESTRICT;
+    ADD CONSTRAINT film_actor_review_film_id_actor_id_fkey FOREIGN KEY (film_id, actor_id) REFERENCES db.film_actor (film_id, actor_id) ON UPDATE CASCADE ON DELETE RESTRICT;
 
 ALTER TABLE db.film_category
-    ADD CONSTRAINT film_category_category_id_fkey FOREIGN KEY (category_id) REFERENCES db.category (category_id) NONE ON UPDATE CASCADE ON DELETE RESTRICT
-    ,ADD CONSTRAINT film_category_film_id_fkey FOREIGN KEY (film_id) REFERENCES db.film (film_id) NONE ON UPDATE CASCADE ON DELETE RESTRICT;
+    ADD CONSTRAINT film_category_category_id_fkey FOREIGN KEY (category_id) REFERENCES db.category (category_id) ON UPDATE CASCADE ON DELETE RESTRICT
+    ,ADD CONSTRAINT film_category_film_id_fkey FOREIGN KEY (film_id) REFERENCES db.film (film_id) ON UPDATE CASCADE ON DELETE RESTRICT;
 
 ALTER TABLE db.inventory
-    ADD CONSTRAINT inventory_film_id_fkey FOREIGN KEY (film_id) REFERENCES db.film (film_id) NONE ON UPDATE CASCADE ON DELETE RESTRICT
-    ,ADD CONSTRAINT inventory_store_id_fkey FOREIGN KEY (store_id) REFERENCES db.store (store_id) NONE ON UPDATE CASCADE ON DELETE RESTRICT;
+    ADD CONSTRAINT inventory_film_id_fkey FOREIGN KEY (film_id) REFERENCES db.film (film_id) ON UPDATE CASCADE ON DELETE RESTRICT
+    ,ADD CONSTRAINT inventory_store_id_fkey FOREIGN KEY (store_id) REFERENCES db.store (store_id) ON UPDATE CASCADE ON DELETE RESTRICT;
 
 ALTER TABLE db.payment
-    ADD CONSTRAINT payment_customer_id_fkey FOREIGN KEY (customer_id) REFERENCES db.customer (customer_id) NONE ON UPDATE CASCADE ON DELETE RESTRICT
-    ,ADD CONSTRAINT payment_rental_id_fkey FOREIGN KEY (rental_id) REFERENCES db.rental (rental_id) NONE ON UPDATE CASCADE ON DELETE RESTRICT
-    ,ADD CONSTRAINT payment_staff_id_fkey FOREIGN KEY (staff_id) REFERENCES db.staff (staff_id) NONE ON UPDATE CASCADE ON DELETE RESTRICT;
+    ADD CONSTRAINT payment_customer_id_fkey FOREIGN KEY (customer_id) REFERENCES db.customer (customer_id) ON UPDATE CASCADE ON DELETE RESTRICT
+    ,ADD CONSTRAINT payment_rental_id_fkey FOREIGN KEY (rental_id) REFERENCES db.rental (rental_id) ON UPDATE CASCADE ON DELETE RESTRICT
+    ,ADD CONSTRAINT payment_staff_id_fkey FOREIGN KEY (staff_id) REFERENCES db.staff (staff_id) ON UPDATE CASCADE ON DELETE RESTRICT;
 
 ALTER TABLE db.rental
-    ADD CONSTRAINT rental_customer_id_fkey FOREIGN KEY (customer_id) REFERENCES db.customer (customer_id) NONE ON UPDATE CASCADE ON DELETE RESTRICT
-    ,ADD CONSTRAINT rental_inventory_id_fkey FOREIGN KEY (inventory_id) REFERENCES db.inventory (inventory_id) NONE ON UPDATE CASCADE ON DELETE RESTRICT
-    ,ADD CONSTRAINT rental_staff_id_fkey FOREIGN KEY (staff_id) REFERENCES db.staff (staff_id) NONE ON UPDATE CASCADE ON DELETE RESTRICT;
+    ADD CONSTRAINT rental_customer_id_fkey FOREIGN KEY (customer_id) REFERENCES db.customer (customer_id) ON UPDATE CASCADE ON DELETE RESTRICT
+    ,ADD CONSTRAINT rental_inventory_id_fkey FOREIGN KEY (inventory_id) REFERENCES db.inventory (inventory_id) ON UPDATE CASCADE ON DELETE RESTRICT
+    ,ADD CONSTRAINT rental_staff_id_fkey FOREIGN KEY (staff_id) REFERENCES db.staff (staff_id) ON UPDATE CASCADE ON DELETE RESTRICT;
 
 ALTER TABLE db.staff
-    ADD CONSTRAINT staff_address_id_fkey FOREIGN KEY (address_id) REFERENCES db.address (address_id) NONE ON UPDATE CASCADE ON DELETE RESTRICT
-    ,ADD CONSTRAINT staff_store_id_fkey FOREIGN KEY (store_id) REFERENCES db.store (store_id) NONE ON UPDATE NO ACTION ON DELETE NO ACTION;
+    ADD CONSTRAINT staff_address_id_fkey FOREIGN KEY (address_id) REFERENCES db.address (address_id) ON UPDATE CASCADE ON DELETE RESTRICT
+    ,ADD CONSTRAINT staff_store_id_fkey FOREIGN KEY (store_id) REFERENCES db.store (store_id) ON UPDATE NO ACTION ON DELETE NO ACTION;
 
 ALTER TABLE db.store
-    ADD CONSTRAINT store_address_id_fkey FOREIGN KEY (address_id) REFERENCES db.address (address_id) NONE ON UPDATE CASCADE ON DELETE RESTRICT
-    ,ADD CONSTRAINT store_manager_staff_id_fkey FOREIGN KEY (manager_staff_id) REFERENCES db.staff (staff_id) NONE ON UPDATE CASCADE ON DELETE RESTRICT;
+    ADD CONSTRAINT store_address_id_fkey FOREIGN KEY (address_id) REFERENCES db.address (address_id) ON UPDATE CASCADE ON DELETE RESTRICT
+    ,ADD CONSTRAINT store_manager_staff_id_fkey FOREIGN KEY (manager_staff_id) REFERENCES db.staff (staff_id) ON UPDATE CASCADE ON DELETE RESTRICT;

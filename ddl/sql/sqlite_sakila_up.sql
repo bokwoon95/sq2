@@ -32,7 +32,7 @@ CREATE TABLE IF NOT EXISTS city (
     ,country_id INT NOT NULL
     ,last_update DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 
-    ,CONSTRAINT city_country_id_fkey FOREIGN KEY (country_id) REFERENCES country (country_id) ON UPDATE CASCADE DEFERRABLE INITIALLY DEFERRED
+    ,CONSTRAINT city_country_id_fkey FOREIGN KEY (country_id) REFERENCES country (country_id) ON UPDATE CASCADE ON DELETE RESTRICT
 );
 
 CREATE TABLE IF NOT EXISTS country (
