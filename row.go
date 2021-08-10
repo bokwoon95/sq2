@@ -42,6 +42,13 @@ func (r *Row) Process(fn func() error) {
 
 func (r *Row) Close() { r.closed = true }
 
+// intended for `if row.IsPassive()` checks so that the user can early return
+// from the rowmapper function to avoid potentially heavy computation during
+// the passive phase. Especially important for FetchOne and FetchSlice, where
+// the row.Process(func() error) contents can be moved into the main function
+// itself.
+func (r *Row) IsActive() bool { return r.active }
+
 /* custom */
 
 // ScanInto scans the field into a dest, where dest is a pointer.
