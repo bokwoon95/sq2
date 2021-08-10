@@ -20,7 +20,7 @@ type ACTOR struct {
 	LAST_NAME          sq.StringField `ddl:"mysql:type=VARCHAR(45) notnull index"`
 	FULL_NAME          sq.StringField `ddl:"generated={first_name || ' ' || last_name} mysql:generated={CONCAT(first_name, ' ', last_name)} virtual"`
 	FULL_NAME_REVERSED sq.StringField `ddl:"generated={last_name || ' ' || first_name} mysql:generated={CONCAT(last_name, ' ', first_name)} stored"`
-	LAST_UPDATE        sq.TimeField   `ddl:"notnull default=CURRENT_TIMESTAMP sqlite:default=DATETIME('now') onupdatecurrenttimestamp"`
+	LAST_UPDATE        sq.TimeField   `ddl:"notnull default=CURRENT_TIMESTAMP onupdatecurrenttimestamp"`
 }
 
 func NEW_ACTOR(alias string) ACTOR {
@@ -48,7 +48,7 @@ type CATEGORY struct {
 	sq.TableInfo
 	CATEGORY_ID sq.NumberField `ddl:"sqlite:type=INTEGER primarykey auto_increment identity"`
 	NAME        sq.StringField `ddl:"mysql:type=VARCHAR(25) notnull"`
-	LAST_UPDATE sq.TimeField   `ddl:"notnull default=CURRENT_TIMESTAMP sqlite:default=DATETIME('now') onupdatecurrenttimestamp"`
+	LAST_UPDATE sq.TimeField   `ddl:"notnull default=CURRENT_TIMESTAMP onupdatecurrenttimestamp"`
 }
 
 func NEW_CATEGORY(alias string) CATEGORY {
@@ -70,7 +70,7 @@ type COUNTRY struct {
 	sq.TableInfo
 	COUNTRY_ID  sq.NumberField `ddl:"sqlite:type=INTEGER primarykey auto_increment identity"`
 	COUNTRY     sq.StringField `ddl:"notnull mysql:type=VARCHAR(50)"`
-	LAST_UPDATE sq.TimeField   `ddl:"notnull default=CURRENT_TIMESTAMP sqlite:default=DATETIME('now') onupdatecurrenttimestamp"`
+	LAST_UPDATE sq.TimeField   `ddl:"notnull default=CURRENT_TIMESTAMP onupdatecurrenttimestamp"`
 }
 
 func NEW_COUNTRY(alias string) COUNTRY {
@@ -120,7 +120,7 @@ type ADDRESS struct {
 	CITY_ID     sq.NumberField `ddl:"notnull references={city.city_id onupdate=cascade ondelete=restrict} index"`
 	POSTAL_CODE sq.StringField `ddl:"mysql:type=VARCHAR(10)"`
 	PHONE       sq.StringField `ddl:"notnull mysql:type=VARCHAR(20)"`
-	LAST_UPDATE sq.TimeField   `ddl:"notnull default=CURRENT_TIMESTAMP sqlite:default=DATETIME('now') onupdatecurrenttimestamp"`
+	LAST_UPDATE sq.TimeField   `ddl:"notnull default=CURRENT_TIMESTAMP onupdatecurrenttimestamp"`
 }
 
 func NEW_ADDRESS(alias string) ADDRESS {
@@ -142,7 +142,7 @@ type LANGUAGE struct {
 	sq.TableInfo
 	LANGUAGE_ID sq.NumberField `ddl:"sqlite:type=INTEGER primarykey auto_increment identity"`
 	NAME        sq.StringField `ddl:"notnull mysql:type=CHAR(20)"`
-	LAST_UPDATE sq.TimeField   `ddl:"notnull default=CURRENT_TIMESTAMP sqlite:default=DATETIME('now') onupdatecurrenttimestamp"`
+	LAST_UPDATE sq.TimeField   `ddl:"notnull default=CURRENT_TIMESTAMP onupdatecurrenttimestamp"`
 }
 
 func NEW_LANGUAGE(alias string) LANGUAGE {
@@ -174,7 +174,7 @@ type FILM struct {
 	REPLACEMENT_COST     sq.NumberField `ddl:"type=DECIMAL(5,2) default=19.99 notnull"`
 	RATING               sq.StringField `ddl:"mysql:type=ENUM('G','PG','PG-13','R','NC-17') default='G'"`
 	SPECIAL_FEATURES     sq.CustomField `ddl:"type=JSON postgres:type=TEXT[]"`
-	LAST_UPDATE          sq.TimeField   `ddl:"notnull default=CURRENT_TIMESTAMP sqlite:default=DATETIME('now') onupdatecurrenttimestamp"`
+	LAST_UPDATE          sq.TimeField   `ddl:"notnull default=CURRENT_TIMESTAMP onupdatecurrenttimestamp"`
 	FULLTEXT             sq.StringField `ddl:"ignore=mysql,sqlite postgres:type=TSVECTOR postgres:index={. using=GIST}"`
 	// TODO: CREATE TYPE mpaa_rating, CREATE DOMAIN year
 }
@@ -249,7 +249,7 @@ type FILM_ACTOR struct {
 	sq.TableInfo `ddl:"index={. cols=actor_id,film_id unique}"`
 	FILM_ID      sq.NumberField `ddl:"notnull references={film.film_id onupdate=cascade ondelete=restrict} index"`
 	ACTOR_ID     sq.NumberField `ddl:"notnull references={actor.actor_id onupdate=cascade ondelete=restrict}"`
-	LAST_UPDATE  sq.TimeField   `ddl:"notnull default=CURRENT_TIMESTAMP sqlite:default=DATETIME('now') onupdatecurrenttimestamp"`
+	LAST_UPDATE  sq.TimeField   `ddl:"notnull default=CURRENT_TIMESTAMP onupdatecurrenttimestamp"`
 }
 
 func NEW_FILM_ACTOR(alias string) FILM_ACTOR {
@@ -274,7 +274,7 @@ type FILM_ACTOR_REVIEW struct {
 	REVIEW_TITLE sq.StringField `ddl:"mysql:type=VARCHAR(50) notnull default='' sqlite:collate=nocase postgres:collate=C mysql:collate=latin1_swedish_ci"`
 	REVIEW_BODY  sq.StringField `ddl:"notnull default=''"`
 	METADATA     sq.JSONField
-	LAST_UPDATE  sq.TimeField `ddl:"notnull default=CURRENT_TIMESTAMP sqlite:default=DATETIME('now') onupdatecurrenttimestamp"`
+	LAST_UPDATE  sq.TimeField `ddl:"notnull default=CURRENT_TIMESTAMP onupdatecurrenttimestamp"`
 	LAST_DELETE  sq.TimeField
 }
 
@@ -323,7 +323,7 @@ type FILM_CATEGORY struct {
 	sq.TableInfo
 	FILM_ID     sq.NumberField `ddl:"notnull references={film.film_id onupdate=cascade ondelete=restrict}"`
 	CATEGORY_ID sq.NumberField `ddl:"notnull references={category.category_id onupdate=cascade ondelete=restrict}"`
-	LAST_UPDATE sq.TimeField   `ddl:"notnull default=CURRENT_TIMESTAMP sqlite:default=DATETIME('now') onupdatecurrenttimestamp"`
+	LAST_UPDATE sq.TimeField   `ddl:"notnull default=CURRENT_TIMESTAMP onupdatecurrenttimestamp"`
 }
 
 func NEW_FILM_CATEGORY(alias string) FILM_CATEGORY {
@@ -352,7 +352,7 @@ type STAFF struct {
 	ACTIVE      sq.BooleanField `ddl:"default=TRUE notnull"`
 	USERNAME    sq.StringField  `ddl:"mysql:type=VARCHAR(16) notnull"`
 	PASSWORD    sq.StringField  `ddl:"mysql:type=VARCHAR(40)"`
-	LAST_UPDATE sq.TimeField    `ddl:"notnull default=CURRENT_TIMESTAMP sqlite:default=DATETIME('now') onupdatecurrenttimestamp"`
+	LAST_UPDATE sq.TimeField    `ddl:"notnull default=CURRENT_TIMESTAMP onupdatecurrenttimestamp"`
 	PICTURE     sq.BlobField
 }
 
@@ -376,7 +376,7 @@ type STORE struct {
 	STORE_ID         sq.NumberField `ddl:"sqlite:type=INTEGER primarykey auto_increment identity"`
 	MANAGER_STAFF_ID sq.NumberField `ddl:"notnull references={staff.staff_id onupdate=cascade ondelete=restrict} index={. unique}"`
 	ADDRESS_ID       sq.NumberField `ddl:"notnull references={address.address_id onupdate=cascade ondelete=restrict}"`
-	LAST_UPDATE      sq.TimeField   `ddl:"notnull default=CURRENT_TIMESTAMP sqlite:default=DATETIME('now') onupdatecurrenttimestamp"`
+	LAST_UPDATE      sq.TimeField   `ddl:"notnull default=CURRENT_TIMESTAMP onupdatecurrenttimestamp"`
 }
 
 func NEW_STORE(alias string) STORE {
@@ -404,8 +404,8 @@ type CUSTOMER struct {
 	ADDRESS_ID   sq.NumberField  `ddl:"notnull references={address.address_id onupdate=cascade ondelete=restrict} index"`
 	ACTIVE       sq.BooleanField `ddl:"default=TRUE notnull"`
 	DATA         sq.JSONField
-	CREATE_DATE  sq.TimeField `ddl:"notnull default=CURRENT_TIMESTAMP sqlite:default=DATETIME('now')"`
-	LAST_UPDATE  sq.TimeField `ddl:"notnull default=CURRENT_TIMESTAMP sqlite:default=DATETIME('now') onupdatecurrenttimestamp"`
+	CREATE_DATE  sq.TimeField `ddl:"notnull default=CURRENT_TIMESTAMP"`
+	LAST_UPDATE  sq.TimeField `ddl:"notnull default=CURRENT_TIMESTAMP onupdatecurrenttimestamp"`
 }
 
 func NEW_CUSTOMER(alias string) CUSTOMER {
@@ -428,7 +428,7 @@ type INVENTORY struct {
 	INVENTORY_ID sq.NumberField `ddl:"sqlite:type=INTEGER primarykey auto_increment identity"`
 	FILM_ID      sq.NumberField `ddl:"notnull references={film.film_id onupdate=cascade ondelete=restrict}"`
 	STORE_ID     sq.NumberField `ddl:"notnull references={store.store_id onupdate=cascade ondelete=restrict}"`
-	LAST_UPDATE  sq.TimeField   `ddl:"notnull default=CURRENT_TIMESTAMP sqlite:default=DATETIME('now') onupdatecurrenttimestamp"`
+	LAST_UPDATE  sq.TimeField   `ddl:"notnull default=CURRENT_TIMESTAMP onupdatecurrenttimestamp"`
 }
 
 func NEW_INVENTORY(alias string) INVENTORY {
@@ -454,7 +454,7 @@ type RENTAL struct {
 	CUSTOMER_ID  sq.NumberField `ddl:"notnull index references={customer.customer_id onupdate=cascade ondelete=restrict}"`
 	RETURN_DATE  sq.TimeField
 	STAFF_ID     sq.NumberField `ddl:"notnull index references={staff.staff_id onupdate=cascade ondelete=restrict}"`
-	LAST_UPDATE  sq.TimeField   `ddl:"notnull default=CURRENT_TIMESTAMP sqlite:default=DATETIME('now') onupdatecurrenttimestamp"`
+	LAST_UPDATE  sq.TimeField   `ddl:"notnull default=CURRENT_TIMESTAMP onupdatecurrenttimestamp"`
 }
 
 func NEW_RENTAL(alias string) RENTAL {
