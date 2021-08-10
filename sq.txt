@@ -12,19 +12,9 @@ subquery_field.go | cte.go
 ...
 window.go (at very last because nothing depends on it)
 
+FOR UPDATE, FOR NO KEY UPDATE, FOR SHARE, FOR KEY SHARE 
+
 sq README needs a FAQ section, just like how Maddy mail server does. I naturally gravitaed towards the FAQ link in order to learn more about maddy, and was able to learn so much it just from reading the FAQ alone.
-
-How much slower is checking before quoting an identifier compared to just quoting it? Need to run some benchmarks, decide if it's worth it.
-
-investigate using type assertion and pointers fro performance:
-https://www.reddit.com/r/golang/comments/9xs0r2/why_is_type_assertion_so_fast/
-"interface asserted to pointer and pointer assigned to interface are both optimized by gc. For other kinds of types other than pointer, the larger size their values, the slower in assertions and assignments."
-type assertions will be used very often during query manipulation (inside a trigger, etc). We want query manipulation to be fast.
-
-investigate using type conversion and alias types for perforance:
-https://stackoverflow.com/a/32253871
-"converting to and from the underlying type of your custom type does not make a copy if it."
-type conversions can be used very often for converting between the XXXField types and FieldInfo, which we want to be fast.
 
 In general, will using struct values instead of struct pointers be faster when building a query? I need to know.
 

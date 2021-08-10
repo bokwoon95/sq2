@@ -2,6 +2,7 @@ package sq
 
 import (
 	"bytes"
+	"database/sql"
 	"fmt"
 	"strings"
 )
@@ -15,6 +16,7 @@ type CTE struct {
 	cteAlias       string
 	fieldNames     []string
 	fieldCache     map[string]int
+	materialized   sql.NullBool
 }
 
 var _ Table = CTE{}
@@ -40,6 +42,18 @@ func NewCTE(name string, columns []string, query Query) CTE {
 
 func NewRecursiveCTE(name string, columns []string, query Query) CTE {
 	return newCTE(true, name, columns, query)
+}
+
+func (cte CTE) Materialized() CTE {
+	cte.materialized.Valid = true
+	cte.materialized.Bool = true
+	return cte
+}
+
+func (cte CTE) NotMaterialized() CTE {
+	cte.materialized.Valid = true
+	cte.materialized.Bool = false
+	return cte
 }
 
 func newCTE(recursive bool, name string, columns []string, query Query) CTE {
@@ -151,7 +165,15 @@ func (ctes CTEs) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{
 		if cte.explicitFields {
 			buf.WriteString(" (" + strings.Join(cte.fieldNames, ", ") + ")")
 		}
-		buf.WriteString(" AS (")
+		buf.WriteString(" AS ")
+		if dialect == DialectPostgres && cte.materialized.Valid {
+			if cte.materialized.Bool {
+				buf.WriteString("MATERIALIZED ")
+			} else {
+				buf.WriteString("NOT MATERIALIZED ")
+			}
+		}
+		buf.WriteString("(")
 		switch query := cte.query.(type) {
 		case nil:
 			return fmt.Errorf("CTE #%d query is nil", i+1)

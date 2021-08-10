@@ -13,6 +13,7 @@ migration_commands.go
 change 'ondelete=restrict' to 'deferrable'
 remove sqlite:default=DATETIME('now'). all hail CURRENT_TIMESTAMP
 change default TimeField type from 'DATETIME' to 'TIMESTAMP'
+investigate postgres table partitions
 
 bah gawd. types. domains. enums.
 ALSO: functions may be user-defined aggregate functions or user-defined windows
