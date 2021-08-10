@@ -339,9 +339,14 @@ func (tbl *Table) loadConstraintConfig(dialect, constraintType, tableSchema, tab
 		case "check":
 			constraint.CheckExpr = modifier[1]
 		case "deferrable":
-			constraint.IsDeferrable = true
+			if dialect != sq.DialectMySQL {
+				constraint.IsDeferrable = true
+			}
 		case "deferred":
-			constraint.IsInitiallyDeferred = true
+			if dialect != sq.DialectMySQL {
+				constraint.IsDeferrable = true
+				constraint.IsInitiallyDeferred = true
+			}
 		case "ignore":
 			if modifier[1] == "" {
 				constraint.Ignore = true

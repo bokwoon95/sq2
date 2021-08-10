@@ -511,6 +511,9 @@ func (t *TConstraint) OnDelete(action string) *TConstraint {
 }
 
 func (t *TConstraint) Deferrable() *TConstraint {
+	if t.dialect == sq.DialectMySQL {
+		return t
+	}
 	constraint := t.tbl.Constraints[t.constraintPosition]
 	constraint.IsDeferrable = true
 	t.tbl.Constraints[t.constraintPosition] = constraint
@@ -518,7 +521,11 @@ func (t *TConstraint) Deferrable() *TConstraint {
 }
 
 func (t *TConstraint) InitiallyDeferred() *TConstraint {
+	if t.dialect == sq.DialectMySQL {
+		return t
+	}
 	constraint := t.tbl.Constraints[t.constraintPosition]
+	constraint.IsDeferrable = true
 	constraint.IsInitiallyDeferred = true
 	t.tbl.Constraints[t.constraintPosition] = constraint
 	return t

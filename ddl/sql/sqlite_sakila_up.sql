@@ -30,9 +30,9 @@ CREATE TABLE IF NOT EXISTS city (
     city_id INTEGER PRIMARY KEY
     ,city TEXT NOT NULL
     ,country_id INT NOT NULL
-    ,last_update DATETIME NOT NULL DEFAULT (DATETIME('now'))
+    ,last_update DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 
-    ,CONSTRAINT city_country_id_fkey FOREIGN KEY (country_id) REFERENCES country (country_id) ON UPDATE CASCADE ON DELETE RESTRICT
+    ,CONSTRAINT city_country_id_fkey FOREIGN KEY (country_id) REFERENCES country (country_id) ON UPDATE CASCADE DEFERRABLE INITIALLY DEFERRED
 );
 
 CREATE TABLE IF NOT EXISTS country (

@@ -258,7 +258,7 @@ ALTER TABLE db.address
     ADD CONSTRAINT address_city_id_fkey FOREIGN KEY (city_id) REFERENCES db.city (city_id) NONE ON UPDATE CASCADE ON DELETE RESTRICT;
 
 ALTER TABLE db.city
-    ADD CONSTRAINT city_country_id_fkey FOREIGN KEY (country_id) REFERENCES db.country (country_id) NONE ON UPDATE CASCADE ON DELETE RESTRICT;
+    ADD CONSTRAINT city_country_id_fkey FOREIGN KEY (country_id) REFERENCES db.country (country_id) NONE ON UPDATE CASCADE ON DELETE NO ACTION;
 
 ALTER TABLE db.customer
     ADD CONSTRAINT customer_address_id_fkey FOREIGN KEY (address_id) REFERENCES db.address (address_id) NONE ON UPDATE CASCADE ON DELETE RESTRICT;
