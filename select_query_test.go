@@ -3,6 +3,8 @@ package sq
 import (
 	"errors"
 	"testing"
+
+	"github.com/bokwoon95/sq/internal/testutil"
 )
 
 func Test_SelectQuery(t *testing.T) {
@@ -15,7 +17,7 @@ func Test_SelectQuery(t *testing.T) {
 		q.SelectFields = AliasFields{ACTOR.ACTOR_ID}
 		_, _, _, err := ToSQL("", q)
 		if err == nil {
-			t.Error(testcallers(), "expected error but got nil")
+			t.Error(testutil.Callers(), "expected error but got nil")
 		}
 	})
 
@@ -29,7 +31,7 @@ func Test_SelectQuery(t *testing.T) {
 		q.SelectFields = AliasFields{ACTOR.ACTOR_ID}
 		_, _, _, err := ToSQL("", q)
 		if err == nil {
-			t.Error(testcallers(), "expected error but got nil")
+			t.Error(testutil.Callers(), "expected error but got nil")
 		}
 	})
 
@@ -42,7 +44,7 @@ func Test_SelectQuery(t *testing.T) {
 		q.SelectFields = AliasFields{ACTOR.ACTOR_ID}
 		_, _, _, err := ToSQL("", q)
 		if !errors.Is(err, ErrFaultySQL) {
-			t.Errorf(testcallers()+" expected ErrFaultySQL but got %#v", err)
+			t.Errorf(testutil.Callers()+" expected ErrFaultySQL but got %#v", err)
 		}
 	})
 
@@ -52,7 +54,7 @@ func Test_SelectQuery(t *testing.T) {
 		q.SelectFields = AliasFields{}
 		_, _, _, err := ToSQL("", q)
 		if err == nil {
-			t.Error(testcallers(), "expected error but got nil")
+			t.Error(testutil.Callers(), "expected error but got nil")
 		}
 	})
 
@@ -62,7 +64,7 @@ func Test_SelectQuery(t *testing.T) {
 		q.SelectFields = AliasFields{FaultySQL{}}
 		_, _, _, err := ToSQL("", q)
 		if !errors.Is(err, ErrFaultySQL) {
-			t.Errorf(testcallers()+" expected ErrFaultySQL but got %#v", err)
+			t.Errorf(testutil.Callers()+" expected ErrFaultySQL but got %#v", err)
 		}
 	})
 
@@ -74,7 +76,7 @@ func Test_SelectQuery(t *testing.T) {
 		q.FromTable = FaultySQL{}
 		_, _, _, err := ToSQL("", q)
 		if !errors.Is(err, ErrFaultySQL) {
-			t.Errorf(testcallers()+" expected ErrFaultySQL but got %#v", err)
+			t.Errorf(testutil.Callers()+" expected ErrFaultySQL but got %#v", err)
 		}
 	})
 
@@ -86,7 +88,7 @@ func Test_SelectQuery(t *testing.T) {
 		q.JoinTables = append(q.JoinTables, Join(ACTOR, Eq(1, 1)))
 		_, _, _, err := ToSQL("", q)
 		if err == nil {
-			t.Error(testcallers(), "expected error but got nil")
+			t.Error(testutil.Callers(), "expected error but got nil")
 		}
 	})
 
@@ -99,7 +101,7 @@ func Test_SelectQuery(t *testing.T) {
 		q.JoinTables = append(q.JoinTables, Join(FaultySQL{}, Eq(1, 1)))
 		_, _, _, err := ToSQL("", q)
 		if !errors.Is(err, ErrFaultySQL) {
-			t.Errorf(testcallers()+" expected ErrFaultySQL but got %#v", err)
+			t.Errorf(testutil.Callers()+" expected ErrFaultySQL but got %#v", err)
 		}
 	})
 
@@ -112,7 +114,7 @@ func Test_SelectQuery(t *testing.T) {
 		q.WherePredicate = And(FaultySQL{})
 		_, _, _, err := ToSQL("", q)
 		if !errors.Is(err, ErrFaultySQL) {
-			t.Errorf(testcallers()+" expected ErrFaultySQL but got %#v", err)
+			t.Errorf(testutil.Callers()+" expected ErrFaultySQL but got %#v", err)
 		}
 	})
 
@@ -125,7 +127,7 @@ func Test_SelectQuery(t *testing.T) {
 		q.GroupByFields = Fields{FaultySQL{}}
 		_, _, _, err := ToSQL("", q)
 		if !errors.Is(err, ErrFaultySQL) {
-			t.Errorf(testcallers()+" expected ErrFaultySQL but got %#v", err)
+			t.Errorf(testutil.Callers()+" expected ErrFaultySQL but got %#v", err)
 		}
 	})
 
@@ -138,7 +140,7 @@ func Test_SelectQuery(t *testing.T) {
 		q.HavingPredicate = And(FaultySQL{})
 		_, _, _, err := ToSQL("", q)
 		if !errors.Is(err, ErrFaultySQL) {
-			t.Errorf(testcallers()+" expected ErrFaultySQL but got %#v", err)
+			t.Errorf(testutil.Callers()+" expected ErrFaultySQL but got %#v", err)
 		}
 	})
 
@@ -151,7 +153,7 @@ func Test_SelectQuery(t *testing.T) {
 		q.OrderByFields = Fields{FaultySQL{}}
 		_, _, _, err := ToSQL("", q)
 		if !errors.Is(err, ErrFaultySQL) {
-			t.Errorf(testcallers()+" expected ErrFaultySQL but got %#v", err)
+			t.Errorf(testutil.Callers()+" expected ErrFaultySQL but got %#v", err)
 		}
 	})
 
@@ -161,16 +163,16 @@ func Test_SelectQuery(t *testing.T) {
 		var q SelectQuery
 		query, err := q.SetFetchableFields(Fields{ACTOR.ACTOR_ID, ACTOR.FIRST_NAME, ACTOR.LAST_NAME})
 		if err != nil {
-			t.Fatalf(testcallers()+" expected nil error, got %#v", err)
+			t.Fatalf(testutil.Callers()+" expected nil error, got %#v", err)
 		}
 		q = query.(SelectQuery)
 		fields, err := q.GetFetchableFields()
 		if err != nil {
-			t.Fatalf(testcallers()+" expected nil error, got %#v", err)
+			t.Fatalf(testutil.Callers()+" expected nil error, got %#v", err)
 		}
-		diff := testdiff(fields, []Field{ACTOR.ACTOR_ID, ACTOR.FIRST_NAME, ACTOR.LAST_NAME})
+		diff := testutil.Diff(fields, []Field{ACTOR.ACTOR_ID, ACTOR.FIRST_NAME, ACTOR.LAST_NAME})
 		if diff != "" {
-			t.Error(testcallers(), diff)
+			t.Error(testutil.Callers(), diff)
 		}
 	})
 }

@@ -3,6 +3,8 @@ package sq
 import (
 	"errors"
 	"testing"
+
+	"github.com/bokwoon95/sq/internal/testutil"
 )
 
 func TestCTE(t *testing.T) {
@@ -17,17 +19,17 @@ func TestCTE(t *testing.T) {
 	assert := func(t *testing.T, tt TT) {
 		gotQuery, gotArgs, gotParams, err := ToSQL("", tt.item)
 		if err != nil {
-			t.Fatal(testcallers(), err)
+			t.Fatal(testutil.Callers(), err)
 		}
-		if diff := testdiff(tt.wantQuery, gotQuery); diff != "" {
-			t.Error(testcallers(), diff)
+		if diff := testutil.Diff(tt.wantQuery, gotQuery); diff != "" {
+			t.Error(testutil.Callers(), diff)
 		}
-		if diff := testdiff(gotArgs, tt.wantArgs); diff != "" {
-			t.Error(testcallers(), diff)
+		if diff := testutil.Diff(gotArgs, tt.wantArgs); diff != "" {
+			t.Error(testutil.Callers(), diff)
 		}
 		if tt.wantParams != nil {
-			if diff := testdiff(gotParams, tt.wantParams); diff != "" {
-				t.Error(testcallers(), diff)
+			if diff := testutil.Diff(gotParams, tt.wantParams); diff != "" {
+				t.Error(testutil.Callers(), diff)
 			}
 		}
 	}
@@ -98,7 +100,7 @@ func TestCTE(t *testing.T) {
 		tt.item = SQLite.SelectWith(NewCTE("", nil, nil)).Select(Literal("1"))
 		_, _, _, err := ToSQL("", tt.item)
 		if err == nil {
-			t.Fatal(testcallers(), "expected error but got nil")
+			t.Fatal(testutil.Callers(), "expected error but got nil")
 		}
 	})
 
@@ -109,7 +111,7 @@ func TestCTE(t *testing.T) {
 			Select(Literal("1"))
 		_, _, _, err := ToSQL("", tt.item)
 		if err == nil {
-			t.Fatal(testcallers(), "expected error but got nil")
+			t.Fatal(testutil.Callers(), "expected error but got nil")
 		}
 	})
 
@@ -120,7 +122,7 @@ func TestCTE(t *testing.T) {
 			Select(Literal("1"))
 		_, _, _, err := ToSQL("", tt.item)
 		if err == nil {
-			t.Fatal(testcallers(), "expected error but got nil")
+			t.Fatal(testutil.Callers(), "expected error but got nil")
 		}
 	})
 
@@ -131,7 +133,7 @@ func TestCTE(t *testing.T) {
 			Select(Literal("1"))
 		_, _, _, err := ToSQL("", tt.item)
 		if err == nil {
-			t.Fatal(testcallers(), "expected error but got nil")
+			t.Fatal(testutil.Callers(), "expected error but got nil")
 		}
 	})
 
@@ -142,7 +144,7 @@ func TestCTE(t *testing.T) {
 			Select(Literal("1"))
 		_, _, _, err := ToSQL("", tt.item)
 		if err == nil {
-			t.Fatal(testcallers(), "expected error but got nil")
+			t.Fatal(testutil.Callers(), "expected error but got nil")
 		}
 	})
 
@@ -152,7 +154,7 @@ func TestCTE(t *testing.T) {
 		tt.item = CTE{}
 		_, _, _, err := ToSQL("", tt.item)
 		if err == nil {
-			t.Fatal(testcallers(), "expected error but got nil")
+			t.Fatal(testutil.Callers(), "expected error but got nil")
 		}
 	})
 
@@ -162,7 +164,7 @@ func TestCTE(t *testing.T) {
 		tt.item = NewCTE("", nil, nil).As("aliased_cte")
 		_, _, _, err := ToSQL("", tt.item)
 		if err == nil {
-			t.Fatal(testcallers(), "expected error but got nil")
+			t.Fatal(testutil.Callers(), "expected error but got nil")
 		}
 	})
 
@@ -172,7 +174,7 @@ func TestCTE(t *testing.T) {
 		tt.item = CTE{}.As("aliased_cte")
 		_, _, _, err := ToSQL("", tt.item)
 		if err == nil {
-			t.Fatal(testcallers(), "expected error but got nil")
+			t.Fatal(testutil.Callers(), "expected error but got nil")
 		}
 	})
 
@@ -182,7 +184,7 @@ func TestCTE(t *testing.T) {
 		tt.item = CTE{cteName: "cte"}.As("aliased_cte")
 		_, _, _, err := ToSQL("", tt.item)
 		if err == nil {
-			t.Fatal(testcallers(), "expected error but got nil")
+			t.Fatal(testutil.Callers(), "expected error but got nil")
 		}
 	})
 
@@ -192,7 +194,7 @@ func TestCTE(t *testing.T) {
 		tt.item = CTE{cteName: "cte", query: SQLite.Select()}.As("aliased_cte")
 		_, _, _, err := ToSQL("", tt.item)
 		if err == nil {
-			t.Fatal(testcallers(), "expected error but got nil")
+			t.Fatal(testutil.Callers(), "expected error but got nil")
 		}
 	})
 
@@ -206,7 +208,7 @@ func TestCTE(t *testing.T) {
 		}
 		_, _, _, err := ToSQL("", tt.item)
 		if err == nil {
-			t.Fatal(testcallers(), "expected error but got nil")
+			t.Fatal(testutil.Callers(), "expected error but got nil")
 		}
 	})
 
@@ -220,7 +222,7 @@ func TestCTE(t *testing.T) {
 		}
 		_, _, _, err := ToSQL("", tt.item)
 		if err == nil {
-			t.Fatal(testcallers(), "expected error but got nil")
+			t.Fatal(testutil.Callers(), "expected error but got nil")
 		}
 	})
 
@@ -234,7 +236,7 @@ func TestCTE(t *testing.T) {
 		}
 		_, _, _, err := ToSQL("", tt.item)
 		if !errors.Is(err, ErrFaultySQL) {
-			t.Errorf(testcallers()+" expected ErrFaultySQL but got %#v", err)
+			t.Errorf(testutil.Callers()+" expected ErrFaultySQL but got %#v", err)
 		}
 	})
 
@@ -248,7 +250,7 @@ func TestCTE(t *testing.T) {
 		}
 		_, _, _, err := ToSQL("", tt.item)
 		if !errors.Is(err, ErrFaultySQL) {
-			t.Errorf(testcallers()+" expected ErrFaultySQL but got %#v", err)
+			t.Errorf(testutil.Callers()+" expected ErrFaultySQL but got %#v", err)
 		}
 	})
 }
@@ -266,17 +268,17 @@ func Test_CTEField(t *testing.T) {
 	assert := func(t *testing.T, tt TT) {
 		gotQuery, gotArgs, gotParams, err := ToSQLExclude(tt.dialect, tt.item, tt.excludedTableQualifiers)
 		if err != nil {
-			t.Fatal(testcallers(), err)
+			t.Fatal(testutil.Callers(), err)
 		}
-		if diff := testdiff(tt.wantQuery, gotQuery); diff != "" {
-			t.Error(testcallers(), diff)
+		if diff := testutil.Diff(tt.wantQuery, gotQuery); diff != "" {
+			t.Error(testutil.Callers(), diff)
 		}
-		if diff := testdiff(gotArgs, tt.wantArgs); diff != "" {
-			t.Error(testcallers(), diff)
+		if diff := testutil.Diff(gotArgs, tt.wantArgs); diff != "" {
+			t.Error(testutil.Callers(), diff)
 		}
 		if tt.wantParams != nil {
-			if diff := testdiff(gotParams, tt.wantParams); diff != "" {
-				t.Error(testcallers(), diff)
+			if diff := testutil.Diff(gotParams, tt.wantParams); diff != "" {
+				t.Error(testutil.Callers(), diff)
 			}
 		}
 	}
@@ -288,7 +290,7 @@ func Test_CTEField(t *testing.T) {
 		tt.item = cte.Field("field")
 		_, _, _, err := ToSQLExclude(tt.dialect, tt.item, tt.excludedTableQualifiers)
 		if err == nil {
-			t.Fatal(testcallers(), "expected error but got nil")
+			t.Fatal(testutil.Callers(), "expected error but got nil")
 		}
 	})
 
@@ -300,7 +302,7 @@ func Test_CTEField(t *testing.T) {
 		tt.item = cte2.Field("nonexistent_field")
 		_, _, _, err := ToSQLExclude(tt.dialect, tt.item, tt.excludedTableQualifiers)
 		if err == nil {
-			t.Fatal(testcallers(), "expected error but got nil")
+			t.Fatal(testutil.Callers(), "expected error but got nil")
 		}
 	})
 

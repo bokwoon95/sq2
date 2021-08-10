@@ -3,6 +3,8 @@ package sq
 import (
 	"bytes"
 	"testing"
+
+	"github.com/bokwoon95/sq/internal/testutil"
 )
 
 func Test_TableInfo(t *testing.T) {
@@ -22,22 +24,22 @@ func Test_TableInfo(t *testing.T) {
 		gotArgs, gotParams := []interface{}{}, map[string][]int{}
 		err := tt.tbl.AppendSQL(tt.dialect, buf, &gotArgs, gotParams)
 		if err != nil {
-			t.Fatal(testcallers(), err)
+			t.Fatal(testutil.Callers(), err)
 		}
-		if diff := testdiff(buf.String(), tt.wantQuery); diff != "" {
-			t.Error(testcallers(), diff)
+		if diff := testutil.Diff(buf.String(), tt.wantQuery); diff != "" {
+			t.Error(testutil.Callers(), diff)
 		}
-		if diff := testdiff(gotArgs, tt.wantArgs); diff != "" {
-			t.Error(testcallers(), diff)
+		if diff := testutil.Diff(gotArgs, tt.wantArgs); diff != "" {
+			t.Error(testutil.Callers(), diff)
 		}
-		if diff := testdiff(tt.tbl.TableSchema, tt.tbl.GetSchema()); diff != "" {
-			t.Error(testcallers(), diff)
+		if diff := testutil.Diff(tt.tbl.TableSchema, tt.tbl.GetSchema()); diff != "" {
+			t.Error(testutil.Callers(), diff)
 		}
-		if diff := testdiff(tt.tbl.TableName, tt.tbl.GetName()); diff != "" {
-			t.Error(testcallers(), diff)
+		if diff := testutil.Diff(tt.tbl.TableName, tt.tbl.GetName()); diff != "" {
+			t.Error(testutil.Callers(), diff)
 		}
-		if diff := testdiff(tt.tbl.TableAlias, tt.tbl.GetAlias()); diff != "" {
-			t.Error(testcallers(), diff)
+		if diff := testutil.Diff(tt.tbl.TableAlias, tt.tbl.GetAlias()); diff != "" {
+			t.Error(testutil.Callers(), diff)
 		}
 	}
 

@@ -3,6 +3,8 @@ package sq
 import (
 	"errors"
 	"testing"
+
+	"github.com/bokwoon95/sq/internal/testutil"
 )
 
 func TestSubquery(t *testing.T) {
@@ -17,17 +19,17 @@ func TestSubquery(t *testing.T) {
 	assert := func(t *testing.T, tt TT) {
 		gotQuery, gotArgs, gotParams, err := ToSQL("", tt.item)
 		if err != nil {
-			t.Fatal(testcallers(), err)
+			t.Fatal(testutil.Callers(), err)
 		}
-		if diff := testdiff(tt.wantQuery, gotQuery); diff != "" {
-			t.Error(testcallers(), diff)
+		if diff := testutil.Diff(tt.wantQuery, gotQuery); diff != "" {
+			t.Error(testutil.Callers(), diff)
 		}
-		if diff := testdiff(gotArgs, tt.wantArgs); diff != "" {
-			t.Error(testcallers(), diff)
+		if diff := testutil.Diff(gotArgs, tt.wantArgs); diff != "" {
+			t.Error(testutil.Callers(), diff)
 		}
 		if tt.wantParams != nil {
-			if diff := testdiff(gotParams, tt.wantParams); diff != "" {
-				t.Error(testcallers(), diff)
+			if diff := testutil.Diff(gotParams, tt.wantParams); diff != "" {
+				t.Error(testutil.Callers(), diff)
 			}
 		}
 	}
@@ -69,7 +71,7 @@ func TestSubquery(t *testing.T) {
 		tt.item = SQLite.From(NewSubquery("subquery", nil)).Select(Literal("*"))
 		_, _, _, err := ToSQL("", tt.item)
 		if err == nil {
-			t.Fatal(testcallers(), "expected error but got nil")
+			t.Fatal(testutil.Callers(), "expected error but got nil")
 		}
 	})
 
@@ -79,7 +81,7 @@ func TestSubquery(t *testing.T) {
 		tt.item = SQLite.From(NewSubquery("subquery", Queryf("SELECT 1"))).Select(Literal("*"))
 		_, _, _, err := ToSQL("", tt.item)
 		if err == nil {
-			t.Fatal(testcallers(), "expected error but got nil")
+			t.Fatal(testutil.Callers(), "expected error but got nil")
 		}
 	})
 
@@ -89,7 +91,7 @@ func TestSubquery(t *testing.T) {
 		tt.item = SQLite.From(NewSubquery("subquery", MySQL.Select())).Select(Literal("*"))
 		_, _, _, err := ToSQL("", tt.item)
 		if err == nil {
-			t.Fatal(testcallers(), "expected error but got nil")
+			t.Fatal(testutil.Callers(), "expected error but got nil")
 		}
 	})
 
@@ -99,7 +101,7 @@ func TestSubquery(t *testing.T) {
 		tt.item = SQLite.From(NewSubquery("subquery", MySQL.Select(Value(1)))).Select(Literal("*"))
 		_, _, _, err := ToSQL("", tt.item)
 		if err == nil {
-			t.Fatal(testcallers(), "expected error but got nil")
+			t.Fatal(testutil.Callers(), "expected error but got nil")
 		}
 	})
 
@@ -111,7 +113,7 @@ func TestSubquery(t *testing.T) {
 			Select(Literal("*"))
 		_, _, _, err := ToSQL("", tt.item)
 		if !errors.Is(err, ErrFaultySQL) {
-			t.Errorf(testcallers()+" expected ErrFaultySQL but got %#v", err)
+			t.Errorf(testutil.Callers()+" expected ErrFaultySQL but got %#v", err)
 		}
 	})
 
@@ -121,7 +123,7 @@ func TestSubquery(t *testing.T) {
 		tt.item = Postgres.From(NewSubquery("", Postgres.Select(Value(1).As("n")))).Select(Literal("*"))
 		_, _, _, err := ToSQL("", tt.item)
 		if err == nil {
-			t.Fatal(testcallers(), "expected error but got nil")
+			t.Fatal(testutil.Callers(), "expected error but got nil")
 		}
 	})
 }
@@ -139,17 +141,17 @@ func Test_SubqueryField(t *testing.T) {
 	assert := func(t *testing.T, tt TT) {
 		gotQuery, gotArgs, gotParams, err := ToSQLExclude(tt.dialect, tt.item, tt.excludedTableQualifiers)
 		if err != nil {
-			t.Fatal(testcallers(), err)
+			t.Fatal(testutil.Callers(), err)
 		}
-		if diff := testdiff(tt.wantQuery, gotQuery); diff != "" {
-			t.Error(testcallers(), diff)
+		if diff := testutil.Diff(tt.wantQuery, gotQuery); diff != "" {
+			t.Error(testutil.Callers(), diff)
 		}
-		if diff := testdiff(gotArgs, tt.wantArgs); diff != "" {
-			t.Error(testcallers(), diff)
+		if diff := testutil.Diff(gotArgs, tt.wantArgs); diff != "" {
+			t.Error(testutil.Callers(), diff)
 		}
 		if tt.wantParams != nil {
-			if diff := testdiff(gotParams, tt.wantParams); diff != "" {
-				t.Error(testcallers(), diff)
+			if diff := testutil.Diff(gotParams, tt.wantParams); diff != "" {
+				t.Error(testutil.Callers(), diff)
 			}
 		}
 	}
@@ -162,7 +164,7 @@ func Test_SubqueryField(t *testing.T) {
 		tt.item = q.Field("field")
 		_, _, _, err := ToSQLExclude(tt.dialect, tt.item, tt.excludedTableQualifiers)
 		if err == nil {
-			t.Fatal(testcallers(), "expected error but got nil")
+			t.Fatal(testutil.Callers(), "expected error but got nil")
 		}
 	})
 
@@ -173,7 +175,7 @@ func Test_SubqueryField(t *testing.T) {
 		tt.item = q.Field("field")
 		_, _, _, err := ToSQLExclude(tt.dialect, tt.item, tt.excludedTableQualifiers)
 		if err == nil {
-			t.Fatal(testcallers(), "expected error but got nil")
+			t.Fatal(testutil.Callers(), "expected error but got nil")
 		}
 	})
 
@@ -184,7 +186,7 @@ func Test_SubqueryField(t *testing.T) {
 		tt.item = q.Field("nonexistent_field")
 		_, _, _, err := ToSQLExclude(tt.dialect, tt.item, tt.excludedTableQualifiers)
 		if err == nil {
-			t.Fatal(testcallers(), "expected error but got nil")
+			t.Fatal(testutil.Callers(), "expected error but got nil")
 		}
 	})
 

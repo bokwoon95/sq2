@@ -4,6 +4,8 @@ import (
 	"database/sql"
 	"errors"
 	"testing"
+
+	"github.com/bokwoon95/sq/internal/testutil"
 )
 
 func Test_DeleteQuery(t *testing.T) {
@@ -13,7 +15,7 @@ func Test_DeleteQuery(t *testing.T) {
 		q.CTEs = CTEs{NewCTE("cte", []string{"n"}, FaultySQL{})}
 		_, _, _, err := ToSQL("", q)
 		if !errors.Is(err, ErrFaultySQL) {
-			t.Errorf(testcallers()+" expected ErrFaultySQL but got %#v", err)
+			t.Errorf(testutil.Callers()+" expected ErrFaultySQL but got %#v", err)
 		}
 	})
 
@@ -22,7 +24,7 @@ func Test_DeleteQuery(t *testing.T) {
 		var q DeleteQuery
 		_, _, _, err := ToSQL("", q)
 		if err == nil {
-			t.Error(testcallers(), "expected error but got nil")
+			t.Error(testutil.Callers(), "expected error but got nil")
 		}
 	})
 
@@ -32,7 +34,7 @@ func Test_DeleteQuery(t *testing.T) {
 		q.FromTables = append(q.FromTables, nil)
 		_, _, _, err := ToSQL("", q)
 		if err == nil {
-			t.Error(testcallers(), "expected error but got nil")
+			t.Error(testutil.Callers(), "expected error but got nil")
 		}
 	})
 
@@ -42,7 +44,7 @@ func Test_DeleteQuery(t *testing.T) {
 		q.FromTables = append(q.FromTables, FaultySQL{})
 		_, _, _, err := ToSQL("", q)
 		if !errors.Is(err, ErrFaultySQL) {
-			t.Errorf(testcallers()+" expected ErrFaultySQL but got %#v", err)
+			t.Errorf(testutil.Callers()+" expected ErrFaultySQL but got %#v", err)
 		}
 	})
 
@@ -55,7 +57,7 @@ func Test_DeleteQuery(t *testing.T) {
 		q.UsingTable = ACTOR
 		_, _, _, err := ToSQL("", q)
 		if err == nil {
-			t.Error(testcallers(), "expected error but got nil")
+			t.Error(testutil.Callers(), "expected error but got nil")
 		}
 	})
 
@@ -67,7 +69,7 @@ func Test_DeleteQuery(t *testing.T) {
 		q.UsingTable = FaultySQL{}
 		_, _, _, err := ToSQL("", q)
 		if !errors.Is(err, ErrFaultySQL) {
-			t.Errorf(testcallers()+" expected ErrFaultySQL but got %#v", err)
+			t.Errorf(testutil.Callers()+" expected ErrFaultySQL but got %#v", err)
 		}
 	})
 
@@ -80,7 +82,7 @@ func Test_DeleteQuery(t *testing.T) {
 		q.JoinTables = append(q.JoinTables, Join(ACTOR))
 		_, _, _, err := ToSQL("", q)
 		if err == nil {
-			t.Error(testcallers(), "expected error but got nil")
+			t.Error(testutil.Callers(), "expected error but got nil")
 		}
 	})
 
@@ -92,7 +94,7 @@ func Test_DeleteQuery(t *testing.T) {
 		q.JoinTables = append(q.JoinTables, Join(ACTOR))
 		_, _, _, err := ToSQL("", q)
 		if err == nil {
-			t.Error(testcallers(), "expected error but got nil")
+			t.Error(testutil.Callers(), "expected error but got nil")
 		}
 	})
 
@@ -105,7 +107,7 @@ func Test_DeleteQuery(t *testing.T) {
 		q.JoinTables = append(q.JoinTables, Join(FaultySQL{}, Eq(1, 1)))
 		_, _, _, err := ToSQL("", q)
 		if !errors.Is(err, ErrFaultySQL) {
-			t.Errorf(testcallers()+" expected ErrFaultySQL but got %#v", err)
+			t.Errorf(testutil.Callers()+" expected ErrFaultySQL but got %#v", err)
 		}
 	})
 
@@ -117,7 +119,7 @@ func Test_DeleteQuery(t *testing.T) {
 		q.WherePredicate = And(FaultySQL{})
 		_, _, _, err := ToSQL("", q)
 		if !errors.Is(err, ErrFaultySQL) {
-			t.Errorf(testcallers()+" expected ErrFaultySQL but got %#v", err)
+			t.Errorf(testutil.Callers()+" expected ErrFaultySQL but got %#v", err)
 		}
 	})
 
@@ -130,7 +132,7 @@ func Test_DeleteQuery(t *testing.T) {
 		q.OrderByFields = Fields{ACTOR.ACTOR_ID, ACTOR.FIRST_NAME}
 		_, _, _, err := ToSQL("", q)
 		if err == nil {
-			t.Error(testcallers(), "expected error but got nil")
+			t.Error(testutil.Callers(), "expected error but got nil")
 		}
 	})
 
@@ -145,7 +147,7 @@ func Test_DeleteQuery(t *testing.T) {
 		q.OrderByFields = Fields{ACTOR.ACTOR_ID, ACTOR.FIRST_NAME}
 		_, _, _, err := ToSQL("", q)
 		if err == nil {
-			t.Error(testcallers(), "expected error but got nil")
+			t.Error(testutil.Callers(), "expected error but got nil")
 		}
 	})
 
@@ -158,7 +160,7 @@ func Test_DeleteQuery(t *testing.T) {
 		q.OrderByFields = Fields{FaultySQL{}}
 		_, _, _, err := ToSQL("", q)
 		if !errors.Is(err, ErrFaultySQL) {
-			t.Errorf(testcallers()+" expected ErrFaultySQL but got %#v", err)
+			t.Errorf(testutil.Callers()+" expected ErrFaultySQL but got %#v", err)
 		}
 	})
 
@@ -171,7 +173,7 @@ func Test_DeleteQuery(t *testing.T) {
 		q.RowLimit = sql.NullInt64{Valid: true, Int64: 10}
 		_, _, _, err := ToSQL("", q)
 		if err == nil {
-			t.Error(testcallers(), "expected error but got nil")
+			t.Error(testutil.Callers(), "expected error but got nil")
 		}
 	})
 
@@ -186,7 +188,7 @@ func Test_DeleteQuery(t *testing.T) {
 		q.RowLimit = sql.NullInt64{Valid: true, Int64: 10}
 		_, _, _, err := ToSQL("", q)
 		if err == nil {
-			t.Error(testcallers(), "expected error but got nil")
+			t.Error(testutil.Callers(), "expected error but got nil")
 		}
 	})
 
@@ -199,7 +201,7 @@ func Test_DeleteQuery(t *testing.T) {
 		q.ReturningFields = AliasFields{ACTOR.ACTOR_ID}
 		_, _, _, err := ToSQL("", q)
 		if err == nil {
-			t.Error(testcallers(), "expected error but got nil")
+			t.Error(testutil.Callers(), "expected error but got nil")
 		}
 	})
 
@@ -212,7 +214,7 @@ func Test_DeleteQuery(t *testing.T) {
 		q.ReturningFields = AliasFields{FaultySQL{}}
 		_, _, _, err := ToSQL("", q)
 		if !errors.Is(err, ErrFaultySQL) {
-			t.Errorf(testcallers()+" expected ErrFaultySQL but got %#v", err)
+			t.Errorf(testutil.Callers()+" expected ErrFaultySQL but got %#v", err)
 		}
 	})
 
@@ -223,16 +225,16 @@ func Test_DeleteQuery(t *testing.T) {
 		q.Dialect = DialectPostgres
 		query, err := q.SetFetchableFields(Fields{ACTOR.ACTOR_ID, ACTOR.FIRST_NAME, ACTOR.LAST_NAME})
 		if err != nil {
-			t.Fatalf(testcallers()+" expected nil error, got %#v", err)
+			t.Fatalf(testutil.Callers()+" expected nil error, got %#v", err)
 		}
 		q = query.(DeleteQuery)
 		fields, err := q.GetFetchableFields()
 		if err != nil {
-			t.Fatalf(testcallers()+" expected nil error, got %#v", err)
+			t.Fatalf(testutil.Callers()+" expected nil error, got %#v", err)
 		}
-		diff := testdiff(fields, []Field{ACTOR.ACTOR_ID, ACTOR.FIRST_NAME, ACTOR.LAST_NAME})
+		diff := testutil.Diff(fields, []Field{ACTOR.ACTOR_ID, ACTOR.FIRST_NAME, ACTOR.LAST_NAME})
 		if diff != "" {
-			t.Error(testcallers(), diff)
+			t.Error(testutil.Callers(), diff)
 		}
 	})
 
@@ -243,11 +245,11 @@ func Test_DeleteQuery(t *testing.T) {
 		q.Dialect = DialectMySQL
 		_, err := q.SetFetchableFields(Fields{ACTOR.ACTOR_ID, ACTOR.FIRST_NAME, ACTOR.LAST_NAME})
 		if !errors.Is(err, ErrNonFetchableQuery) {
-			t.Error(testcallers()+" expected ErrNonFetchableQuery, got %#v", err)
+			t.Error(testutil.Callers()+" expected ErrNonFetchableQuery, got %#v", err)
 		}
 		_, err = q.GetFetchableFields()
 		if !errors.Is(err, ErrNonFetchableQuery) {
-			t.Error(testcallers()+" expected ErrNonFetchableQuery, got %#v", err)
+			t.Error(testutil.Callers()+" expected ErrNonFetchableQuery, got %#v", err)
 		}
 	})
 }

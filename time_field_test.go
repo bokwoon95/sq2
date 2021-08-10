@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"testing"
 	"time"
+
+	"github.com/bokwoon95/sq/internal/testutil"
 )
 
 func Test_TimeField(t *testing.T) {
@@ -39,17 +41,17 @@ func Test_TimeField(t *testing.T) {
 		gotArgs, gotParams := []interface{}{}, map[string][]int{}
 		err := tt.item.AppendSQLExclude(tt.dialect, buf, &gotArgs, gotParams, tt.excludedTableQualifiers)
 		if err != nil {
-			t.Fatal(testcallers(), err)
+			t.Fatal(testutil.Callers(), err)
 		}
-		if diff := testdiff(buf.String(), tt.wantQuery); diff != "" {
-			t.Error(testcallers(), diff)
+		if diff := testutil.Diff(buf.String(), tt.wantQuery); diff != "" {
+			t.Error(testutil.Callers(), diff)
 		}
-		if diff := testdiff(gotArgs, tt.wantArgs); diff != "" {
-			t.Error(testcallers(), diff)
+		if diff := testutil.Diff(gotArgs, tt.wantArgs); diff != "" {
+			t.Error(testutil.Callers(), diff)
 		}
 		if tt.wantParams != nil {
-			if diff := testdiff(gotParams, tt.wantParams); diff != "" {
-				t.Error(testcallers(), diff)
+			if diff := testutil.Diff(gotParams, tt.wantParams); diff != "" {
+				t.Error(testutil.Callers(), diff)
 			}
 		}
 	}

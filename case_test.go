@@ -2,6 +2,8 @@ package sq
 
 import (
 	"testing"
+
+	"github.com/bokwoon95/sq/internal/testutil"
 )
 
 func Test_PredicateCases(t *testing.T) {
@@ -16,13 +18,13 @@ func Test_PredicateCases(t *testing.T) {
 	assert := func(t *testing.T, tt TT) {
 		gotQuery, gotArgs, _, err := ToSQLExclude(tt.dialect, tt.item, tt.excludedTableQualifiers)
 		if err != nil {
-			t.Fatal(testcallers(), err)
+			t.Fatal(testutil.Callers(), err)
 		}
-		if diff := testdiff(gotQuery, tt.wantQuery); diff != "" {
-			t.Error(testcallers(), diff)
+		if diff := testutil.Diff(gotQuery, tt.wantQuery); diff != "" {
+			t.Error(testutil.Callers(), diff)
 		}
-		if diff := testdiff(gotArgs, tt.wantArgs); diff != "" {
-			t.Error(testcallers(), diff)
+		if diff := testutil.Diff(gotArgs, tt.wantArgs); diff != "" {
+			t.Error(testutil.Callers(), diff)
 		}
 	}
 
@@ -30,7 +32,7 @@ func Test_PredicateCases(t *testing.T) {
 		t.Parallel()
 		_, _, _, err := ToSQLExclude("", PredicateCases{}, nil)
 		if err == nil {
-			t.Fatal(testcallers(), "expected error but got nil")
+			t.Fatal(testutil.Callers(), "expected error but got nil")
 		}
 	})
 
@@ -77,13 +79,13 @@ func Test_SimpleCases(t *testing.T) {
 	assert := func(t *testing.T, tt TT) {
 		gotQuery, gotArgs, _, err := ToSQLExclude(tt.dialect, tt.item, tt.excludedTableQualifiers)
 		if err != nil {
-			t.Fatal(testcallers(), err)
+			t.Fatal(testutil.Callers(), err)
 		}
-		if diff := testdiff(gotQuery, tt.wantQuery); diff != "" {
-			t.Error(testcallers(), diff)
+		if diff := testutil.Diff(gotQuery, tt.wantQuery); diff != "" {
+			t.Error(testutil.Callers(), diff)
 		}
-		if diff := testdiff(gotArgs, tt.wantArgs); diff != "" {
-			t.Error(testcallers(), diff)
+		if diff := testutil.Diff(gotArgs, tt.wantArgs); diff != "" {
+			t.Error(testutil.Callers(), diff)
 		}
 	}
 
@@ -91,7 +93,7 @@ func Test_SimpleCases(t *testing.T) {
 		t.Parallel()
 		_, _, _, err := ToSQLExclude("", SimpleCases{}, nil)
 		if err == nil {
-			t.Fatal(testcallers(), "expected error but got nil")
+			t.Fatal(testutil.Callers(), "expected error but got nil")
 		}
 	})
 
@@ -100,7 +102,7 @@ func Test_SimpleCases(t *testing.T) {
 		a := xNEW_ACTOR("a")
 		_, _, _, err := ToSQLExclude("", Case(a.ACTOR_ID), nil)
 		if err == nil {
-			t.Fatal(testcallers(), "expected error but got nil")
+			t.Fatal(testutil.Callers(), "expected error but got nil")
 		}
 	})
 

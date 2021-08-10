@@ -3,6 +3,8 @@ package sq
 import (
 	"testing"
 	"time"
+
+	"github.com/bokwoon95/sq/internal/testutil"
 )
 
 func Test_Column(t *testing.T) {
@@ -57,11 +59,11 @@ func Test_Column(t *testing.T) {
 			{int64(3), true, "mallory", 35, 80.0, time.Unix(2, 0)},
 			{int64(4), false, "eve", 21, 79.9, time.Unix(3, 0)},
 		}
-		if diff := testdiff(gotFields, wantFields); diff != "" {
-			t.Error(testcallers(), diff)
+		if diff := testutil.Diff(gotFields, wantFields); diff != "" {
+			t.Error(testutil.Callers(), diff)
 		}
-		if diff := testdiff(gotRowValues, wantRowValues); diff != "" {
-			t.Error(testcallers(), diff)
+		if diff := testutil.Diff(gotRowValues, wantRowValues); diff != "" {
+			t.Error(testutil.Callers(), diff)
 		}
 	})
 
@@ -94,8 +96,8 @@ func Test_Column(t *testing.T) {
 			Assign(USERS.SCORE, user.Score),
 			Assign(USERS.CREATED_AT, user.CreatedAt),
 		}
-		if diff := testdiff(gotAssignments, wantAssignments); diff != "" {
-			t.Error(testcallers(), diff)
+		if diff := testutil.Diff(gotAssignments, wantAssignments); diff != "" {
+			t.Error(testutil.Callers(), diff)
 		}
 	})
 }

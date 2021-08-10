@@ -10,6 +10,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/bokwoon95/sq/internal/testutil"
 	"github.com/google/go-cmp/cmp"
 )
 
@@ -144,17 +145,17 @@ func Test_explodeSlice(t *testing.T) {
 		}()
 		gotArgs, gotParams := []interface{}{}, map[string][]int{}
 		if !isExplodableSlice(tt.slice) {
-			t.Fatalf("%s expected slice %#v to be explodable", testcallers(), tt.slice)
+			t.Fatalf("%s expected slice %#v to be explodable", testutil.Callers(), tt.slice)
 		}
 		err := explodeSlice(tt.dialect, buf, &gotArgs, gotParams, tt.excludedTableQualifiers, tt.slice)
 		if err != nil {
-			t.Fatal(testcallers(), err)
+			t.Fatal(testutil.Callers(), err)
 		}
-		if diff := testdiff(buf.String(), tt.wantQuery); diff != "" {
-			t.Error(testcallers(), diff)
+		if diff := testutil.Diff(buf.String(), tt.wantQuery); diff != "" {
+			t.Error(testutil.Callers(), diff)
 		}
-		if diff := testdiff(gotArgs, tt.wantArgs); diff != "" {
-			t.Error(testcallers(), diff)
+		if diff := testutil.Diff(gotArgs, tt.wantArgs); diff != "" {
+			t.Error(testutil.Callers(), diff)
 		}
 	}
 

@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"database/sql"
 	"testing"
+
+	"github.com/bokwoon95/sq/internal/testutil"
 )
 
 func Test_Fprintf(t *testing.T) {
@@ -39,16 +41,16 @@ func Test_Fprintf(t *testing.T) {
 		gotArgs, gotParams := []interface{}{}, map[string][]int{}
 		err := BufferPrintf(tt.dialect, buf, &gotArgs, gotParams, nil, tt.format, tt.values)
 		if err != nil {
-			t.Fatal(testcallers(), err)
+			t.Fatal(testutil.Callers(), err)
 		}
-		if diff := testdiff(buf.String(), tt.wantQuery); diff != "" {
-			t.Error(testcallers(), diff)
+		if diff := testutil.Diff(buf.String(), tt.wantQuery); diff != "" {
+			t.Error(testutil.Callers(), diff)
 		}
-		if diff := testdiff(gotArgs, tt.wantArgs); diff != "" {
-			t.Error(testcallers(), diff)
+		if diff := testutil.Diff(gotArgs, tt.wantArgs); diff != "" {
+			t.Error(testutil.Callers(), diff)
 		}
-		if diff := testdiff(gotParams, tt.wantParams); diff != "" {
-			t.Error(testcallers(), diff)
+		if diff := testutil.Diff(gotParams, tt.wantParams); diff != "" {
+			t.Error(testutil.Callers(), diff)
 		}
 	}
 
@@ -161,7 +163,7 @@ func Test_Fprintf(t *testing.T) {
 		tt.values = []interface{}{USERS.NAME, USERS, USERS.AGE, USERS.EMAIL, sql.Named("email", "bob@email.com"), sql.Named("age", 5)}
 		err := BufferPrintf(tt.dialect, new(bytes.Buffer), new([]interface{}), make(map[string][]int), nil, tt.format, tt.values)
 		if err == nil {
-			t.Error(testcallers(), "expected error but got nil")
+			t.Error(testutil.Callers(), "expected error but got nil")
 		}
 	})
 
@@ -209,7 +211,7 @@ func Test_Fprintf(t *testing.T) {
 		tt.values = []interface{}{USERS.NAME, USERS, USERS.AGE, USERS.EMAIL, sql.Named("email", "bob@email.com"), sql.Named("age", 5)}
 		err := BufferPrintf(tt.dialect, new(bytes.Buffer), new([]interface{}), make(map[string][]int), nil, tt.format, tt.values)
 		if err == nil {
-			t.Error(testcallers(), "expected error but got nil")
+			t.Error(testutil.Callers(), "expected error but got nil")
 		}
 	})
 
@@ -369,10 +371,10 @@ func Test_Sprintf(t *testing.T) {
 	assert := func(t *testing.T, tt TT) {
 		gotString, err := Sprintf(tt.dialect, tt.query, tt.args)
 		if err != nil {
-			t.Fatal(testcallers(), err)
+			t.Fatal(testutil.Callers(), err)
 		}
-		if diff := testdiff(gotString, tt.wantString); diff != "" {
-			t.Error(testcallers(), diff)
+		if diff := testutil.Diff(gotString, tt.wantString); diff != "" {
+			t.Error(testutil.Callers(), diff)
 		}
 	}
 

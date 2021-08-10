@@ -2,6 +2,8 @@ package sq
 
 import (
 	"testing"
+
+	"github.com/bokwoon95/sq/internal/testutil"
 )
 
 func Test_Assignment(t *testing.T) {
@@ -30,13 +32,13 @@ func Test_Assignment(t *testing.T) {
 	assert := func(t *testing.T, tt TT) {
 		gotQuery, gotArgs, _, err := ToSQLExclude(tt.dialect, tt.item, tt.excludedTableQualifiers)
 		if err != nil {
-			t.Fatal(testcallers(), err)
+			t.Fatal(testutil.Callers(), err)
 		}
-		if diff := testdiff(gotQuery, tt.wantQuery); diff != "" {
-			t.Error(testcallers(), diff)
+		if diff := testutil.Diff(gotQuery, tt.wantQuery); diff != "" {
+			t.Error(testutil.Callers(), diff)
 		}
-		if diff := testdiff(gotArgs, tt.wantArgs); diff != "" {
-			t.Error(testcallers(), diff)
+		if diff := testutil.Diff(gotArgs, tt.wantArgs); diff != "" {
+			t.Error(testutil.Callers(), diff)
 		}
 	}
 
@@ -120,13 +122,13 @@ func Test_Assignments(t *testing.T) {
 	assert := func(t *testing.T, tt TT) {
 		gotQuery, gotArgs, _, err := ToSQLExclude(tt.dialect, tt.item, tt.excludedTableQualifiers)
 		if err != nil {
-			t.Fatal(testcallers(), err)
+			t.Fatal(testutil.Callers(), err)
 		}
-		if diff := testdiff(gotQuery, tt.wantQuery); diff != "" {
-			t.Error(testcallers(), diff)
+		if diff := testutil.Diff(gotQuery, tt.wantQuery); diff != "" {
+			t.Error(testutil.Callers(), diff)
 		}
-		if diff := testdiff(gotArgs, tt.wantArgs); diff != "" {
-			t.Error(testcallers(), diff)
+		if diff := testutil.Diff(gotArgs, tt.wantArgs); diff != "" {
+			t.Error(testutil.Callers(), diff)
 		}
 	}
 

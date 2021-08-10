@@ -16,6 +16,7 @@ import (
 
 	"github.com/bokwoon95/sq"
 	"github.com/bokwoon95/sq/ddl"
+	"github.com/bokwoon95/sq/internal/testutil"
 	"github.com/google/go-cmp/cmp"
 )
 
@@ -69,11 +70,11 @@ func sqliteSetup() {
 	}
 	db, err := sql.Open("sqlite3", "/Users/bokwoon/Documents/sq2/db.sqlite3")
 	if err != nil {
-		log.Fatal(testcallers(), err)
+		log.Fatal(testutil.Callers(), err)
 	}
 	tx, err := db.Begin()
 	if err != nil {
-		log.Fatal(testcallers(), err)
+		log.Fatal(testutil.Callers(), err)
 	}
 	defer func() {
 		if err != nil {
@@ -84,7 +85,7 @@ func sqliteSetup() {
 	}()
 	err = ddl.AutoMigrate(dialect, tx, ddl.DropExtraneous|ddl.DropCascade)
 	if err != nil {
-		log.Fatal(testcallers(), err)
+		log.Fatal(testutil.Callers(), err)
 	}
 	err = ddl.AutoMigrate(dialect, tx, ddl.CreateMissing, ddl.WithTables(
 		NEW_ACTOR(""),
@@ -115,15 +116,15 @@ func sqliteSetup() {
 		NEW_STAFF_LIST(""),
 	))
 	if err != nil {
-		log.Fatal(testcallers(), err)
+		log.Fatal(testutil.Callers(), err)
 	}
 	b, err := fs.ReadFile(embeddedFiles, "testdata/sqlite_sakila_data.sql")
 	if err != nil {
-		log.Fatal(testcallers(), err)
+		log.Fatal(testutil.Callers(), err)
 	}
 	_, err = tx.Exec(string(b))
 	if err != nil {
-		log.Fatal(testcallers(), err)
+		log.Fatal(testutil.Callers(), err)
 	}
 }
 
@@ -138,15 +139,15 @@ func postgresSetup() {
 		"testdata/postgres_refresh_full_address.sql",
 	)
 	if err != nil {
-		log.Fatal(testcallers(), err)
+		log.Fatal(testutil.Callers(), err)
 	}
 	db, err := sql.Open("postgres", "postgres://postgres:postgres@localhost:5442/db?sslmode=disable")
 	if err != nil {
-		log.Fatal(testcallers(), err)
+		log.Fatal(testutil.Callers(), err)
 	}
 	tx, err := db.Begin()
 	if err != nil {
-		log.Fatal(testcallers(), err)
+		log.Fatal(testutil.Callers(), err)
 	}
 	defer func() {
 		if err != nil {
@@ -157,7 +158,7 @@ func postgresSetup() {
 	}()
 	err = ddl.AutoMigrate(dialect, tx, ddl.DropExtraneous|ddl.DropCascade)
 	if err != nil {
-		log.Fatal(testcallers(), err)
+		log.Fatal(testutil.Callers(), err)
 	}
 	err = ddl.AutoMigrate(dialect, tx, ddl.CreateMissing, ddl.WithTables(
 		NEW_ACTOR(""),
@@ -192,15 +193,15 @@ func postgresSetup() {
 		extensions...,
 	))
 	if err != nil {
-		log.Fatal(testcallers(), err)
+		log.Fatal(testutil.Callers(), err)
 	}
 	b, err := fs.ReadFile(embeddedFiles, "testdata/postgres_sakila_data.sql")
 	if err != nil {
-		log.Fatal(testcallers(), err)
+		log.Fatal(testutil.Callers(), err)
 	}
 	_, err = tx.Exec(string(b))
 	if err != nil {
-		log.Fatal(testcallers(), err)
+		log.Fatal(testutil.Callers(), err)
 	}
 }
 
@@ -211,11 +212,11 @@ func mysqlSetup() {
 	}
 	db, err := sql.Open("mysql", "root:root@tcp(localhost:3312)/db?parseTime=true&multiStatements=true")
 	if err != nil {
-		log.Fatal(testcallers(), err)
+		log.Fatal(testutil.Callers(), err)
 	}
 	err = ddl.AutoMigrate(dialect, db, ddl.DropExtraneous|ddl.DropCascade)
 	if err != nil {
-		log.Fatal(testcallers(), err)
+		log.Fatal(testutil.Callers(), err)
 	}
 	err = ddl.AutoMigrate(dialect, db, ddl.CreateMissing, ddl.WithTables(
 		NEW_ACTOR(""),
@@ -246,14 +247,14 @@ func mysqlSetup() {
 		NEW_STAFF_LIST(""),
 	))
 	if err != nil {
-		log.Fatal(testcallers(), err)
+		log.Fatal(testutil.Callers(), err)
 	}
 	b, err := fs.ReadFile(embeddedFiles, "testdata/mysql_sakila_data.sql")
 	if err != nil {
-		log.Fatal(testcallers(), err)
+		log.Fatal(testutil.Callers(), err)
 	}
 	_, err = db.Exec(string(b))
 	if err != nil {
-		log.Fatal(testcallers(), err)
+		log.Fatal(testutil.Callers(), err)
 	}
 }

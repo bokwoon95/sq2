@@ -3,6 +3,8 @@ package sq
 import (
 	"bytes"
 	"testing"
+
+	"github.com/bokwoon95/sq/internal/testutil"
 )
 
 func TestVariadicPredicate(t *testing.T) {
@@ -37,13 +39,13 @@ func TestVariadicPredicate(t *testing.T) {
 		gotArgs, gotParams := []interface{}{}, map[string][]int{}
 		err := tt.predicate.AppendSQLExclude(tt.dialect, buf, &gotArgs, gotParams, tt.excludedTableQualifiers)
 		if err != nil {
-			t.Fatal(testcallers(), err)
+			t.Fatal(testutil.Callers(), err)
 		}
-		if diff := testdiff(buf.String(), tt.wantQuery); diff != "" {
-			t.Error(testcallers(), diff)
+		if diff := testutil.Diff(buf.String(), tt.wantQuery); diff != "" {
+			t.Error(testutil.Callers(), diff)
 		}
-		if diff := testdiff(gotArgs, tt.wantArgs); diff != "" {
-			t.Error(testcallers(), diff)
+		if diff := testutil.Diff(gotArgs, tt.wantArgs); diff != "" {
+			t.Error(testutil.Callers(), diff)
 		}
 	}
 
@@ -56,7 +58,7 @@ func TestVariadicPredicate(t *testing.T) {
 		gotArgs, params := []interface{}{}, map[string][]int{}
 		err := tt.predicate.AppendSQLExclude(tt.dialect, buf, &gotArgs, params, tt.excludedTableQualifiers)
 		if err == nil {
-			t.Fatal(testcallers(), "expected error but got nil")
+			t.Fatal(testutil.Callers(), "expected error but got nil")
 		}
 	}
 
