@@ -16,24 +16,6 @@ FOR UPDATE, FOR NO KEY UPDATE, FOR SHARE, FOR KEY SHARE
 
 sq README needs a FAQ section, just like how Maddy mail server does. I naturally gravitaed towards the FAQ link in order to learn more about maddy, and was able to learn so much it just from reading the FAQ alone.
 
-In general, will using struct values instead of struct pointers be faster when building a query? I need to know.
-
-ddl: patches
-p := ddl.NewPatches()
-p.Register(patchName, patchFunc)
-p.RegisterWithGroup(patchName, patchGroup, patchFunc)
-p.ApplyAllPatches(db, )
-p.ApplyPatches(db, patchNames...)
-p.ApplyPatchGroups(db, patchGroups...)
-CREATE TABLE sq_patches (
-    patch_name VARCHAR(255) -- most database-agnostic type
-    started_at BIGINT -- unix timestamp
-    ended_at BIGINT -- unix timestamp
-    success BOOLEAN
-);
-started_at, but no ended_at means what?
-started_at, ended_at but no success means what?
-
 IMPORTANT: before I do any kind of performance testing, I need to know:
 - given a simple SQL query that instantiates a query, runs it and then exits, does the query get stack allocated?
     - I really need this to happen because it's the main reason why I went with queries as struct values instead of struct pointers
@@ -42,27 +24,3 @@ IMPORTANT: before I do any kind of performance testing, I need to know:
     - I need to know this because it determines if I want to pass the Query interface to LogQueryStats for analytics purposes.
     - If LogQueryStats gets the Query interface, it can do interesting things like analyzing which tables and columns were most commonly used
     - But if performance takes a hit compared to just passing in the compiled query string and args, then maybe I'll leave it out
-
-func (TBL) View(dialect string) sq.Query {
-    return SQLite.
-        Select(fields..).
-        From(table).
-        Join(table).
-        Where(predicates...)
-} // what about materialized views and their different refresh configs?
-func (TBL) DDL(dialect string, t *T) {
-    t.Trigger(name, strings.NewReader(`CREATE TRIGGER ON UPDATE...`))
-    t.Trigger(name, t.File(filename)) // if the user didn't pass in an fs.FS, it will panic
-    /*
-    okay, but there is no way of creating a templated trigger. You have to
-    manually keep the columns references in the trigger up to date with
-    changes, or the trigger breaks. Is there no way around this?
-    */
-    /*
-    Also, trigger procedures should not be defined in tables. The actual
-    attaching of a trigger procedure to a table should be defined in the table,
-    but the trigger source must be defined outside because Postgres allows the
-    same trigger procedure to be reused across multiple tables. But where to
-    hook this in?
-    */
-}
