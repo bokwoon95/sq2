@@ -16,13 +16,13 @@ func Test_PredicateCases(t *testing.T) {
 	assert := func(t *testing.T, tt TT) {
 		gotQuery, gotArgs, _, err := ToSQLExclude(tt.dialect, tt.item, tt.excludedTableQualifiers)
 		if err != nil {
-			t.Fatal(Callers(), err)
+			t.Fatal(testcallers(), err)
 		}
-		if diff := Diff(gotQuery, tt.wantQuery); diff != "" {
-			t.Error(Callers(), diff)
+		if diff := testdiff(gotQuery, tt.wantQuery); diff != "" {
+			t.Error(testcallers(), diff)
 		}
-		if diff := Diff(gotArgs, tt.wantArgs); diff != "" {
-			t.Error(Callers(), diff)
+		if diff := testdiff(gotArgs, tt.wantArgs); diff != "" {
+			t.Error(testcallers(), diff)
 		}
 	}
 
@@ -30,7 +30,7 @@ func Test_PredicateCases(t *testing.T) {
 		t.Parallel()
 		_, _, _, err := ToSQLExclude("", PredicateCases{}, nil)
 		if err == nil {
-			t.Fatal(Callers(), "expected error but got nil")
+			t.Fatal(testcallers(), "expected error but got nil")
 		}
 	})
 
@@ -77,13 +77,13 @@ func Test_SimpleCases(t *testing.T) {
 	assert := func(t *testing.T, tt TT) {
 		gotQuery, gotArgs, _, err := ToSQLExclude(tt.dialect, tt.item, tt.excludedTableQualifiers)
 		if err != nil {
-			t.Fatal(Callers(), err)
+			t.Fatal(testcallers(), err)
 		}
-		if diff := Diff(gotQuery, tt.wantQuery); diff != "" {
-			t.Error(Callers(), diff)
+		if diff := testdiff(gotQuery, tt.wantQuery); diff != "" {
+			t.Error(testcallers(), diff)
 		}
-		if diff := Diff(gotArgs, tt.wantArgs); diff != "" {
-			t.Error(Callers(), diff)
+		if diff := testdiff(gotArgs, tt.wantArgs); diff != "" {
+			t.Error(testcallers(), diff)
 		}
 	}
 
@@ -91,7 +91,7 @@ func Test_SimpleCases(t *testing.T) {
 		t.Parallel()
 		_, _, _, err := ToSQLExclude("", SimpleCases{}, nil)
 		if err == nil {
-			t.Fatal(Callers(), "expected error but got nil")
+			t.Fatal(testcallers(), "expected error but got nil")
 		}
 	})
 
@@ -100,7 +100,7 @@ func Test_SimpleCases(t *testing.T) {
 		a := xNEW_ACTOR("a")
 		_, _, _, err := ToSQLExclude("", Case(a.ACTOR_ID), nil)
 		if err == nil {
-			t.Fatal(Callers(), "expected error but got nil")
+			t.Fatal(testcallers(), "expected error but got nil")
 		}
 	})
 

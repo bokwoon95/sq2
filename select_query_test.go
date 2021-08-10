@@ -15,7 +15,7 @@ func Test_SelectQuery(t *testing.T) {
 		q.SelectFields = AliasFields{ACTOR.ACTOR_ID}
 		_, _, _, err := ToSQL("", q)
 		if err == nil {
-			t.Error(Callers(), "expected error but got nil")
+			t.Error(testcallers(), "expected error but got nil")
 		}
 	})
 
@@ -29,7 +29,7 @@ func Test_SelectQuery(t *testing.T) {
 		q.SelectFields = AliasFields{ACTOR.ACTOR_ID}
 		_, _, _, err := ToSQL("", q)
 		if err == nil {
-			t.Error(Callers(), "expected error but got nil")
+			t.Error(testcallers(), "expected error but got nil")
 		}
 	})
 
@@ -42,7 +42,7 @@ func Test_SelectQuery(t *testing.T) {
 		q.SelectFields = AliasFields{ACTOR.ACTOR_ID}
 		_, _, _, err := ToSQL("", q)
 		if !errors.Is(err, ErrFaultySQL) {
-			t.Errorf(Callers()+" expected ErrFaultySQL but got %#v", err)
+			t.Errorf(testcallers()+" expected ErrFaultySQL but got %#v", err)
 		}
 	})
 
@@ -52,7 +52,7 @@ func Test_SelectQuery(t *testing.T) {
 		q.SelectFields = AliasFields{}
 		_, _, _, err := ToSQL("", q)
 		if err == nil {
-			t.Error(Callers(), "expected error but got nil")
+			t.Error(testcallers(), "expected error but got nil")
 		}
 	})
 
@@ -62,7 +62,7 @@ func Test_SelectQuery(t *testing.T) {
 		q.SelectFields = AliasFields{FaultySQL{}}
 		_, _, _, err := ToSQL("", q)
 		if !errors.Is(err, ErrFaultySQL) {
-			t.Errorf(Callers()+" expected ErrFaultySQL but got %#v", err)
+			t.Errorf(testcallers()+" expected ErrFaultySQL but got %#v", err)
 		}
 	})
 
@@ -74,7 +74,7 @@ func Test_SelectQuery(t *testing.T) {
 		q.FromTable = FaultySQL{}
 		_, _, _, err := ToSQL("", q)
 		if !errors.Is(err, ErrFaultySQL) {
-			t.Errorf(Callers()+" expected ErrFaultySQL but got %#v", err)
+			t.Errorf(testcallers()+" expected ErrFaultySQL but got %#v", err)
 		}
 	})
 
@@ -86,7 +86,7 @@ func Test_SelectQuery(t *testing.T) {
 		q.JoinTables = append(q.JoinTables, Join(ACTOR, Eq(1, 1)))
 		_, _, _, err := ToSQL("", q)
 		if err == nil {
-			t.Error(Callers(), "expected error but got nil")
+			t.Error(testcallers(), "expected error but got nil")
 		}
 	})
 
@@ -99,7 +99,7 @@ func Test_SelectQuery(t *testing.T) {
 		q.JoinTables = append(q.JoinTables, Join(FaultySQL{}, Eq(1, 1)))
 		_, _, _, err := ToSQL("", q)
 		if !errors.Is(err, ErrFaultySQL) {
-			t.Errorf(Callers()+" expected ErrFaultySQL but got %#v", err)
+			t.Errorf(testcallers()+" expected ErrFaultySQL but got %#v", err)
 		}
 	})
 
@@ -112,7 +112,7 @@ func Test_SelectQuery(t *testing.T) {
 		q.WherePredicate = And(FaultySQL{})
 		_, _, _, err := ToSQL("", q)
 		if !errors.Is(err, ErrFaultySQL) {
-			t.Errorf(Callers()+" expected ErrFaultySQL but got %#v", err)
+			t.Errorf(testcallers()+" expected ErrFaultySQL but got %#v", err)
 		}
 	})
 
@@ -125,7 +125,7 @@ func Test_SelectQuery(t *testing.T) {
 		q.GroupByFields = Fields{FaultySQL{}}
 		_, _, _, err := ToSQL("", q)
 		if !errors.Is(err, ErrFaultySQL) {
-			t.Errorf(Callers()+" expected ErrFaultySQL but got %#v", err)
+			t.Errorf(testcallers()+" expected ErrFaultySQL but got %#v", err)
 		}
 	})
 
@@ -138,7 +138,7 @@ func Test_SelectQuery(t *testing.T) {
 		q.HavingPredicate = And(FaultySQL{})
 		_, _, _, err := ToSQL("", q)
 		if !errors.Is(err, ErrFaultySQL) {
-			t.Errorf(Callers()+" expected ErrFaultySQL but got %#v", err)
+			t.Errorf(testcallers()+" expected ErrFaultySQL but got %#v", err)
 		}
 	})
 
@@ -151,7 +151,7 @@ func Test_SelectQuery(t *testing.T) {
 		q.OrderByFields = Fields{FaultySQL{}}
 		_, _, _, err := ToSQL("", q)
 		if !errors.Is(err, ErrFaultySQL) {
-			t.Errorf(Callers()+" expected ErrFaultySQL but got %#v", err)
+			t.Errorf(testcallers()+" expected ErrFaultySQL but got %#v", err)
 		}
 	})
 
@@ -161,16 +161,16 @@ func Test_SelectQuery(t *testing.T) {
 		var q SelectQuery
 		query, err := q.SetFetchableFields(Fields{ACTOR.ACTOR_ID, ACTOR.FIRST_NAME, ACTOR.LAST_NAME})
 		if err != nil {
-			t.Fatalf(Callers()+" expected nil error, got %#v", err)
+			t.Fatalf(testcallers()+" expected nil error, got %#v", err)
 		}
 		q = query.(SelectQuery)
 		fields, err := q.GetFetchableFields()
 		if err != nil {
-			t.Fatalf(Callers()+" expected nil error, got %#v", err)
+			t.Fatalf(testcallers()+" expected nil error, got %#v", err)
 		}
-		diff := Diff(fields, []Field{ACTOR.ACTOR_ID, ACTOR.FIRST_NAME, ACTOR.LAST_NAME})
+		diff := testdiff(fields, []Field{ACTOR.ACTOR_ID, ACTOR.FIRST_NAME, ACTOR.LAST_NAME})
 		if diff != "" {
-			t.Error(Callers(), diff)
+			t.Error(testcallers(), diff)
 		}
 	})
 }

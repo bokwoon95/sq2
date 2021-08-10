@@ -52,7 +52,7 @@ func (f tmpfield) AppendSQLExclude(dialect string, buf *bytes.Buffer, args *[]in
 	return nil
 }
 
-func Diff(got, want interface{}) string {
+func testdiff(got, want interface{}) string {
 	diff := cmp.Diff(got, want, cmp.Exporter(func(typ reflect.Type) bool { return true }))
 	if diff != "" {
 		return "\n-got +want\n" + diff
@@ -60,7 +60,7 @@ func Diff(got, want interface{}) string {
 	return ""
 }
 
-func Callers() string {
+func testcallers() string {
 	var pc [50]uintptr
 	// Skip two extra frames to account for this function
 	// and runtime.Callers itself.
@@ -144,17 +144,17 @@ func Test_explodeSlice(t *testing.T) {
 		}()
 		gotArgs, gotParams := []interface{}{}, map[string][]int{}
 		if !isExplodableSlice(tt.slice) {
-			t.Fatalf("%s expected slice %#v to be explodable", Callers(), tt.slice)
+			t.Fatalf("%s expected slice %#v to be explodable", testcallers(), tt.slice)
 		}
 		err := explodeSlice(tt.dialect, buf, &gotArgs, gotParams, tt.excludedTableQualifiers, tt.slice)
 		if err != nil {
-			t.Fatal(Callers(), err)
+			t.Fatal(testcallers(), err)
 		}
-		if diff := Diff(buf.String(), tt.wantQuery); diff != "" {
-			t.Error(Callers(), diff)
+		if diff := testdiff(buf.String(), tt.wantQuery); diff != "" {
+			t.Error(testcallers(), diff)
 		}
-		if diff := Diff(gotArgs, tt.wantArgs); diff != "" {
-			t.Error(Callers(), diff)
+		if diff := testdiff(gotArgs, tt.wantArgs); diff != "" {
+			t.Error(testcallers(), diff)
 		}
 	}
 
