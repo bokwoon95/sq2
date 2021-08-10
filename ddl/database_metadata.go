@@ -9,10 +9,10 @@ import (
 	"github.com/bokwoon95/sq"
 )
 
-type Catalog struct {
+type DatabaseMetadata struct {
 	Dialect        string   `json:",omitempty"`
 	VersionNums    []int    `json:",omitempty"`
-	CatalogName    string   `json:",omitempty"`
+	DatabaseName   string   `json:",omitempty"`
 	CurrentSchema  string   `json:",omitempty"`
 	Extensions     []string `json:",omitempty"`
 	Schemas        []Schema `json:",omitempty"`
@@ -21,86 +21,86 @@ type Catalog struct {
 	extensionCache map[string]int
 }
 
-func (c *Catalog) CachedSchemaPosition(schemaName string) (schemaPosition int) {
-	schemaPosition, ok := c.schemaCache[schemaName]
+func (dbm *DatabaseMetadata) CachedSchemaPosition(schemaName string) (schemaPosition int) {
+	schemaPosition, ok := dbm.schemaCache[schemaName]
 	if !ok {
 		return -1
 	}
-	if schemaPosition < 0 || schemaPosition >= len(c.Schemas) {
-		delete(c.schemaCache, schemaName)
+	if schemaPosition < 0 || schemaPosition >= len(dbm.Schemas) {
+		delete(dbm.schemaCache, schemaName)
 		return -1
 	}
-	schema := c.Schemas[schemaPosition]
+	schema := dbm.Schemas[schemaPosition]
 	if schema.SchemaName != schemaName || schema.Ignore {
-		delete(c.schemaCache, schemaName)
+		delete(dbm.schemaCache, schemaName)
 		return -1
 	}
 	return schemaPosition
 }
 
-func (c *Catalog) AppendSchema(schema Schema) (schemaPosition int) {
-	c.Schemas = append(c.Schemas, schema)
-	if c.schemaCache == nil {
-		c.schemaCache = make(map[string]int)
+func (dbm *DatabaseMetadata) AppendSchema(schema Schema) (schemaPosition int) {
+	dbm.Schemas = append(dbm.Schemas, schema)
+	if dbm.schemaCache == nil {
+		dbm.schemaCache = make(map[string]int)
 	}
-	schemaPosition = len(c.Schemas) - 1
-	c.schemaCache[schema.SchemaName] = schemaPosition
+	schemaPosition = len(dbm.Schemas) - 1
+	dbm.schemaCache[schema.SchemaName] = schemaPosition
 	return schemaPosition
 }
 
-func (c *Catalog) RefreshSchemaCache() {
-	if c.schemaCache == nil && len(c.Schemas) > 0 {
-		c.schemaCache = make(map[string]int)
+func (dbm *DatabaseMetadata) RefreshSchemaCache() {
+	if dbm.schemaCache == nil && len(dbm.Schemas) > 0 {
+		dbm.schemaCache = make(map[string]int)
 	}
-	for n, schema := range c.Schemas {
+	for n, schema := range dbm.Schemas {
 		if schema.Ignore {
 			continue
 		}
-		c.schemaCache[schema.SchemaName] = n
+		dbm.schemaCache[schema.SchemaName] = n
 	}
 }
 
-func (c *Catalog) CachedExtensionPosition(extension string) (extensionPosition int) {
+func (dbm *DatabaseMetadata) CachedExtensionPosition(extension string) (extensionPosition int) {
 	if i := strings.IndexByte(extension, '@'); i >= 0 {
 		extension = extension[:i]
 	}
-	extensionPosition, ok := c.extensionCache[extension]
+	extensionPosition, ok := dbm.extensionCache[extension]
 	if !ok {
 		return -1
 	}
-	if extensionPosition < 0 || extensionPosition >= len(c.Schemas) || !strings.HasPrefix(c.Extensions[extensionPosition], extension) {
-		delete(c.schemaCache, extension)
+	if extensionPosition < 0 || extensionPosition >= len(dbm.Schemas) || !strings.HasPrefix(dbm.Extensions[extensionPosition], extension) {
+		delete(dbm.schemaCache, extension)
 		return -1
 	}
 	return extensionPosition
 }
 
-func (c *Catalog) AppendExtension(extension string) (extensionPosition int) {
-	c.Extensions = append(c.Extensions, extension)
-	if c.extensionCache == nil {
-		c.extensionCache = make(map[string]int)
+func (dbm *DatabaseMetadata) AppendExtension(extension string) (extensionPosition int) {
+	dbm.Extensions = append(dbm.Extensions, extension)
+	if dbm.extensionCache == nil {
+		dbm.extensionCache = make(map[string]int)
 	}
-	extensionPosition = len(c.Extensions) - 1
+	extensionPosition = len(dbm.Extensions) - 1
 	if i := strings.IndexByte(extension, '@'); i >= 0 {
 		extension = extension[:i]
 	}
-	c.extensionCache[extension] = extensionPosition
+	dbm.extensionCache[extension] = extensionPosition
 	return extensionPosition
 }
 
-func (c *Catalog) RefreshExtensionCache() {
-	if c.extensionCache == nil && len(c.Extensions) > 0 {
-		c.extensionCache = make(map[string]int)
+func (dbm *DatabaseMetadata) RefreshExtensionCache() {
+	if dbm.extensionCache == nil && len(dbm.Extensions) > 0 {
+		dbm.extensionCache = make(map[string]int)
 	}
-	for n, extension := range c.Extensions {
+	for n, extension := range dbm.Extensions {
 		if i := strings.IndexByte(extension, '@'); i >= 0 {
 			extension = extension[:i]
 		}
-		c.extensionCache[extension] = n
+		dbm.extensionCache[extension] = n
 	}
 }
 
-func (c *Catalog) loadTable(table sq.SchemaTable) error {
+func (dbm *DatabaseMetadata) loadTable(table sq.SchemaTable) error {
 	if table == nil {
 		return fmt.Errorf("table is nil")
 	}
@@ -109,12 +109,12 @@ func (c *Catalog) loadTable(table sq.SchemaTable) error {
 		return fmt.Errorf("table name is empty")
 	}
 	var schema Schema
-	if n := c.CachedSchemaPosition(tableSchema); n >= 0 {
-		schema = c.Schemas[n]
-		defer func() { c.Schemas[n] = schema }()
+	if n := dbm.CachedSchemaPosition(tableSchema); n >= 0 {
+		schema = dbm.Schemas[n]
+		defer func() { dbm.Schemas[n] = schema }()
 	} else {
 		schema = Schema{SchemaName: tableSchema}
-		defer func() { c.AppendSchema(schema) }()
+		defer func() { dbm.AppendSchema(schema) }()
 	}
 	var tbl Table
 	if n := schema.CachedTablePosition(tableName); n >= 0 {
@@ -127,10 +127,10 @@ func (c *Catalog) loadTable(table sq.SchemaTable) error {
 		}
 		defer func() { schema.AppendTable(tbl) }()
 	}
-	return tbl.LoadTable(c.Dialect, table)
+	return tbl.LoadTable(dbm.Dialect, table)
 }
 
-func (c *Catalog) loadDDLView(ddlView DDLView) error {
+func (dbm *DatabaseMetadata) loadDDLView(ddlView DDLView) error {
 	if ddlView == nil {
 		return fmt.Errorf("view is nil")
 	}
@@ -139,12 +139,12 @@ func (c *Catalog) loadDDLView(ddlView DDLView) error {
 		return fmt.Errorf("table name is empty")
 	}
 	var schema Schema
-	if n := c.CachedSchemaPosition(viewSchema); n >= 0 {
-		schema = c.Schemas[n]
-		defer func() { c.Schemas[n] = schema }()
+	if n := dbm.CachedSchemaPosition(viewSchema); n >= 0 {
+		schema = dbm.Schemas[n]
+		defer func() { dbm.Schemas[n] = schema }()
 	} else {
 		schema = Schema{SchemaName: viewSchema}
-		defer func() { c.AppendSchema(schema) }()
+		defer func() { dbm.AppendSchema(schema) }()
 	}
 	var view View
 	if n := schema.CachedViewPosition(viewName); n >= 0 {
@@ -157,40 +157,40 @@ func (c *Catalog) loadDDLView(ddlView DDLView) error {
 		}
 		defer func() { schema.AppendView(view) }()
 	}
-	return view.LoadDDLView(c.Dialect, ddlView)
+	return view.LoadDDLView(dbm.Dialect, ddlView)
 }
 
-func (c *Catalog) loadFunction(function Function) error {
+func (dbm *DatabaseMetadata) loadFunction(function Function) error {
 	if function.FunctionName == "" {
 		return fmt.Errorf("function name cannot be empty")
 	}
 	var schema Schema
-	if n := c.CachedSchemaPosition(function.FunctionSchema); n >= 0 {
-		schema = c.Schemas[n]
-		defer func() { c.Schemas[n] = schema }()
+	if n := dbm.CachedSchemaPosition(function.FunctionSchema); n >= 0 {
+		schema = dbm.Schemas[n]
+		defer func() { dbm.Schemas[n] = schema }()
 	} else {
 		schema = Schema{SchemaName: function.FunctionSchema}
-		defer func() { c.AppendSchema(schema) }()
+		defer func() { dbm.AppendSchema(schema) }()
 	}
 	schema.Functions = append(schema.Functions, function)
 	return nil
 }
 
-type CatalogOption func(*Catalog) error
+type DatabaseMetadataOption func(*DatabaseMetadata) error
 
-func NewCatalog(dialect string, opts ...CatalogOption) (Catalog, error) {
-	catalog := Catalog{Dialect: dialect}
+func NewDatabaseMetadata(dialect string, opts ...DatabaseMetadataOption) (DatabaseMetadata, error) {
+	dbMetadata := DatabaseMetadata{Dialect: dialect}
 	for _, opt := range opts {
-		err := opt(&catalog)
+		err := opt(&dbMetadata)
 		if err != nil {
-			return catalog, err
+			return dbMetadata, err
 		}
 	}
-	return catalog, nil
+	return dbMetadata, nil
 }
 
-func WithDB(db sq.DB, defaultFilter *Filter) CatalogOption {
-	return func(c *Catalog) error {
+func WithDB(db sq.DB, defaultFilter *Filter) DatabaseMetadataOption {
+	return func(c *DatabaseMetadata) error {
 		dbi, err := NewDatabaseIntrospector(c.Dialect, db, defaultFilter)
 		if err != nil {
 			return fmt.Errorf("NewDatabaseIntrospector: %w", err)
@@ -200,9 +200,9 @@ func WithDB(db sq.DB, defaultFilter *Filter) CatalogOption {
 		if err != nil {
 			return fmt.Errorf("GetVersionNums: %w", err)
 		}
-		c.CatalogName, err = dbi.GetCatalogName(ctx)
+		c.DatabaseName, err = dbi.GetDatabaseName(ctx)
 		if err != nil {
-			return fmt.Errorf("GetCatalogName: %w", err)
+			return fmt.Errorf("GetDatabaseName: %w", err)
 		}
 		c.CurrentSchema, err = dbi.GetCurrentSchema(ctx)
 		if err != nil {
@@ -327,15 +327,15 @@ func WithDB(db sq.DB, defaultFilter *Filter) CatalogOption {
 	}
 }
 
-func WithExtensions(extensions ...string) CatalogOption {
-	return func(c *Catalog) error {
+func WithExtensions(extensions ...string) DatabaseMetadataOption {
+	return func(c *DatabaseMetadata) error {
 		c.Extensions = extensions
 		return nil
 	}
 }
 
-func WithTables(tables ...sq.SchemaTable) CatalogOption {
-	return func(c *Catalog) error {
+func WithTables(tables ...sq.SchemaTable) DatabaseMetadataOption {
+	return func(c *DatabaseMetadata) error {
 		for i, table := range tables {
 			err := c.loadTable(table)
 			if err != nil {
@@ -346,8 +346,8 @@ func WithTables(tables ...sq.SchemaTable) CatalogOption {
 	}
 }
 
-func WithDDLViews(ddlViews ...DDLView) CatalogOption {
-	return func(c *Catalog) error {
+func WithDDLViews(ddlViews ...DDLView) DatabaseMetadataOption {
+	return func(c *DatabaseMetadata) error {
 		for i, ddlView := range ddlViews {
 			err := c.loadDDLView(ddlView)
 			if err != nil {
@@ -358,8 +358,8 @@ func WithDDLViews(ddlViews ...DDLView) CatalogOption {
 	}
 }
 
-func WithFunctions(functions ...Function) CatalogOption {
-	return func(c *Catalog) error {
+func WithFunctions(functions ...Function) DatabaseMetadataOption {
+	return func(c *DatabaseMetadata) error {
 		for i, function := range functions {
 			err := function.populateFunctionInfo(c.Dialect)
 			if err != nil {
@@ -374,6 +374,6 @@ func WithFunctions(functions ...Function) CatalogOption {
 	}
 }
 
-func (c *Catalog) WriteStructs(w io.Writer) error {
+func (dbm *DatabaseMetadata) WriteStructs(w io.Writer) error {
 	return nil
 }

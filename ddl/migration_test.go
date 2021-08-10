@@ -55,7 +55,7 @@ func Test_SakilaSQLite(t *testing.T) {
 	if len(views) != 0 {
 		t.Fatal(testutil.Callers(), " AutoMigrate did not drop all views:", fmt.Sprint(views))
 	}
-	wantCatalog, err := NewCatalog(dialect, WithTables(
+	wantDBMetadata, err := NewDatabaseMetadata(dialect, WithTables(
 		NEW_ACTOR(""),
 		NEW_ADDRESS(""),
 		NEW_CATEGORY(""),
@@ -86,7 +86,7 @@ func Test_SakilaSQLite(t *testing.T) {
 	if err != nil {
 		t.Fatal(testutil.Callers(), err)
 	}
-	upMigration, err := Migrate(CreateMissing|UpdateExisting, Catalog{}, wantCatalog)
+	upMigration, err := Migrate(CreateMissing|UpdateExisting, DatabaseMetadata{}, wantDBMetadata)
 	if err != nil {
 		t.Fatal(testutil.Callers(), err)
 	}
@@ -112,11 +112,11 @@ func Test_SakilaSQLite(t *testing.T) {
 	if err != nil {
 		t.Fatal(testutil.Callers(), err)
 	}
-	gotCatalog, err := NewCatalog(dialect, WithDB(tx, &Filter{SortOutput: true}))
+	gotDBMetadata, err := NewDatabaseMetadata(dialect, WithDB(tx, &Filter{SortOutput: true}))
 	if err != nil {
 		t.Fatal(testutil.Callers(), err)
 	}
-	introspectMigration, err := Migrate(CreateMissing|UpdateExisting, Catalog{}, gotCatalog)
+	introspectMigration, err := Migrate(CreateMissing|UpdateExisting, DatabaseMetadata{}, gotDBMetadata)
 	if err != nil {
 		t.Fatal(testutil.Callers(), err)
 	}
@@ -134,7 +134,7 @@ func Test_SakilaSQLite(t *testing.T) {
 	if diff := testutil.Diff(gotIntrospectSQL, wantIntrospectSQL); diff != "" {
 		t.Fatal(testutil.Callers(), diff)
 	}
-	downMigration, err := Migrate(DropExtraneous|DropCascade, gotCatalog, Catalog{})
+	downMigration, err := Migrate(DropExtraneous|DropCascade, gotDBMetadata, DatabaseMetadata{})
 	if err != nil {
 		t.Fatal(testutil.Callers(), err)
 	}
@@ -218,7 +218,7 @@ func Test_SakilaPostgres(t *testing.T) {
 		}
 		t.Fatal(testutil.Callers(), " AutoMigrate did not drop all extensions:", fmt.Sprint(exts))
 	}
-	wantCatalog, err := NewCatalog(dialect, WithTables(
+	wantDBMetadata, err := NewDatabaseMetadata(dialect, WithTables(
 		NEW_ACTOR(""),
 		NEW_ADDRESS(""),
 		NEW_CATEGORY(""),
@@ -253,7 +253,7 @@ func Test_SakilaPostgres(t *testing.T) {
 	if err != nil {
 		t.Fatal(testutil.Callers(), err)
 	}
-	upMigration, err := Migrate(CreateMissing|UpdateExisting, Catalog{}, wantCatalog)
+	upMigration, err := Migrate(CreateMissing|UpdateExisting, DatabaseMetadata{}, wantDBMetadata)
 	if err != nil {
 		t.Fatal(testutil.Callers(), err)
 	}
@@ -279,17 +279,17 @@ func Test_SakilaPostgres(t *testing.T) {
 	if err != nil {
 		t.Fatal(testutil.Callers(), err)
 	}
-	gotCatalog, err := NewCatalog(dialect, WithDB(tx, &Filter{SortOutput: true}))
+	gotDBMetadata, err := NewDatabaseMetadata(dialect, WithDB(tx, &Filter{SortOutput: true}))
 	if err != nil {
 		t.Fatal(testutil.Callers(), err)
 	}
 	// remove the version numbers
-	for i, extension := range gotCatalog.Extensions {
+	for i, extension := range gotDBMetadata.Extensions {
 		if n := strings.IndexByte(extension, '@'); n >= 0 {
-			gotCatalog.Extensions[i] = extension[:n]
+			gotDBMetadata.Extensions[i] = extension[:n]
 		}
 	}
-	introspectMigration, err := Migrate(CreateMissing|UpdateExisting, Catalog{}, gotCatalog)
+	introspectMigration, err := Migrate(CreateMissing|UpdateExisting, DatabaseMetadata{}, gotDBMetadata)
 	if err != nil {
 		t.Fatal(testutil.Callers(), err)
 	}
@@ -307,7 +307,7 @@ func Test_SakilaPostgres(t *testing.T) {
 	if diff := testutil.Diff(gotIntrospectSQL, wantIntrospectSQL); diff != "" {
 		t.Fatal(testutil.Callers(), diff)
 	}
-	downMigration, err := Migrate(DropExtraneous|DropCascade, gotCatalog, Catalog{})
+	downMigration, err := Migrate(DropExtraneous|DropCascade, gotDBMetadata, DatabaseMetadata{})
 	if err != nil {
 		t.Fatal(testutil.Callers(), err)
 	}
@@ -355,7 +355,7 @@ func Test_SakilaMySQL(t *testing.T) {
 	if len(views) != 0 {
 		t.Fatal(testutil.Callers(), " AutoMigrate did not drop all views:", fmt.Sprint(views))
 	}
-	wantCatalog, err := NewCatalog(dialect, WithTables(
+	wantDBMetadata, err := NewDatabaseMetadata(dialect, WithTables(
 		NEW_ACTOR(""),
 		NEW_ADDRESS(""),
 		NEW_CATEGORY(""),
@@ -386,7 +386,7 @@ func Test_SakilaMySQL(t *testing.T) {
 	if err != nil {
 		t.Fatal(testutil.Callers(), err)
 	}
-	upMigration, err := Migrate(CreateMissing|UpdateExisting, Catalog{}, wantCatalog)
+	upMigration, err := Migrate(CreateMissing|UpdateExisting, DatabaseMetadata{}, wantDBMetadata)
 	if err != nil {
 		t.Fatal(testutil.Callers(), err)
 	}
@@ -412,11 +412,11 @@ func Test_SakilaMySQL(t *testing.T) {
 	if err != nil {
 		t.Fatal(testutil.Callers(), err)
 	}
-	gotCatalog, err := NewCatalog(dialect, WithDB(db, &Filter{SortOutput: true}))
+	gotDBMetadata, err := NewDatabaseMetadata(dialect, WithDB(db, &Filter{SortOutput: true}))
 	if err != nil {
 		t.Fatal(testutil.Callers(), err)
 	}
-	introspectMigration, err := Migrate(CreateMissing|UpdateExisting, Catalog{}, gotCatalog)
+	introspectMigration, err := Migrate(CreateMissing|UpdateExisting, DatabaseMetadata{}, gotDBMetadata)
 	if err != nil {
 		t.Fatal(testutil.Callers(), err)
 	}
@@ -434,7 +434,7 @@ func Test_SakilaMySQL(t *testing.T) {
 	if diff := testutil.Diff(gotIntrospectSQL, wantIntrospectSQL); diff != "" {
 		t.Fatal(testutil.Callers(), diff)
 	}
-	downMigration, err := Migrate(DropExtraneous|DropCascade, gotCatalog, Catalog{})
+	downMigration, err := Migrate(DropExtraneous|DropCascade, gotDBMetadata, DatabaseMetadata{})
 	if err != nil {
 		t.Fatal(testutil.Callers(), err)
 	}

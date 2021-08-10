@@ -31,7 +31,7 @@ type Filter struct {
 
 type Introspector interface {
 	GetVersionNums(context.Context) (versionNums []int, err error)
-	GetCatalogName(context.Context) (catalogName string, err error)
+	GetDatabaseName(context.Context) (databaseName string, err error)
 	GetCurrentSchema(context.Context) (currentSchema string, err error)
 	GetExtensions(context.Context, *Filter) (extensions []string, err error)
 	GetTables(context.Context, *Filter) ([]Table, error)
@@ -184,7 +184,7 @@ func (dbi *DatabaseIntrospector) GetVersionNums(ctx context.Context) (versionNum
 	return versionNums, nil
 }
 
-func (dbi *DatabaseIntrospector) GetCatalogName(ctx context.Context) (catalogName string, err error) {
+func (dbi *DatabaseIntrospector) GetDatabaseName(ctx context.Context) (databaseName string, err error) {
 	var rows *sql.Rows
 	switch dbi.dialect {
 	case sq.DialectSQLite:
@@ -204,9 +204,9 @@ func (dbi *DatabaseIntrospector) GetCatalogName(ctx context.Context) (catalogNam
 	}
 	defer rows.Close()
 	for rows.Next() {
-		err = rows.Scan(&catalogName)
+		err = rows.Scan(&databaseName)
 		if err != nil {
-			return "", fmt.Errorf("scanning catalogName: %w", err)
+			return "", fmt.Errorf("scanning databaseName: %w", err)
 		}
 		break
 	}
@@ -218,7 +218,7 @@ func (dbi *DatabaseIntrospector) GetCatalogName(ctx context.Context) (catalogNam
 	if err != nil {
 		return "", fmt.Errorf("rows.Err: %w", err)
 	}
-	return catalogName, nil
+	return databaseName, nil
 }
 
 func (dbi *DatabaseIntrospector) GetCurrentSchema(ctx context.Context) (currentSchema string, err error) {

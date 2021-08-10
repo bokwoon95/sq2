@@ -42,16 +42,16 @@ type Migration struct {
 	DropExtensionCmds   []DropExtensionCommand
 }
 
-func AutoMigrate(dialect string, db sq.DB, migrationMode MigrationMode, catalogOpts ...CatalogOption) error {
-	gotCatalog, err := NewCatalog(dialect, WithDB(db, nil))
+func AutoMigrate(dialect string, db sq.DB, migrationMode MigrationMode, databaseMetadataOpts ...DatabaseMetadataOption) error {
+	gotDBMetadata, err := NewDatabaseMetadata(dialect, WithDB(db, nil))
 	if err != nil {
 		return fmt.Errorf("introspecting db: %w", err)
 	}
-	wantCatalog, err := NewCatalog(dialect, catalogOpts...)
+	wantDBMetadata, err := NewDatabaseMetadata(dialect, databaseMetadataOpts...)
 	if err != nil {
-		return fmt.Errorf("building catalog: %w", err)
+		return fmt.Errorf("building db metadata: %w", err)
 	}
-	migration, err := Migrate(migrationMode, gotCatalog, wantCatalog)
+	migration, err := Migrate(migrationMode, gotDBMetadata, wantDBMetadata)
 	if err != nil {
 		return fmt.Errorf("building migration: %w", err)
 	}
@@ -62,24 +62,24 @@ func AutoMigrate(dialect string, db sq.DB, migrationMode MigrationMode, catalogO
 	return nil
 }
 
-func Migrate(mode MigrationMode, gotCatalog, wantCatalog Catalog) (*Migration, error) {
+func Migrate(mode MigrationMode, gotDBMetadata, wantDBMetadata DatabaseMetadata) (*Migration, error) {
 	m := &Migration{
-		Dialect:       gotCatalog.Dialect,
-		CurrentSchema: gotCatalog.CurrentSchema,
+		Dialect:       gotDBMetadata.Dialect,
+		CurrentSchema: gotDBMetadata.CurrentSchema,
 	}
-	if gotCatalog.Dialect == "" && wantCatalog.Dialect == "" {
+	if gotDBMetadata.Dialect == "" && wantDBMetadata.Dialect == "" {
 		return m, fmt.Errorf("dialect missing")
 	}
-	if gotCatalog.Dialect != "" && wantCatalog.Dialect != "" && gotCatalog.Dialect != wantCatalog.Dialect {
-		return m, fmt.Errorf("dialect mismatch: gotCatalog is %s, wantCatalog is %s", gotCatalog.Dialect, wantCatalog.Dialect)
+	if gotDBMetadata.Dialect != "" && wantDBMetadata.Dialect != "" && gotDBMetadata.Dialect != wantDBMetadata.Dialect {
+		return m, fmt.Errorf("dialect mismatch: got %s, want %s", gotDBMetadata.Dialect, wantDBMetadata.Dialect)
 	}
 	if m.Dialect == "" {
-		m.Dialect = wantCatalog.Dialect
+		m.Dialect = wantDBMetadata.Dialect
 	}
 	if mode&CreateMissing != 0 || mode&UpdateExisting != 0 {
 		if m.Dialect == sq.DialectPostgres && mode&CreateMissing != 0 {
-			for _, wantExtension := range wantCatalog.Extensions {
-				if n := gotCatalog.CachedExtensionPosition(wantExtension); n >= 0 {
+			for _, wantExtension := range wantDBMetadata.Extensions {
+				if n := gotDBMetadata.CachedExtensionPosition(wantExtension); n >= 0 {
 					continue
 				}
 				createExtensionCmd := CreateExtensionCommand{
@@ -89,7 +89,7 @@ func Migrate(mode MigrationMode, gotCatalog, wantCatalog Catalog) (*Migration, e
 				m.CreateExtensionCmds = append(m.CreateExtensionCmds, createExtensionCmd)
 			}
 		}
-		for _, wantSchema := range wantCatalog.Schemas {
+		for _, wantSchema := range wantDBMetadata.Schemas {
 			if wantSchema.Ignore {
 				continue
 			}
@@ -99,8 +99,8 @@ func Migrate(mode MigrationMode, gotCatalog, wantCatalog Catalog) (*Migration, e
 			gotSchema := Schema{
 				SchemaName: wantSchema.SchemaName,
 			}
-			if n := gotCatalog.CachedSchemaPosition(wantSchema.SchemaName); n >= 0 {
-				gotSchema = gotCatalog.Schemas[n]
+			if n := gotDBMetadata.CachedSchemaPosition(wantSchema.SchemaName); n >= 0 {
+				gotSchema = gotDBMetadata.Schemas[n]
 			} else if mode&CreateMissing != 0 {
 				if wantSchema.SchemaName != "" {
 					createSchemaCmd := CreateSchemaCommand{
@@ -303,13 +303,13 @@ func Migrate(mode MigrationMode, gotCatalog, wantCatalog Catalog) (*Migration, e
 		}
 		var alterTableCmds []AlterTableCommand
 		// drop extensions
-		for _, gotExtension := range gotCatalog.Extensions {
+		for _, gotExtension := range gotDBMetadata.Extensions {
 			if strings.HasPrefix(gotExtension, "plpgsql") {
 				// we never want to drop the plpgsql extension since postgres
 				// enables it by default
 				continue
 			}
-			if n := wantCatalog.CachedExtensionPosition(gotExtension); n >= 0 {
+			if n := wantDBMetadata.CachedExtensionPosition(gotExtension); n >= 0 {
 				continue
 			}
 			dropExtensionCmd.Extensions = append(dropExtensionCmd.Extensions, gotExtension)
@@ -317,15 +317,15 @@ func Migrate(mode MigrationMode, gotCatalog, wantCatalog Catalog) (*Migration, e
 		if len(dropExtensionCmd.Extensions) > 0 {
 			m.DropExtensionCmds = append(m.DropExtensionCmds, dropExtensionCmd)
 		}
-		for _, gotSchema := range gotCatalog.Schemas {
+		for _, gotSchema := range gotDBMetadata.Schemas {
 			if gotSchema.Ignore {
 				continue
 			}
 			wantSchema := Schema{
 				SchemaName: gotSchema.SchemaName,
 			}
-			if n := wantCatalog.CachedSchemaPosition(gotSchema.SchemaName); n >= 0 {
-				wantSchema = wantCatalog.Schemas[n]
+			if n := wantDBMetadata.CachedSchemaPosition(gotSchema.SchemaName); n >= 0 {
+				wantSchema = wantDBMetadata.Schemas[n]
 			}
 			// drop tables
 			for _, gotTable := range gotSchema.Tables {
