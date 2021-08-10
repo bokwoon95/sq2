@@ -27,7 +27,7 @@ func TestMain(m *testing.M) {
 
 func sqliteSetup() {
 	const dialect = sq.DialectSQLite
-	if testing.Short() {
+	if testing.Short() || true {
 		return
 	}
 	db, err := sql.Open("sqlite3", "/Users/bokwoon/Documents/sq2/db.sqlite3")
@@ -92,7 +92,7 @@ func sqliteSetup() {
 
 func postgresSetup() {
 	const dialect = sq.DialectPostgres
-	if testing.Short() {
+	if testing.Short() || true {
 		return
 	}
 	extensions := []string{"btree_gist", "uuid-ossp"}
@@ -172,6 +172,8 @@ func mysqlSetup() {
 	if testing.Short() {
 		return
 	}
+	var b []byte
+	var err error
 	db, err := sql.Open("mysql", "root:root@tcp(localhost:3312)/db?parseTime=true&multiStatements=true")
 	if err != nil {
 		log.Fatal(testutil.Callers(), err)
@@ -211,7 +213,15 @@ func mysqlSetup() {
 	if err != nil {
 		log.Fatal(testutil.Callers(), err)
 	}
-	b, err := fs.ReadFile(embeddedFiles, "testdata/mysql_sakila_data.sql")
+	// b, err = fs.ReadFile(embeddedFiles, "testdata/mysql_sakila_init.sql")
+	// if err != nil {
+	// 	log.Fatal(testutil.Callers(), err)
+	// }
+	// _, err = db.Exec(string(b))
+	// if err != nil {
+	// 	log.Fatal(testutil.Callers(), err)
+	// }
+	b, err = fs.ReadFile(embeddedFiles, "testdata/mysql_sakila_data.sql")
 	if err != nil {
 		log.Fatal(testutil.Callers(), err)
 	}

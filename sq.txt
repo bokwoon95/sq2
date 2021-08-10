@@ -12,6 +12,19 @@ subquery_field.go | cte.go
 ...
 window.go (at very last because nothing depends on it)
 
+it is possible to remove sq's dependence on ddl for setting up the database
+- check if the -resetdb flag was passed to the test. if it was, drop everything.
+- check if the actor table exists. if it doesn't, run the init script.
+- else check if the actor table has any rows. if it doesn't, run the data script.
+- the tests that hit the db should never actually modify anything i.e. do DML in a transaction and rollback at the end of the test.
+    - this way we can keep reusing the same db without needing to do data setup/teardown every time because its core data is unchanged
+
+queries to test:
+- SELECT
+- SELECT DISTINCT
+- SELECT DISTINCT ON
+- SELECT EXISTS
+
 FOR UPDATE, FOR NO KEY UPDATE, FOR SHARE, FOR KEY SHARE 
 
 sq README needs a FAQ section, just like how Maddy mail server does. I naturally gravitaed towards the FAQ link in order to learn more about maddy, and was able to learn so much it just from reading the FAQ alone.
