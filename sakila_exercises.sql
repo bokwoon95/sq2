@@ -2,6 +2,10 @@
 -- SELECT --
 ------------
 
+-- TODO: need a formalized structure for testing the following queries. Results
+-- must always be the same, no matter the dialect. Only for
+-- insert/update/delete are there some dialect-specific queries.
+
 -- Find the distinct actor last names ordered by last name. Show only the top 4
 -- results.
 SELECT DISTINCT last_name FROM actor ORDER BY last_name LIMIT 4;
@@ -204,6 +208,7 @@ ORDER BY
 
 -- Upsert the same row with ID, but change a column
 
+-- Insert from SELECT
 -- Customer 'MARY SMITH' rents the film 'ACADEMY DINOSAUR' from staff 'Mike
 -- Hillyer' at Store 1 on 9th of August 2021 4pm. Write the query that creates a
 -- new rental record representing that transaction.
@@ -246,7 +251,11 @@ LIMIT
 
 -- Update with join
 
--- Multi-table update
+-- Update with returning (postgres, sqlite)
+
+-- Update with limit (mysql)
+
+-- Multi-table update (mysql)
 
 ------------
 -- DELETE --
@@ -254,4 +263,8 @@ LIMIT
 
 -- Delete with join
 
--- Multi-table delete
+-- Delete with returning (postgres, sqlite)
+
+-- Delete with limit (mysql)
+
+-- Multi-table delete (mysql)
