@@ -200,6 +200,8 @@ ORDER BY
 -- INSERT --
 ------------
 
+-- data modifying queries should not use a common query testing framework, because operations must be rolled back. Better to keep everything constrained to one function.
+
 -- Insert and get ID (sqlite uses both RETURNING and LastInsertID)
 
 -- Insert the same row with the ID but ignore
