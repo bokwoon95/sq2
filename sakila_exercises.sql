@@ -39,9 +39,9 @@ ORDER BY
     country.country, city.city
 ;
 
--- List films with their film classification, ordered by title. The classifications are:
+-- List films with their length classification, ordered by title. The classifications are:
 -- length <= 60 then 'short', length > 60 and length <= 100 then 'medium',
--- length > 100 then 'long'. Return the title, length, and film_classification. Show
+-- length > 100 then 'long'. Return the title, length, and length_classification. Show
 -- only the top 10 results.
 SELECT
     title
@@ -50,7 +50,7 @@ SELECT
         WHEN length <= 60 THEN 'short'
         WHEN length > 60 AND length <= 100 THEN 'medium'
         ELSE 'long'
-    END AS film_classification
+    END AS length_classification
 FROM
     film
 ORDER BY
