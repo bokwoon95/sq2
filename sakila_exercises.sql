@@ -200,11 +200,11 @@ ORDER BY
 -- INSERT --
 ------------
 
--- Insert and get ID
+-- Insert and get ID (sqlite uses both RETURNING and LastInsertID)
 
 -- Insert the same row with the ID but ignore
 
--- Upsert a row, get ID
+-- Upsert a row, get ID (sqlite uses both RETURNING and LastInsertID)
 
 -- Upsert the same row with ID, but change a column
 
