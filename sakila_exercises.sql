@@ -35,24 +35,71 @@ ORDER BY
     country.country, city.city
 ;
 
--- List films with their price categories, ordered by title. The categories
--- are: price < 2.99 is 'discount', price >= 2.99 and price < 4.99 is
--- 'regular', price >= 4.99 is 'premium'. Return the title, price, and price
--- category. Show only the top 10 results.
+-- List films with their film classification, ordered by title. The classifications are:
+-- length <= 60 then 'short', length > 60 and length <= 100 then 'medium',
+-- length > 100 then 'long'. Return the title, length, and film_classification. Show
+-- only the top 10 results.
 SELECT
     title
-    ,price
+    ,length
     ,CASE
-        WHEN price < 2.99 THEN 'discount'
-        WHEN price >= 2.99 AND price < 4.99 THEN 'regular'
-        ELSE 'premium'
-    END AS price_category
+        WHEN length <= 60 THEN 'short'
+        WHEN length > 60 AND length <= 100 THEN 'medium'
+        ELSE 'long'
+    END AS film_classification
 FROM
     film
 ORDER BY
     title
 LIMIT
     10
+;
+
+-- List films with their target audience, ordered by title. The target
+-- audiences are: rating = 'G' then 'family', rating = 'PG' or rating = 'PG-13'
+-- then 'teens', rating = 'R' or rating = 'NC-17' then 'adults'. Return the
+-- title, rating, and target_audience.
+SELECT
+    title
+    ,rating
+    ,CASE rating
+        WHEN 'G' THEN 'family'
+        WHEN 'PG' THEN 'teens'
+        WHEN 'PG-13' THEN 'teens'
+        WHEN 'R' THEN 'adults'
+        WHEN 'NC-17' THEN 'adults'
+    END AS intended_audience
+FROM
+    film
+ORDER BY
+    title
+LIMIT
+    10
+;
+
+-- https://towardsdatascience.com/sql-tricks-for-data-scientists-53298467dd5
+-- sqlite: case strftime('%m', rental_date) when 01 then 'January' when 02 then 'February' ... end
+-- postgres: to_char(rental_date, 'Month')
+-- mysql: monthname(rental_date)
+WITH months (num, name) AS (
+    VALUES ('01', 'January'), ('02', 'February'), ('03', 'March'),
+        ('04', 'April'), ('05', 'May'), ('06', 'June'),
+        ('07', 'July'), ('08', 'August'), ('09', 'September'),
+        ('10', 'October'), ('11', 'November'), ('12', 'December')
+)
+SELECT
+    months.name AS month
+    ,SUM(category.name = 'Horror') AS horror_count
+    ,SUM(category.name = 'Action') AS action_count
+    ,SUM(category.name = 'Comedy') AS comedy_count
+    ,SUM(category.name = 'Sci-Fi') AS scifi_count
+FROM
+    rental
+    JOIN months ON months.num = strftime('%m', rental.rental_date)
+    JOIN film_category ON film_category.film_id = rental.inventory_id
+    JOIN category ON category.category_id = film_category.category_id
+GROUP BY
+    months.name
 ;
 
 -- Find the actors who have appeared in the most films ordered by descending
@@ -95,6 +142,31 @@ ORDER BY
     film.title
 LIMIT
     10
+;
+
+-- Recursive CTE (union) example
+
+-- Window function example
+-- CASE usage means I can drop the other query with 'intended_audience'
+SELECT
+    name
+    ,SUM(amount) AS summ
+    ,CASE NTILE(4) OVER (ORDER BY SUM(amount) DESC)
+        WHEN 1 THEN 'Q4'
+        WHEN 2 THEN 'Q3'
+        WHEN 3 THEN 'Q2'
+        WHEN 4 THEN 'Q1'
+    END AS quartile
+FROM
+    category
+    JOIN film_category ON category.category_id = film_category.category_id
+    JOIN inventory ON film_category.film_id = inventory.film_id
+    JOIN rental ON inventory.inventory_id = rental.inventory_id
+    JOIN payment ON rental.rental_id = payment.rental_id
+GROUP BY
+    name
+ORDER BY
+    summ DESC
 ;
 
 ------------
