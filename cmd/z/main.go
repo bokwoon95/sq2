@@ -13,7 +13,7 @@ import (
 
 func main() {
 	// pgx
-	pgxConfig, err := pgx.ParseConfig("postgres://postgres:postgres@localhost:5442/db?sslmode=disable")
+	pgxConfig, err := pgx.ParseConfig("postgres://postgres:postgres@localhost:5452/db?sslmode=disable")
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -31,7 +31,7 @@ func main() {
 		log.Fatalln(err)
 	}
 	// pq
-	pqDB, err := sql.Open("postgres", "postgres://postgres:postgres@localhost:5442/db?sslmode=disable")
+	pqDB, err := sql.Open("postgres", "postgres://postgres:postgres@localhost:5452/db?sslmode=disable")
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -42,7 +42,7 @@ func main() {
 	DROP TABLE tmppq;
 	`)
 	// mysql
-	mysqlDB, err := sql.Open("mysql", "root:root@tcp(localhost:3312)/db?multiStatements=true")
+	mysqlDB, err := sql.Open("mysql", "root:root@tcp(localhost:3326)/db?multiStatements=true")
 	if err != nil {
 		log.Fatalln(err)
 	}
