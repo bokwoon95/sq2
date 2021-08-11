@@ -196,6 +196,14 @@ ORDER BY
 -- INSERT --
 ------------
 
+-- Insert and get ID
+
+-- Insert the same row with the ID but ignore
+
+-- Upsert a row, get ID
+
+-- Upsert the same row with ID, but change a column
+
 -- Customer 'MARY SMITH' rents the film 'ACADEMY DINOSAUR' from staff 'Mike
 -- Hillyer' at Store 1 on 9th of August 2021 4pm. Write the query that creates a
 -- new rental record representing that transaction.
@@ -231,3 +239,19 @@ ORDER BY
 LIMIT
     1
 ;
+
+------------
+-- UPDATE --
+------------
+
+-- Update with join
+
+-- Multi-table update
+
+------------
+-- DELETE --
+------------
+
+-- Delete with join
+
+-- Multi-table delete
