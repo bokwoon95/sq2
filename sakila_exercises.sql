@@ -144,8 +144,6 @@ LIMIT
     10
 ;
 
--- Recursive CTE (union) example
-
 -- Window function example
 -- CASE usage means I can drop the other query with 'intended_audience'
 SELECT
@@ -167,6 +165,31 @@ GROUP BY
     name
 ORDER BY
     summ DESC
+;
+
+-- Recursive CTE (union) example
+WITH RECURSIVE dates (date_value) AS (
+    SELECT DATE('2005-03-01')
+    UNION ALL
+    SELECT DATE(date_value, '+1 month') FROM dates WHERE date_value < '2006-02-01'
+)
+,months (num, name) AS (
+    VALUES ('01', 'January'), ('02', 'February'), ('03', 'March'),
+        ('04', 'April'), ('05', 'May'), ('06', 'June'),
+        ('07', 'July'), ('08', 'August'), ('09', 'September'),
+        ('10', 'October'), ('11', 'November'), ('12', 'December')
+)
+SELECT
+    strftime('%Y', dates.date_value) || ' ' || months.name AS rental_month
+    ,COUNT(rental.rental_id) AS rental_count
+FROM
+    dates
+    JOIN months ON months.num = strftime('%m', dates.date_value)
+    LEFT JOIN rental ON strftime('%Y %m', rental.rental_date) = strftime('%Y %m', dates.date_value)
+GROUP BY
+    strftime('%Y %m', dates.date_value)
+ORDER BY
+    dates.date_value
 ;
 
 ------------
