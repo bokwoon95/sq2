@@ -32,7 +32,7 @@ type UpdateQuery struct {
 
 var _ Query = UpdateQuery{}
 
-func (q UpdateQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
+func (q UpdateQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int, env map[string]interface{}) error {
 	var err error
 	var excludedTableQualifiers []string
 	if q.ColumnMapper != nil {
@@ -45,7 +45,7 @@ func (q UpdateQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interf
 	}
 	// WITH
 	if len(q.CTEs) > 0 {
-		err = q.CTEs.AppendSQL(dialect, buf, args, params)
+		err = q.CTEs.AppendSQL(dialect, buf, args, params, nil)
 		if err != nil {
 			return fmt.Errorf("WITH: %w", err)
 		}
@@ -55,7 +55,7 @@ func (q UpdateQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interf
 	if q.UpdateTable == nil {
 		return fmt.Errorf("no table provided to UPDATE")
 	}
-	err = q.UpdateTable.AppendSQL(dialect, buf, args, params)
+	err = q.UpdateTable.AppendSQL(dialect, buf, args, params, nil)
 	if err != nil {
 		return fmt.Errorf("UPDATE: %w", err)
 	}
@@ -72,7 +72,7 @@ func (q UpdateQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interf
 	// SET (not MySQL)
 	if dialect != DialectMySQL {
 		buf.WriteString(" SET ")
-		err = q.Assignments.AppendSQLExclude(dialect, buf, args, params, excludedTableQualifiers)
+		err = q.Assignments.AppendSQLExclude(dialect, buf, args, params, nil, excludedTableQualifiers)
 		if err != nil {
 			return fmt.Errorf("SET: %w", err)
 		}
@@ -83,7 +83,7 @@ func (q UpdateQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interf
 			return fmt.Errorf("mysql UPDATE does not support FROM")
 		}
 		buf.WriteString(" FROM ")
-		err = q.FromTable.AppendSQL(dialect, buf, args, params)
+		err = q.FromTable.AppendSQL(dialect, buf, args, params, nil)
 		if err != nil {
 			return fmt.Errorf("FROM: %w", err)
 		}
@@ -98,7 +98,7 @@ func (q UpdateQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interf
 			return fmt.Errorf("%s can't JOIN without a FROM table", dialect)
 		}
 		buf.WriteString(" ")
-		err = q.JoinTables.AppendSQL(dialect, buf, args, params)
+		err = q.JoinTables.AppendSQL(dialect, buf, args, params, nil)
 		if err != nil {
 			return fmt.Errorf("JOIN: %w", err)
 		}
@@ -106,7 +106,7 @@ func (q UpdateQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interf
 	// SET (MySQL)
 	if len(q.Assignments) > 0 && dialect == DialectMySQL {
 		buf.WriteString(" SET ")
-		err = q.Assignments.AppendSQLExclude(dialect, buf, args, params, nil)
+		err = q.Assignments.AppendSQLExclude(dialect, buf, args, params, nil, nil)
 		if err != nil {
 			return fmt.Errorf("SET: %w", err)
 		}
@@ -115,7 +115,7 @@ func (q UpdateQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interf
 	if len(q.WherePredicate.Predicates) > 0 {
 		buf.WriteString(" WHERE ")
 		q.WherePredicate.Toplevel = true
-		err = q.WherePredicate.AppendSQLExclude(dialect, buf, args, params, nil)
+		err = q.WherePredicate.AppendSQLExclude(dialect, buf, args, params, nil, nil)
 		if err != nil {
 			return fmt.Errorf("WHERE: %w", err)
 		}
@@ -126,7 +126,7 @@ func (q UpdateQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interf
 			return fmt.Errorf("%s UPDATE does not support ORDER BY", dialect)
 		}
 		buf.WriteString(" ORDER BY ")
-		err = q.OrderByFields.AppendSQLExclude(dialect, buf, args, params, nil)
+		err = q.OrderByFields.AppendSQLExclude(dialect, buf, args, params, nil, nil)
 		if err != nil {
 			return fmt.Errorf("ORDER BY: %w", err)
 		}
@@ -157,7 +157,7 @@ func (q UpdateQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interf
 			return fmt.Errorf("%s UPDATE does not support RETURNING", dialect)
 		}
 		buf.WriteString(" RETURNING ")
-		err = q.ReturningFields.AppendSQLExclude(dialect, buf, args, params, nil)
+		err = q.ReturningFields.AppendSQLExclude(dialect, buf, args, params, nil, nil)
 		if err != nil {
 			return fmt.Errorf("RETURNING: %w", err)
 		}

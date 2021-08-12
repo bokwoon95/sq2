@@ -6,8 +6,8 @@ type SQLiteUpdateQuery UpdateQuery
 
 var _ Query = SQLiteUpdateQuery{}
 
-func (q SQLiteUpdateQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
-	return UpdateQuery(q).AppendSQL(dialect, buf, args, params)
+func (q SQLiteUpdateQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int, env map[string]interface{}) error {
+	return UpdateQuery(q).AppendSQL(dialect, buf, args, params, nil)
 }
 
 func (q SQLiteUpdateQuery) SetFetchableFields(fields []Field) (Query, error) {

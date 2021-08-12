@@ -49,7 +49,7 @@ func execContext(ctx context.Context, db DB, q Query, execflag int, skip int) (r
 		}
 		logQueryStats(ctx, stats, skip+2)
 	}()
-	err = q.AppendSQL(stats.Dialect, buf, &stats.Args, make(map[string][]int))
+	err = q.AppendSQL(stats.Dialect, buf, &stats.Args, make(map[string][]int), nil)
 	if err != nil {
 		return 0, 0, err
 	}

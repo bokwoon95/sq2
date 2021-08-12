@@ -70,7 +70,7 @@ func CustomJoin(joinType JoinType, table Table, predicates ...Predicate) JoinTab
 	}
 }
 
-func (join JoinTable) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
+func (join JoinTable) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int, env map[string]interface{}) error {
 	if join.JoinType == "" {
 		join.JoinType = JoinTypeInner
 	}
@@ -87,7 +87,7 @@ func (join JoinTable) AppendSQL(dialect string, buf *bytes.Buffer, args *[]inter
 	if join.Table == nil {
 		return fmt.Errorf("joining on a nil table")
 	}
-	err := join.Table.AppendSQL(dialect, buf, args, params)
+	err := join.Table.AppendSQL(dialect, buf, args, params, nil)
 	if err != nil {
 		return err
 	}
@@ -98,7 +98,7 @@ func (join JoinTable) AppendSQL(dialect string, buf *bytes.Buffer, args *[]inter
 	if len(join.OnPredicate.Predicates) > 0 {
 		buf.WriteString(" ON ")
 		join.OnPredicate.Toplevel = true
-		err = join.OnPredicate.AppendSQLExclude(dialect, buf, args, params, nil)
+		err = join.OnPredicate.AppendSQLExclude(dialect, buf, args, params, nil, nil)
 		if err != nil {
 			return err
 		}
@@ -110,13 +110,13 @@ type JoinTables []JoinTable
 
 var _ SQLAppender = JoinTables{}
 
-func (joins JoinTables) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
+func (joins JoinTables) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int, env map[string]interface{}) error {
 	var err error
 	for i, join := range joins {
 		if i > 0 {
 			buf.WriteString(" ")
 		}
-		err = join.AppendSQL(dialect, buf, args, params)
+		err = join.AppendSQL(dialect, buf, args, params, nil)
 		if err != nil {
 			return fmt.Errorf("join #%d: %w", i+1, err)
 		}

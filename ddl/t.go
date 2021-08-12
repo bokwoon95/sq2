@@ -568,7 +568,7 @@ func getColumnNamesAndExprs(dialect, tableName string, fields []sq.Field, dontWr
 		} else if columnName == "" {
 			buf.Reset()
 			args = args[:0]
-			err = field.AppendSQLExclude(dialect, buf, &args, make(map[string][]int), []string{tableName})
+			err = field.AppendSQLExclude(dialect, buf, &args, make(map[string][]int), nil, []string{tableName})
 			if err != nil {
 				return nil, nil, fmt.Errorf("field #%d, :%w", i+1, err)
 			}

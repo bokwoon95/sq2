@@ -6,8 +6,8 @@ type SQLiteDeleteQuery DeleteQuery
 
 var _ Query = SQLiteDeleteQuery{}
 
-func (q SQLiteDeleteQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
-	return DeleteQuery(q).AppendSQL(dialect, buf, args, params)
+func (q SQLiteDeleteQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int, env map[string]interface{}) error {
+	return DeleteQuery(q).AppendSQL(dialect, buf, args, params, nil)
 }
 
 func (q SQLiteDeleteQuery) SetFetchableFields(fields []Field) (Query, error) {

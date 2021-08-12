@@ -34,7 +34,7 @@ func (f FieldInfo) GetAlias() string { return f.FieldAlias }
 
 func (f FieldInfo) GetName() string { return f.FieldName }
 
-func (f FieldInfo) AppendSQLExclude(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int, excludedTableQualifiers []string) error {
+func (f FieldInfo) AppendSQLExclude(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int, env map[string]interface{}, excludedTableQualifiers []string) error {
 	if f.Err != nil {
 		return f.Err
 	}

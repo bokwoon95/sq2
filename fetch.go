@@ -76,7 +76,7 @@ func fetchContext(ctx context.Context, db DB, q Query, rowmapper func(*Row), ski
 		stats.RowCount.Int64 = rowCount
 		logQueryStats(ctx, stats, skip+2)
 	}()
-	err = q.AppendSQL(stats.Dialect, buf, &stats.Args, make(map[string][]int))
+	err = q.AppendSQL(stats.Dialect, buf, &stats.Args, make(map[string][]int), nil)
 	if err != nil {
 		return 0, err
 	}
@@ -144,7 +144,7 @@ func decorateScanError(dialect string, fields []Field, dest []interface{}, err e
 		buf.WriteString("\n" + strconv.Itoa(i) + ") ")
 		tmpbuf.Reset()
 		tmpargs = tmpargs[:0]
-		err2 := fields[i].AppendSQLExclude(dialect, tmpbuf, &tmpargs, make(map[string][]int), nil)
+		err2 := fields[i].AppendSQLExclude(dialect, tmpbuf, &tmpargs, make(map[string][]int), nil, nil)
 		if err2 != nil {
 			buf.WriteString("%!(error=" + err2.Error() + ")")
 			continue
@@ -173,7 +173,7 @@ func accumulateResults(dialect string, buf *bytes.Buffer, fields []Field, dest [
 		buf.WriteString("\n")
 		tmpbuf.Reset()
 		tmpargs = tmpargs[:0]
-		err := fields[i].AppendSQLExclude(dialect, tmpbuf, &tmpargs, make(map[string][]int), nil)
+		err := fields[i].AppendSQLExclude(dialect, tmpbuf, &tmpargs, make(map[string][]int), nil, nil)
 		if err != nil {
 			buf.WriteString("%!(error=" + err.Error() + ")")
 			continue
@@ -236,7 +236,7 @@ func fetchExistsContext(ctx context.Context, db DB, q Query, skip int) (exists b
 		logQueryStats(ctx, stats, skip+2)
 	}()
 	buf.WriteString("SELECT EXISTS(")
-	err = q.AppendSQL(stats.Dialect, buf, &stats.Args, make(map[string][]int))
+	err = q.AppendSQL(stats.Dialect, buf, &stats.Args, make(map[string][]int), nil)
 	if err != nil {
 		return false, err
 	}

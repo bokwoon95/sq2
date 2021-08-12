@@ -38,7 +38,7 @@ type AddConstraintCommand struct {
 	Ignore     bool
 }
 
-func (cmd AddConstraintCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
+func (cmd AddConstraintCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int, env map[string]interface{}) error {
 	if cmd.Ignore {
 		return nil
 	}
@@ -178,7 +178,7 @@ type AlterConstraintCommand struct {
 	Ignore              bool
 }
 
-func (cmd AlterConstraintCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
+func (cmd AlterConstraintCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int, env map[string]interface{}) error {
 	if cmd.Ignore {
 		return nil
 	}
@@ -212,7 +212,7 @@ type DropConstraintCommand struct {
 	Ignore         bool
 }
 
-func (cmd DropConstraintCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
+func (cmd DropConstraintCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int, env map[string]interface{}) error {
 	if cmd.Ignore {
 		return nil
 	}

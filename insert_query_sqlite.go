@@ -6,8 +6,8 @@ type SQLiteInsertQuery InsertQuery
 
 var _ Query = SQLiteInsertQuery{}
 
-func (q SQLiteInsertQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
-	return InsertQuery(q).AppendSQL(dialect, buf, args, params)
+func (q SQLiteInsertQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int, env map[string]interface{}) error {
+	return InsertQuery(q).AppendSQL(dialect, buf, args, params, nil)
 }
 
 func (q SQLiteInsertQuery) SetFetchableFields(fields []Field) (Query, error) {

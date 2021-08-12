@@ -16,7 +16,7 @@ func (t tmptable) GetAlias() string { return "" }
 
 func (t tmptable) GetName() string { return string(t[1]) }
 
-func (t tmptable) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
+func (t tmptable) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int, env map[string]interface{}) error {
 	if t[0] != "" {
 		buf.WriteString(QuoteIdentifier(dialect, string(t[0])) + ".")
 	}
@@ -32,7 +32,7 @@ func (f tmpfield) GetAlias() string { return "" }
 
 func (f tmpfield) GetName() string { return f[1] }
 
-func (f tmpfield) AppendSQLExclude(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int, excludedTableQualifiers []string) error {
+func (f tmpfield) AppendSQLExclude(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int, env map[string]interface{}, excludedTableQualifiers []string) error {
 	tableQualifier := f[0]
 	if tableQualifier != "" {
 		i := sort.SearchStrings(excludedTableQualifiers, tableQualifier)
@@ -62,7 +62,7 @@ var (
 	_ Predicate   = FaultySQL{}
 )
 
-func (q FaultySQL) AppendSQL(string, *bytes.Buffer, *[]interface{}, map[string][]int) error {
+func (q FaultySQL) AppendSQL(string, *bytes.Buffer, *[]interface{}, map[string][]int, map[string]interface{}) error {
 	return ErrFaultySQL
 }
 
@@ -76,7 +76,7 @@ func (q FaultySQL) GetFetchableFields() ([]Field, error) {
 
 func (q FaultySQL) GetDialect() string { return "" }
 
-func (q FaultySQL) AppendSQLExclude(string, *bytes.Buffer, *[]interface{}, map[string][]int, []string) error {
+func (q FaultySQL) AppendSQLExclude(string, *bytes.Buffer, *[]interface{}, map[string][]int, map[string]interface{}, []string) error {
 	return ErrFaultySQL
 }
 

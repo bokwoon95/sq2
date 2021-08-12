@@ -19,7 +19,7 @@ func NewTableInfo(tableSchema, tableName, tableAlias string) TableInfo {
 
 var _ Table = TableInfo{}
 
-func (tbl TableInfo) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
+func (tbl TableInfo) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int, env map[string]interface{}) error {
 	if tbl.TableSchema != "" {
 		buf.WriteString(QuoteIdentifier(dialect, tbl.TableSchema) + ".")
 	}

@@ -37,7 +37,7 @@ func TestVariadicPredicate(t *testing.T) {
 			bufpool.Put(buf)
 		}()
 		gotArgs, gotParams := []interface{}{}, map[string][]int{}
-		err := tt.predicate.AppendSQLExclude(tt.dialect, buf, &gotArgs, gotParams, tt.excludedTableQualifiers)
+		err := tt.predicate.AppendSQLExclude(tt.dialect, buf, &gotArgs, gotParams, nil, tt.excludedTableQualifiers)
 		if err != nil {
 			t.Fatal(testutil.Callers(), err)
 		}
@@ -56,7 +56,7 @@ func TestVariadicPredicate(t *testing.T) {
 			bufpool.Put(buf)
 		}()
 		gotArgs, params := []interface{}{}, map[string][]int{}
-		err := tt.predicate.AppendSQLExclude(tt.dialect, buf, &gotArgs, params, tt.excludedTableQualifiers)
+		err := tt.predicate.AppendSQLExclude(tt.dialect, buf, &gotArgs, params, nil, tt.excludedTableQualifiers)
 		if err == nil {
 			t.Fatal(testutil.Callers(), "expected error but got nil")
 		}

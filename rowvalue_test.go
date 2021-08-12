@@ -36,7 +36,7 @@ func TestRowValue(t *testing.T) {
 			bufpool.Put(buf)
 		}()
 		gotArgs, gotParams := []interface{}{}, map[string][]int{}
-		err := tt.value.AppendSQL(tt.dialect, buf, &gotArgs, gotParams)
+		err := tt.value.AppendSQL(tt.dialect, buf, &gotArgs, gotParams, nil)
 		if err != nil {
 			t.Fatal(testutil.Callers(), err)
 		}
@@ -86,7 +86,7 @@ func TestRowValue(t *testing.T) {
 			bufpool.Put(buf)
 		}()
 		gotArgs, gotParams := []interface{}{}, map[string][]int{}
-		err := predicate.AppendSQLExclude(tt.dialect, buf, &gotArgs, gotParams, nil)
+		err := predicate.AppendSQLExclude(tt.dialect, buf, &gotArgs, gotParams, nil, nil)
 		if err != nil {
 			t.Fatal(testutil.Callers(), err)
 		}

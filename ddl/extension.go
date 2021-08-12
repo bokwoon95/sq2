@@ -15,7 +15,7 @@ type CreateExtensionCommand struct {
 	Ignore            bool
 }
 
-func (cmd CreateExtensionCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
+func (cmd CreateExtensionCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int, env map[string]interface{}) error {
 	if cmd.Ignore {
 		return nil
 	}
@@ -50,7 +50,7 @@ type DropExtensionCommand struct {
 	Ignore       bool
 }
 
-func (cmd DropExtensionCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
+func (cmd DropExtensionCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int, env map[string]interface{}) error {
 	if cmd.Ignore {
 		return nil
 	}

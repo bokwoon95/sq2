@@ -22,7 +22,7 @@ func (f PredicateCases) GetAlias() string { return f.alias }
 
 func (f PredicateCases) GetName() string { return "" }
 
-func (f PredicateCases) AppendSQLExclude(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int, excludedTableQualifiers []string) error {
+func (f PredicateCases) AppendSQLExclude(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int, env map[string]interface{}, excludedTableQualifiers []string) error {
 	buf.WriteString("CASE")
 	if len(f.cases) == 0 {
 		return fmt.Errorf("CASE: no predicate cases provided")
@@ -98,7 +98,7 @@ func (f SimpleCases) GetAlias() string { return f.alias }
 
 func (f SimpleCases) GetName() string { return "" }
 
-func (f SimpleCases) AppendSQLExclude(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int, excludedTableQualifiers []string) error {
+func (f SimpleCases) AppendSQLExclude(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int, env map[string]interface{}, excludedTableQualifiers []string) error {
 	buf.WriteString("CASE ")
 	if len(f.cases) == 0 {
 		return fmt.Errorf("no predicate cases provided")

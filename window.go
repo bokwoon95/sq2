@@ -10,13 +10,13 @@ type Window struct {
 
 var _ SQLAppender = Window{}
 
-func (w Window) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
+func (w Window) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int, env map[string]interface{}) error {
 	buf.WriteString("(")
 	var written bool
 	if len(w.PartitionByFields) > 0 {
 		written = true
 		buf.WriteString("PARTITION BY ")
-		w.PartitionByFields.AppendSQLExclude(dialect, buf, args, params, nil)
+		w.PartitionByFields.AppendSQLExclude(dialect, buf, args, params, nil, nil)
 	}
 	if len(w.OrderByFields) > 0 {
 		if written {
@@ -24,7 +24,7 @@ func (w Window) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}
 		}
 		written = true
 		buf.WriteString("ORDER BY ")
-		w.OrderByFields.AppendSQLExclude(dialect, buf, args, params, nil)
+		w.OrderByFields.AppendSQLExclude(dialect, buf, args, params, nil, nil)
 	}
 	if w.FrameDefinition != "" {
 		if written {

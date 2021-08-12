@@ -35,7 +35,7 @@ func Test_CustomField(t *testing.T) {
 			bufpool.Put(buf)
 		}()
 		gotArgs, gotParams := []interface{}{}, map[string][]int{}
-		err := tt.item.AppendSQLExclude(tt.dialect, buf, &gotArgs, gotParams, tt.excludedTableQualifiers)
+		err := tt.item.AppendSQLExclude(tt.dialect, buf, &gotArgs, gotParams, nil, tt.excludedTableQualifiers)
 		if err != nil {
 			t.Fatal(testutil.Callers(), err)
 		}

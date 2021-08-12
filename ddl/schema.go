@@ -160,7 +160,7 @@ type CreateSchemaCommand struct {
 	Ignore            bool
 }
 
-func (cmd CreateSchemaCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
+func (cmd CreateSchemaCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int, env map[string]interface{}) error {
 	if cmd.Ignore {
 		return nil
 	}

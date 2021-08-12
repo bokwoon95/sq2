@@ -25,7 +25,7 @@ func (cte CTE) GetAlias() string { return cte.cteAlias }
 
 func (cte CTE) GetName() string { return cte.cteName }
 
-func (cte CTE) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
+func (cte CTE) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int, env map[string]interface{}) error {
 	if cte.stickyErr != nil {
 		return cte.stickyErr
 	}
@@ -138,7 +138,7 @@ type CTEs []CTE
 
 var _ SQLAppender = CTEs{}
 
-func (ctes CTEs) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
+func (ctes CTEs) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int, env map[string]interface{}) error {
 	var hasRecursiveCTE bool
 	for _, cte := range ctes {
 		if cte.isRecursive {
@@ -179,12 +179,12 @@ func (ctes CTEs) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{
 			return fmt.Errorf("CTE #%d query is nil", i+1)
 		case VariadicQuery:
 			query.TopLevel = true
-			err := query.AppendSQL(dialect, buf, args, params)
+			err := query.AppendSQL(dialect, buf, args, params, nil)
 			if err != nil {
 				return fmt.Errorf("CTE #%d failed to build query: %w", i+1, err)
 			}
 		default:
-			err := query.AppendSQL(dialect, buf, args, params)
+			err := query.AppendSQL(dialect, buf, args, params, nil)
 			if err != nil {
 				return fmt.Errorf("CTE #%d failed to build query: %w", i+1, err)
 			}
@@ -208,7 +208,7 @@ func (f CTEField) GetAlias() string { return f.info.FieldAlias }
 
 func (f CTEField) GetName() string { return f.info.FieldName }
 
-func (f CTEField) AppendSQLExclude(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int, excludedTableQualifiers []string) error {
+func (f CTEField) AppendSQLExclude(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int, env map[string]interface{}, excludedTableQualifiers []string) error {
 	if _, ok := f.fieldCache[f.info.FieldName]; !ok {
 		tableQualifier := f.info.TableName
 		if f.info.TableAlias != "" {
@@ -220,7 +220,7 @@ func (f CTEField) AppendSQLExclude(dialect string, buf *bytes.Buffer, args *[]in
 			return fmt.Errorf("CTE field %s.%s does not exist (available fields: %s)", tableQualifier, f.info.FieldName, strings.Join(f.fieldNames, ", "))
 		}
 	}
-	return f.info.AppendSQLExclude(dialect, buf, args, params, excludedTableQualifiers)
+	return f.info.AppendSQLExclude(dialect, buf, args, params, nil, excludedTableQualifiers)
 }
 
 func (f CTEField) As(alias string) CTEField {

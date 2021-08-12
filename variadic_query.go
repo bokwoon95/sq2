@@ -24,7 +24,7 @@ type VariadicQuery struct {
 
 var _ SQLAppender = VariadicQuery{}
 
-func (vq VariadicQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
+func (vq VariadicQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int, env map[string]interface{}) error {
 	var err error
 	if vq.Operator == "" {
 		vq.Operator = QueryUnion
@@ -38,12 +38,12 @@ func (vq VariadicQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]int
 			return fmt.Errorf("VariadicQuery query #1 is nil")
 		case VariadicQuery:
 			q.TopLevel = vq.TopLevel
-			err = q.AppendSQL(dialect, buf, args, params)
+			err = q.AppendSQL(dialect, buf, args, params, nil)
 			if err != nil {
 				return err
 			}
 		default:
-			err = q.AppendSQL(dialect, buf, args, params)
+			err = q.AppendSQL(dialect, buf, args, params, nil)
 			if err != nil {
 				return err
 			}
@@ -62,12 +62,12 @@ func (vq VariadicQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]int
 			return fmt.Errorf("VariadicQuery query #%d is nil", i+1)
 		case VariadicQuery:
 			q.TopLevel = false
-			err = q.AppendSQL(dialect, buf, args, params)
+			err = q.AppendSQL(dialect, buf, args, params, nil)
 			if err != nil {
 				return fmt.Errorf("VariadicQuery query #%d: %w", i+1, err)
 			}
 		default:
-			err = q.AppendSQL(dialect, buf, args, params)
+			err = q.AppendSQL(dialect, buf, args, params, nil)
 			if err != nil {
 				return fmt.Errorf("VariadicQuery query #%d: %w", i+1, err)
 			}

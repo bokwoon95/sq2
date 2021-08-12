@@ -8,8 +8,8 @@ type StringField struct {
 
 var _ Field = StringField{}
 
-func (f StringField) AppendSQLExclude(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int, excludedTableQualifiers []string) error {
-	return f.info.AppendSQLExclude(dialect, buf, args, params, excludedTableQualifiers)
+func (f StringField) AppendSQLExclude(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int, env map[string]interface{}, excludedTableQualifiers []string) error {
+	return f.info.AppendSQLExclude(dialect, buf, args, params, nil, excludedTableQualifiers)
 }
 
 func (f StringField) GetAlias() string { return f.info.FieldAlias }

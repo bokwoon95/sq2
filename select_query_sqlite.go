@@ -6,8 +6,8 @@ type SQLiteSelectQuery SelectQuery
 
 var _ Query = SQLiteSelectQuery{}
 
-func (q SQLiteSelectQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
-	return SelectQuery(q).AppendSQL(dialect, buf, args, params)
+func (q SQLiteSelectQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int, env map[string]interface{}) error {
+	return SelectQuery(q).AppendSQL(dialect, buf, args, params, nil)
 }
 
 func (q SQLiteSelectQuery) SetFetchableFields(fields []Field) (Query, error) {

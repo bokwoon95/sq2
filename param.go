@@ -34,16 +34,16 @@ func (param NamedParam) GetName() string {
 	return ""
 }
 
-func (param NamedParam) AppendSQLExclude(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int, excludedTableQualifiers []string) error {
+func (param NamedParam) AppendSQLExclude(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int, env map[string]interface{}, excludedTableQualifiers []string) error {
 	if param.Name == "" {
 		return fmt.Errorf("Param name cannot be empty")
 	}
 	// TODO: what happens if you next Params? Param("a", Param("b", Param("c", 11))). Need to add a test for it.
 	if v, ok := param.Value.(SQLExcludeAppender); ok && v != nil {
-		return v.AppendSQLExclude(dialect, buf, args, params, excludedTableQualifiers)
+		return v.AppendSQLExclude(dialect, buf, args, params, nil, excludedTableQualifiers)
 	}
 	if v, ok := param.Value.(SQLAppender); ok && v != nil {
-		return v.AppendSQL(dialect, buf, args, params)
+		return v.AppendSQL(dialect, buf, args, params, nil)
 	}
 	if isExplodableSlice(param.Value) {
 		return explodeSlice(dialect, buf, args, params, excludedTableQualifiers, param.Value)

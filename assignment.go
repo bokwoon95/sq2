@@ -16,7 +16,7 @@ func Assign(LHS, RHS interface{}) Assignment {
 	return Assignment{LHS: LHS, RHS: RHS}
 }
 
-func (a Assignment) AppendSQLExclude(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int, excludedTableQualifiers []string) error {
+func (a Assignment) AppendSQLExclude(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int, env map[string]interface{}, excludedTableQualifiers []string) error {
 	err := BufferPrintValue(dialect, buf, args, params, excludedTableQualifiers, a.LHS, "")
 	if err != nil {
 		return err
@@ -43,13 +43,13 @@ type Assignments []Assignment
 
 var _ SQLExcludeAppender = Assignments{}
 
-func (as Assignments) AppendSQLExclude(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int, excludedTableQualifiers []string) error {
+func (as Assignments) AppendSQLExclude(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int, env map[string]interface{}, excludedTableQualifiers []string) error {
 	var err error
 	for i, a := range as {
 		if i > 0 {
 			buf.WriteString(", ")
 		}
-		err = a.AppendSQLExclude(dialect, buf, args, params, excludedTableQualifiers)
+		err = a.AppendSQLExclude(dialect, buf, args, params, nil, excludedTableQualifiers)
 		if err != nil {
 			return fmt.Errorf("assignment #%d: %w", i+1, err)
 		}

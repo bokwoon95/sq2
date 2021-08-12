@@ -37,7 +37,7 @@ func Test_JoinTable(t *testing.T) {
 			bufpool.Put(buf)
 		}()
 		gotArgs, gotParams := []interface{}{}, map[string][]int{}
-		err := tt.item.AppendSQL(tt.dialect, buf, &gotArgs, gotParams)
+		err := tt.item.AppendSQL(tt.dialect, buf, &gotArgs, gotParams, nil)
 		if err != nil {
 			t.Fatal(testutil.Callers(), err)
 		}

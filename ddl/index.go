@@ -30,7 +30,7 @@ type CreateIndexCommand struct {
 	Ignore             bool
 }
 
-func (cmd CreateIndexCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
+func (cmd CreateIndexCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int, env map[string]interface{}) error {
 	if cmd.Ignore {
 		return nil
 	}
@@ -114,7 +114,7 @@ type DropIndexCommand struct {
 	Ignore           bool
 }
 
-func (cmd DropIndexCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
+func (cmd DropIndexCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int, env map[string]interface{}) error {
 	if cmd.Ignore {
 		return nil
 	}

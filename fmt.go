@@ -146,10 +146,10 @@ func BufferPrintValue(dialect string, buf *bytes.Buffer, args *[]interface{}, pa
 		return nil
 	}
 	if v, ok := value.(SQLExcludeAppender); ok && v != nil {
-		return v.AppendSQLExclude(dialect, buf, args, params, excludedTableQualifiers)
+		return v.AppendSQLExclude(dialect, buf, args, params, nil, excludedTableQualifiers)
 	}
 	if v, ok := value.(SQLAppender); ok && v != nil {
-		return v.AppendSQL(dialect, buf, args, params)
+		return v.AppendSQL(dialect, buf, args, params, nil)
 	}
 	if isExplodableSlice(value) {
 		return explodeSlice(dialect, buf, args, params, excludedTableQualifiers, value)
@@ -527,7 +527,7 @@ func (tbl customTable) GetAlias() string { return "" }
 
 func (tbl customTable) GetName() string { return "" }
 
-func (tbl customTable) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
+func (tbl customTable) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int, env map[string]interface{}) error {
 	return BufferPrintf(dialect, buf, args, params, nil, tbl.format, tbl.values)
 }
 
@@ -555,7 +555,7 @@ func (d MySQLDialect) Queryf(format string, values ...interface{}) Query {
 	return customQuery{dialect: DialectMySQL, format: format, values: values}
 }
 
-func (q customQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
+func (q customQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int, env map[string]interface{}) error {
 	return BufferPrintf(dialect, buf, args, params, nil, q.format, q.values)
 }
 

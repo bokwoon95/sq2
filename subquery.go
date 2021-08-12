@@ -57,12 +57,12 @@ func (q Subquery) GetAlias() string { return q.subqueryAlias }
 
 func (q Subquery) GetName() string { return "" }
 
-func (q Subquery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
+func (q Subquery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int, env map[string]interface{}) error {
 	if q.stickyErr != nil {
 		return q.stickyErr
 	}
 	buf.WriteString("(")
-	err := q.query.AppendSQL(dialect, buf, args, params)
+	err := q.query.AppendSQL(dialect, buf, args, params, nil)
 	if err != nil {
 		return fmt.Errorf("subquery failed to build query: %w", err)
 	}
@@ -98,7 +98,7 @@ func (f SubqueryField) GetAlias() string { return f.info.FieldAlias }
 
 func (f SubqueryField) GetName() string { return f.info.FieldName }
 
-func (f SubqueryField) AppendSQLExclude(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int, excludedTableQualifiers []string) error {
+func (f SubqueryField) AppendSQLExclude(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int, env map[string]interface{}, excludedTableQualifiers []string) error {
 	if f.info.TableAlias == "" && (dialect == DialectPostgres || dialect == DialectMySQL) {
 		return fmt.Errorf("subquery field %s invalid because %s subquery needs an alias", f.info.FieldName, dialect)
 	}
@@ -109,7 +109,7 @@ func (f SubqueryField) AppendSQLExclude(dialect string, buf *bytes.Buffer, args 
 			return fmt.Errorf("subquery field %s.%s does not exist (available fields: %s)", f.info.TableAlias, f.info.FieldName, strings.Join(f.fieldNames, ", "))
 		}
 	}
-	return f.info.AppendSQLExclude(dialect, buf, args, params, excludedTableQualifiers)
+	return f.info.AppendSQLExclude(dialect, buf, args, params, nil, excludedTableQualifiers)
 }
 
 func (f SubqueryField) As(alias string) SubqueryField {

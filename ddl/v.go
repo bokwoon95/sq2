@@ -39,7 +39,7 @@ func (v *V) SetQuery(query sq.Query) {
 		bufpool.Put(buf)
 		argspool.Put(args)
 	}()
-	err := query.AppendSQL(v.dialect, buf, &args, make(map[string][]int))
+	err := query.AppendSQL(v.dialect, buf, &args, make(map[string][]int), nil)
 	if err != nil {
 		panicErr(err)
 	}

@@ -44,7 +44,7 @@ var (
 )
 
 type SQLAppender interface {
-	AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error
+	AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int, env map[string]interface{}) error
 }
 
 type SQLExcludeAppender interface {
@@ -59,7 +59,7 @@ type SQLExcludeAppender interface {
 	//
 	// excludedTableQualifiers must be sorted in ascending order, as the fields
 	// will rely on binary search to find a match.
-	AppendSQLExclude(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int, excludedTableQualifiers []string) error
+	AppendSQLExclude(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int, env map[string]interface{}, excludedTableQualifiers []string) error
 }
 
 type Table interface {
@@ -98,7 +98,7 @@ func ToSQL(dialect string, q SQLAppender) (query string, args []interface{}, par
 			dialect = q.GetDialect()
 		}
 	}
-	err = q.AppendSQL(dialect, buf, &args, params)
+	err = q.AppendSQL(dialect, buf, &args, params, nil)
 	return buf.String(), args, params, err
 }
 
@@ -109,7 +109,7 @@ func ToSQLExclude(dialect string, f SQLExcludeAppender, excludedTableQualifiers 
 		bufpool.Put(buf)
 	}()
 	params = make(map[string][]int)
-	err = f.AppendSQLExclude(dialect, buf, &args, params, excludedTableQualifiers)
+	err = f.AppendSQLExclude(dialect, buf, &args, params, nil, excludedTableQualifiers)
 	return buf.String(), args, params, err
 }
 
@@ -141,14 +141,14 @@ func explodeSlice(dialect string, buf *bytes.Buffer, args *[]interface{}, params
 		}
 		v := slice.Index(i).Interface()
 		if v, ok := v.(SQLExcludeAppender); ok && v != nil {
-			err = v.AppendSQLExclude(dialect, buf, args, params, excludedTableQualifiers)
+			err = v.AppendSQLExclude(dialect, buf, args, params, nil, excludedTableQualifiers)
 			if err != nil {
 				return err
 			}
 			continue
 		}
 		if v, ok := v.(SQLAppender); ok && v != nil {
-			err = v.AppendSQL(dialect, buf, args, params)
+			err = v.AppendSQL(dialect, buf, args, params, nil)
 			if err != nil {
 				return err
 			}

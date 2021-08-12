@@ -137,7 +137,7 @@ type CreateViewCommand struct {
 	Ignore            bool
 }
 
-func (cmd CreateViewCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
+func (cmd CreateViewCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int, env map[string]interface{}) error {
 	if cmd.Ignore {
 		return nil
 	}
@@ -180,7 +180,7 @@ type DropViewCommand struct {
 	Ignore         bool
 }
 
-func (cmd DropViewCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
+func (cmd DropViewCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int, env map[string]interface{}) error {
 	if cmd.Ignore {
 		return nil
 	}

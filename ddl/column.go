@@ -38,7 +38,7 @@ type AddColumnCommand struct {
 	Ignore           bool
 }
 
-func (cmd AddColumnCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
+func (cmd AddColumnCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int, env map[string]interface{}) error {
 	if cmd.Ignore {
 		return nil
 	}
@@ -161,7 +161,7 @@ type AlterColumnCommand struct {
 	Ignore               bool
 }
 
-func (cmd AlterColumnCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
+func (cmd AlterColumnCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int, env map[string]interface{}) error {
 	if cmd.Ignore {
 		return nil
 	}
@@ -242,7 +242,7 @@ type DropColumnCommand struct {
 	Ignore       bool
 }
 
-func (cmd DropColumnCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
+func (cmd DropColumnCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int, env map[string]interface{}) error {
 	if cmd.Ignore {
 		return nil
 	}

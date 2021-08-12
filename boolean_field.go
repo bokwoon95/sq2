@@ -24,11 +24,11 @@ func (f BooleanField) GetAlias() string { return f.info.FieldAlias }
 
 func (f BooleanField) GetName() string { return f.info.FieldName }
 
-func (f BooleanField) AppendSQLExclude(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int, excludedTableQualifiers []string) error {
+func (f BooleanField) AppendSQLExclude(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int, env map[string]interface{}, excludedTableQualifiers []string) error {
 	if f.Negative {
 		buf.WriteString("NOT ")
 	}
-	return f.info.AppendSQLExclude(dialect, buf, args, params, excludedTableQualifiers)
+	return f.info.AppendSQLExclude(dialect, buf, args, params, nil, excludedTableQualifiers)
 }
 
 func (f BooleanField) As(alias string) BooleanField {

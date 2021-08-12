@@ -22,7 +22,7 @@ func Test_TableInfo(t *testing.T) {
 			bufpool.Put(buf)
 		}()
 		gotArgs, gotParams := []interface{}{}, map[string][]int{}
-		err := tt.tbl.AppendSQL(tt.dialect, buf, &gotArgs, gotParams)
+		err := tt.tbl.AppendSQL(tt.dialect, buf, &gotArgs, gotParams, nil)
 		if err != nil {
 			t.Fatal(testutil.Callers(), err)
 		}

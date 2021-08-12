@@ -73,7 +73,7 @@ type CreateTriggerCommand struct {
 	Ignore  bool
 }
 
-func (cmd CreateTriggerCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
+func (cmd CreateTriggerCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int, env map[string]interface{}) error {
 	if cmd.Ignore {
 		return nil
 	}
@@ -90,7 +90,7 @@ type DropTriggerCommand struct {
 	Ignore       bool
 }
 
-func (cmd DropTriggerCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
+func (cmd DropTriggerCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int, env map[string]interface{}) error {
 	if cmd.Ignore {
 		return nil
 	}

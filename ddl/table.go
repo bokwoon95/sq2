@@ -500,7 +500,7 @@ type CreateTableCommand struct {
 	Ignore             bool
 }
 
-func (cmd CreateTableCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
+func (cmd CreateTableCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int, env map[string]interface{}) error {
 	if cmd.Ignore {
 		return nil
 	}
@@ -602,7 +602,7 @@ func (cmd CreateTableCommand) AppendSQL(dialect string, buf *bytes.Buffer, args 
 				newlineWritten = true
 			}
 			buf.WriteString("\n    ,")
-			err := createIndexCmd.AppendSQL(dialect, buf, args, params)
+			err := createIndexCmd.AppendSQL(dialect, buf, args, params, nil)
 			if err != nil {
 				return fmt.Errorf("index #%d: %w", i+1, err)
 			}
@@ -627,7 +627,7 @@ type AlterTableCommand struct {
 	Ignore              bool
 }
 
-func (cmd AlterTableCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
+func (cmd AlterTableCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int, env map[string]interface{}) error {
 	if cmd.Ignore {
 		return nil
 	}
@@ -668,21 +668,21 @@ func (cmd AlterTableCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *
 	}
 	for _, addColumnCmd := range cmd.AddColumnCmds {
 		writeNewLine()
-		err := addColumnCmd.AppendSQL(dialect, buf, args, params)
+		err := addColumnCmd.AppendSQL(dialect, buf, args, params, nil)
 		if err != nil {
 			return fmt.Errorf("ALTER TABLE ADD COLUMN %s: %w", addColumnCmd.Column.ColumnName, err)
 		}
 	}
 	for _, alterColumnCmd := range cmd.AlterColumnCmds {
 		writeNewLine()
-		err := alterColumnCmd.AppendSQL(dialect, buf, args, params)
+		err := alterColumnCmd.AppendSQL(dialect, buf, args, params, nil)
 		if err != nil {
 			return fmt.Errorf("ALTER TABLE ALTER COLUMN %s: %w", alterColumnCmd.Column.ColumnName, err)
 		}
 	}
 	for _, dropColumnCmd := range cmd.DropColumnCmds {
 		writeNewLine()
-		err := dropColumnCmd.AppendSQL(dialect, buf, args, params)
+		err := dropColumnCmd.AppendSQL(dialect, buf, args, params, nil)
 		if err != nil {
 			return fmt.Errorf("ALTER TABLE DROP COLUMN %s: %w", dropColumnCmd.ColumnName, err)
 		}
@@ -692,21 +692,21 @@ func (cmd AlterTableCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *
 	// command.
 	for _, dropConstraintCmd := range cmd.DropConstraintCmds {
 		writeNewLine()
-		err := dropConstraintCmd.AppendSQL(dialect, buf, args, params)
+		err := dropConstraintCmd.AppendSQL(dialect, buf, args, params, nil)
 		if err != nil {
 			return fmt.Errorf("ALTER TABLE DROP CONSTRAINT %s: %w", dropConstraintCmd.ConstraintName, err)
 		}
 	}
 	for _, addConstraintCmd := range cmd.AddConstraintCmds {
 		writeNewLine()
-		err := addConstraintCmd.AppendSQL(dialect, buf, args, params)
+		err := addConstraintCmd.AppendSQL(dialect, buf, args, params, nil)
 		if err != nil {
 			return fmt.Errorf("ALTER TABLE ADD CONSTRAINT %s: %w", addConstraintCmd.Constraint.ConstraintName, err)
 		}
 	}
 	for _, alterConstraintCmd := range cmd.AlterConstraintCmds {
 		writeNewLine()
-		err := alterConstraintCmd.AppendSQL(dialect, buf, args, params)
+		err := alterConstraintCmd.AppendSQL(dialect, buf, args, params, nil)
 		if err != nil {
 			return fmt.Errorf("ALTER TABLE ALTER CONSTRAINT %s: %w", alterConstraintCmd.ConstraintName, err)
 		}
@@ -716,14 +716,14 @@ func (cmd AlterTableCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *
 		if dialect == sq.DialectMySQL {
 			buf.WriteString("ADD ")
 		}
-		err := createIndexCmd.AppendSQL(dialect, buf, args, params)
+		err := createIndexCmd.AppendSQL(dialect, buf, args, params, nil)
 		if err != nil {
 			return fmt.Errorf("ALTER TABLE INDEX %s: %w", createIndexCmd.Index.IndexName, err)
 		}
 	}
 	for _, dropIndexCmd := range cmd.DropIndexCmds {
 		writeNewLine()
-		err := dropIndexCmd.AppendSQL(dialect, buf, args, params)
+		err := dropIndexCmd.AppendSQL(dialect, buf, args, params, nil)
 		if err != nil {
 			return fmt.Errorf("ALTER TABLE DROP INDEX %s: %w", dropIndexCmd.IndexName, err)
 		}
@@ -783,7 +783,7 @@ type RenameTableCommand struct {
 	Ignore          bool
 }
 
-func (cmd *RenameTableCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
+func (cmd *RenameTableCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int, env map[string]interface{}) error {
 	if cmd.Ignore {
 		return nil
 	}
@@ -829,7 +829,7 @@ type DropTableCommand struct {
 	Ignore       bool
 }
 
-func (cmd DropTableCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
+func (cmd DropTableCommand) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int, env map[string]interface{}) error {
 	if cmd.Ignore {
 		return nil
 	}

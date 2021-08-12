@@ -31,7 +31,7 @@ func (p CustomPredicate) GetAlias() string { return p.Alias }
 
 func (p CustomPredicate) GetName() string { return "" }
 
-func (p CustomPredicate) AppendSQLExclude(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int, excludedTableQualifiers []string) error {
+func (p CustomPredicate) AppendSQLExclude(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int, env map[string]interface{}, excludedTableQualifiers []string) error {
 	if p.Negative {
 		buf.WriteString("NOT ")
 	}
@@ -53,7 +53,7 @@ type VariadicPredicate struct {
 	Negative   bool
 }
 
-func (p VariadicPredicate) AppendSQLExclude(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int, excludedTableQualifiers []string) error {
+func (p VariadicPredicate) AppendSQLExclude(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int, env map[string]interface{}, excludedTableQualifiers []string) error {
 	var err error
 	switch len(p.Predicates) {
 	case 0:
@@ -70,7 +70,7 @@ func (p VariadicPredicate) AppendSQLExclude(dialect string, buf *bytes.Buffer, a
 				buf.WriteString("(")
 			}
 			v.Toplevel = true
-			err = v.AppendSQLExclude(dialect, buf, args, params, excludedTableQualifiers)
+			err = v.AppendSQLExclude(dialect, buf, args, params, nil, excludedTableQualifiers)
 			if err != nil {
 				return err
 			}
@@ -78,7 +78,7 @@ func (p VariadicPredicate) AppendSQLExclude(dialect string, buf *bytes.Buffer, a
 				buf.WriteString(")")
 			}
 		default:
-			err = p.Predicates[0].AppendSQLExclude(dialect, buf, args, params, excludedTableQualifiers)
+			err = p.Predicates[0].AppendSQLExclude(dialect, buf, args, params, nil, excludedTableQualifiers)
 			if err != nil {
 				return err
 			}
@@ -101,7 +101,7 @@ func (p VariadicPredicate) AppendSQLExclude(dialect string, buf *bytes.Buffer, a
 			if predicate == nil {
 				return fmt.Errorf("predicate #%d is nil", i+1)
 			}
-			err = predicate.AppendSQLExclude(dialect, buf, args, params, excludedTableQualifiers)
+			err = predicate.AppendSQLExclude(dialect, buf, args, params, nil, excludedTableQualifiers)
 			if err != nil {
 				return fmt.Errorf("predicate #%d: %w", i+1, err)
 			}

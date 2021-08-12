@@ -10,8 +10,8 @@ type NumberField struct {
 
 var _ Field = NumberField{}
 
-func (f NumberField) AppendSQLExclude(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int, excludedTableQualifiers []string) error {
-	return f.info.AppendSQLExclude(dialect, buf, args, params, excludedTableQualifiers)
+func (f NumberField) AppendSQLExclude(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int, env map[string]interface{}, excludedTableQualifiers []string) error {
+	return f.info.AppendSQLExclude(dialect, buf, args, params, nil, excludedTableQualifiers)
 }
 
 func (f NumberField) GetAlias() string { return f.info.FieldAlias }

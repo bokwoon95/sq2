@@ -6,8 +6,8 @@ type PostgresUpdateQuery UpdateQuery
 
 var _ Query = PostgresUpdateQuery{}
 
-func (q PostgresUpdateQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
-	return UpdateQuery(q).AppendSQL(dialect, buf, args, params)
+func (q PostgresUpdateQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int, env map[string]interface{}) error {
+	return UpdateQuery(q).AppendSQL(dialect, buf, args, params, nil)
 }
 
 func (q PostgresUpdateQuery) SetFetchableFields(fields []Field) (Query, error) {

@@ -29,11 +29,11 @@ type DeleteQuery struct {
 
 var _ Query = DeleteQuery{}
 
-func (q DeleteQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int) error {
+func (q DeleteQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int, env map[string]interface{}) error {
 	var err error
 	// WITH
 	if len(q.CTEs) > 0 {
-		err = q.CTEs.AppendSQL(dialect, buf, args, params)
+		err = q.CTEs.AppendSQL(dialect, buf, args, params, nil)
 		if err != nil {
 			return fmt.Errorf("WITH: %w", err)
 		}
@@ -59,7 +59,7 @@ func (q DeleteQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interf
 		if fromTable == nil {
 			return fmt.Errorf("no table provided to DELETE")
 		}
-		err = fromTable.AppendSQL(dialect, buf, args, params)
+		err = fromTable.AppendSQL(dialect, buf, args, params, nil)
 		if err != nil {
 			return fmt.Errorf("DELETE FROM: %w", err)
 		}
@@ -73,7 +73,7 @@ func (q DeleteQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interf
 			return fmt.Errorf("sqlite DELETE does not support joins")
 		}
 		buf.WriteString(" USING ")
-		err = q.UsingTable.AppendSQL(dialect, buf, args, params)
+		err = q.UsingTable.AppendSQL(dialect, buf, args, params, nil)
 		if err != nil {
 			return fmt.Errorf("USING: %w", err)
 		}
@@ -90,7 +90,7 @@ func (q DeleteQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interf
 			return fmt.Errorf("can't use JOIN without providing an initial table to join on")
 		}
 		buf.WriteString(" ")
-		err = q.JoinTables.AppendSQL(dialect, buf, args, params)
+		err = q.JoinTables.AppendSQL(dialect, buf, args, params, nil)
 		if err != nil {
 			return fmt.Errorf("JOIN: %w", err)
 		}
@@ -99,7 +99,7 @@ func (q DeleteQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interf
 	if len(q.WherePredicate.Predicates) > 0 {
 		buf.WriteString(" WHERE ")
 		q.WherePredicate.Toplevel = true
-		err = q.WherePredicate.AppendSQLExclude(dialect, buf, args, params, nil)
+		err = q.WherePredicate.AppendSQLExclude(dialect, buf, args, params, nil, nil)
 		if err != nil {
 			return fmt.Errorf("WHERE: %w", err)
 		}
@@ -113,7 +113,7 @@ func (q DeleteQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interf
 			return fmt.Errorf("ORDER BY not allowed in a multi-table DELETE")
 		}
 		buf.WriteString(" ORDER BY ")
-		err = q.OrderByFields.AppendSQLExclude(dialect, buf, args, params, nil)
+		err = q.OrderByFields.AppendSQLExclude(dialect, buf, args, params, nil, nil)
 		if err != nil {
 			return fmt.Errorf("ORDER BY: %w", err)
 		}
@@ -147,7 +147,7 @@ func (q DeleteQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interf
 			return fmt.Errorf("%s DELETE does not support RETURNING", dialect)
 		}
 		buf.WriteString(" RETURNING ")
-		err = q.ReturningFields.AppendSQLExclude(dialect, buf, args, params, nil)
+		err = q.ReturningFields.AppendSQLExclude(dialect, buf, args, params, nil, nil)
 		if err != nil {
 			return fmt.Errorf("RETURNING: %w", err)
 		}
