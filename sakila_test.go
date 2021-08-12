@@ -463,6 +463,9 @@ type SQLTest struct {
 	// TODO: test database-side JSON aggregation queries
 
 	// TODO: test full text search queries
+
+	// TODO: move the queries out of the test suite. All it should contain are
+	// the answers.
 }
 
 func NewSQLTest() SQLTest {
