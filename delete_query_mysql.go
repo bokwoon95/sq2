@@ -21,17 +21,19 @@ func (q MySQLDeleteQuery) GetFetchableFields() ([]Field, error) {
 func (q MySQLDeleteQuery) GetDialect() string { return q.Dialect }
 
 func (d MySQLQueryBuilder) DeleteWith(ctes ...CTE) MySQLDeleteQuery {
-	var q MySQLDeleteQuery
-	q.Dialect = DialectMySQL
-	q.CTEs = ctes
-	return q
+	return MySQLDeleteQuery{
+		Env:     d.env,
+		Dialect: DialectMySQL,
+		CTEs:    ctes,
+	}
 }
 
 func (d MySQLQueryBuilder) DeleteFrom(tables ...SchemaTable) MySQLDeleteQuery {
-	var q MySQLDeleteQuery
-	q.Dialect = DialectMySQL
-	q.FromTables = tables
-	return q
+	return MySQLDeleteQuery{
+		Env:        d.env,
+		Dialect:    DialectMySQL,
+		FromTables: tables,
+	}
 }
 
 func (q MySQLDeleteQuery) With(ctes ...CTE) MySQLDeleteQuery {

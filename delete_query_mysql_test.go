@@ -31,7 +31,7 @@ func Test_MySQLDeleteQuery(t *testing.T) {
 		t.Parallel()
 		var tt TT
 		ACTOR := xNEW_ACTOR("")
-		tt.item = MySQL.
+		tt.item = MySQL(nil).
 			DeleteFrom(ACTOR).
 			With(NewCTE("cte", []string{"n"}, Queryf("SELECT 1"))).
 			Using(ACTOR).
@@ -58,12 +58,12 @@ func Test_MySQLDeleteQuery(t *testing.T) {
 		t.Parallel()
 		var tt TT
 		FILM, LANGUAGE, INVENTORY := xNEW_FILM("f"), xNEW_LANGUAGE("l"), xNEW_INVENTORY("i")
-		lang := NewCTE("lang", nil, MySQL.
+		lang := NewCTE("lang", nil, MySQL(nil).
 			Select(LANGUAGE.LANGUAGE_ID, LANGUAGE.NAME).
 			From(LANGUAGE).
 			Where(LANGUAGE.NAME.IsNotNull()),
 		)
-		tt.item = MySQL.
+		tt.item = MySQL(nil).
 			DeleteWith(lang).
 			DeleteFrom(FILM).
 			Using(FILM).
@@ -89,7 +89,7 @@ func Test_MySQLDeleteQuery(t *testing.T) {
 		t.Parallel()
 		var tt TT
 		ADDRESS, CITY, COUNTRY := xNEW_ADDRESS("a"), xNEW_CITY("ci"), xNEW_COUNTRY("co")
-		tt.item = MySQL.
+		tt.item = MySQL(nil).
 			DeleteFrom(ADDRESS, CITY, COUNTRY).
 			Using(ADDRESS).
 			Join(CITY, CITY.CITY_ID.Eq(ADDRESS.CITY_ID)).
@@ -108,7 +108,7 @@ func Test_MySQLDeleteQuery(t *testing.T) {
 		t.Parallel()
 		var tt TT
 		ACTOR := xNEW_ACTOR("a")
-		tt.item = MySQL.DeleteFrom(ACTOR).OrderBy(ACTOR.ACTOR_ID).Limit(0)
+		tt.item = MySQL(nil).DeleteFrom(ACTOR).OrderBy(ACTOR.ACTOR_ID).Limit(0)
 		tt.wantQuery = "DELETE FROM actor AS a ORDER BY a.actor_id LIMIT ?"
 		tt.wantArgs = []interface{}{int64(0)}
 		assert(t, tt)

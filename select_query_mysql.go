@@ -21,39 +21,44 @@ func (q MySQLSelectQuery) GetFetchableFields() ([]Field, error) {
 func (q MySQLSelectQuery) GetDialect() string { return q.Dialect }
 
 func (d MySQLQueryBuilder) From(table Table) MySQLSelectQuery {
-	var q MySQLSelectQuery
-	q.Dialect = DialectMySQL
-	q.FromTable = table
-	return q
+	return MySQLSelectQuery{
+		Env:       d.env,
+		Dialect:   DialectMySQL,
+		FromTable: table,
+	}
 }
 
 func (d MySQLQueryBuilder) SelectWith(ctes ...CTE) MySQLSelectQuery {
-	var q MySQLSelectQuery
-	q.Dialect = DialectMySQL
-	q.CTEs = ctes
-	return q
+	return MySQLSelectQuery{
+		Env:     d.env,
+		Dialect: DialectMySQL,
+		CTEs:    ctes,
+	}
 }
 
 func (d MySQLQueryBuilder) Select(fields ...Field) MySQLSelectQuery {
-	var q MySQLSelectQuery
-	q.Dialect = DialectMySQL
-	q.SelectFields = fields
-	return q
+	return MySQLSelectQuery{
+		Env:          d.env,
+		Dialect:      DialectMySQL,
+		SelectFields: fields,
+	}
 }
 
 func (d MySQLQueryBuilder) SelectOne() MySQLSelectQuery {
-	var q MySQLSelectQuery
-	q.Dialect = DialectMySQL
-	q.SelectFields = AliasFields{Literal("1")}
-	return q
+	return MySQLSelectQuery{
+		Env:          d.env,
+		Dialect:      DialectMySQL,
+		SelectFields: AliasFields{Literal("1")},
+	}
 }
 
 func (d MySQLQueryBuilder) SelectDistinct(fields ...Field) MySQLSelectQuery {
-	var q MySQLSelectQuery
-	q.Dialect = DialectMySQL
-	q.Distinct = true
-	q.SelectFields = fields
-	return q
+	return MySQLSelectQuery{
+		Env:          d.env,
+		Dialect:      DialectMySQL,
+		Distinct:     true,
+		SelectFields: fields,
+	}
 }
 
 func (q MySQLSelectQuery) With(ctes ...CTE) MySQLSelectQuery {

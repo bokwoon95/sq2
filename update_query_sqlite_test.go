@@ -84,7 +84,7 @@ func Test_SQLiteUpdateQuery(t *testing.T) {
 		t.Parallel()
 		var tt TT
 		ADDRESS, CITY, COUNTRY := xNEW_ADDRESS("a"), xNEW_CITY("ci"), xNEW_COUNTRY("co")
-		tt.item = MySQL.
+		tt.item = MySQL(nil).
 			Update(ADDRESS).
 			Join(CITY, CITY.CITY_ID.Eq(ADDRESS.CITY_ID)).
 			Join(COUNTRY, COUNTRY.COUNTRY_ID.Eq(CITY.COUNTRY_ID)).

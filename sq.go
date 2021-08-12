@@ -35,20 +35,16 @@ type (
 	OracleQueryBuilder    struct{ env map[string]interface{} }
 )
 
-var (
-	// SQLite    = SQLiteQueryBuilder{}
-	// Postgres  = PostgresQueryBuilder{}
-	MySQL = MySQLQueryBuilder{}
-	// SQLServer = SQLServerQueryBuilder{}
-	// Oracle    = OracleDialect{}
-)
-
 func SQLite(env map[string]interface{}) SQLiteQueryBuilder {
 	return SQLiteQueryBuilder{env: env}
 }
 
 func Postgres(env map[string]interface{}) PostgresQueryBuilder {
 	return PostgresQueryBuilder{env: env}
+}
+
+func MySQL(env map[string]interface{}) MySQLQueryBuilder {
+	return MySQLQueryBuilder{env: env}
 }
 
 func SQLServer(env map[string]interface{}) SQLServerQueryBuilder {

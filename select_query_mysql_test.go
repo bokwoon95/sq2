@@ -31,7 +31,7 @@ func Test_MySQLSelectQuery(t *testing.T) {
 		t.Parallel()
 		var tt TT
 		ACTOR := xNEW_ACTOR("a")
-		tt.item = MySQL.
+		tt.item = MySQL(nil).
 			SelectWith(NewCTE("cte", []string{"n"}, Queryf("SELECT 1"))).
 			Select(ACTOR.ACTOR_ID).
 			From(ACTOR)
@@ -43,7 +43,7 @@ func Test_MySQLSelectQuery(t *testing.T) {
 		t.Parallel()
 		var tt TT
 		ACTOR := xNEW_ACTOR("a")
-		tt.item = MySQL.
+		tt.item = MySQL(nil).
 			SelectDistinct(ACTOR.ACTOR_ID).
 			SelectDistinct(ACTOR.ACTOR_ID).
 			From(ACTOR)
@@ -55,7 +55,7 @@ func Test_MySQLSelectQuery(t *testing.T) {
 		t.Parallel()
 		var tt TT
 		ACTOR := xNEW_ACTOR("a")
-		tt.item = MySQL.
+		tt.item = MySQL(nil).
 			SelectOne().
 			From(ACTOR).
 			With(NewCTE("cte", []string{"n"}, Queryf("SELECT 1"))).
@@ -82,7 +82,7 @@ func Test_MySQLSelectQuery(t *testing.T) {
 		t.Parallel()
 		var tt TT
 		ACTOR := xNEW_ACTOR("a")
-		tt.item = MySQL.
+		tt.item = MySQL(nil).
 			From(ACTOR).
 			Select(ACTOR.ACTOR_ID, ACTOR.FIRST_NAME, ACTOR.LAST_NAME).
 			With(NewCTE("cte", []string{"n"}, Queryf("SELECT 1"))).
