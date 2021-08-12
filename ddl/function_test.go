@@ -22,7 +22,7 @@ func Test_Function(t *testing.T) {
 		if err != nil {
 			t.Fatal(testutil.Callers(), err)
 		}
-		sql, _, _, err := sq.ToSQL(tt.dialect, CreateFunctionCommand{Function: tt.item}, nil)
+		sql, _, _, err := sq.ToSQL(tt.dialect, CreateFunctionCommand{Function: tt.item})
 		if err != nil {
 			t.Fatal(testutil.Callers(), err)
 		}
@@ -184,7 +184,7 @@ func Test_DropFunctionCommand(t *testing.T) {
 	}
 
 	assert := func(t *testing.T, tt TT) {
-		gotQuery, gotArgs, _, err := sq.ToSQL(tt.dialect, tt.item, nil)
+		gotQuery, gotArgs, _, err := sq.ToSQL(tt.dialect, tt.item)
 		if err != nil {
 			t.Fatal(testutil.Callers(), err)
 		}
@@ -220,7 +220,7 @@ func Test_DropFunctionCommand(t *testing.T) {
 		tt.item = DropFunctionCommand{
 			Function: Function{FunctionName: "my_function"},
 		}
-		_, _, _, err := sq.ToSQL(tt.dialect, tt.item, nil)
+		_, _, _, err := sq.ToSQL(tt.dialect, tt.item)
 		if err == nil {
 			t.Fatal(testutil.Callers(), "expected error but got nil")
 		}

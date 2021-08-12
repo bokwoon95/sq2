@@ -507,7 +507,7 @@ func (m *Migration) WriteSQL(w io.Writer) error {
 	var err error
 	var written bool
 	writeCmd := func(cmd Command, isMySQLFunction bool) error {
-		query, args, _, err := sq.ToSQL(m.Dialect, cmd, nil)
+		query, args, _, err := sq.ToSQL(m.Dialect, cmd)
 		if err != nil {
 			return fmt.Errorf("building command (%s): %w", query, err)
 		}
@@ -703,7 +703,7 @@ func (m *Migration) Exec(db sq.DB) error {
 func (m *Migration) ExecContext(ctx context.Context, db sq.DB) error {
 	var err error
 	execCmd := func(cmd Command) error {
-		query, args, _, err := sq.ToSQL(m.Dialect, cmd, nil)
+		query, args, _, err := sq.ToSQL(m.Dialect, cmd)
 		if err != nil {
 			return fmt.Errorf("building command (%s): %w", query, err)
 		}

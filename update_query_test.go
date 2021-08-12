@@ -14,7 +14,7 @@ func Test_UpdateQuery(t *testing.T) {
 		var ErrColumnMapper = errors.New("some error")
 		var q UpdateQuery
 		q.ColumnMapper = func(c *Column) error { return ErrColumnMapper }
-		_, _, _, err := ToSQL("", q, nil)
+		_, _, _, err := ToSQL("", q)
 		if !errors.Is(err, ErrColumnMapper) {
 			t.Errorf(testutil.Callers()+" expected ErrColumnMapper but got %#v", err)
 		}
@@ -24,7 +24,7 @@ func Test_UpdateQuery(t *testing.T) {
 		t.Parallel()
 		var q UpdateQuery
 		q.CTEs = CTEs{NewCTE("cte", []string{"n"}, FaultySQL{})}
-		_, _, _, err := ToSQL("", q, nil)
+		_, _, _, err := ToSQL("", q)
 		if !errors.Is(err, ErrFaultySQL) {
 			t.Errorf(testutil.Callers()+" expected ErrFaultySQL but got %#v", err)
 		}
@@ -34,7 +34,7 @@ func Test_UpdateQuery(t *testing.T) {
 		t.Parallel()
 		var q UpdateQuery
 		q.UpdateTable = nil
-		_, _, _, err := ToSQL("", q, nil)
+		_, _, _, err := ToSQL("", q)
 		if err == nil {
 			t.Error(testutil.Callers(), "expected error but got nil")
 		}
@@ -44,7 +44,7 @@ func Test_UpdateQuery(t *testing.T) {
 		t.Parallel()
 		var q UpdateQuery
 		q.UpdateTable = FaultySQL{}
-		_, _, _, err := ToSQL("", q, nil)
+		_, _, _, err := ToSQL("", q)
 		if !errors.Is(err, ErrFaultySQL) {
 			t.Errorf(testutil.Callers()+" expected ErrFaultySQL but got %#v", err)
 		}
@@ -55,7 +55,7 @@ func Test_UpdateQuery(t *testing.T) {
 		ACTOR := xNEW_ACTOR("")
 		var q UpdateQuery
 		q.UpdateTable = ACTOR
-		_, _, _, err := ToSQL("", q, nil)
+		_, _, _, err := ToSQL("", q)
 		if err == nil {
 			t.Error(testutil.Callers(), "expected error but got nil")
 		}
@@ -68,7 +68,7 @@ func Test_UpdateQuery(t *testing.T) {
 		q.Dialect = DialectPostgres
 		q.UpdateTable = ACTOR
 		q.Assignments = Assignments{Assign(FaultySQL{}, FaultySQL{})}
-		_, _, _, err := ToSQL("", q, nil)
+		_, _, _, err := ToSQL("", q)
 		if !errors.Is(err, ErrFaultySQL) {
 			t.Errorf(testutil.Callers()+" expected ErrFaultySQL but got %#v", err)
 		}
@@ -82,7 +82,7 @@ func Test_UpdateQuery(t *testing.T) {
 		q.UpdateTable = ACTOR
 		q.Assignments = Assignments{Assign(FaultySQL{}, FaultySQL{})}
 		q.FromTable = ACTOR
-		_, _, _, err := ToSQL("", q, nil)
+		_, _, _, err := ToSQL("", q)
 		if err == nil {
 			t.Error(testutil.Callers(), "expected error but got nil")
 		}
@@ -96,7 +96,7 @@ func Test_UpdateQuery(t *testing.T) {
 		q.UpdateTable = ACTOR
 		q.Assignments = Assignments{Assign(ACTOR.ACTOR_ID, 1)}
 		q.FromTable = FaultySQL{}
-		_, _, _, err := ToSQL("", q, nil)
+		_, _, _, err := ToSQL("", q)
 		if !errors.Is(err, ErrFaultySQL) {
 			t.Errorf(testutil.Callers()+" expected ErrFaultySQL but got %#v", err)
 		}
@@ -110,7 +110,7 @@ func Test_UpdateQuery(t *testing.T) {
 		q.UpdateTable = ACTOR
 		q.Assignments = Assignments{Assign(ACTOR.ACTOR_ID, 1)}
 		q.JoinTables = JoinTables{Join(ACTOR, Eq(1, 1))}
-		_, _, _, err := ToSQL("", q, nil)
+		_, _, _, err := ToSQL("", q)
 		if err == nil {
 			t.Error(testutil.Callers(), "expected error but got nil")
 		}
@@ -125,7 +125,7 @@ func Test_UpdateQuery(t *testing.T) {
 		q.Assignments = Assignments{Assign(ACTOR.ACTOR_ID, 1)}
 		q.FromTable = ACTOR
 		q.JoinTables = JoinTables{Join(FaultySQL{}, Eq(1, 1))}
-		_, _, _, err := ToSQL("", q, nil)
+		_, _, _, err := ToSQL("", q)
 		if !errors.Is(err, ErrFaultySQL) {
 			t.Errorf(testutil.Callers()+" expected ErrFaultySQL but got %#v", err)
 		}
@@ -138,7 +138,7 @@ func Test_UpdateQuery(t *testing.T) {
 		q.Dialect = DialectMySQL
 		q.UpdateTable = ACTOR
 		q.Assignments = Assignments{Assign(FaultySQL{}, FaultySQL{})}
-		_, _, _, err := ToSQL("", q, nil)
+		_, _, _, err := ToSQL("", q)
 		if !errors.Is(err, ErrFaultySQL) {
 			t.Errorf(testutil.Callers()+" expected ErrFaultySQL but got %#v", err)
 		}
@@ -151,7 +151,7 @@ func Test_UpdateQuery(t *testing.T) {
 		q.UpdateTable = ACTOR
 		q.Assignments = Assignments{Assign(ACTOR.ACTOR_ID, 1)}
 		q.WherePredicate = And(FaultySQL{})
-		_, _, _, err := ToSQL("", q, nil)
+		_, _, _, err := ToSQL("", q)
 		if !errors.Is(err, ErrFaultySQL) {
 			t.Errorf(testutil.Callers()+" expected ErrFaultySQL but got %#v", err)
 		}
@@ -165,7 +165,7 @@ func Test_UpdateQuery(t *testing.T) {
 		q.UpdateTable = ACTOR
 		q.Assignments = Assignments{Assign(ACTOR.ACTOR_ID, 1)}
 		q.OrderByFields = Fields{ACTOR.ACTOR_ID}
-		_, _, _, err := ToSQL("", q, nil)
+		_, _, _, err := ToSQL("", q)
 		if err == nil {
 			t.Error(testutil.Callers(), "expected error but got nil")
 		}
@@ -179,7 +179,7 @@ func Test_UpdateQuery(t *testing.T) {
 		q.UpdateTable = ACTOR
 		q.Assignments = Assignments{Assign(ACTOR.ACTOR_ID, 1)}
 		q.OrderByFields = Fields{FaultySQL{}}
-		_, _, _, err := ToSQL("", q, nil)
+		_, _, _, err := ToSQL("", q)
 		if !errors.Is(err, ErrFaultySQL) {
 			t.Errorf(testutil.Callers()+" expected ErrFaultySQL but got %#v", err)
 		}
@@ -193,7 +193,7 @@ func Test_UpdateQuery(t *testing.T) {
 		q.UpdateTable = ACTOR
 		q.Assignments = Assignments{Assign(ACTOR.ACTOR_ID, 1)}
 		q.RowLimit = sql.NullInt64{Valid: true, Int64: 10}
-		_, _, _, err := ToSQL("", q, nil)
+		_, _, _, err := ToSQL("", q)
 		if err == nil {
 			t.Error(testutil.Callers(), "expected error but got nil")
 		}
@@ -207,7 +207,7 @@ func Test_UpdateQuery(t *testing.T) {
 		q.UpdateTable = ACTOR
 		q.Assignments = Assignments{Assign(ACTOR.ACTOR_ID, 1)}
 		q.RowOffset = sql.NullInt64{Valid: true, Int64: 20}
-		_, _, _, err := ToSQL("", q, nil)
+		_, _, _, err := ToSQL("", q)
 		if err == nil {
 			t.Error(testutil.Callers(), "expected error but got nil")
 		}
@@ -221,7 +221,7 @@ func Test_UpdateQuery(t *testing.T) {
 		q.UpdateTable = ACTOR
 		q.Assignments = Assignments{Assign(ACTOR.ACTOR_ID, 1)}
 		q.ReturningFields = AliasFields{ACTOR.ACTOR_ID}
-		_, _, _, err := ToSQL("", q, nil)
+		_, _, _, err := ToSQL("", q)
 		if err == nil {
 			t.Error(testutil.Callers(), "expected error but got nil")
 		}

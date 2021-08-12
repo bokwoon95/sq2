@@ -16,7 +16,7 @@ func Test_PredicateCases(t *testing.T) {
 	}
 
 	assert := func(t *testing.T, tt TT) {
-		gotQuery, gotArgs, _, err := ToSQLExclude(tt.dialect, tt.item, tt.excludedTableQualifiers, nil)
+		gotQuery, gotArgs, _, err := ToSQLExclude(tt.dialect, tt.item, tt.excludedTableQualifiers)
 		if err != nil {
 			t.Fatal(testutil.Callers(), err)
 		}
@@ -30,7 +30,7 @@ func Test_PredicateCases(t *testing.T) {
 
 	t.Run("empty", func(t *testing.T) {
 		t.Parallel()
-		_, _, _, err := ToSQLExclude("", PredicateCases{}, nil, nil)
+		_, _, _, err := ToSQLExclude("", PredicateCases{}, nil)
 		if err == nil {
 			t.Fatal(testutil.Callers(), "expected error but got nil")
 		}
@@ -77,7 +77,7 @@ func Test_SimpleCases(t *testing.T) {
 	}
 
 	assert := func(t *testing.T, tt TT) {
-		gotQuery, gotArgs, _, err := ToSQLExclude(tt.dialect, tt.item, tt.excludedTableQualifiers, nil)
+		gotQuery, gotArgs, _, err := ToSQLExclude(tt.dialect, tt.item, tt.excludedTableQualifiers)
 		if err != nil {
 			t.Fatal(testutil.Callers(), err)
 		}
@@ -91,7 +91,7 @@ func Test_SimpleCases(t *testing.T) {
 
 	t.Run("empty", func(t *testing.T) {
 		t.Parallel()
-		_, _, _, err := ToSQLExclude("", SimpleCases{}, nil, nil)
+		_, _, _, err := ToSQLExclude("", SimpleCases{}, nil)
 		if err == nil {
 			t.Fatal(testutil.Callers(), "expected error but got nil")
 		}
@@ -100,7 +100,7 @@ func Test_SimpleCases(t *testing.T) {
 	t.Run("expression only", func(t *testing.T) {
 		t.Parallel()
 		a := xNEW_ACTOR("a")
-		_, _, _, err := ToSQLExclude("", Case(a.ACTOR_ID), nil, nil)
+		_, _, _, err := ToSQLExclude("", Case(a.ACTOR_ID), nil)
 		if err == nil {
 			t.Fatal(testutil.Callers(), "expected error but got nil")
 		}
