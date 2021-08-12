@@ -125,6 +125,24 @@ LIMIT
     10
 ;
 
+-- Find customers who have rented the most items, ordered by descending rental
+-- count. Return the first_name, last_name and rental_count. Show only the top
+-- 10 results.
+SELECT
+    customer.first_name
+    ,customer.last_name
+    ,COUNT(*) AS rental_count
+FROM
+    customer
+    JOIN rental ON rental.customer_id = customer.customer_id
+GROUP BY
+    customer.customer_id
+ORDER BY
+    rental_count DESC
+LIMIT
+    10
+;
+
 -- https://stackoverflow.com/questions/67080935/how-can-i-get-the-desired-results-from-the-sakila-database-using-sql
 -- Find the films whose total number of actors is above the average, ordered by
 -- title. Return the film title and the actor count. Show only the top 10
