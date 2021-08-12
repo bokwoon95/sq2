@@ -351,6 +351,10 @@ func xNEW_PAYMENT(alias string) xPAYMENT {
 	return tbl
 }
 
+// TODO: I *need* semantically named types, not just generic RecordN types.
+// This would make it more palatable in the documentation when I inevitably
+// show test snippets in it.
+
 type Record4 struct {
 	ActorID   int
 	FirstName string
