@@ -140,7 +140,7 @@ func (q UpdateQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interf
 		if dialect != DialectMySQL && dialect != DialectSQLite {
 			return fmt.Errorf("%s UPDATE does not support LIMIT", dialect)
 		}
-		err = BufferPrintf(dialect, buf, args, params, nil, " LIMIT {}", []interface{}{q.RowLimit.Int64})
+		err = BufferPrintf(dialect, buf, args, params, env, nil, " LIMIT {}", []interface{}{q.RowLimit.Int64})
 		if err != nil {
 			return fmt.Errorf("LIMIT: %w", err)
 		}
@@ -150,7 +150,7 @@ func (q UpdateQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interf
 		if dialect != DialectSQLite {
 			return fmt.Errorf("%s UPDATE does not support OFFSET", dialect)
 		}
-		err = BufferPrintf(dialect, buf, args, params, nil, " OFFSET {}", []interface{}{q.RowOffset.Int64})
+		err = BufferPrintf(dialect, buf, args, params, env, nil, " OFFSET {}", []interface{}{q.RowOffset.Int64})
 		if err != nil {
 			return fmt.Errorf("OFFSET: %w", err)
 		}

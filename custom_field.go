@@ -126,7 +126,7 @@ func (f FieldValue) GetAlias() string { return f.alias }
 func (f FieldValue) GetName() string { return "" }
 
 func (f FieldValue) AppendSQLExclude(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int, env map[string]interface{}, excludedTableQualifiers []string) error {
-	return BufferPrintValue(dialect, buf, args, params, excludedTableQualifiers, f.value, "")
+	return BufferPrintValue(dialect, buf, args, params, env, excludedTableQualifiers, f.value, "")
 }
 
 func Value(value interface{}) FieldValue {
@@ -149,12 +149,12 @@ func (fs Fields) AppendSQLExclude(dialect string, buf *bytes.Buffer, args *[]int
 			buf.WriteString(", ")
 		}
 		if field == nil {
-			err = BufferPrintValue(dialect, buf, args, params, excludedTableQualifiers, nil, "")
+			err = BufferPrintValue(dialect, buf, args, params, env, excludedTableQualifiers, nil, "")
 			if err != nil {
 				return fmt.Errorf("field #%d: %w", i+1, err)
 			}
 		} else {
-			err = field.AppendSQLExclude(dialect, buf, args, params, nil, excludedTableQualifiers)
+			err = field.AppendSQLExclude(dialect, buf, args, params, env, excludedTableQualifiers)
 			if err != nil {
 				return fmt.Errorf("field #%d: %w", i+1, err)
 			}
@@ -173,7 +173,7 @@ func (fs AliasFields) AppendSQLExclude(dialect string, buf *bytes.Buffer, args *
 			buf.WriteString(", ")
 		}
 		if f == nil {
-			err = BufferPrintValue(dialect, buf, args, params, excludedTableQualifiers, nil, "")
+			err = BufferPrintValue(dialect, buf, args, params, env, excludedTableQualifiers, nil, "")
 			if err != nil {
 				return fmt.Errorf("field #%d: %w", i+1, err)
 			}

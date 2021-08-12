@@ -43,7 +43,7 @@ func (f FieldInfo) AppendSQLExclude(dialect string, buf *bytes.Buffer, args *[]i
 		if !ok {
 			format = f.Formats["default"]
 		}
-		err := BufferPrintf(dialect, buf, args, params, excludedTableQualifiers, format, f.Values)
+		err := BufferPrintf(dialect, buf, args, params, env, excludedTableQualifiers, format, f.Values)
 		if err != nil {
 			return err
 		}

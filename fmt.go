@@ -13,7 +13,7 @@ import (
 	"time"
 )
 
-func BufferPrintf(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int, excludedTableQualifiers []string, format string, values []interface{}) error {
+func BufferPrintf(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int, env map[string]interface{}, excludedTableQualifiers []string, format string, values []interface{}) error {
 	if i := strings.IndexByte(format, '{'); i < 0 {
 		buf.WriteString(format)
 		return nil
@@ -106,7 +106,7 @@ func BufferPrintf(dialect string, buf *bytes.Buffer, args *[]interface{}, params
 				value = Literal(v.GetName())
 			}
 		}
-		err = BufferPrintValue(dialect, buf, args, params, excludedTableQualifiers, value, paramName)
+		err = BufferPrintValue(dialect, buf, args, params, env, excludedTableQualifiers, value, paramName)
 		if err != nil {
 			return err
 		}
@@ -118,7 +118,7 @@ func BufferPrintf(dialect string, buf *bytes.Buffer, args *[]interface{}, params
 	return nil
 }
 
-func BufferPrintValue(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int, excludedTableQualifiers []string, value interface{}, paramName string) error {
+func BufferPrintValue(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int, env map[string]interface{}, excludedTableQualifiers []string, value interface{}, paramName string) error {
 	if v, ok := value.(sql.NamedArg); ok {
 		if dialect == DialectPostgres || dialect == DialectMySQL {
 			return fmt.Errorf("%s does not support named parameters, please do not use sql.NamedArg", dialect)
@@ -146,10 +146,10 @@ func BufferPrintValue(dialect string, buf *bytes.Buffer, args *[]interface{}, pa
 		return nil
 	}
 	if v, ok := value.(SQLExcludeAppender); ok && v != nil {
-		return v.AppendSQLExclude(dialect, buf, args, params, nil, excludedTableQualifiers)
+		return v.AppendSQLExclude(dialect, buf, args, params, env, excludedTableQualifiers)
 	}
 	if v, ok := value.(SQLAppender); ok && v != nil {
-		return v.AppendSQL(dialect, buf, args, params, nil)
+		return v.AppendSQL(dialect, buf, args, params, env)
 	}
 	if isExplodableSlice(value) {
 		return explodeSlice(dialect, buf, args, params, excludedTableQualifiers, value)
@@ -528,7 +528,7 @@ func (tbl customTable) GetAlias() string { return "" }
 func (tbl customTable) GetName() string { return "" }
 
 func (tbl customTable) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int, env map[string]interface{}) error {
-	return BufferPrintf(dialect, buf, args, params, nil, tbl.format, tbl.values)
+	return BufferPrintf(dialect, buf, args, params, env, nil, tbl.format, tbl.values)
 }
 
 type customQuery struct {
@@ -556,7 +556,7 @@ func (d MySQLDialect) Queryf(format string, values ...interface{}) Query {
 }
 
 func (q customQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int, env map[string]interface{}) error {
-	return BufferPrintf(dialect, buf, args, params, nil, q.format, q.values)
+	return BufferPrintf(dialect, buf, args, params, env, nil, q.format, q.values)
 }
 
 func (q customQuery) SetFetchableFields([]Field) (Query, error) {

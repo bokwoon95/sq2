@@ -89,7 +89,7 @@ func sprintf(dialect string, format string, values []interface{}, excludedTableQ
 		bufpool.Put(buf)
 		argspool.Put(args)
 	}()
-	err := sq.BufferPrintf(dialect, buf, &args, make(map[string][]int), excludedTableQualifiers, format, values)
+	err := sq.BufferPrintf(dialect, buf, &args, make(map[string][]int), nil, excludedTableQualifiers, format, values)
 	if err != nil {
 		return "", err
 	}

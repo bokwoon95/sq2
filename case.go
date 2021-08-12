@@ -30,19 +30,19 @@ func (f PredicateCases) AppendSQLExclude(dialect string, buf *bytes.Buffer, args
 	var err error
 	for i, Case := range f.cases {
 		buf.WriteString(" WHEN ")
-		err = BufferPrintValue(dialect, buf, args, params, excludedTableQualifiers, Case.condition, "")
+		err = BufferPrintValue(dialect, buf, args, params, env, excludedTableQualifiers, Case.condition, "")
 		if err != nil {
 			return fmt.Errorf("CASE #%d WHEN: %w", i+1, err)
 		}
 		buf.WriteString(" THEN ")
-		err = BufferPrintValue(dialect, buf, args, params, excludedTableQualifiers, Case.result, "")
+		err = BufferPrintValue(dialect, buf, args, params, env, excludedTableQualifiers, Case.result, "")
 		if err != nil {
 			return fmt.Errorf("CASE #%d THEN: %w", i+1, err)
 		}
 	}
 	if f.fallback != nil {
 		buf.WriteString(" ELSE ")
-		err = BufferPrintValue(dialect, buf, args, params, excludedTableQualifiers, f.fallback, "")
+		err = BufferPrintValue(dialect, buf, args, params, env, excludedTableQualifiers, f.fallback, "")
 		if err != nil {
 			return fmt.Errorf("CASE ELSE: %w", err)
 		}
@@ -103,25 +103,25 @@ func (f SimpleCases) AppendSQLExclude(dialect string, buf *bytes.Buffer, args *[
 	if len(f.cases) == 0 {
 		return fmt.Errorf("no predicate cases provided")
 	}
-	err := BufferPrintValue(dialect, buf, args, params, excludedTableQualifiers, f.expression, "")
+	err := BufferPrintValue(dialect, buf, args, params, env, excludedTableQualifiers, f.expression, "")
 	if err != nil {
 		return fmt.Errorf("CASE: %w", err)
 	}
 	for i, Case := range f.cases {
 		buf.WriteString(" WHEN ")
-		err = BufferPrintValue(dialect, buf, args, params, excludedTableQualifiers, Case.value, "")
+		err = BufferPrintValue(dialect, buf, args, params, env, excludedTableQualifiers, Case.value, "")
 		if err != nil {
 			return fmt.Errorf("CASE WHEN #%d: %w", i+1, err)
 		}
 		buf.WriteString(" THEN ")
-		err = BufferPrintValue(dialect, buf, args, params, excludedTableQualifiers, Case.result, "")
+		err = BufferPrintValue(dialect, buf, args, params, env, excludedTableQualifiers, Case.result, "")
 		if err != nil {
 			return fmt.Errorf("CASE THEN #%d: %w", i+1, err)
 		}
 	}
 	if f.fallback != nil {
 		buf.WriteString(" ELSE ")
-		err = BufferPrintValue(dialect, buf, args, params, excludedTableQualifiers, f.fallback, "")
+		err = BufferPrintValue(dialect, buf, args, params, env, excludedTableQualifiers, f.fallback, "")
 		if err != nil {
 			return fmt.Errorf("CASE ELSE: %w", err)
 		}

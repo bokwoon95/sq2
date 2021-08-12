@@ -149,14 +149,14 @@ func (q SelectQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interf
 	}
 	// LIMIT
 	if q.RowLimit.Valid {
-		err = BufferPrintf(dialect, buf, args, params, nil, " LIMIT {}", []interface{}{q.RowLimit.Int64})
+		err = BufferPrintf(dialect, buf, args, params, env, nil, " LIMIT {}", []interface{}{q.RowLimit.Int64})
 		if err != nil {
 			return fmt.Errorf("LIMIT: %w", err)
 		}
 	}
 	// OFFSET
 	if q.RowOffset.Valid {
-		err = BufferPrintf(dialect, buf, args, params, nil, " OFFSET {}", []interface{}{q.RowOffset.Int64})
+		err = BufferPrintf(dialect, buf, args, params, env, nil, " OFFSET {}", []interface{}{q.RowOffset.Int64})
 		if err != nil {
 			return fmt.Errorf("OFFSET: %w", err)
 		}
