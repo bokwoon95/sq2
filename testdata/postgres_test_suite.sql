@@ -154,27 +154,3 @@ WITH RECURSIVE dates (date_value) AS (
     UNION ALL
     SELECT DATE(date_value, '+1 month') FROM dates WHERE date_value < '2006-02-01'
 )
-,months (num, name) AS (
-    VALUES ('01', 'January'), ('02', 'February'), ('03', 'March'),
-        ('04', 'April'), ('05', 'May'), ('06', 'June'),
-        ('07', 'July'), ('08', 'August'), ('09', 'September'),
-        ('10', 'October'), ('11', 'November'), ('12', 'December')
-)
-SELECT
-    strftime('%Y', dates.date_value) || ' ' || months.name AS month
-    ,COUNT(CASE category.name WHEN 'Horror' THEN 1 END) AS horror_count
-    ,COUNT(CASE category.name WHEN 'Action' THEN 1 END) AS action_count
-    ,COUNT(CASE category.name WHEN 'Comedy' THEN 1 END) AS comedy_count
-    ,COUNT(CASE category.name WHEN 'Sci-Fi' THEN 1 END) AS scifi_count
-    ,COUNT(*) OVER () AS count
-FROM
-    dates
-    JOIN months ON months.num = strftime('%m', dates.date_value)
-    LEFT JOIN rental ON strftime('%Y %m', rental.rental_date) = strftime('%Y %m', dates.date_value)
-    LEFT JOIN film_category ON film_category.film_id = rental.inventory_id
-    LEFT JOIN category ON category.category_id = film_category.category_id
-GROUP BY
-    dates.date_value
-ORDER BY
-    dates.date_value
-;

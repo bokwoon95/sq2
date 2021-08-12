@@ -164,7 +164,7 @@ func Test_SakilaPostgres(t *testing.T) {
 	if err != nil {
 		t.Fatal(testutil.Callers(), err)
 	}
-	db, err := sql.Open("postgres", "postgres://postgres:postgres@localhost:5452/db?sslmode=disable")
+	db, err := sql.Open("postgres", "postgres://postgres:postgres@localhost:5452/db?sslmode=disable&timezone=UTC")
 	if err != nil {
 		t.Fatal(testutil.Callers(), err)
 	}
@@ -329,7 +329,7 @@ func Test_SakilaPostgres(t *testing.T) {
 
 func Test_SakilaMySQL(t *testing.T) {
 	const dialect = sq.DialectMySQL
-	db, err := sql.Open("mysql", "root:root@tcp(localhost:3326)/db")
+	db, err := sql.Open("mysql", "root:root@tcp(localhost:3326)/db?parseTime=true&time_zone=UTC&multiStatements=true")
 	if err != nil {
 		t.Fatal(testutil.Callers(), err)
 	}

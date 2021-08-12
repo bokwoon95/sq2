@@ -23,8 +23,8 @@ var embeddedFiles embed.FS
 var (
 	dropTablesFlag  = flag.Bool("drop-tables", false, "")
 	sqliteDSNFlag   = flag.String("sqlite-dsn", "./db.sqlite3", "")
-	postgresDSNFlag = flag.String("postgres-dsn", "postgres://postgres:postgres@localhost:5452/db?sslmode=disable", "")
-	mysqlDSNFlag    = flag.String("mysql-dsn", "root:root@tcp(localhost:3326)/db?parseTime=true&multiStatements=true", "")
+	postgresDSNFlag = flag.String("postgres-dsn", "postgres://postgres:postgres@localhost:5452/db?sslmode=disable&timezone=UTC", "")
+	mysqlDSNFlag    = flag.String("mysql-dsn", "root:root@tcp(localhost:3326)/db?parseTime=true&time_zone=UTC&multiStatements=true", "")
 )
 
 func TestMain(m *testing.M) {
