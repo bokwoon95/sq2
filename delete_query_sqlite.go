@@ -20,14 +20,14 @@ func (q SQLiteDeleteQuery) GetFetchableFields() ([]Field, error) {
 
 func (q SQLiteDeleteQuery) GetDialect() string { return q.Dialect }
 
-func (d SQLiteDialect) DeleteWith(ctes ...CTE) SQLiteDeleteQuery {
+func (d SQLiteQueryBuilder) DeleteWith(ctes ...CTE) SQLiteDeleteQuery {
 	var q SQLiteDeleteQuery
 	q.Dialect = DialectSQLite
 	q.CTEs = ctes
 	return q
 }
 
-func (d SQLiteDialect) DeleteFrom(table SchemaTable) SQLiteDeleteQuery {
+func (d SQLiteQueryBuilder) DeleteFrom(table SchemaTable) SQLiteDeleteQuery {
 	var q SQLiteDeleteQuery
 	q.Dialect = DialectSQLite
 	q.FromTables = append(q.FromTables, table)

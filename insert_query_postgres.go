@@ -20,14 +20,14 @@ func (q PostgresInsertQuery) GetFetchableFields() ([]Field, error) {
 
 func (q PostgresInsertQuery) GetDialect() string { return q.Dialect }
 
-func (d PostgresDialect) InsertWith(ctes ...CTE) PostgresInsertQuery {
+func (d PostgresQueryBuilder) InsertWith(ctes ...CTE) PostgresInsertQuery {
 	var q PostgresInsertQuery
 	q.Dialect = DialectPostgres
 	q.CTEs = ctes
 	return q
 }
 
-func (d PostgresDialect) InsertInto(table SchemaTable) PostgresInsertQuery {
+func (d PostgresQueryBuilder) InsertInto(table SchemaTable) PostgresInsertQuery {
 	var q PostgresInsertQuery
 	q.Dialect = DialectPostgres
 	q.IntoTable = table

@@ -20,14 +20,14 @@ func (q MySQLInsertQuery) GetFetchableFields() ([]Field, error) {
 
 func (q MySQLInsertQuery) GetDialect() string { return q.Dialect }
 
-func (d MySQLDialect) InsertInto(table SchemaTable) MySQLInsertQuery {
+func (d MySQLQueryBuilder) InsertInto(table SchemaTable) MySQLInsertQuery {
 	var q MySQLInsertQuery
 	q.Dialect = DialectMySQL
 	q.IntoTable = table
 	return q
 }
 
-func (d MySQLDialect) InsertIgnoreInto(table SchemaTable) MySQLInsertQuery {
+func (d MySQLQueryBuilder) InsertIgnoreInto(table SchemaTable) MySQLInsertQuery {
 	var q MySQLInsertQuery
 	q.Dialect = DialectMySQL
 	q.InsertIgnore = true

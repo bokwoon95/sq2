@@ -20,35 +20,35 @@ func (q PostgresSelectQuery) GetFetchableFields() ([]Field, error) {
 
 func (q PostgresSelectQuery) GetDialect() string { return q.Dialect }
 
-func (d PostgresDialect) From(table Table) PostgresSelectQuery {
+func (d PostgresQueryBuilder) From(table Table) PostgresSelectQuery {
 	var q PostgresSelectQuery
 	q.Dialect = DialectPostgres
 	q.FromTable = table
 	return q
 }
 
-func (d PostgresDialect) SelectWith(ctes ...CTE) PostgresSelectQuery {
+func (d PostgresQueryBuilder) SelectWith(ctes ...CTE) PostgresSelectQuery {
 	var q PostgresSelectQuery
 	q.Dialect = DialectPostgres
 	q.CTEs = ctes
 	return q
 }
 
-func (d PostgresDialect) Select(fields ...Field) PostgresSelectQuery {
+func (d PostgresQueryBuilder) Select(fields ...Field) PostgresSelectQuery {
 	var q PostgresSelectQuery
 	q.Dialect = DialectPostgres
 	q.SelectFields = fields
 	return q
 }
 
-func (d PostgresDialect) SelectOne() PostgresSelectQuery {
+func (d PostgresQueryBuilder) SelectOne() PostgresSelectQuery {
 	var q PostgresSelectQuery
 	q.Dialect = DialectPostgres
 	q.SelectFields = AliasFields{Literal("1")}
 	return q
 }
 
-func (d PostgresDialect) SelectDistinct(fields ...Field) PostgresSelectQuery {
+func (d PostgresQueryBuilder) SelectDistinct(fields ...Field) PostgresSelectQuery {
 	var q PostgresSelectQuery
 	q.Dialect = DialectPostgres
 	q.Distinct = true

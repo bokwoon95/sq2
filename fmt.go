@@ -543,15 +543,15 @@ func Queryf(format string, values ...interface{}) Query {
 	return customQuery{format: format, values: values}
 }
 
-func (d SQLiteDialect) Queryf(format string, values ...interface{}) Query {
+func (d SQLiteQueryBuilder) Queryf(format string, values ...interface{}) Query {
 	return customQuery{dialect: DialectSQLite, format: format, values: values}
 }
 
-func (d PostgresDialect) Queryf(format string, values ...interface{}) Query {
+func (d PostgresQueryBuilder) Queryf(format string, values ...interface{}) Query {
 	return customQuery{dialect: DialectPostgres, format: format, values: values}
 }
 
-func (d MySQLDialect) Queryf(format string, values ...interface{}) Query {
+func (d MySQLQueryBuilder) Queryf(format string, values ...interface{}) Query {
 	return customQuery{dialect: DialectMySQL, format: format, values: values}
 }
 

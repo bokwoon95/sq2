@@ -20,14 +20,14 @@ func (q MySQLDeleteQuery) GetFetchableFields() ([]Field, error) {
 
 func (q MySQLDeleteQuery) GetDialect() string { return q.Dialect }
 
-func (d MySQLDialect) DeleteWith(ctes ...CTE) MySQLDeleteQuery {
+func (d MySQLQueryBuilder) DeleteWith(ctes ...CTE) MySQLDeleteQuery {
 	var q MySQLDeleteQuery
 	q.Dialect = DialectMySQL
 	q.CTEs = ctes
 	return q
 }
 
-func (d MySQLDialect) DeleteFrom(tables ...SchemaTable) MySQLDeleteQuery {
+func (d MySQLQueryBuilder) DeleteFrom(tables ...SchemaTable) MySQLDeleteQuery {
 	var q MySQLDeleteQuery
 	q.Dialect = DialectMySQL
 	q.FromTables = tables

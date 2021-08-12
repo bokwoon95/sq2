@@ -20,35 +20,35 @@ func (q MySQLSelectQuery) GetFetchableFields() ([]Field, error) {
 
 func (q MySQLSelectQuery) GetDialect() string { return q.Dialect }
 
-func (d MySQLDialect) From(table Table) MySQLSelectQuery {
+func (d MySQLQueryBuilder) From(table Table) MySQLSelectQuery {
 	var q MySQLSelectQuery
 	q.Dialect = DialectMySQL
 	q.FromTable = table
 	return q
 }
 
-func (d MySQLDialect) SelectWith(ctes ...CTE) MySQLSelectQuery {
+func (d MySQLQueryBuilder) SelectWith(ctes ...CTE) MySQLSelectQuery {
 	var q MySQLSelectQuery
 	q.Dialect = DialectMySQL
 	q.CTEs = ctes
 	return q
 }
 
-func (d MySQLDialect) Select(fields ...Field) MySQLSelectQuery {
+func (d MySQLQueryBuilder) Select(fields ...Field) MySQLSelectQuery {
 	var q MySQLSelectQuery
 	q.Dialect = DialectMySQL
 	q.SelectFields = fields
 	return q
 }
 
-func (d MySQLDialect) SelectOne() MySQLSelectQuery {
+func (d MySQLQueryBuilder) SelectOne() MySQLSelectQuery {
 	var q MySQLSelectQuery
 	q.Dialect = DialectMySQL
 	q.SelectFields = AliasFields{Literal("1")}
 	return q
 }
 
-func (d MySQLDialect) SelectDistinct(fields ...Field) MySQLSelectQuery {
+func (d MySQLQueryBuilder) SelectDistinct(fields ...Field) MySQLSelectQuery {
 	var q MySQLSelectQuery
 	q.Dialect = DialectMySQL
 	q.Distinct = true

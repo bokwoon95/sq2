@@ -20,14 +20,14 @@ func (q SQLiteInsertQuery) GetFetchableFields() ([]Field, error) {
 
 func (q SQLiteInsertQuery) GetDialect() string { return q.Dialect }
 
-func (d SQLiteDialect) InsertWith(ctes ...CTE) SQLiteInsertQuery {
+func (d SQLiteQueryBuilder) InsertWith(ctes ...CTE) SQLiteInsertQuery {
 	var q SQLiteInsertQuery
 	q.Dialect = DialectSQLite
 	q.CTEs = ctes
 	return q
 }
 
-func (d SQLiteDialect) InsertInto(table SchemaTable) SQLiteInsertQuery {
+func (d SQLiteQueryBuilder) InsertInto(table SchemaTable) SQLiteInsertQuery {
 	var q SQLiteInsertQuery
 	q.Dialect = DialectSQLite
 	q.IntoTable = table

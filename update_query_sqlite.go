@@ -20,14 +20,14 @@ func (q SQLiteUpdateQuery) GetFetchableFields() ([]Field, error) {
 
 func (q SQLiteUpdateQuery) GetDialect() string { return q.Dialect }
 
-func (d SQLiteDialect) UpdateWith(ctes ...CTE) SQLiteUpdateQuery {
+func (d SQLiteQueryBuilder) UpdateWith(ctes ...CTE) SQLiteUpdateQuery {
 	var q SQLiteUpdateQuery
 	q.Dialect = DialectSQLite
 	q.CTEs = ctes
 	return q
 }
 
-func (d SQLiteDialect) Update(table SchemaTable) SQLiteUpdateQuery {
+func (d SQLiteQueryBuilder) Update(table SchemaTable) SQLiteUpdateQuery {
 	var q SQLiteUpdateQuery
 	q.Dialect = DialectSQLite
 	q.UpdateTable = table

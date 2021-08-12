@@ -20,14 +20,14 @@ func (q MySQLUpdateQuery) GetFetchableFields() ([]Field, error) {
 
 func (q MySQLUpdateQuery) GetDialect() string { return q.Dialect }
 
-func (d MySQLDialect) UpdateWith(ctes ...CTE) MySQLUpdateQuery {
+func (d MySQLQueryBuilder) UpdateWith(ctes ...CTE) MySQLUpdateQuery {
 	var q MySQLUpdateQuery
 	q.Dialect = DialectMySQL
 	q.CTEs = ctes
 	return q
 }
 
-func (d MySQLDialect) Update(table SchemaTable) MySQLUpdateQuery {
+func (d MySQLQueryBuilder) Update(table SchemaTable) MySQLUpdateQuery {
 	var q MySQLUpdateQuery
 	q.Dialect = DialectMySQL
 	q.UpdateTable = table

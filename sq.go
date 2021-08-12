@@ -28,20 +28,22 @@ const (
 )
 
 type (
-	SQLiteDialect    struct{}
-	PostgresDialect  struct{}
-	MySQLDialect     struct{}
-	SQLServerDialect struct{}
-	OracleDialect    struct{}
+	SQLiteQueryBuilder    struct{ env map[string]interface{} }
+	PostgresQueryBuilder  struct{ env map[string]interface{} }
+	MySQLQueryBuilder     struct{ env map[string]interface{} }
+	SQLServerQueryBuilder struct{ env map[string]interface{} }
+	OracleDialect         struct{ env map[string]interface{} }
 )
 
 var (
-	SQLite    = SQLiteDialect{}
-	Postgres  = PostgresDialect{}
-	MySQL     = MySQLDialect{}
-	SQLServer = SQLServerDialect{}
+	SQLite    = SQLiteQueryBuilder{}
+	Postgres  = PostgresQueryBuilder{}
+	MySQL     = MySQLQueryBuilder{}
+	SQLServer = SQLServerQueryBuilder{}
 	Oracle    = OracleDialect{}
 )
+
+// func SQLite(env map[string]interface{}) SQLiteQueryBuilder { return SQLiteQueryBuilder{env: env} }
 
 type SQLAppender interface {
 	AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int, env map[string]interface{}) error

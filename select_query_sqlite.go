@@ -20,35 +20,35 @@ func (q SQLiteSelectQuery) GetFetchableFields() ([]Field, error) {
 
 func (q SQLiteSelectQuery) GetDialect() string { return q.Dialect }
 
-func (d SQLiteDialect) From(table Table) SQLiteSelectQuery {
+func (d SQLiteQueryBuilder) From(table Table) SQLiteSelectQuery {
 	var q SQLiteSelectQuery
 	q.Dialect = DialectSQLite
 	q.FromTable = table
 	return q
 }
 
-func (d SQLiteDialect) SelectWith(ctes ...CTE) SQLiteSelectQuery {
+func (d SQLiteQueryBuilder) SelectWith(ctes ...CTE) SQLiteSelectQuery {
 	var q SQLiteSelectQuery
 	q.Dialect = DialectSQLite
 	q.CTEs = ctes
 	return q
 }
 
-func (d SQLiteDialect) Select(fields ...Field) SQLiteSelectQuery {
+func (d SQLiteQueryBuilder) Select(fields ...Field) SQLiteSelectQuery {
 	var q SQLiteSelectQuery
 	q.Dialect = DialectSQLite
 	q.SelectFields = fields
 	return q
 }
 
-func (d SQLiteDialect) SelectOne() SQLiteSelectQuery {
+func (d SQLiteQueryBuilder) SelectOne() SQLiteSelectQuery {
 	var q SQLiteSelectQuery
 	q.Dialect = DialectSQLite
 	q.SelectFields = AliasFields{Literal("1")}
 	return q
 }
 
-func (d SQLiteDialect) SelectDistinct(fields ...Field) SQLiteSelectQuery {
+func (d SQLiteQueryBuilder) SelectDistinct(fields ...Field) SQLiteSelectQuery {
 	var q SQLiteSelectQuery
 	q.Dialect = DialectSQLite
 	q.Distinct = true

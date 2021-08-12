@@ -20,14 +20,14 @@ func (q PostgresUpdateQuery) GetFetchableFields() ([]Field, error) {
 
 func (q PostgresUpdateQuery) GetDialect() string { return q.Dialect }
 
-func (d PostgresDialect) UpdateWith(ctes ...CTE) PostgresUpdateQuery {
+func (d PostgresQueryBuilder) UpdateWith(ctes ...CTE) PostgresUpdateQuery {
 	var q PostgresUpdateQuery
 	q.Dialect = DialectPostgres
 	q.CTEs = ctes
 	return q
 }
 
-func (d PostgresDialect) Update(table SchemaTable) PostgresUpdateQuery {
+func (d PostgresQueryBuilder) Update(table SchemaTable) PostgresUpdateQuery {
 	var q PostgresUpdateQuery
 	q.Dialect = DialectPostgres
 	q.UpdateTable = table
