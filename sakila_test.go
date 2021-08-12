@@ -457,6 +457,12 @@ type SQLTest struct {
 	// comedy_count and scifi_count.
 	Query10  Query
 	Answer10 []Record10
+
+	// TODO: test application-side aggregation queries
+
+	// TODO: test database-side JSON aggregation queries
+
+	// TODO: test full text search queries
 }
 
 func NewSQLTest() SQLTest {
