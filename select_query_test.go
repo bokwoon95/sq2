@@ -15,7 +15,7 @@ func Test_SelectQuery(t *testing.T) {
 		q.Dialect = DialectMySQL
 		q.DistinctOnFields = Fields{ACTOR.ACTOR_ID, ACTOR.FIRST_NAME}
 		q.SelectFields = AliasFields{ACTOR.ACTOR_ID}
-		_, _, _, err := ToSQL("", q)
+		_, _, _, err := ToSQL("", q, nil)
 		if err == nil {
 			t.Error(testutil.Callers(), "expected error but got nil")
 		}
@@ -29,7 +29,7 @@ func Test_SelectQuery(t *testing.T) {
 		q.Distinct = true
 		q.DistinctOnFields = Fields{ACTOR.ACTOR_ID, ACTOR.FIRST_NAME}
 		q.SelectFields = AliasFields{ACTOR.ACTOR_ID}
-		_, _, _, err := ToSQL("", q)
+		_, _, _, err := ToSQL("", q, nil)
 		if err == nil {
 			t.Error(testutil.Callers(), "expected error but got nil")
 		}
@@ -42,7 +42,7 @@ func Test_SelectQuery(t *testing.T) {
 		q.Dialect = DialectPostgres
 		q.DistinctOnFields = Fields{FaultySQL{}}
 		q.SelectFields = AliasFields{ACTOR.ACTOR_ID}
-		_, _, _, err := ToSQL("", q)
+		_, _, _, err := ToSQL("", q, nil)
 		if !errors.Is(err, ErrFaultySQL) {
 			t.Errorf(testutil.Callers()+" expected ErrFaultySQL but got %#v", err)
 		}
@@ -52,7 +52,7 @@ func Test_SelectQuery(t *testing.T) {
 		t.Parallel()
 		var q SelectQuery
 		q.SelectFields = AliasFields{}
-		_, _, _, err := ToSQL("", q)
+		_, _, _, err := ToSQL("", q, nil)
 		if err == nil {
 			t.Error(testutil.Callers(), "expected error but got nil")
 		}
@@ -62,7 +62,7 @@ func Test_SelectQuery(t *testing.T) {
 		t.Parallel()
 		var q SelectQuery
 		q.SelectFields = AliasFields{FaultySQL{}}
-		_, _, _, err := ToSQL("", q)
+		_, _, _, err := ToSQL("", q, nil)
 		if !errors.Is(err, ErrFaultySQL) {
 			t.Errorf(testutil.Callers()+" expected ErrFaultySQL but got %#v", err)
 		}
@@ -74,7 +74,7 @@ func Test_SelectQuery(t *testing.T) {
 		var q SelectQuery
 		q.SelectFields = AliasFields{ACTOR.ACTOR_ID}
 		q.FromTable = FaultySQL{}
-		_, _, _, err := ToSQL("", q)
+		_, _, _, err := ToSQL("", q, nil)
 		if !errors.Is(err, ErrFaultySQL) {
 			t.Errorf(testutil.Callers()+" expected ErrFaultySQL but got %#v", err)
 		}
@@ -86,7 +86,7 @@ func Test_SelectQuery(t *testing.T) {
 		var q SelectQuery
 		q.SelectFields = AliasFields{ACTOR.ACTOR_ID}
 		q.JoinTables = append(q.JoinTables, Join(ACTOR, Eq(1, 1)))
-		_, _, _, err := ToSQL("", q)
+		_, _, _, err := ToSQL("", q, nil)
 		if err == nil {
 			t.Error(testutil.Callers(), "expected error but got nil")
 		}
@@ -99,7 +99,7 @@ func Test_SelectQuery(t *testing.T) {
 		q.SelectFields = AliasFields{ACTOR.ACTOR_ID}
 		q.FromTable = ACTOR
 		q.JoinTables = append(q.JoinTables, Join(FaultySQL{}, Eq(1, 1)))
-		_, _, _, err := ToSQL("", q)
+		_, _, _, err := ToSQL("", q, nil)
 		if !errors.Is(err, ErrFaultySQL) {
 			t.Errorf(testutil.Callers()+" expected ErrFaultySQL but got %#v", err)
 		}
@@ -112,7 +112,7 @@ func Test_SelectQuery(t *testing.T) {
 		q.SelectFields = AliasFields{ACTOR.ACTOR_ID}
 		q.FromTable = ACTOR
 		q.WherePredicate = And(FaultySQL{})
-		_, _, _, err := ToSQL("", q)
+		_, _, _, err := ToSQL("", q, nil)
 		if !errors.Is(err, ErrFaultySQL) {
 			t.Errorf(testutil.Callers()+" expected ErrFaultySQL but got %#v", err)
 		}
@@ -125,7 +125,7 @@ func Test_SelectQuery(t *testing.T) {
 		q.SelectFields = AliasFields{ACTOR.ACTOR_ID}
 		q.FromTable = ACTOR
 		q.GroupByFields = Fields{FaultySQL{}}
-		_, _, _, err := ToSQL("", q)
+		_, _, _, err := ToSQL("", q, nil)
 		if !errors.Is(err, ErrFaultySQL) {
 			t.Errorf(testutil.Callers()+" expected ErrFaultySQL but got %#v", err)
 		}
@@ -138,7 +138,7 @@ func Test_SelectQuery(t *testing.T) {
 		q.SelectFields = AliasFields{ACTOR.ACTOR_ID}
 		q.FromTable = ACTOR
 		q.HavingPredicate = And(FaultySQL{})
-		_, _, _, err := ToSQL("", q)
+		_, _, _, err := ToSQL("", q, nil)
 		if !errors.Is(err, ErrFaultySQL) {
 			t.Errorf(testutil.Callers()+" expected ErrFaultySQL but got %#v", err)
 		}
@@ -151,7 +151,7 @@ func Test_SelectQuery(t *testing.T) {
 		q.SelectFields = AliasFields{ACTOR.ACTOR_ID}
 		q.FromTable = ACTOR
 		q.OrderByFields = Fields{FaultySQL{}}
-		_, _, _, err := ToSQL("", q)
+		_, _, _, err := ToSQL("", q, nil)
 		if !errors.Is(err, ErrFaultySQL) {
 			t.Errorf(testutil.Callers()+" expected ErrFaultySQL but got %#v", err)
 		}

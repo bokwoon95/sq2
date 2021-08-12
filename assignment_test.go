@@ -30,7 +30,7 @@ func Test_Assignment(t *testing.T) {
 	}
 
 	assert := func(t *testing.T, tt TT) {
-		gotQuery, gotArgs, _, err := ToSQLExclude(tt.dialect, tt.item, tt.excludedTableQualifiers)
+		gotQuery, gotArgs, _, err := ToSQLExclude(tt.dialect, tt.item, tt.excludedTableQualifiers, nil)
 		if err != nil {
 			t.Fatal(testutil.Callers(), err)
 		}
@@ -120,7 +120,7 @@ func Test_Assignments(t *testing.T) {
 	}
 
 	assert := func(t *testing.T, tt TT) {
-		gotQuery, gotArgs, _, err := ToSQLExclude(tt.dialect, tt.item, tt.excludedTableQualifiers)
+		gotQuery, gotArgs, _, err := ToSQLExclude(tt.dialect, tt.item, tt.excludedTableQualifiers, nil)
 		if err != nil {
 			t.Fatal(testutil.Callers(), err)
 		}

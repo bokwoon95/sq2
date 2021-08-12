@@ -86,7 +86,7 @@ type Query interface {
 	GetDialect() string
 }
 
-func ToSQL(dialect string, q SQLAppender) (query string, args []interface{}, params map[string][]int, err error) {
+func ToSQL(dialect string, q SQLAppender, env map[string]interface{}) (query string, args []interface{}, params map[string][]int, err error) {
 	buf := bufpool.Get().(*bytes.Buffer)
 	defer func() {
 		buf.Reset()
@@ -98,18 +98,18 @@ func ToSQL(dialect string, q SQLAppender) (query string, args []interface{}, par
 			dialect = q.GetDialect()
 		}
 	}
-	err = q.AppendSQL(dialect, buf, &args, params, nil)
+	err = q.AppendSQL(dialect, buf, &args, params, env)
 	return buf.String(), args, params, err
 }
 
-func ToSQLExclude(dialect string, f SQLExcludeAppender, excludedTableQualifiers []string) (query string, args []interface{}, params map[string][]int, err error) {
+func ToSQLExclude(dialect string, f SQLExcludeAppender, excludedTableQualifiers []string, env map[string]interface{}) (query string, args []interface{}, params map[string][]int, err error) {
 	buf := bufpool.Get().(*bytes.Buffer)
 	defer func() {
 		buf.Reset()
 		bufpool.Put(buf)
 	}()
 	params = make(map[string][]int)
-	err = f.AppendSQLExclude(dialect, buf, &args, params, nil, excludedTableQualifiers)
+	err = f.AppendSQLExclude(dialect, buf, &args, params, env, excludedTableQualifiers)
 	return buf.String(), args, params, err
 }
 

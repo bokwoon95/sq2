@@ -16,7 +16,7 @@ func Test_AddColumnCommand(t *testing.T) {
 	}
 
 	assert := func(t *testing.T, tt TT) {
-		gotQuery, gotArgs, _, err := sq.ToSQL(tt.dialect, tt.item)
+		gotQuery, gotArgs, _, err := sq.ToSQL(tt.dialect, tt.item, nil)
 		if err != nil {
 			t.Fatal(testutil.Callers(), err)
 		}
@@ -73,7 +73,7 @@ func Test_AddColumnCommand(t *testing.T) {
 			},
 		}
 		tt.dialect = sq.DialectPostgres
-		_, _, _, err := sq.ToSQL(tt.dialect, tt.item)
+		_, _, _, err := sq.ToSQL(tt.dialect, tt.item, nil)
 		if err == nil {
 			t.Fatal(testutil.Callers(), "expected error but got nil")
 		}
@@ -90,7 +90,7 @@ func Test_AddColumnCommand(t *testing.T) {
 			},
 		}
 		tt.dialect = sq.DialectPostgres
-		_, _, _, err := sq.ToSQL(tt.dialect, tt.item)
+		_, _, _, err := sq.ToSQL(tt.dialect, tt.item, nil)
 		if err == nil {
 			t.Fatal(testutil.Callers(), "expected error but got nil")
 		}
@@ -107,7 +107,7 @@ func Test_AddColumnCommand(t *testing.T) {
 			},
 		}
 		tt.dialect = sq.DialectSQLite
-		_, _, _, err := sq.ToSQL(tt.dialect, tt.item)
+		_, _, _, err := sq.ToSQL(tt.dialect, tt.item, nil)
 		if err == nil {
 			t.Fatal(testutil.Callers(), "expected error but got nil")
 		}
@@ -124,7 +124,7 @@ func Test_AddColumnCommand(t *testing.T) {
 			},
 		}
 		tt.dialect = sq.DialectPostgres
-		_, _, _, err := sq.ToSQL(tt.dialect, tt.item)
+		_, _, _, err := sq.ToSQL(tt.dialect, tt.item, nil)
 		if err == nil {
 			t.Fatal(testutil.Callers(), "expected error but got nil")
 		}
@@ -141,7 +141,7 @@ func Test_AddColumnCommand(t *testing.T) {
 			},
 		}
 		tt.dialect = sq.DialectSQLite
-		_, _, _, err := sq.ToSQL(tt.dialect, tt.item)
+		_, _, _, err := sq.ToSQL(tt.dialect, tt.item, nil)
 		if err == nil {
 			t.Fatal(testutil.Callers(), "expected error but got nil")
 		}
@@ -158,7 +158,7 @@ func Test_AddColumnCommand(t *testing.T) {
 			},
 		}
 		tt.dialect = sq.DialectSQLite
-		_, _, _, err := sq.ToSQL(tt.dialect, tt.item)
+		_, _, _, err := sq.ToSQL(tt.dialect, tt.item, nil)
 		if err == nil {
 			t.Fatal(testutil.Callers(), "expected error but got nil")
 		}
@@ -175,7 +175,7 @@ func Test_AddColumnCommand(t *testing.T) {
 			},
 		}
 		tt.dialect = sq.DialectSQLite
-		_, _, _, err := sq.ToSQL(tt.dialect, tt.item)
+		_, _, _, err := sq.ToSQL(tt.dialect, tt.item, nil)
 		if err == nil {
 			t.Fatal(testutil.Callers(), "expected error but got nil")
 		}
@@ -193,7 +193,7 @@ func Test_AddColumnCommand(t *testing.T) {
 			},
 		}
 		tt.dialect = sq.DialectSQLite
-		_, _, _, err := sq.ToSQL(tt.dialect, tt.item)
+		_, _, _, err := sq.ToSQL(tt.dialect, tt.item, nil)
 		if err == nil {
 			t.Fatal(testutil.Callers(), "expected error but got nil")
 		}
@@ -212,7 +212,7 @@ func Test_AddColumnCommand(t *testing.T) {
 			ReferencesColumn: "country_id",
 		}
 		tt.dialect = sq.DialectSQLite
-		_, _, _, err := sq.ToSQL(tt.dialect, tt.item)
+		_, _, _, err := sq.ToSQL(tt.dialect, tt.item, nil)
 		if err == nil {
 			t.Fatal(testutil.Callers(), "expected error but got nil")
 		}
@@ -230,7 +230,7 @@ func Test_AddColumnCommand(t *testing.T) {
 			},
 		}
 		tt.dialect = sq.DialectSQLite
-		_, _, _, err := sq.ToSQL(tt.dialect, tt.item)
+		_, _, _, err := sq.ToSQL(tt.dialect, tt.item, nil)
 		if err == nil {
 			t.Fatal(testutil.Callers(), "expected error but got nil")
 		}
@@ -247,7 +247,7 @@ func Test_AddColumnCommand(t *testing.T) {
 			},
 		}
 		tt.dialect = sq.DialectSQLite
-		_, _, _, err := sq.ToSQL(tt.dialect, tt.item)
+		_, _, _, err := sq.ToSQL(tt.dialect, tt.item, nil)
 		if err == nil {
 			t.Fatal(testutil.Callers(), "expected error but got nil")
 		}
@@ -375,7 +375,7 @@ func Test_AlterColumnCommand(t *testing.T) {
 	}
 
 	assert := func(t *testing.T, tt TT) {
-		gotQuery, gotArgs, _, err := sq.ToSQL(tt.dialect, tt.item)
+		gotQuery, gotArgs, _, err := sq.ToSQL(tt.dialect, tt.item, nil)
 		if err != nil {
 			t.Fatal(testutil.Callers(), err)
 		}
@@ -392,7 +392,7 @@ func Test_AlterColumnCommand(t *testing.T) {
 		var tt TT
 		tt.dialect = sq.DialectSQLite
 		tt.item = &AlterColumnCommand{}
-		_, _, _, err := sq.ToSQL(tt.dialect, tt.item)
+		_, _, _, err := sq.ToSQL(tt.dialect, tt.item, nil)
 		if err == nil {
 			t.Fatal(testutil.Callers(), "expected error but got nil")
 		}
@@ -439,7 +439,7 @@ func Test_AlterColumnCommand(t *testing.T) {
 				Identity:   BY_DEFAULT_AS_IDENTITY,
 			},
 		}
-		_, _, _, err := sq.ToSQL(tt.dialect, tt.item)
+		_, _, _, err := sq.ToSQL(tt.dialect, tt.item, nil)
 		if err == nil {
 			t.Fatal(testutil.Callers(), "expected error but got nil")
 		}
@@ -499,7 +499,7 @@ func Test_AlterColumnCommand(t *testing.T) {
 				ColumnType: "TEXT",
 			},
 		}
-		_, _, _, err := sq.ToSQL(tt.dialect, tt.item)
+		_, _, _, err := sq.ToSQL(tt.dialect, tt.item, nil)
 		if err == nil {
 			t.Fatal(testutil.Callers(), "expected error but got nil")
 		}
@@ -515,7 +515,7 @@ func Test_DropColumnCommand(t *testing.T) {
 	}
 
 	assert := func(t *testing.T, tt TT) {
-		gotQuery, gotArgs, _, err := sq.ToSQL(tt.dialect, tt.item)
+		gotQuery, gotArgs, _, err := sq.ToSQL(tt.dialect, tt.item, nil)
 		if err != nil {
 			t.Fatal(testutil.Callers(), err)
 		}
@@ -557,7 +557,7 @@ func Test_DropColumnCommand(t *testing.T) {
 			DropIfExists: true,
 			ColumnName:   "actor_id",
 		}
-		_, _, _, err := sq.ToSQL(tt.dialect, tt.item)
+		_, _, _, err := sq.ToSQL(tt.dialect, tt.item, nil)
 		if err == nil {
 			t.Fatal(testutil.Callers(), "expected error but got nil")
 		}
@@ -571,7 +571,7 @@ func Test_DropColumnCommand(t *testing.T) {
 			ColumnName:  "actor_id",
 			DropCascade: true,
 		}
-		_, _, _, err := sq.ToSQL(tt.dialect, tt.item)
+		_, _, _, err := sq.ToSQL(tt.dialect, tt.item, nil)
 		if err == nil {
 			t.Fatal(testutil.Callers(), "expected error but got nil")
 		}

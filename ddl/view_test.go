@@ -96,7 +96,7 @@ func Test_CreateViewCommand(t *testing.T) {
 	}
 
 	assert := func(t *testing.T, tt TT) {
-		gotQuery, gotArgs, _, err := sq.ToSQL(tt.dialect, tt.item)
+		gotQuery, gotArgs, _, err := sq.ToSQL(tt.dialect, tt.item, nil)
 		if err != nil {
 			t.Fatal(testutil.Callers(), err)
 		}

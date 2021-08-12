@@ -16,7 +16,7 @@ func Test_CreateIndexCommnd(t *testing.T) {
 	}
 
 	assert := func(t *testing.T, tt TT) {
-		gotQuery, gotArgs, _, err := sq.ToSQL(tt.dialect, tt.item)
+		gotQuery, gotArgs, _, err := sq.ToSQL(tt.dialect, tt.item, nil)
 		if err != nil {
 			t.Fatal(testutil.Callers(), err)
 		}
@@ -100,7 +100,7 @@ func Test_CreateIndexCommnd(t *testing.T) {
 				Columns:   []string{"my_column"},
 			},
 		}
-		_, _, _, err := sq.ToSQL(tt.dialect, tt.item)
+		_, _, _, err := sq.ToSQL(tt.dialect, tt.item, nil)
 		if err == nil {
 			t.Fatal(testutil.Callers(), "expected error but got nil")
 		}
@@ -118,7 +118,7 @@ func Test_CreateIndexCommnd(t *testing.T) {
 				Columns:   []string{"my_column"},
 			},
 		}
-		_, _, _, err := sq.ToSQL(tt.dialect, tt.item)
+		_, _, _, err := sq.ToSQL(tt.dialect, tt.item, nil)
 		if err == nil {
 			t.Fatal(testutil.Callers(), "expected error but got nil")
 		}
@@ -136,7 +136,7 @@ func Test_CreateIndexCommnd(t *testing.T) {
 				IncludeColumns: []string{"other_column"},
 			},
 		}
-		_, _, _, err := sq.ToSQL(tt.dialect, tt.item)
+		_, _, _, err := sq.ToSQL(tt.dialect, tt.item, nil)
 		if err == nil {
 			t.Fatal(testutil.Callers(), "expected error but got nil")
 		}
@@ -154,7 +154,7 @@ func Test_CreateIndexCommnd(t *testing.T) {
 				Predicate: "other_column IS NULL",
 			},
 		}
-		_, _, _, err := sq.ToSQL(tt.dialect, tt.item)
+		_, _, _, err := sq.ToSQL(tt.dialect, tt.item, nil)
 		if err == nil {
 			t.Fatal(testutil.Callers(), "expected error but got nil")
 		}
@@ -170,7 +170,7 @@ func Test_DropIndexCommnd(t *testing.T) {
 	}
 
 	assert := func(t *testing.T, tt TT) {
-		gotQuery, gotArgs, _, err := sq.ToSQL(tt.dialect, tt.item)
+		gotQuery, gotArgs, _, err := sq.ToSQL(tt.dialect, tt.item, nil)
 		if err != nil {
 			t.Fatal(testutil.Callers(), err)
 		}
@@ -221,7 +221,7 @@ func Test_DropIndexCommnd(t *testing.T) {
 			TableName:        "some table name",
 			IndexName:        "some index name",
 		}
-		_, _, _, err := sq.ToSQL(tt.dialect, tt.item)
+		_, _, _, err := sq.ToSQL(tt.dialect, tt.item, nil)
 		if err == nil {
 			t.Fatal(testutil.Callers(), "expected error but got nil")
 		}
@@ -237,7 +237,7 @@ func Test_DropIndexCommnd(t *testing.T) {
 			TableName:    "some table name",
 			IndexName:    "some index name",
 		}
-		_, _, _, err := sq.ToSQL(tt.dialect, tt.item)
+		_, _, _, err := sq.ToSQL(tt.dialect, tt.item, nil)
 		if err == nil {
 			t.Fatal(testutil.Callers(), "expected error but got nil")
 		}
@@ -253,7 +253,7 @@ func Test_DropIndexCommnd(t *testing.T) {
 			IndexName:   "some index name",
 			DropCascade: true,
 		}
-		_, _, _, err := sq.ToSQL(tt.dialect, tt.item)
+		_, _, _, err := sq.ToSQL(tt.dialect, tt.item, nil)
 		if err == nil {
 			t.Fatal(testutil.Callers(), "expected error but got nil")
 		}

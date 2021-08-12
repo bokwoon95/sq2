@@ -21,7 +21,7 @@ func Test_Trigger(t *testing.T) {
 		if err != nil {
 			t.Fatal(testutil.Callers(), err)
 		}
-		sql, _, _, err := sq.ToSQL(tt.dialect, CreateTriggerCommand{Trigger: tt.item})
+		sql, _, _, err := sq.ToSQL(tt.dialect, CreateTriggerCommand{Trigger: tt.item}, nil)
 		if err != nil {
 			t.Fatal(testutil.Callers(), err)
 		}
@@ -99,7 +99,7 @@ func Test_DropTriggerCommand(t *testing.T) {
 	}
 
 	assert := func(t *testing.T, tt TT) {
-		gotQuery, gotArgs, _, err := sq.ToSQL(tt.dialect, tt.item)
+		gotQuery, gotArgs, _, err := sq.ToSQL(tt.dialect, tt.item, nil)
 		if err != nil {
 			t.Fatal(testutil.Callers(), err)
 		}

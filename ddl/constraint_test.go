@@ -16,7 +16,7 @@ func Test_AddConstraintCommnd(t *testing.T) {
 	}
 
 	assert := func(t *testing.T, tt TT) {
-		gotQuery, gotArgs, _, err := sq.ToSQL(tt.dialect, tt.item)
+		gotQuery, gotArgs, _, err := sq.ToSQL(tt.dialect, tt.item, nil)
 		if err != nil {
 			t.Fatal(testutil.Callers(), err)
 		}
@@ -186,7 +186,7 @@ func Test_AddConstraintCommnd(t *testing.T) {
 		var tt TT
 		tt.dialect = sq.DialectSQLite
 		tt.item = AddConstraintCommand{}
-		_, _, _, err := sq.ToSQL(tt.dialect, tt.item)
+		_, _, _, err := sq.ToSQL(tt.dialect, tt.item, nil)
 		if err == nil {
 			t.Fatal(testutil.Callers(), "expected error but got nil")
 		}
@@ -205,7 +205,7 @@ func Test_AddConstraintCommnd(t *testing.T) {
 			},
 			IndexName: "film_actor_actor_id_film_id_idx",
 		}
-		_, _, _, err := sq.ToSQL(tt.dialect, tt.item)
+		_, _, _, err := sq.ToSQL(tt.dialect, tt.item, nil)
 		if err == nil {
 			t.Fatal(testutil.Callers(), "expected error but got nil")
 		}
@@ -223,7 +223,7 @@ func Test_AddConstraintCommnd(t *testing.T) {
 			},
 			IndexName: "film_actor_actor_id_film_id_idx",
 		}
-		_, _, _, err := sq.ToSQL(tt.dialect, tt.item)
+		_, _, _, err := sq.ToSQL(tt.dialect, tt.item, nil)
 		if err == nil {
 			t.Fatal(testutil.Callers(), "expected error but got nil")
 		}
@@ -245,7 +245,7 @@ func Test_AddConstraintCommnd(t *testing.T) {
 				IsDeferrable:       true,
 			},
 		}
-		_, _, _, err := sq.ToSQL(tt.dialect, tt.item)
+		_, _, _, err := sq.ToSQL(tt.dialect, tt.item, nil)
 		if err == nil {
 			t.Fatal(testutil.Callers(), "expected error but got nil")
 		}
@@ -266,7 +266,7 @@ func Test_AddConstraintCommnd(t *testing.T) {
 				IsDeferrable:       true,
 			},
 		}
-		_, _, _, err := sq.ToSQL(tt.dialect, tt.item)
+		_, _, _, err := sq.ToSQL(tt.dialect, tt.item, nil)
 		if err == nil {
 			t.Fatal(testutil.Callers(), "expected error but got nil")
 		}
@@ -286,7 +286,7 @@ func Test_AddConstraintCommnd(t *testing.T) {
 				ExclusionOperators: []string{"="},
 			},
 		}
-		_, _, _, err := sq.ToSQL(tt.dialect, tt.item)
+		_, _, _, err := sq.ToSQL(tt.dialect, tt.item, nil)
 		if err == nil {
 			t.Fatal(testutil.Callers(), "expected error but got nil")
 		}
@@ -305,7 +305,7 @@ func Test_AddConstraintCommnd(t *testing.T) {
 				ExclusionOperators: []string{""},
 			},
 		}
-		_, _, _, err := sq.ToSQL(tt.dialect, tt.item)
+		_, _, _, err := sq.ToSQL(tt.dialect, tt.item, nil)
 		if err == nil {
 			t.Fatal(testutil.Callers(), "expected error but got nil")
 		}
@@ -323,7 +323,7 @@ func Test_AddConstraintCommnd(t *testing.T) {
 			},
 			IsNotValid: true,
 		}
-		_, _, _, err := sq.ToSQL(tt.dialect, tt.item)
+		_, _, _, err := sq.ToSQL(tt.dialect, tt.item, nil)
 		if err == nil {
 			t.Fatal(testutil.Callers(), "expected error but got nil")
 		}
@@ -341,7 +341,7 @@ func Test_AddConstraintCommnd(t *testing.T) {
 			},
 			IsNotValid: true,
 		}
-		_, _, _, err := sq.ToSQL(tt.dialect, tt.item)
+		_, _, _, err := sq.ToSQL(tt.dialect, tt.item, nil)
 		if err == nil {
 			t.Fatal(testutil.Callers(), "expected error but got nil")
 		}
@@ -359,7 +359,7 @@ func Test_AddConstraintCommnd(t *testing.T) {
 				IsDeferrable:   true,
 			},
 		}
-		_, _, _, err := sq.ToSQL(tt.dialect, tt.item)
+		_, _, _, err := sq.ToSQL(tt.dialect, tt.item, nil)
 		if err == nil {
 			t.Fatal(testutil.Callers(), "expected error but got nil")
 		}
@@ -377,7 +377,7 @@ func Test_AddConstraintCommnd(t *testing.T) {
 				IsDeferrable:   true,
 			},
 		}
-		_, _, _, err := sq.ToSQL(tt.dialect, tt.item)
+		_, _, _, err := sq.ToSQL(tt.dialect, tt.item, nil)
 		if err == nil {
 			t.Fatal(testutil.Callers(), "expected error but got nil")
 		}
@@ -393,7 +393,7 @@ func Test_AlterConstraintCommnd(t *testing.T) {
 	}
 
 	assert := func(t *testing.T, tt TT) {
-		gotQuery, gotArgs, _, err := sq.ToSQL(tt.dialect, tt.item)
+		gotQuery, gotArgs, _, err := sq.ToSQL(tt.dialect, tt.item, nil)
 		if err != nil {
 			t.Fatal(testutil.Callers(), err)
 		}
@@ -475,7 +475,7 @@ func Test_AlterConstraintCommnd(t *testing.T) {
 			ConstraintName:  "city_country_id_fkey",
 			AlterDeferrable: true,
 		}
-		_, _, _, err := sq.ToSQL(tt.dialect, tt.item)
+		_, _, _, err := sq.ToSQL(tt.dialect, tt.item, nil)
 		if err == nil {
 			t.Fatal(testutil.Callers(), "expected error but got nil")
 		}
@@ -489,7 +489,7 @@ func Test_AlterConstraintCommnd(t *testing.T) {
 			ConstraintName:  "city_country_id_fkey",
 			AlterDeferrable: true,
 		}
-		_, _, _, err := sq.ToSQL(tt.dialect, tt.item)
+		_, _, _, err := sq.ToSQL(tt.dialect, tt.item, nil)
 		if err == nil {
 			t.Fatal(testutil.Callers(), "expected error but got nil")
 		}
@@ -505,7 +505,7 @@ func Test_DropConstraintCommnd(t *testing.T) {
 	}
 
 	assert := func(t *testing.T, tt TT) {
-		gotQuery, gotArgs, _, err := sq.ToSQL(tt.dialect, tt.item)
+		gotQuery, gotArgs, _, err := sq.ToSQL(tt.dialect, tt.item, nil)
 		if err != nil {
 			t.Fatal(testutil.Callers(), err)
 		}
@@ -559,7 +559,7 @@ func Test_DropConstraintCommnd(t *testing.T) {
 		tt.item = DropConstraintCommand{
 			ConstraintName: "city_country_id_fkey",
 		}
-		_, _, _, err := sq.ToSQL(tt.dialect, tt.item)
+		_, _, _, err := sq.ToSQL(tt.dialect, tt.item, nil)
 		if err == nil {
 			t.Fatal(testutil.Callers(), "expected error but got nil")
 		}
@@ -573,7 +573,7 @@ func Test_DropConstraintCommnd(t *testing.T) {
 			DropIfExists:   true,
 			ConstraintName: "city_country_id_fkey",
 		}
-		_, _, _, err := sq.ToSQL(tt.dialect, tt.item)
+		_, _, _, err := sq.ToSQL(tt.dialect, tt.item, nil)
 		if err == nil {
 			t.Fatal(testutil.Callers(), "expected error but got nil")
 		}
@@ -587,7 +587,7 @@ func Test_DropConstraintCommnd(t *testing.T) {
 			ConstraintName: "city_country_id_fkey",
 			DropCascade:    true,
 		}
-		_, _, _, err := sq.ToSQL(tt.dialect, tt.item)
+		_, _, _, err := sq.ToSQL(tt.dialect, tt.item, nil)
 		if err == nil {
 			t.Fatal(testutil.Callers(), "expected error but got nil")
 		}
