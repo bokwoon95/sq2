@@ -129,7 +129,7 @@ SELECT
     ,category.name
     ,category.last_update
     ,ROUND(SUM(payment.amount)) AS revenue
-    ,RANK() OVER (ORDER BY SUM(payment.amount) DESC) AS rank
+    ,RANK() OVER (ORDER BY SUM(payment.amount) DESC) AS "rank"
     ,NTILE(4) OVER (ORDER BY SUM(payment.amount) ASC) AS quartile
 FROM
     category
@@ -150,19 +150,19 @@ ORDER BY
 -- '2006-02-01', ordered by month. Months with 0 rentals should also be
 -- included.
 WITH RECURSIVE dates (date_value) AS (
-    SELECT '2005-03-01'::DATE
+    SELECT CAST('2005-03-01' AS DATE)
     UNION ALL
-    SELECT (date_value + '1 month'::INTERVAL)::DATE FROM dates WHERE date_value < '2006-02-01'
+    SELECT date_add(date_value, INTERVAL 1 MONTH) FROM dates WHERE date_value < '2006-02-01'
 )
 SELECT
-    to_char(dates.date_value, 'YYYY Month')
+    date_format(dates.date_value, '%Y %M')
     ,COUNT(CASE category.name WHEN 'Horror' THEN 1 END) AS horror_count
     ,COUNT(CASE category.name WHEN 'Action' THEN 1 END) AS action_count
     ,COUNT(CASE category.name WHEN 'Comedy' THEN 1 END) AS comedy_count
     ,COUNT(CASE category.name WHEN 'Sci-Fi' THEN 1 END) AS scifi_count
 FROM
     dates
-    LEFT JOIN rental ON to_char(rental.rental_date, 'YYYY Month') = to_char(dates.date_value, 'YYYY Month')
+    LEFT JOIN rental ON date_format(rental.rental_date, '%Y %M') = date_format(dates.date_value, '%Y %M')
     LEFT JOIN film_category ON film_category.film_id = rental.inventory_id
     LEFT JOIN category ON category.category_id = film_category.category_id
 GROUP BY
