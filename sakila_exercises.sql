@@ -6,7 +6,7 @@
 -- must always be the same, no matter the dialect. Only for
 -- insert/update/delete are there some dialect-specific queries.
 
--- Find the distinct actor last names ordered by last name. Show only the top 4
+-- Find all distinct actor last names ordered by last name. Show only the top 4
 -- results.
 SELECT DISTINCT last_name FROM actor ORDER BY last_name LIMIT 4;
 
@@ -25,7 +25,7 @@ SELECT actor_id, first_name, last_name FROM actor WHERE last_name LIKE '%GEN%' O
 -- Show only the top 10 results.
 SELECT last_name FROM actor GROUP BY last_name HAVING COUNT(*) = 1 ORDER BY last_name LIMIT 10;
 
--- Find the cities of the countries Egypt, Greece and Puerto Rico, ordered by
+-- Find all the cities of the countries Egypt, Greece and Puerto Rico, ordered by
 -- country_name and city_name. Return the country_name and city_name.
 SELECT
     country.country
@@ -93,10 +93,10 @@ WITH months (num, name) AS (
 )
 SELECT
     months.name AS month
-    ,SUM(category.name = 'Horror') AS horror_count
-    ,SUM(category.name = 'Action') AS action_count
-    ,SUM(category.name = 'Comedy') AS comedy_count
-    ,SUM(category.name = 'Sci-Fi') AS scifi_count
+    ,SUM(CASE category.name WHEN 'Horror' THEN 1 END) AS horror_count
+    ,SUM(CASE category.name WHEN 'Action' THEN 1 END) AS action_count
+    ,SUM(CASE category.name WHEN 'Comedy' THEN 1 END) AS comedy_count
+    ,SUM(CASE category.name WHEN 'Sci-Fi' THEN 1 END) AS scifi_count
 FROM
     rental
     JOIN months ON months.num = strftime('%m', rental.rental_date)
@@ -151,14 +151,10 @@ LIMIT
 -- Window function example
 -- CASE usage means I can drop the other query with 'intended_audience'
 SELECT
-    name
-    ,SUM(amount) AS summ
-    ,CASE NTILE(4) OVER (ORDER BY SUM(amount) DESC)
-        WHEN 1 THEN 'Q4'
-        WHEN 2 THEN 'Q3'
-        WHEN 3 THEN 'Q2'
-        WHEN 4 THEN 'Q1'
-    END AS quartile
+    category.name
+    ,ROUND(SUM(payment.amount)) AS revenue
+    ,NTILE(4) OVER (ORDER BY SUM(payment.amount) ASC) AS quartile
+    ,RANK() OVER (ORDER BY SUM(payment.amount) DESC) AS rank
 FROM
     category
     JOIN film_category ON category.category_id = film_category.category_id
@@ -168,7 +164,7 @@ FROM
 GROUP BY
     name
 ORDER BY
-    summ DESC
+    revenue DESC
 ;
 
 -- Recursive CTE (union) example
