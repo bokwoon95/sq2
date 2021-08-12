@@ -112,6 +112,13 @@ func (q SelectQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interf
 		}
 	}
 	if len(tablePredicates) > 0 {
+		// TODO: you shouldn't inject the tablePredicates into
+		// q.WherePredicate, because the user might have set
+		// q.WherePredicate.Or to true, rendering the effects of the injected
+		// predicates useless. Instead a new VariadicPredicate should be
+		// constructed, one where you can guarantee the top level operator is
+		// AND, and merge q.WherePredicate in as a subpredicate of the new top
+		// level predicate.
 		q.WherePredicate.Predicates = append(tablePredicates, q.WherePredicate.Predicates...)
 	}
 	if len(q.WherePredicate.Predicates) > 0 {
