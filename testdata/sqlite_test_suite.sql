@@ -166,7 +166,6 @@ SELECT
     ,COUNT(CASE category.name WHEN 'Action' THEN 1 END) AS action_count
     ,COUNT(CASE category.name WHEN 'Comedy' THEN 1 END) AS comedy_count
     ,COUNT(CASE category.name WHEN 'Sci-Fi' THEN 1 END) AS scifi_count
-    ,COUNT(*) OVER () AS count
 FROM
     dates
     JOIN months ON months.num = strftime('%m', dates.date_value)

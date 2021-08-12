@@ -150,7 +150,23 @@ ORDER BY
 -- '2006-02-01', ordered by month. Months with 0 rentals should also be
 -- included.
 WITH RECURSIVE dates (date_value) AS (
-    SELECT DATE('2005-03-01')
+    SELECT '2005-03-01'::TIMESTAMPTZ
     UNION ALL
-    SELECT DATE(date_value, '+1 month') FROM dates WHERE date_value < '2006-02-01'
+    SELECT date_value + '1 month'::INTERVAL FROM dates WHERE date_value < '2006-02-01'::TIMESTAMPTZ
 )
+SELECT
+    to_char(dates.date_value, 'YYYY Month')
+    ,COUNT(CASE category.name WHEN 'Horror' THEN 1 END) AS horror_count
+    ,COUNT(CASE category.name WHEN 'Action' THEN 1 END) AS action_count
+    ,COUNT(CASE category.name WHEN 'Comedy' THEN 1 END) AS comedy_count
+    ,COUNT(CASE category.name WHEN 'Sci-Fi' THEN 1 END) AS scifi_count
+FROM
+    dates
+    LEFT JOIN rental ON to_char(rental.rental_date, 'YYYY Month') = to_char(dates.date_value, 'YYYY Month')
+    LEFT JOIN film_category ON film_category.film_id = rental.inventory_id
+    LEFT JOIN category ON category.category_id = film_category.category_id
+GROUP BY
+    dates.date_value
+ORDER BY
+    dates.date_value
+;
