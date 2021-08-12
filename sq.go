@@ -36,14 +36,14 @@ type (
 )
 
 var (
-	SQLite    = SQLiteQueryBuilder{}
+	// SQLite    = SQLiteQueryBuilder{}
 	Postgres  = PostgresQueryBuilder{}
 	MySQL     = MySQLQueryBuilder{}
 	SQLServer = SQLServerQueryBuilder{}
 	Oracle    = OracleDialect{}
 )
 
-// func SQLite(env map[string]interface{}) SQLiteQueryBuilder { return SQLiteQueryBuilder{env: env} }
+func SQLite(env map[string]interface{}) SQLiteQueryBuilder { return SQLiteQueryBuilder{env: env} }
 
 type SQLAppender interface {
 	AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int, env map[string]interface{}) error

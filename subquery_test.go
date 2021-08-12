@@ -68,7 +68,7 @@ func TestSubquery(t *testing.T) {
 	t.Run("subquery nil query", func(t *testing.T) {
 		t.Parallel()
 		var tt TT
-		tt.item = SQLite.From(NewSubquery("subquery", nil)).Select(Literal("*"))
+		tt.item = SQLite(nil).From(NewSubquery("subquery", nil)).Select(Literal("*"))
 		_, _, _, err := ToSQL("", tt.item)
 		if err == nil {
 			t.Fatal(testutil.Callers(), "expected error but got nil")
@@ -78,7 +78,7 @@ func TestSubquery(t *testing.T) {
 	t.Run("subquery query GetFetchableFields error", func(t *testing.T) {
 		t.Parallel()
 		var tt TT
-		tt.item = SQLite.From(NewSubquery("subquery", Queryf("SELECT 1"))).Select(Literal("*"))
+		tt.item = SQLite(nil).From(NewSubquery("subquery", Queryf("SELECT 1"))).Select(Literal("*"))
 		_, _, _, err := ToSQL("", tt.item)
 		if err == nil {
 			t.Fatal(testutil.Callers(), "expected error but got nil")
@@ -88,7 +88,7 @@ func TestSubquery(t *testing.T) {
 	t.Run("subquery query no fields", func(t *testing.T) {
 		t.Parallel()
 		var tt TT
-		tt.item = SQLite.From(NewSubquery("subquery", MySQL.Select())).Select(Literal("*"))
+		tt.item = SQLite(nil).From(NewSubquery("subquery", MySQL.Select())).Select(Literal("*"))
 		_, _, _, err := ToSQL("", tt.item)
 		if err == nil {
 			t.Fatal(testutil.Callers(), "expected error but got nil")
@@ -98,7 +98,7 @@ func TestSubquery(t *testing.T) {
 	t.Run("subquery query field no name", func(t *testing.T) {
 		t.Parallel()
 		var tt TT
-		tt.item = SQLite.From(NewSubquery("subquery", MySQL.Select(Value(1)))).Select(Literal("*"))
+		tt.item = SQLite(nil).From(NewSubquery("subquery", MySQL.Select(Value(1)))).Select(Literal("*"))
 		_, _, _, err := ToSQL("", tt.item)
 		if err == nil {
 			t.Fatal(testutil.Callers(), "expected error but got nil")
@@ -108,7 +108,7 @@ func TestSubquery(t *testing.T) {
 	t.Run("subquery query faulty sql", func(t *testing.T) {
 		t.Parallel()
 		var tt TT
-		tt.item = SQLite.
+		tt.item = SQLite(nil).
 			From(NewSubquery("subquery", MySQL.Select(Value(1).As("field")).Where(FaultySQL{}))).
 			Select(Literal("*"))
 		_, _, _, err := ToSQL("", tt.item)

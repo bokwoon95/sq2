@@ -21,39 +21,44 @@ func (q SQLiteSelectQuery) GetFetchableFields() ([]Field, error) {
 func (q SQLiteSelectQuery) GetDialect() string { return q.Dialect }
 
 func (d SQLiteQueryBuilder) From(table Table) SQLiteSelectQuery {
-	var q SQLiteSelectQuery
-	q.Dialect = DialectSQLite
-	q.FromTable = table
-	return q
+	return SQLiteSelectQuery{
+		Env:       d.env,
+		Dialect:   DialectSQLite,
+		FromTable: table,
+	}
 }
 
 func (d SQLiteQueryBuilder) SelectWith(ctes ...CTE) SQLiteSelectQuery {
-	var q SQLiteSelectQuery
-	q.Dialect = DialectSQLite
-	q.CTEs = ctes
-	return q
+	return SQLiteSelectQuery{
+		Env:     d.env,
+		Dialect: DialectSQLite,
+		CTEs:    ctes,
+	}
 }
 
 func (d SQLiteQueryBuilder) Select(fields ...Field) SQLiteSelectQuery {
-	var q SQLiteSelectQuery
-	q.Dialect = DialectSQLite
-	q.SelectFields = fields
-	return q
+	return SQLiteSelectQuery{
+		Env:          d.env,
+		Dialect:      DialectSQLite,
+		SelectFields: fields,
+	}
 }
 
 func (d SQLiteQueryBuilder) SelectOne() SQLiteSelectQuery {
-	var q SQLiteSelectQuery
-	q.Dialect = DialectSQLite
-	q.SelectFields = AliasFields{Literal("1")}
-	return q
+	return SQLiteSelectQuery{
+		Env:          d.env,
+		Dialect:      DialectSQLite,
+		SelectFields: AliasFields{Literal("1")},
+	}
 }
 
 func (d SQLiteQueryBuilder) SelectDistinct(fields ...Field) SQLiteSelectQuery {
-	var q SQLiteSelectQuery
-	q.Dialect = DialectSQLite
-	q.Distinct = true
-	q.SelectFields = fields
-	return q
+	return SQLiteSelectQuery{
+		Env:          d.env,
+		Dialect:      DialectSQLite,
+		Distinct:     true,
+		SelectFields: fields,
+	}
 }
 
 func (q SQLiteSelectQuery) With(ctes ...CTE) SQLiteSelectQuery {

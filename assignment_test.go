@@ -64,7 +64,7 @@ func Test_Assignment(t *testing.T) {
 	t.Run("field assign query", func(t *testing.T) {
 		t.Parallel()
 		var tt TT
-		tt.item = Assign(USERS.USER_ID, SQLite.Select(USERS.USER_ID).From(USERS).Limit(1))
+		tt.item = Assign(USERS.USER_ID, SQLite(nil).Select(USERS.USER_ID).From(USERS).Limit(1))
 		tt.excludedTableQualifiers = []string{"users"}
 		tt.wantQuery = "user_id = (SELECT users.user_id FROM users LIMIT ?)"
 		tt.wantArgs = []interface{}{int64(1)}

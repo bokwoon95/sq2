@@ -31,7 +31,7 @@ func Test_SQLiteSelectQuery(t *testing.T) {
 		t.Parallel()
 		var tt TT
 		ACTOR := xNEW_ACTOR("a")
-		tt.item = SQLite.
+		tt.item = SQLite(nil).
 			From(ACTOR).
 			From(ACTOR).
 			SelectOne().
@@ -55,7 +55,7 @@ func Test_SQLiteSelectQuery(t *testing.T) {
 		t.Parallel()
 		var tt TT
 		ACTOR := xNEW_ACTOR("a")
-		tt.item = SQLite.
+		tt.item = SQLite(nil).
 			SelectDistinct(ACTOR.ACTOR_ID, ACTOR.FIRST_NAME, ACTOR.LAST_NAME).
 			SelectDistinct(ACTOR.ACTOR_ID, ACTOR.FIRST_NAME, ACTOR.LAST_NAME).
 			From(ACTOR).

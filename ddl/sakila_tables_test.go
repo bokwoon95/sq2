@@ -535,7 +535,7 @@ func (view ACTOR_INFO) DDL(dialect string, v *V) {
 	FILM_ACTOR := NEW_FILM_ACTOR("fa")
 	FILM_CATEGORY := NEW_FILM_CATEGORY("fc")
 	CATEGORY := NEW_CATEGORY("c")
-	v.SetQuery(sq.SQLite.
+	v.SetQuery(sq.SQLite(nil).
 		From(ACTOR).
 		LeftJoin(FILM_ACTOR, FILM_ACTOR.ACTOR_ID.Eq(ACTOR.ACTOR_ID)).
 		LeftJoin(FILM_CATEGORY, FILM_CATEGORY.FILM_ID.Eq(FILM_ACTOR.FILM_ID)).
@@ -545,7 +545,7 @@ func (view ACTOR_INFO) DDL(dialect string, v *V) {
 			ACTOR.ACTOR_ID,
 			ACTOR.FIRST_NAME,
 			ACTOR.LAST_NAME,
-			json_object_agg(CATEGORY.NAME, sq.SQLite.
+			json_object_agg(CATEGORY.NAME, sq.SQLite(nil).
 				Select(json_array_agg(FILM.TITLE)).
 				From(FILM).
 				Join(FILM_CATEGORY, FILM_CATEGORY.FILM_ID.Eq(FILM.FILM_ID)).
@@ -593,7 +593,7 @@ func (view CUSTOMER_LIST) DDL(dialect string, v *V) {
 	ADDRESS := NEW_ADDRESS("a")
 	CITY := NEW_CITY("")
 	COUNTRY := NEW_COUNTRY("")
-	v.SetQuery(sq.SQLite.
+	v.SetQuery(sq.SQLite(nil).
 		From(CUSTOMER).
 		Join(ADDRESS, ADDRESS.ADDRESS_ID.Eq(CUSTOMER.ADDRESS_ID)).
 		Join(CITY, CITY.CITY_ID.Eq(ADDRESS.CITY_ID)).
@@ -647,7 +647,7 @@ func (view FILM_LIST) DDL(dialect string, v *V) {
 	FILM := NEW_FILM("")
 	FILM_ACTOR := NEW_FILM_ACTOR("")
 	ACTOR := NEW_ACTOR("")
-	v.SetQuery(sq.SQLite.
+	v.SetQuery(sq.SQLite(nil).
 		From(CATEGORY).
 		LeftJoin(FILM_CATEGORY, FILM_CATEGORY.CATEGORY_ID.Eq(CATEGORY.CATEGORY_ID)).
 		LeftJoin(FILM, FILM.FILM_ID.Eq(FILM_CATEGORY.FILM_ID)).
@@ -712,7 +712,7 @@ func (view NICER_BUT_SLOWER_FILM_LIST) DDL(dialect string, v *V) {
 	FILM := NEW_FILM("")
 	FILM_ACTOR := NEW_FILM_ACTOR("")
 	ACTOR := NEW_ACTOR("")
-	v.SetQuery(sq.SQLite.
+	v.SetQuery(sq.SQLite(nil).
 		From(CATEGORY).
 		LeftJoin(FILM_CATEGORY, FILM_CATEGORY.CATEGORY_ID.Eq(CATEGORY.CATEGORY_ID)).
 		LeftJoin(FILM, FILM.FILM_ID.Eq(FILM_CATEGORY.FILM_ID)).
@@ -774,7 +774,7 @@ func (view SALES_BY_FILM_CATEGORY) DDL(dialect string, v *V) {
 	FILM := NEW_FILM("f")
 	FILM_CATEGORY := NEW_FILM_CATEGORY("fc")
 	CATEGORY := NEW_CATEGORY("c")
-	v.SetQuery(sq.SQLite.
+	v.SetQuery(sq.SQLite(nil).
 		From(PAYMENT).
 		Join(RENTAL, RENTAL.RENTAL_ID.Eq(PAYMENT.RENTAL_ID)).
 		Join(INVENTORY, INVENTORY.INVENTORY_ID.Eq(RENTAL.INVENTORY_ID)).
@@ -815,7 +815,7 @@ func (view SALES_BY_STORE) DDL(dialect string, v *V) {
 	CITY := NEW_CITY("ci")
 	COUNTRY := NEW_COUNTRY("co")
 	STAFF := NEW_STAFF("m")
-	v.SetQuery(sq.SQLite.
+	v.SetQuery(sq.SQLite(nil).
 		From(PAYMENT).
 		Join(RENTAL, RENTAL.RENTAL_ID.Eq(PAYMENT.RENTAL_ID)).
 		Join(INVENTORY, INVENTORY.INVENTORY_ID.Eq(RENTAL.INVENTORY_ID)).
@@ -880,7 +880,7 @@ func (view STAFF_LIST) DDL(dialect string, v *V) {
 	ADDRESS := NEW_ADDRESS("a")
 	CITY := NEW_CITY("ci")
 	COUNTRY := NEW_COUNTRY("co")
-	v.SetQuery(sq.SQLite.
+	v.SetQuery(sq.SQLite(nil).
 		From(STAFF).
 		Join(ADDRESS, ADDRESS.ADDRESS_ID.Eq(STAFF.ADDRESS_ID)).
 		Join(CITY, CITY.CITY_ID.Eq(ADDRESS.CITY_ID)).
@@ -931,7 +931,7 @@ FOR EACH STATEMENT EXECUTE PROCEDURE refresh_full_address();
 	CITY := NEW_CITY("")
 	COUNTRY := NEW_COUNTRY("")
 	v.IsMaterialized()
-	v.SetQuery(sq.SQLite.
+	v.SetQuery(sq.SQLite(nil).
 		From(ADDRESS).
 		Join(CITY, CITY.CITY_ID.Eq(ADDRESS.CITY_ID)).
 		Join(COUNTRY, COUNTRY.COUNTRY_ID.Eq(CITY.COUNTRY_ID)).

@@ -31,7 +31,7 @@ func Test_SQLiteUpdateQuery(t *testing.T) {
 		t.Parallel()
 		var tt TT
 		ACTOR := xNEW_ACTOR("")
-		tt.item = SQLite.
+		tt.item = SQLite(nil).
 			Update(ACTOR).
 			With(NewCTE("cte", []string{"n"}, Queryf("SELECT 1"))).
 			Set(ACTOR.ACTOR_ID.SetInt64(1)).
@@ -58,7 +58,7 @@ func Test_SQLiteUpdateQuery(t *testing.T) {
 		t.Parallel()
 		var tt TT
 		ACTOR := xNEW_ACTOR("a")
-		tt.item = SQLite.
+		tt.item = SQLite(nil).
 			UpdateWith(NewCTE("cte", []string{"n"}, Queryf("SELECT 1"))).
 			Update(ACTOR).
 			Setx(func(c *Column) error {
