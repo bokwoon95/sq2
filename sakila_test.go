@@ -58,9 +58,9 @@ type Store struct {
 }
 
 type City struct {
+	Country    Country   `json:"country"`
 	CityID     int       `json:"city_id"`
 	CityName   string    `json:"city"`
-	Country    Country   `json:"country"`
 	LastUpdate time.Time `json:"last_update"`
 }
 
@@ -127,15 +127,62 @@ type TestSuiteAnswers struct {
 }
 
 func NewTestSuiteAnswers() TestSuiteAnswers {
+	datetime := func(year, month, day, hour, min, sec int) time.Time {
+		return time.Date(year, time.Month(month), day, hour, min, sec, 0, time.UTC)
+	}
 	return TestSuiteAnswers{
 		Answer01: []string{"AKROYD", "ALLEN", "ASTAIRE", "BACALL", "BAILEY"},
 		Answer02: true,
 		Answer03: 121,
 		Answer04: []Actor{
-			{ActorID: 14, FirstName: "", LastName: "", LastUpdate: time.Time{}},
+			{ActorID: 14, FirstName: "VIVIEN", LastName: "BERGEN", LastUpdate: datetime(2006, 2, 15, 4, 34, 33)},
+			{ActorID: 41, FirstName: "JODIE", LastName: "DEGENERES", LastUpdate: datetime(2006, 2, 15, 4, 34, 33)},
+			{ActorID: 107, FirstName: "GINA", LastName: "DEGENERES", LastUpdate: datetime(2006, 2, 15, 4, 34, 33)},
+			{ActorID: 166, FirstName: "NICK", LastName: "DEGENERES", LastUpdate: datetime(2006, 2, 15, 4, 34, 33)},
 		},
 		Answer05: []string{"ASTAIRE", "BACALL", "BALE", "BALL", "BARRYMORE"},
-		Answer06: []City{},
+		Answer06: []City{
+			{
+				Country: Country{CountryID: 29, CountryName: "Egypt", LastUpdate: datetime(2006, 2, 15, 4, 44, 0)},
+				CityID:  79, CityName: "Bilbays", LastUpdate: datetime(2006, 02, 15, 4, 45, 25),
+			},
+			{
+				Country: Country{CountryID: 29, CountryName: "Egypt", LastUpdate: datetime(2006, 2, 15, 4, 44, 0)},
+				CityID:  216, CityName: "Idfu", LastUpdate: datetime(2006, 02, 15, 4, 45, 25),
+			},
+			{
+				Country: Country{CountryID: 29, CountryName: "Egypt", LastUpdate: datetime(2006, 2, 15, 4, 44, 0)},
+				CityID:  337, CityName: "Mit Ghamr", LastUpdate: datetime(2006, 02, 15, 4, 45, 25),
+			},
+			{
+				Country: Country{CountryID: 29, CountryName: "Egypt", LastUpdate: datetime(2006, 2, 15, 4, 44, 0)},
+				CityID:  421, CityName: "Qalyub", LastUpdate: datetime(2006, 02, 15, 4, 45, 25),
+			},
+			{
+				Country: Country{CountryID: 29, CountryName: "Egypt", LastUpdate: datetime(2006, 2, 15, 4, 44, 0)},
+				CityID:  465, CityName: "Sawhaj", LastUpdate: datetime(2006, 02, 15, 4, 45, 25),
+			},
+			{
+				Country: Country{CountryID: 29, CountryName: "Egypt", LastUpdate: datetime(2006, 2, 15, 4, 44, 0)},
+				CityID:  476, CityName: "Shubra al-Khayma", LastUpdate: datetime(2006, 02, 15, 4, 45, 25),
+			},
+			{
+				Country: Country{CountryID: 39, CountryName: "Greece", LastUpdate: datetime(2006, 2, 15, 4, 44, 0)},
+				CityID:  38, CityName: "Athenai", LastUpdate: datetime(2006, 02, 15, 4, 45, 25),
+			},
+			{
+				Country: Country{CountryID: 39, CountryName: "Greece", LastUpdate: datetime(2006, 2, 15, 4, 44, 0)},
+				CityID:  401, CityName: "Patras", LastUpdate: datetime(2006, 02, 15, 4, 45, 25),
+			},
+			{
+				Country: Country{CountryID: 77, CountryName: "Puerto Rico", LastUpdate: datetime(2006, 2, 15, 4, 44, 0)},
+				CityID:  32, CityName: "Arecibo", LastUpdate: datetime(2006, 02, 15, 4, 45, 25),
+			},
+			{
+				Country: Country{CountryID: 77, CountryName: "Puerto Rico", LastUpdate: datetime(2006, 2, 15, 4, 44, 0)},
+				CityID:  411, CityName: "Ponce", LastUpdate: datetime(2006, 02, 15, 4, 45, 25),
+			},
+		},
 		Answer07: []Film{},
 		Answer08: []FilmActorStats{},
 		Answer09: []CategoryRevenueStats{},

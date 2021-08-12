@@ -31,12 +31,12 @@ SELECT last_name FROM actor GROUP BY last_name HAVING COUNT(*) = 1 ORDER BY last
 -- Q6) Find all the cities (and their country) of the where country is either
 -- 'Egypt', 'Greece' or 'Puerto Rico', ordered by country_name and city_name.
 SELECT
-    city.city_id
-    ,city.city
-    ,city.last_update AS city_last_update
-    ,country.country_id
+    country.country_id
     ,country.country
     ,country.last_update AS country_last_update
+    ,city.city_id
+    ,city.city
+    ,city.last_update AS city_last_update
 FROM
     city
     JOIN country ON country.country_id = city.country_id
@@ -177,3 +177,27 @@ GROUP BY
 ORDER BY
     dates.date_value
 ;
+
+------------
+-- UPDATE --
+------------
+
+-- Update with join
+
+-- Update with returning (postgres, sqlite)
+
+-- Update with limit (mysql)
+
+-- Multi-table update (mysql)
+
+------------
+-- DELETE --
+------------
+
+-- Delete with join
+
+-- Delete with returning (postgres, sqlite)
+
+-- Delete with limit (mysql)
+
+-- Multi-table delete (mysql)
