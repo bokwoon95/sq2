@@ -12,7 +12,7 @@
 
 -- Find all distinct actor last names ordered by last name. Show only the top 4
 -- results.
-SELECT DISTINCT last_name FROM actor ORDER BY last_name LIMIT 4;
+SELECT DISTINCT last_name FROM actor ORDER BY last_name LIMIT 5;
 
 -- Find if there is any actor with first name 'SCARLETT' or last name
 -- 'JOHANSSON'.
