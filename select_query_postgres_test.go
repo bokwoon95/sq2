@@ -31,7 +31,7 @@ func Test_PostgresSelectQuery(t *testing.T) {
 		t.Parallel()
 		var tt TT
 		ACTOR := xNEW_ACTOR("a")
-		tt.item = Postgres.
+		tt.item = Postgres(nil).
 			SelectDistinct(ACTOR.ACTOR_ID).
 			SelectDistinct(ACTOR.ACTOR_ID).
 			From(ACTOR)
@@ -43,7 +43,7 @@ func Test_PostgresSelectQuery(t *testing.T) {
 		t.Parallel()
 		var tt TT
 		ACTOR := xNEW_ACTOR("a")
-		tt.item = Postgres.
+		tt.item = Postgres(nil).
 			SelectOne().
 			From(ACTOR).
 			With(NewCTE("cte", []string{"n"}, Queryf("SELECT 1"))).
@@ -70,7 +70,7 @@ func Test_PostgresSelectQuery(t *testing.T) {
 		t.Parallel()
 		var tt TT
 		ACTOR := xNEW_ACTOR("a")
-		tt.item = Postgres.
+		tt.item = Postgres(nil).
 			From(ACTOR).
 			Select(ACTOR.ACTOR_ID, ACTOR.FIRST_NAME, ACTOR.LAST_NAME).
 			DistinctOn(ACTOR.FIRST_NAME, ACTOR.LAST_NAME).

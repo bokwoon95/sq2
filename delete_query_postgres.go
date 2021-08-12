@@ -21,17 +21,19 @@ func (q PostgresDeleteQuery) GetFetchableFields() ([]Field, error) {
 func (q PostgresDeleteQuery) GetDialect() string { return q.Dialect }
 
 func (d PostgresQueryBuilder) DeleteWith(ctes ...CTE) PostgresDeleteQuery {
-	var q PostgresDeleteQuery
-	q.Dialect = DialectPostgres
-	q.CTEs = ctes
-	return q
+	return PostgresDeleteQuery{
+		Env:     d.env,
+		Dialect: DialectPostgres,
+		CTEs:    ctes,
+	}
 }
 
 func (d PostgresQueryBuilder) DeleteFrom(table SchemaTable) PostgresDeleteQuery {
-	var q PostgresDeleteQuery
-	q.Dialect = DialectPostgres
-	q.FromTables = append(q.FromTables, table)
-	return q
+	return PostgresDeleteQuery{
+		Env:        d.env,
+		Dialect:    DialectPostgres,
+		FromTables: []SchemaTable{table},
+	}
 }
 
 func (q PostgresDeleteQuery) With(ctes ...CTE) PostgresDeleteQuery {

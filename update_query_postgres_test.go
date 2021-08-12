@@ -31,7 +31,7 @@ func Test_PostgresUpdateQuery(t *testing.T) {
 		t.Parallel()
 		var tt TT
 		ACTOR := xNEW_ACTOR("a")
-		tt.item = Postgres.
+		tt.item = Postgres(nil).
 			Update(ACTOR).
 			With(NewCTE("cte", []string{"n"}, Queryf("SELECT 1"))).
 			Set(ACTOR.ACTOR_ID.SetInt64(1)).
@@ -62,7 +62,7 @@ func Test_PostgresUpdateQuery(t *testing.T) {
 		t.Parallel()
 		var tt TT
 		ACTOR := xNEW_ACTOR("a")
-		tt.item = Postgres.
+		tt.item = Postgres(nil).
 			UpdateWith(NewCTE("cte", []string{"n"}, Queryf("SELECT 1"))).
 			Update(ACTOR).
 			Setx(func(c *Column) error {

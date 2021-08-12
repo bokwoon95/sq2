@@ -38,7 +38,7 @@ func TestSubquery(t *testing.T) {
 		t.Parallel()
 		var tt TT
 		RENTAL, STAFF := xNEW_RENTAL(""), xNEW_STAFF("s")
-		subquery_rental := NewSubquery("subquery_rental", Postgres.
+		subquery_rental := NewSubquery("subquery_rental", Postgres(nil).
 			Select(
 				RENTAL.STAFF_ID,
 				Fieldf("COUNT({})", RENTAL.RENTAL_ID).As("rental_count"),
@@ -46,7 +46,7 @@ func TestSubquery(t *testing.T) {
 			From(RENTAL).
 			GroupBy(RENTAL.STAFF_ID),
 		)
-		tt.item = Postgres.
+		tt.item = Postgres(nil).
 			Select(
 				STAFF.STAFF_ID,
 				STAFF.FIRST_NAME,
@@ -120,7 +120,7 @@ func TestSubquery(t *testing.T) {
 	t.Run("subquery no alias, dialect == postgres || dialect == mysql", func(t *testing.T) {
 		t.Parallel()
 		var tt TT
-		tt.item = Postgres.From(NewSubquery("", Postgres.Select(Value(1).As("n")))).Select(Literal("*"))
+		tt.item = Postgres(nil).From(NewSubquery("", Postgres(nil).Select(Value(1).As("n")))).Select(Literal("*"))
 		_, _, _, err := ToSQL("", tt.item)
 		if err == nil {
 			t.Fatal(testutil.Callers(), "expected error but got nil")
@@ -160,7 +160,7 @@ func Test_SubqueryField(t *testing.T) {
 		t.Parallel()
 		var tt TT
 		tt.dialect = DialectPostgres
-		q := NewSubquery("", Postgres.Select(Value(1).As("field")))
+		q := NewSubquery("", Postgres(nil).Select(Value(1).As("field")))
 		tt.item = q.Field("field")
 		_, _, _, err := ToSQLExclude(tt.dialect, tt.item, tt.excludedTableQualifiers)
 		if err == nil {

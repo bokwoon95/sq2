@@ -21,39 +21,44 @@ func (q PostgresSelectQuery) GetFetchableFields() ([]Field, error) {
 func (q PostgresSelectQuery) GetDialect() string { return q.Dialect }
 
 func (d PostgresQueryBuilder) From(table Table) PostgresSelectQuery {
-	var q PostgresSelectQuery
-	q.Dialect = DialectPostgres
-	q.FromTable = table
-	return q
+	return PostgresSelectQuery{
+		Env:       d.env,
+		Dialect:   DialectPostgres,
+		FromTable: table,
+	}
 }
 
 func (d PostgresQueryBuilder) SelectWith(ctes ...CTE) PostgresSelectQuery {
-	var q PostgresSelectQuery
-	q.Dialect = DialectPostgres
-	q.CTEs = ctes
-	return q
+	return PostgresSelectQuery{
+		Env:     d.env,
+		Dialect: DialectPostgres,
+		CTEs:    ctes,
+	}
 }
 
 func (d PostgresQueryBuilder) Select(fields ...Field) PostgresSelectQuery {
-	var q PostgresSelectQuery
-	q.Dialect = DialectPostgres
-	q.SelectFields = fields
-	return q
+	return PostgresSelectQuery{
+		Env:          d.env,
+		Dialect:      DialectPostgres,
+		SelectFields: fields,
+	}
 }
 
 func (d PostgresQueryBuilder) SelectOne() PostgresSelectQuery {
-	var q PostgresSelectQuery
-	q.Dialect = DialectPostgres
-	q.SelectFields = AliasFields{Literal("1")}
-	return q
+	return PostgresSelectQuery{
+		Env:          d.env,
+		Dialect:      DialectPostgres,
+		SelectFields: AliasFields{Literal("1")},
+	}
 }
 
 func (d PostgresQueryBuilder) SelectDistinct(fields ...Field) PostgresSelectQuery {
-	var q PostgresSelectQuery
-	q.Dialect = DialectPostgres
-	q.Distinct = true
-	q.SelectFields = fields
-	return q
+	return PostgresSelectQuery{
+		Env:          d.env,
+		Dialect:      DialectPostgres,
+		Distinct:     true,
+		SelectFields: fields,
+	}
 }
 
 func (q PostgresSelectQuery) With(ctes ...CTE) PostgresSelectQuery {

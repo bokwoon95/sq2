@@ -38,7 +38,7 @@ func TestCTE(t *testing.T) {
 		t.Parallel()
 		var tt TT
 		RENTAL, STAFF := xNEW_RENTAL(""), xNEW_STAFF("s")
-		cte_rental := NewCTE("cte_rental", nil, Postgres.
+		cte_rental := NewCTE("cte_rental", nil, Postgres(nil).
 			Select(
 				RENTAL.STAFF_ID,
 				Fieldf("COUNT({})", RENTAL.RENTAL_ID).As("rental_count"),
@@ -47,7 +47,7 @@ func TestCTE(t *testing.T) {
 			GroupBy(RENTAL.STAFF_ID),
 		)
 		cte := cte_rental.As("cte")
-		tt.item = Postgres.
+		tt.item = Postgres(nil).
 			SelectWith(cte).
 			Select(
 				STAFF.STAFF_ID,
