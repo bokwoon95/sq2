@@ -8,6 +8,7 @@ import (
 
 type SelectQuery struct {
 	Dialect string
+	Env     map[string]interface{}
 	// WITH
 	CTEs CTEs
 	// SELECT
@@ -34,10 +35,13 @@ type SelectQuery struct {
 var _ Query = SelectQuery{}
 
 func (q SelectQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int, env map[string]interface{}) error {
+	if env == nil && q.Env != nil {
+		env = q.Env
+	}
 	var err error
 	// WITH
 	if len(q.CTEs) > 0 {
-		err = q.CTEs.AppendSQL(dialect, buf, args, params, nil)
+		err = q.CTEs.AppendSQL(dialect, buf, args, params, env)
 		if err != nil {
 			return fmt.Errorf("WITH: %w", err)
 		}
@@ -52,7 +56,7 @@ func (q SelectQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interf
 			return fmt.Errorf("postgres SELECT cannot be DISTINCT and DISTINCT ON at the same time")
 		}
 		buf.WriteString("DISTINCT ON (")
-		err = q.DistinctOnFields.AppendSQLExclude(dialect, buf, args, params, nil, nil)
+		err = q.DistinctOnFields.AppendSQLExclude(dialect, buf, args, params, env, nil)
 		if err != nil {
 			return fmt.Errorf("DISTINCT ON: %w", err)
 		}
@@ -63,14 +67,14 @@ func (q SelectQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interf
 	if len(q.SelectFields) == 0 {
 		return fmt.Errorf("no fields SELECT-ed")
 	}
-	err = q.SelectFields.AppendSQLExclude(dialect, buf, args, params, nil, nil)
+	err = q.SelectFields.AppendSQLExclude(dialect, buf, args, params, env, nil)
 	if err != nil {
 		return fmt.Errorf("SELECT: %w", err)
 	}
 	// FROM
 	if q.FromTable != nil {
 		buf.WriteString(" FROM ")
-		err = q.FromTable.AppendSQL(dialect, buf, args, params, nil)
+		err = q.FromTable.AppendSQL(dialect, buf, args, params, env)
 		if err != nil {
 			return fmt.Errorf("FROM: %w", err)
 		}
@@ -84,16 +88,36 @@ func (q SelectQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interf
 			return fmt.Errorf("can't JOIN without a FROM table")
 		}
 		buf.WriteString(" ")
-		err = q.JoinTables.AppendSQL(dialect, buf, args, params, nil)
+		err = q.JoinTables.AppendSQL(dialect, buf, args, params, env)
 		if err != nil {
 			return fmt.Errorf("JOIN: %w", err)
 		}
 	}
 	// WHERE
+	var tablePredicates []Predicate
+	if predicateAdder, ok := q.FromTable.(PredicateAdder); ok {
+		predicates, err := predicateAdder.AddPredicate(env)
+		if err != nil {
+			return fmt.Errorf("FromTable adding predicate: %w", err)
+		}
+		tablePredicates = append(tablePredicates, predicates...)
+	}
+	for i, joinTable := range q.JoinTables {
+		if predicateAdder, ok := joinTable.Table.(PredicateAdder); ok {
+			predicates, err := predicateAdder.AddPredicate(env)
+			if err != nil {
+				return fmt.Errorf("JoinTable #%d adding predicate: %w", i+1, err)
+			}
+			tablePredicates = append(tablePredicates, predicates...)
+		}
+	}
+	if len(tablePredicates) > 0 {
+		q.WherePredicate.Predicates = append(tablePredicates, q.WherePredicate.Predicates...)
+	}
 	if len(q.WherePredicate.Predicates) > 0 {
 		buf.WriteString(" WHERE ")
 		q.WherePredicate.Toplevel = true
-		err = q.WherePredicate.AppendSQLExclude(dialect, buf, args, params, nil, nil)
+		err = q.WherePredicate.AppendSQLExclude(dialect, buf, args, params, env, nil)
 		if err != nil {
 			return fmt.Errorf("WHERE: %w", err)
 		}
@@ -101,7 +125,7 @@ func (q SelectQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interf
 	// GROUP BY
 	if len(q.GroupByFields) > 0 {
 		buf.WriteString(" GROUP BY ")
-		err = q.GroupByFields.AppendSQLExclude(dialect, buf, args, params, nil, nil)
+		err = q.GroupByFields.AppendSQLExclude(dialect, buf, args, params, env, nil)
 		if err != nil {
 			return fmt.Errorf("GROUP BY: %w", err)
 		}
@@ -110,7 +134,7 @@ func (q SelectQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interf
 	if len(q.HavingPredicate.Predicates) > 0 {
 		buf.WriteString(" HAVING ")
 		q.HavingPredicate.Toplevel = true
-		err = q.HavingPredicate.AppendSQLExclude(dialect, buf, args, params, nil, nil)
+		err = q.HavingPredicate.AppendSQLExclude(dialect, buf, args, params, env, nil)
 		if err != nil {
 			return fmt.Errorf("HAVING: %w", err)
 		}
@@ -118,7 +142,7 @@ func (q SelectQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interf
 	// ORDER BY
 	if len(q.OrderByFields) > 0 {
 		buf.WriteString(" ORDER BY ")
-		err = q.OrderByFields.AppendSQLExclude(dialect, buf, args, params, nil, nil)
+		err = q.OrderByFields.AppendSQLExclude(dialect, buf, args, params, env, nil)
 		if err != nil {
 			return fmt.Errorf("ORDER BY: %w", err)
 		}

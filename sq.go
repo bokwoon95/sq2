@@ -68,6 +68,10 @@ type Table interface {
 	GetName() string // Table name must exclude the schema (if any)
 }
 
+type PredicateAdder interface {
+	AddPredicate(env map[string]interface{}) ([]Predicate, error)
+}
+
 type SchemaTable interface {
 	Table
 	GetSchema() string
