@@ -6,11 +6,15 @@
 -- must always be the same, no matter the dialect. Only for
 -- insert/update/delete are there some dialect-specific queries.
 
+-- TODO: also need OLTP queries where you scan into a nested structure. Either
+-- aggregate manually in the application or aggregate into json and unmarshal
+-- in the application.
+
 -- Find all distinct actor last names ordered by last name. Show only the top 4
 -- results.
 SELECT DISTINCT last_name FROM actor ORDER BY last_name LIMIT 4;
 
--- Check if there is any actor with first name 'SCARLETT' or last name
+-- Find if there is any actor with first name 'SCARLETT' or last name
 -- 'JOHANSSON'.
 SELECT EXISTS(SELECT 1 FROM actor WHERE first_name = 'SCARLETT' OR last_name = 'JOHANSSON');
 
@@ -40,39 +44,25 @@ ORDER BY
 ;
 
 -- List films with their length classification, ordered by title. The classifications are:
--- length <= 60 then 'short', length > 60 and length <= 100 then 'medium',
--- length > 100 then 'long'. Return the title, length, and length_classification. Show
+-- length <= 60 then 'short', length > 60 and length <= 120 then 'medium',
+-- length > 120 then 'long'. Return the title, length, and length_classification. Show
 -- only the top 10 results.
 SELECT
     title
-    ,length
-    ,CASE
-        WHEN length <= 60 THEN 'short'
-        WHEN length > 60 AND length <= 100 THEN 'medium'
-        ELSE 'long'
-    END AS length_classification
-FROM
-    film
-ORDER BY
-    title
-LIMIT
-    10
-;
-
--- List films with their target audience, ordered by title. The target
--- audiences are: rating = 'G' then 'family', rating = 'PG' or rating = 'PG-13'
--- then 'teens', rating = 'R' or rating = 'NC-17' then 'adults'. Return the
--- title, rating, and target_audience.
-SELECT
-    title
     ,rating
+    ,length
     ,CASE rating
         WHEN 'G' THEN 'family'
         WHEN 'PG' THEN 'teens'
         WHEN 'PG-13' THEN 'teens'
         WHEN 'R' THEN 'adults'
         WHEN 'NC-17' THEN 'adults'
-    END AS intended_audience
+    END AS audience
+    ,CASE
+        WHEN length <= 60 THEN 'short'
+        WHEN length > 60 AND length <= 120 THEN 'medium'
+        ELSE 'long'
+    END AS length_type
 FROM
     film
 ORDER BY
@@ -106,25 +96,6 @@ GROUP BY
     months.name
 ;
 
--- Find the actors who have appeared in the most films ordered by descending
--- film count. Return the first name, last name and film count. Show only the
--- top 10 results.
-SELECT
-    actor.actor_id
-    ,actor.first_name
-    ,actor.last_name
-    ,COUNT(*) AS film_count
-FROM
-    actor
-    JOIN film_actor ON film_actor.actor_id = actor.actor_id
-GROUP BY
-    actor.actor_id
-ORDER BY
-    film_count DESC
-LIMIT
-    10
-;
-
 -- Find customers who have rented the most items, ordered by descending rental
 -- count. Return the first_name, last_name and rental_count. Show only the top
 -- 10 results.
@@ -145,8 +116,8 @@ LIMIT
 
 -- https://stackoverflow.com/questions/67080935/how-can-i-get-the-desired-results-from-the-sakila-database-using-sql
 -- Find the films whose total number of actors is above the average, ordered by
--- title. Return the film title and the actor count. Show only the top 10
--- results.
+-- descending actor count, ascending film title. Return the film title and the actor_count. Show only
+-- the top 10 results.
 WITH film_stats AS (
     SELECT film_id, COUNT(*) AS actor_count
     FROM film_actor
@@ -161,18 +132,23 @@ FROM
 WHERE
     film_stats.actor_count > (SELECT AVG(actor_count) FROM film_stats)
 ORDER BY
-    film.title
+    film_stats.actor_count DESC
+    ,film.title ASC
 LIMIT
     10
 ;
 
 -- Window function example
 -- CASE usage means I can drop the other query with 'intended_audience'
+-- List the film categories and their total revenue (rounded to nearest
+-- integer), ordered by descending revenue. Return the name, revenue, the
+-- rank of that category and the quartile it belongs to (relative to the other
+-- categories).
 SELECT
     category.name
     ,ROUND(SUM(payment.amount)) AS revenue
-    ,NTILE(4) OVER (ORDER BY SUM(payment.amount) ASC) AS quartile
     ,RANK() OVER (ORDER BY SUM(payment.amount) DESC) AS rank
+    ,NTILE(4) OVER (ORDER BY SUM(payment.amount) ASC) AS quartile
 FROM
     category
     JOIN film_category ON category.category_id = film_category.category_id
@@ -206,6 +182,40 @@ FROM
     LEFT JOIN rental ON strftime('%Y %m', rental.rental_date) = strftime('%Y %m', dates.date_value)
 GROUP BY
     strftime('%Y %m', dates.date_value)
+ORDER BY
+    dates.date_value
+;
+
+-- Find the total number of 'Horror' films, 'Action' films, 'Comedy' films and
+-- 'Sci-Fi' films rented out every month between '2005-03-01' and '2006-02-01',
+-- ordered by month. Months with 0 rentals should also be included. Return the
+-- month, horror_count, action_count, comedy_count and scifi_count.
+WITH RECURSIVE dates (date_value) AS (
+    SELECT DATE('2005-03-01')
+    UNION ALL
+    SELECT DATE(date_value, '+1 month') FROM dates WHERE date_value < '2006-02-01'
+)
+,months (num, name) AS (
+    VALUES ('01', 'January'), ('02', 'February'), ('03', 'March'),
+        ('04', 'April'), ('05', 'May'), ('06', 'June'),
+        ('07', 'July'), ('08', 'August'), ('09', 'September'),
+        ('10', 'October'), ('11', 'November'), ('12', 'December')
+)
+SELECT
+    strftime('%Y', dates.date_value) || ' ' || months.name AS month
+    ,COUNT(CASE category.name WHEN 'Horror' THEN 1 END) AS horror_count
+    ,COUNT(CASE category.name WHEN 'Action' THEN 1 END) AS action_count
+    ,COUNT(CASE category.name WHEN 'Comedy' THEN 1 END) AS comedy_count
+    ,COUNT(CASE category.name WHEN 'Sci-Fi' THEN 1 END) AS scifi_count
+    ,COUNT(*) OVER () AS count
+FROM
+    dates
+    JOIN months ON months.num = strftime('%m', dates.date_value)
+    LEFT JOIN rental ON strftime('%Y %m', rental.rental_date) = strftime('%Y %m', dates.date_value)
+    LEFT JOIN film_category ON film_category.film_id = rental.inventory_id
+    LEFT JOIN category ON category.category_id = film_category.category_id
+GROUP BY
+    dates.date_value
 ORDER BY
     dates.date_value
 ;

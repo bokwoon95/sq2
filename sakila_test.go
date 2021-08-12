@@ -343,3 +343,192 @@ func xNEW_PAYMENT(alias string) xPAYMENT {
 	tbl.PAYMENT_DATE = NewTimeField("payment_date", tbl.TableInfo)
 	return tbl
 }
+
+type Record4 struct {
+	ActorID   int
+	FirstName string
+	LastName  string
+}
+
+type Record6 struct {
+	CountryName string
+	CityName    string
+}
+
+type Record7 struct {
+	FilmTitle  string
+	Length     int
+	Rating     string
+	Audience   string
+	LengthType string
+}
+
+type Record8 struct {
+	FilmTitle  string
+	ActorCount int
+}
+
+type Record9 struct {
+	CategoryName string
+	Revenue      int
+	Rank         int
+	Quartile     int
+}
+
+type Record10 struct {
+	Month       string
+	HorrorCount int
+	ActionCount int
+	ComedyCount int
+	ScifiCount  int
+}
+
+type SQLTest struct {
+	// Q1) Find all distinct actor last names ordered by last name. Show only
+	// the top 4 results.
+	Query1  Query
+	Answer1 []string
+
+	// Q2) Find if there is any actor with first name 'SCARLETT' or last name
+	// 'JOHANSSON'.
+	Query2  Query
+	Answer2 bool
+
+	// Q3) Find the number of distinct actor last names.
+	Query3  Query
+	Answer3 int
+
+	// Q4) Find all actors whose last name contain the letters 'GEN', ordered
+	// by actor_id. Return the actor_id, first_name and last_name.
+	Query4  Query
+	Answer4 []Record4
+
+	// Q5) Find actor last names that only once in the database, ordered by
+	// last_name.  Show only the top 5 results.
+	Query5  Query
+	Answer5 []string
+
+	// Q6) Find all the cities of the countries Egypt, Greece and Puerto Rico,
+	// ordered by country_name and city_name. Return the country_name and
+	// city_name.
+	Query6  Query
+	Answer6 []Record6
+
+	// Q7) List films together with their audience and length type, ordered by title.
+	// The audiences are:
+	// - rating = 'G' then 'family'
+	// - rating = 'PG' or rating = 'PG-13' then 'teens'
+	// - rating = 'R' or rating = 'NC-17' then 'adults'
+	// The length types are:
+	// - length <= 60 then 'short'
+	// - length > 60 and length <= 120 then 'medium'
+	// - length > 120 then 'long'
+	// Return the film_title, rating, length, audience and length_type. Show only the
+	// top 10 results.
+	Query7  Query
+	Answer7 []Record7
+
+	// Q8) Find the films whose total number of actors is above the average,
+	// ordered by title. Return the film title and the actor count. Show only
+	// the top 10 results.
+	Query8  Query
+	Answer8 []Record8
+
+	// Q9) List the film categories and their total revenue (rounded to nearest
+	// integer), ordered by descending revenue. Return the category name,
+	// revenue, the rank of that category and the quartile it belongs to
+	// (relative to the other categories).
+	Query9  Query
+	Answer9 []Record9
+
+	// Q10) Find the total number of 'Horror' films, 'Action' films, 'Comedy'
+	// films and 'Sci-Fi' films rented out every month between the dates
+	// '2005-03-01' and '2006-02-01', ordered by month. Months with 0 rentals
+	// should also be included. Return the month, horror_count, action_count,
+	// comedy_count and scifi_count.
+	Query10  Query
+	Answer10 []Record10
+}
+
+func NewSQLTest() SQLTest {
+	return SQLTest{
+		Answer1: []string{"AKROYD", "ALLEN", "ASTAIRE", "BACALL"},
+		Answer2: true,
+		Answer3: 121,
+		Answer4: []Record4{
+			{ActorID: 14, FirstName: "VIVIEN", LastName: "BERGEN"},
+			{ActorID: 41, FirstName: "JODIE", LastName: "DEGENERES"},
+			{ActorID: 107, FirstName: "GINA", LastName: "DEGENERES"},
+			{ActorID: 166, FirstName: "NICK", LastName: "DEGENERES"},
+		},
+		Answer5: []string{"ASTAIRE", "BACALL", "BALE", "BALL", "BARRYMORE"},
+		Answer6: []Record6{
+			{CountryName: "Egypt", CityName: "Bilbays"},
+			{CountryName: "Egypt", CityName: "Idfu"},
+			{CountryName: "Egypt", CityName: "Mit Ghamr"},
+			{CountryName: "Egypt", CityName: "Qalyub"},
+			{CountryName: "Egypt", CityName: "Sawhaj"},
+			{CountryName: "Egypt", CityName: "Shubra al-Khayma"},
+			{CountryName: "Greece", CityName: "Athenai"},
+			{CountryName: "Greece", CityName: "Patras"},
+			{CountryName: "Puerto Rico", CityName: "Arecibo"},
+			{CountryName: "Puerto Rico", CityName: "Ponce"},
+		},
+		Answer7: []Record7{
+			{FilmTitle: "ACADEMY DINOSAUR", Rating: "PG", Length: 86, Audience: "teens", LengthType: "medium"},
+			{FilmTitle: "ACE GOLDFINGER", Rating: "G", Length: 48, Audience: "family", LengthType: "short"},
+			{FilmTitle: "ADAPTATION HOLES", Rating: "NC-17", Length: 50, Audience: "adults", LengthType: "short"},
+			{FilmTitle: "AFFAIR PREJUDICE", Rating: "G", Length: 117, Audience: "family", LengthType: "medium"},
+			{FilmTitle: "AFRICAN EGG", Rating: "G", Length: 130, Audience: "family", LengthType: "long"},
+			{FilmTitle: "AGENT TRUMAN", Rating: "PG", Length: 169, Audience: "teens", LengthType: "long"},
+			{FilmTitle: "AIRPLANE SIERRA", Rating: "PG-13", Length: 62, Audience: "teens", LengthType: "medium"},
+			{FilmTitle: "AIRPORT POLLOCK", Rating: "R", Length: 54, Audience: "adults", LengthType: "short"},
+			{FilmTitle: "ALABAMA DEVIL", Rating: "PG-13", Length: 114, Audience: "teens", LengthType: "medium"},
+			{FilmTitle: "ALADDIN CALENDAR", Rating: "NC-17", Length: 63, Audience: "adults", LengthType: "medium"},
+		},
+		Answer8: []Record8{
+			{FilmTitle: "ALABAMA DEVIL", ActorCount: 24},
+			{FilmTitle: "ACADEMY DINOSAUR", ActorCount: 23},
+			{FilmTitle: "ALICE FANTASIA", ActorCount: 21},
+			{FilmTitle: "AGENT TRUMAN", ActorCount: 20},
+			{FilmTitle: "AIRPORT POLLOCK", ActorCount: 20},
+			{FilmTitle: "ALASKA PHANTOM", ActorCount: 19},
+			{FilmTitle: "ALI FOREVER", ActorCount: 19},
+			{FilmTitle: "AIRPLANE SIERRA", ActorCount: 17},
+			{FilmTitle: "ALAMO VIDEOTAPE", ActorCount: 17},
+			{FilmTitle: "ADAPTATION HOLES", ActorCount: 16},
+		},
+		Answer9: []Record9{
+			{CategoryName: "Sports", Revenue: 5314, Rank: 1, Quartile: 4},
+			{CategoryName: "Sci-Fi", Revenue: 4757, Rank: 2, Quartile: 4},
+			{CategoryName: "Animation", Revenue: 4656, Rank: 3, Quartile: 4},
+			{CategoryName: "Drama", Revenue: 4587, Rank: 4, Quartile: 4},
+			{CategoryName: "Comedy", Revenue: 4384, Rank: 5, Quartile: 3},
+			{CategoryName: "Action", Revenue: 4376, Rank: 6, Quartile: 3},
+			{CategoryName: "New", Revenue: 4353, Rank: 7, Quartile: 3},
+			{CategoryName: "Games", Revenue: 4281, Rank: 8, Quartile: 3},
+			{CategoryName: "Foreign", Revenue: 4271, Rank: 9, Quartile: 2},
+			{CategoryName: "Family", Revenue: 4235, Rank: 10, Quartile: 2},
+			{CategoryName: "Documentary", Revenue: 4218, Rank: 11, Quartile: 2},
+			{CategoryName: "Horror", Revenue: 3723, Rank: 12, Quartile: 2},
+			{CategoryName: "Children", Revenue: 3656, Rank: 13, Quartile: 1},
+			{CategoryName: "Classics", Revenue: 3640, Rank: 14, Quartile: 1},
+			{CategoryName: "Travel", Revenue: 3550, Rank: 15, Quartile: 1},
+			{CategoryName: "Music", Revenue: 3418, Rank: 16, Quartile: 1},
+		},
+		Answer10: []Record10{
+			{Month: "2005 March"},
+			{Month: "2005 April"},
+			{Month: "2005 May", HorrorCount: 14, ActionCount: 15, ComedyCount: 9, ScifiCount: 12},
+			{Month: "2005 June", HorrorCount: 27, ActionCount: 32, ComedyCount: 27, ScifiCount: 26},
+			{Month: "2005 July", HorrorCount: 79, ActionCount: 91, ComedyCount: 82, ScifiCount: 83},
+			{Month: "2005 August", HorrorCount: 71, ActionCount: 88, ComedyCount: 68, ScifiCount: 76},
+			{Month: "2005 September"},
+			{Month: "2005 October"},
+			{Month: "2005 November"},
+			{Month: "2005 December"},
+			{Month: "2006 January"},
+			{Month: "2006 February", HorrorCount: 3, ActionCount: 2, ComedyCount: 6, ScifiCount: 4},
+		},
+	}
+}
