@@ -2,6 +2,7 @@ package sq
 
 import (
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"reflect"
 	"time"
@@ -131,6 +132,24 @@ func (r *Row) ScanInto(dest interface{}, field Field) {
 			panic(fmt.Errorf("cannot pass in non pointer value (%#v) as dest", dest))
 		}
 		destValue.Elem().Set(reflect.ValueOf(r.dest[r.index]).Elem())
+	}
+	r.index++
+}
+
+func (r *Row) ScanJSON(dest interface{}, field Field) {
+	if !r.active {
+		if reflect.TypeOf(dest).Kind() != reflect.Ptr {
+			panic(fmt.Errorf("cannot pass in non pointer value (%#v) as dest", dest))
+		}
+		var b []byte
+		r.fields = append(r.fields, field)
+		r.dest = append(r.dest, &b)
+		return
+	}
+	bptr := r.dest[r.index].(*[]byte)
+	err := json.Unmarshal(*bptr, dest)
+	if err != nil {
+		panic(fmt.Errorf("ScanJSON failed: %w", err))
 	}
 	r.index++
 }

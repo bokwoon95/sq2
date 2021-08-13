@@ -220,4 +220,48 @@ func Test_SQLiteTestSuite(t *testing.T) {
 			t.Fatal(testutil.Callers(), diff)
 		}
 	})
+
+	t.Run("Q7", func(t *testing.T) {
+		t.Parallel()
+		FILM := xNEW_FILM("")
+		var answer7 []Film
+		_, err := Fetch(Log(db), SQLite.
+			From(FILM).
+			OrderBy(FILM.TITLE).
+			Limit(10),
+			func(row *Row) {
+				film := Film{
+					FilmID:          row.Int(FILM.FILM_ID),
+					Title:           row.String(FILM.TITLE),
+					Description:     row.String(FILM.DESCRIPTION),
+					ReleaseYear:     row.Int(FILM.RELEASE_YEAR),
+					RentalDuration:  row.Int(FILM.RENTAL_DURATION),
+					RentalRate:      row.Float64(FILM.RENTAL_RATE),
+					Length:          row.Int(FILM.LENGTH),
+					ReplacementCost: row.Float64(FILM.REPLACEMENT_COST),
+					Rating:          row.String(FILM.RATING),
+					LastUpdate:      row.Time(FILM.LAST_UPDATE),
+				}
+				row.ScanJSON(&film.SpecialFeatures, FILM.SPECIAL_FEATURES)
+				row.ScanInto(&film.Audience, Case(FILM.RATING).
+					When("G", "family").
+					When("PG", "teens").
+					When("PG-13", "teens").
+					When("R", "adults").
+					When("NC-17", "adults"),
+				)
+				row.ScanInto(&film.LengthType, CaseWhen(FILM.LENGTH.LeInt(60), "short").
+					When(And(FILM.LENGTH.GtInt(60), FILM.LENGTH.LeInt(120)), "medium").
+					Else("long"),
+				)
+				row.Process(func() { answer7 = append(answer7, film) })
+			},
+		)
+		if err != nil {
+			t.Fatal(testutil.Callers(), err)
+		}
+		if diff := testutil.Diff(answer7, sakilaAnswer7()); diff != "" {
+			t.Fatal(testutil.Callers(), diff)
+		}
+	})
 }
