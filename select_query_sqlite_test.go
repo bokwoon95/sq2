@@ -348,4 +348,50 @@ func Test_SQLiteTestSuite(t *testing.T) {
 			t.Fatal(testutil.Callers(), diff)
 		}
 	})
+
+	t.Run("Q10", func(t *testing.T) {
+		t.Parallel()
+		var answer10 []MonthlyRentalStats
+		RENTAL := xNEW_RENTAL("")
+		FILM_CATEGORY := xNEW_FILM_CATEGORY("")
+		CATEGORY := xNEW_CATEGORY("")
+		dates := NewRecursiveCTE("dates", []string{"date_value"}, UnionAll(
+			SQLite.Select(Fieldf("DATE({})", "2005-03-01")),
+			SQLite.Select(Fieldf("DATE(date_value, '+1 month')")).From(Tablef("dates")).Where(Predicatef("date_value < {}", "2006-02-01")),
+		))
+		months := NewCTE("months", []string{"num", "name"}, Queryf(
+			"VALUES {}", RowValues{
+				{"01", "January"}, {"02", "February"}, {"03", "March"},
+				{"04", "April"}, {"05", "May"}, {"06", "June"},
+				{"07", "July"}, {"08", "August"}, {"09", "September"},
+				{"10", "October"}, {"11", "November"}, {"12", "December"},
+			},
+		))
+		_, err := Fetch(Log(db), SQLite.
+			SelectWith(dates, months).
+			From(dates).
+			Join(months, months.Field("num").Eq(Fieldf(`strftime('%m', {})`, dates.Field("date_value")))).
+			LeftJoin(RENTAL, Predicatef(`strftime('%Y %m', {}) = strftime('%Y %m', {})`, RENTAL.RENTAL_DATE, dates.Field("date_value"))).
+			LeftJoin(FILM_CATEGORY, FILM_CATEGORY.FILM_ID.Eq(RENTAL.INVENTORY_ID)).
+			LeftJoin(CATEGORY, CATEGORY.CATEGORY_ID.Eq(FILM_CATEGORY.CATEGORY_ID)).
+			GroupBy(dates.Field("date_value")).
+			OrderBy(dates.Field("date_value")),
+			func(row *Row) {
+				stats := MonthlyRentalStats{
+					Month:       row.String(StringFieldf(`strftime('%Y', {}) || ' ' || {}`, dates.Field("date_value"), months.Field("name"))),
+					HorrorCount: row.Int64(NumberFieldf("COUNT({})", Case(CATEGORY.NAME).When("Horror", 1))),
+					ActionCount: row.Int64(NumberFieldf("COUNT({})", Case(CATEGORY.NAME).When("Action", 1))),
+					ComedyCount: row.Int64(NumberFieldf("COUNT({})", Case(CATEGORY.NAME).When("Comedy", 1))),
+					ScifiCount:  row.Int64(NumberFieldf("COUNT({})", Case(CATEGORY.NAME).When("Sci-Fi", 1))),
+				}
+				row.Process(func() { answer10 = append(answer10, stats) })
+			},
+		)
+		if err != nil {
+			t.Fatal(testutil.Callers(), err)
+		}
+		if diff := testutil.Diff(answer10, sakilaAnswer10()); diff != "" {
+			t.Fatal(testutil.Callers(), diff)
+		}
+	})
 }
