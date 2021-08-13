@@ -75,4 +75,8 @@ func (f StringField) EqString(val string) Predicate { return Eq(f, val) }
 
 func (f StringField) NeString(val string) Predicate { return Ne(f, val) }
 
+func (f StringField) LikeString(val string) Predicate { return Predicatef("{} LIKE {}", f, val) }
+
+func (f StringField) ILikeString(val string) Predicate { return Predicatef("{} ILIKE {}", f, val) }
+
 func (f StringField) SetString(val string) Assignment { return Assign(f, val) }

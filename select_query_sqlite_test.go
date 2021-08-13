@@ -81,21 +81,20 @@ func Test_SQLiteSelectQuery(t *testing.T) {
 
 func Test_SQLiteTestSuite(t *testing.T) {
 	answers := NewTestSuiteAnswers()
+	db, err := sql.Open("sqlite3", "/Users/bokwoon/Documents/sq2/db.sqlite3")
+	if err != nil {
+		t.Fatal(testutil.Callers(), err)
+	}
 
 	t.Run("Q1", func(t *testing.T) {
 		t.Parallel()
-		db, err := sql.Open("sqlite3", "/Users/bokwoon/Documents/sq2/db.sqlite3")
-		if err != nil {
-			t.Fatal(testutil.Callers(), err)
-		}
 		var answer1 []string
 		ACTOR := xNEW_ACTOR("")
-		q := SQLiteEnv(nil).
+		_, err := Fetch(db, SQLite.
 			SelectDistinct().
 			From(ACTOR).
 			OrderBy(ACTOR.LAST_NAME).
-			Limit(5)
-		_, err = Fetch(db, q,
+			Limit(5),
 			func(row *Row) {
 				lastName := row.String(ACTOR.LAST_NAME)
 				row.Process(func() { answer1 = append(answer1, lastName) })
@@ -111,26 +110,60 @@ func Test_SQLiteTestSuite(t *testing.T) {
 
 	t.Run("Q2", func(t *testing.T) {
 		t.Parallel()
-		db, err := sql.Open("sqlite3", "/Users/bokwoon/Documents/sq2/db.sqlite3")
+		ACTOR := xNEW_ACTOR("")
+		answer2, err := FetchExists(Log(db), SQLite.
+			From(ACTOR).
+			Where(Or(
+				ACTOR.FIRST_NAME.EqString("SCARLETT"),
+				ACTOR.FIRST_NAME.EqString("JOHANSSON"),
+			)),
+		)
 		if err != nil {
 			t.Fatal(testutil.Callers(), err)
 		}
-		var answer01 []string
+		if diff := testutil.Diff(answer2, answers.Answer2); diff != "" {
+			t.Fatal(testutil.Callers(), diff)
+		}
+	})
+
+	t.Run("Q3", func(t *testing.T) {
+		t.Parallel()
 		ACTOR := xNEW_ACTOR("")
-		_, err = Fetch(db, SQLiteEnv(nil).
-			SelectDistinct().
+		var answer3 int
+		_, err := Fetch(db, SQLite.From(ACTOR), func(row *Row) {
+			answer3 = row.Int(NumberFieldf("COUNT(DISTINCT {})", ACTOR.LAST_NAME))
+			row.Close()
+		})
+		if err != nil {
+			t.Fatal(testutil.Callers(), err)
+		}
+		if diff := testutil.Diff(answers.Answer3, answer3); diff != "" {
+			t.Fatal(testutil.Callers(), diff)
+		}
+	})
+
+	t.Run("Q4", func(t *testing.T) {
+		t.Parallel()
+		ACTOR := xNEW_ACTOR("")
+		var answer4 []Actor
+		_, err := Fetch(db, SQLite.
 			From(ACTOR).
-			OrderBy(ACTOR.LAST_NAME).
-			Limit(5),
+			Where(ACTOR.LAST_NAME.LikeString("%GEN%")).
+			OrderBy(ACTOR.ACTOR_ID),
 			func(row *Row) {
-				lastName := row.String(ACTOR.LAST_NAME)
-				row.Process(func() { answer01 = append(answer01, lastName) })
+				actor := Actor{
+					ActorID:    row.Int(ACTOR.ACTOR_ID),
+					FirstName:  row.String(ACTOR.FIRST_NAME),
+					LastName:   row.String(ACTOR.LAST_NAME),
+					LastUpdate: row.Time(ACTOR.LAST_UPDATE),
+				}
+				row.Process(func() { answer4 = append(answer4, actor) })
 			},
 		)
 		if err != nil {
 			t.Fatal(testutil.Callers(), err)
 		}
-		if diff := testutil.Diff(answers.Answer1, answer01); diff != "" {
+		if diff := testutil.Diff(answers.Answer4, answer4); diff != "" {
 			t.Fatal(testutil.Callers(), diff)
 		}
 	})
