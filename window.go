@@ -129,3 +129,15 @@ func LastValueOver(field interface{}, window Window) CustomField {
 func NthValueOver(field interface{}, n int, window Window) CustomField {
 	return Fieldf("NTH_VALUE({}, {}) OVER {}", field, n, window)
 }
+
+func Count(field Field) NumberField { return NumberFieldf("COUNT({})", field) }
+
+func CountAll() NumberField { return NumberFieldf("COUNT(*)") }
+
+func Sum(field Field) NumberField { return NumberFieldf("SUM({})", field) }
+
+func Avg(field Field) NumberField { return NumberFieldf("AVG({})", field) }
+
+func Min(field Field) NumberField { return NumberFieldf("MIN({})", field) }
+
+func Max(field Field) NumberField { return NumberFieldf("MAX({})", field) }

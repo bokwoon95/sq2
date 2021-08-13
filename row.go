@@ -136,6 +136,10 @@ func (r *Row) ScanInto(dest interface{}, field Field) {
 	r.index++
 }
 
+// TODO: ScanArray isn't strictly necessary because the user can wrap pq.Array
+// themselves, but having array scanning work out of the box will delight the
+// user (esepcially beginners)
+
 func (r *Row) ScanJSON(dest interface{}, field Field) {
 	if !r.active {
 		if reflect.TypeOf(dest).Kind() != reflect.Ptr {
