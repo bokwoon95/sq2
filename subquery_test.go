@@ -38,7 +38,7 @@ func TestSubquery(t *testing.T) {
 		t.Parallel()
 		var tt TT
 		RENTAL, STAFF := xNEW_RENTAL(""), xNEW_STAFF("s")
-		subquery_rental := NewSubquery("subquery_rental", PostgresEnv(nil).
+		subquery_rental := NewSubquery("subquery_rental", Postgres.
 			Select(
 				RENTAL.STAFF_ID,
 				Fieldf("COUNT({})", RENTAL.RENTAL_ID).As("rental_count"),
@@ -46,7 +46,7 @@ func TestSubquery(t *testing.T) {
 			From(RENTAL).
 			GroupBy(RENTAL.STAFF_ID),
 		)
-		tt.item = PostgresEnv(nil).
+		tt.item = Postgres.
 			Select(
 				STAFF.STAFF_ID,
 				STAFF.FIRST_NAME,
@@ -88,7 +88,7 @@ func TestSubquery(t *testing.T) {
 	t.Run("subquery query no fields", func(t *testing.T) {
 		t.Parallel()
 		var tt TT
-		tt.item = SQLite.From(NewSubquery("subquery", MySQLEnv(nil).Select())).Select(Literal("*"))
+		tt.item = SQLite.From(NewSubquery("subquery", MySQL.Select())).Select(Literal("*"))
 		_, _, _, err := ToSQL("", tt.item)
 		if err == nil {
 			t.Fatal(testutil.Callers(), "expected error but got nil")
@@ -98,7 +98,7 @@ func TestSubquery(t *testing.T) {
 	t.Run("subquery query field no name", func(t *testing.T) {
 		t.Parallel()
 		var tt TT
-		tt.item = SQLite.From(NewSubquery("subquery", MySQLEnv(nil).Select(Value(1)))).Select(Literal("*"))
+		tt.item = SQLite.From(NewSubquery("subquery", MySQL.Select(Value(1)))).Select(Literal("*"))
 		_, _, _, err := ToSQL("", tt.item)
 		if err == nil {
 			t.Fatal(testutil.Callers(), "expected error but got nil")
@@ -109,7 +109,7 @@ func TestSubquery(t *testing.T) {
 		t.Parallel()
 		var tt TT
 		tt.item = SQLite.
-			From(NewSubquery("subquery", MySQLEnv(nil).Select(Value(1).As("field")).Where(FaultySQL{}))).
+			From(NewSubquery("subquery", MySQL.Select(Value(1).As("field")).Where(FaultySQL{}))).
 			Select(Literal("*"))
 		_, _, _, err := ToSQL("", tt.item)
 		if !errors.Is(err, ErrFaultySQL) {
@@ -120,7 +120,7 @@ func TestSubquery(t *testing.T) {
 	t.Run("subquery no alias, dialect == postgres || dialect == mysql", func(t *testing.T) {
 		t.Parallel()
 		var tt TT
-		tt.item = PostgresEnv(nil).From(NewSubquery("", PostgresEnv(nil).Select(Value(1).As("n")))).Select(Literal("*"))
+		tt.item = Postgres.From(NewSubquery("", Postgres.Select(Value(1).As("n")))).Select(Literal("*"))
 		_, _, _, err := ToSQL("", tt.item)
 		if err == nil {
 			t.Fatal(testutil.Callers(), "expected error but got nil")
@@ -160,7 +160,7 @@ func Test_SubqueryField(t *testing.T) {
 		t.Parallel()
 		var tt TT
 		tt.dialect = DialectPostgres
-		q := NewSubquery("", PostgresEnv(nil).Select(Value(1).As("field")))
+		q := NewSubquery("", Postgres.Select(Value(1).As("field")))
 		tt.item = q.Field("field")
 		_, _, _, err := ToSQLExclude(tt.dialect, tt.item, tt.excludedTableQualifiers)
 		if err == nil {
@@ -182,7 +182,7 @@ func Test_SubqueryField(t *testing.T) {
 	t.Run("Subquery field not exists", func(t *testing.T) {
 		t.Parallel()
 		var tt TT
-		q := NewSubquery("subquery", MySQLEnv(nil).Select(Value(1).As("field")))
+		q := NewSubquery("subquery", MySQL.Select(Value(1).As("field")))
 		tt.item = q.Field("nonexistent_field")
 		_, _, _, err := ToSQLExclude(tt.dialect, tt.item, tt.excludedTableQualifiers)
 		if err == nil {
@@ -193,7 +193,7 @@ func Test_SubqueryField(t *testing.T) {
 	t.Run("SubqueryField alias", func(t *testing.T) {
 		t.Parallel()
 		var tt TT
-		q := NewSubquery("subquery", MySQLEnv(nil).Select(Value(1).As("field")))
+		q := NewSubquery("subquery", MySQL.Select(Value(1).As("field")))
 		tt.item = q.Field("field").As("f")
 		tt.wantQuery = "subquery.field"
 		assert(t, tt)
@@ -202,7 +202,7 @@ func Test_SubqueryField(t *testing.T) {
 	t.Run("SubqueryField ASC NULLS LAST", func(t *testing.T) {
 		t.Parallel()
 		var tt TT
-		q := NewSubquery("subquery", MySQLEnv(nil).Select(Value(1).As("field")))
+		q := NewSubquery("subquery", MySQL.Select(Value(1).As("field")))
 		tt.item = q.Field("field").Asc().NullsLast()
 		tt.wantQuery = "subquery.field ASC NULLS LAST"
 		assert(t, tt)
@@ -211,7 +211,7 @@ func Test_SubqueryField(t *testing.T) {
 	t.Run("SubqueryField DESC NULLS FIRST", func(t *testing.T) {
 		t.Parallel()
 		var tt TT
-		q := NewSubquery("subquery", MySQLEnv(nil).Select(Value(1).As("field")))
+		q := NewSubquery("subquery", MySQL.Select(Value(1).As("field")))
 		tt.item = q.Field("field").Desc().NullsFirst()
 		tt.wantQuery = "subquery.field DESC NULLS FIRST"
 		assert(t, tt)
@@ -220,7 +220,7 @@ func Test_SubqueryField(t *testing.T) {
 	t.Run("SubqueryField IS NULL", func(t *testing.T) {
 		t.Parallel()
 		var tt TT
-		q := NewSubquery("subquery", MySQLEnv(nil).Select(Value(1).As("field")))
+		q := NewSubquery("subquery", MySQL.Select(Value(1).As("field")))
 		tt.item = q.Field("field").IsNull()
 		tt.wantQuery = "subquery.field IS NULL"
 		assert(t, tt)
@@ -229,7 +229,7 @@ func Test_SubqueryField(t *testing.T) {
 	t.Run("SubqueryField IS NOT NULL", func(t *testing.T) {
 		t.Parallel()
 		var tt TT
-		q := NewSubquery("subquery", MySQLEnv(nil).Select(Value(1).As("field")))
+		q := NewSubquery("subquery", MySQL.Select(Value(1).As("field")))
 		tt.item = q.Field("field").IsNotNull()
 		tt.wantQuery = "subquery.field IS NOT NULL"
 		assert(t, tt)
@@ -238,7 +238,7 @@ func Test_SubqueryField(t *testing.T) {
 	t.Run("SubqueryField IN (slice)", func(t *testing.T) {
 		t.Parallel()
 		var tt TT
-		q := NewSubquery("subquery", MySQLEnv(nil).Select(Value(1).As("field")))
+		q := NewSubquery("subquery", MySQL.Select(Value(1).As("field")))
 		tt.item = q.Field("field").In([]int{5, 6, 7})
 		tt.wantQuery = "subquery.field IN (?, ?, ?)"
 		tt.wantArgs = []interface{}{5, 6, 7}
@@ -248,7 +248,7 @@ func Test_SubqueryField(t *testing.T) {
 	t.Run("SubqueryField Eq", func(t *testing.T) {
 		t.Parallel()
 		var tt TT
-		q := NewSubquery("subquery", MySQLEnv(nil).Select(Value(1).As("field")))
+		q := NewSubquery("subquery", MySQL.Select(Value(1).As("field")))
 		tt.item = q.Field("field").Eq(123)
 		tt.wantQuery = "subquery.field = ?"
 		tt.wantArgs = []interface{}{123}
@@ -258,7 +258,7 @@ func Test_SubqueryField(t *testing.T) {
 	t.Run("SubqueryField Ne", func(t *testing.T) {
 		t.Parallel()
 		var tt TT
-		q := NewSubquery("subquery", MySQLEnv(nil).Select(Value(1).As("field")))
+		q := NewSubquery("subquery", MySQL.Select(Value(1).As("field")))
 		tt.item = q.Field("field").Ne(123)
 		tt.wantQuery = "subquery.field <> ?"
 		tt.wantArgs = []interface{}{123}
@@ -268,7 +268,7 @@ func Test_SubqueryField(t *testing.T) {
 	t.Run("SubqueryField Gt", func(t *testing.T) {
 		t.Parallel()
 		var tt TT
-		q := NewSubquery("subquery", MySQLEnv(nil).Select(Value(1).As("field")))
+		q := NewSubquery("subquery", MySQL.Select(Value(1).As("field")))
 		tt.item = q.Field("field").Gt(123)
 		tt.wantQuery = "subquery.field > ?"
 		tt.wantArgs = []interface{}{123}
@@ -278,7 +278,7 @@ func Test_SubqueryField(t *testing.T) {
 	t.Run("SubqueryField Ge", func(t *testing.T) {
 		t.Parallel()
 		var tt TT
-		q := NewSubquery("subquery", MySQLEnv(nil).Select(Value(1).As("field")))
+		q := NewSubquery("subquery", MySQL.Select(Value(1).As("field")))
 		tt.item = q.Field("field").Ge(123)
 		tt.wantQuery = "subquery.field >= ?"
 		tt.wantArgs = []interface{}{123}
@@ -288,7 +288,7 @@ func Test_SubqueryField(t *testing.T) {
 	t.Run("SubqueryField Lt", func(t *testing.T) {
 		t.Parallel()
 		var tt TT
-		q := NewSubquery("subquery", MySQLEnv(nil).Select(Value(1).As("field")))
+		q := NewSubquery("subquery", MySQL.Select(Value(1).As("field")))
 		tt.item = q.Field("field").Lt(123)
 		tt.wantQuery = "subquery.field < ?"
 		tt.wantArgs = []interface{}{123}
@@ -298,7 +298,7 @@ func Test_SubqueryField(t *testing.T) {
 	t.Run("SubqueryField Le", func(t *testing.T) {
 		t.Parallel()
 		var tt TT
-		q := NewSubquery("subquery", MySQLEnv(nil).Select(Value(1).As("field")))
+		q := NewSubquery("subquery", MySQL.Select(Value(1).As("field")))
 		tt.item = q.Field("field").Le(123)
 		tt.wantQuery = "subquery.field <= ?"
 		tt.wantArgs = []interface{}{123}
