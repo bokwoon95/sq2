@@ -80,7 +80,6 @@ func Test_SQLiteSelectQuery(t *testing.T) {
 }
 
 func Test_SQLiteTestSuite(t *testing.T) {
-	answers := NewTestSuiteAnswers()
 	db, err := sql.Open("sqlite3", "/Users/bokwoon/Documents/sq2/db.sqlite3")
 	if err != nil {
 		t.Fatal(testutil.Callers(), err)
@@ -103,7 +102,7 @@ func Test_SQLiteTestSuite(t *testing.T) {
 		if err != nil {
 			t.Fatal(testutil.Callers(), err)
 		}
-		if diff := testutil.Diff(answer1, answers.Answer1); diff != "" {
+		if diff := testutil.Diff(answer1, sakilaAnswer1()); diff != "" {
 			t.Fatal(testutil.Callers(), diff)
 		}
 	})
@@ -121,7 +120,7 @@ func Test_SQLiteTestSuite(t *testing.T) {
 		if err != nil {
 			t.Fatal(testutil.Callers(), err)
 		}
-		if diff := testutil.Diff(answer2, answers.Answer2); diff != "" {
+		if diff := testutil.Diff(answer2, sakilaAnswer2()); diff != "" {
 			t.Fatal(testutil.Callers(), diff)
 		}
 	})
@@ -137,7 +136,7 @@ func Test_SQLiteTestSuite(t *testing.T) {
 		if err != nil {
 			t.Fatal(testutil.Callers(), err)
 		}
-		if diff := testutil.Diff(answer3, answers.Answer3); diff != "" {
+		if diff := testutil.Diff(answer3, sakilaAnswer3()); diff != "" {
 			t.Fatal(testutil.Callers(), diff)
 		}
 	})
@@ -163,7 +162,7 @@ func Test_SQLiteTestSuite(t *testing.T) {
 		if err != nil {
 			t.Fatal(testutil.Callers(), err)
 		}
-		if diff := testutil.Diff(answer4, answers.Answer4); diff != "" {
+		if diff := testutil.Diff(answer4, sakilaAnswer4()); diff != "" {
 			t.Fatal(testutil.Callers(), diff)
 		}
 	})
