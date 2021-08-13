@@ -106,7 +106,7 @@ type Category struct {
 
 type CategoryRevenueStats struct {
 	Category Category `json:"category"`
-	Revenue  int64    `json:"revenue"`
+	Revenue  float64  `json:"revenue"`
 	Rank     int      `json:"rank"`
 	Quartile int      `json:"quartile"`
 }
@@ -354,7 +354,72 @@ func NewTestSuiteAnswers() TestSuiteAnswers {
 				ActorCount: 16,
 			},
 		},
-		Answer09: []CategoryRevenueStats{},
+		Answer09: []CategoryRevenueStats{
+			{
+				Category: Category{CategoryID: 15, CategoryName: "Sports", LastUpdate: datetime(2006, 02, 15, 4, 46, 27)},
+				Revenue:  5314.21, Rank: 1, Quartile: 4,
+			},
+			{
+				Category: Category{CategoryID: 14, CategoryName: "Sports", LastUpdate: datetime(2006, 02, 15, 4, 46, 27)},
+				Revenue:  4756.98, Rank: 2, Quartile: 4,
+			},
+			{
+				Category: Category{CategoryID: 2, CategoryName: "Animation", LastUpdate: datetime(2006, 02, 15, 4, 46, 27)},
+				Revenue:  4656.30, Rank: 3, Quartile: 4,
+			},
+			{
+				Category: Category{CategoryID: 7, CategoryName: "Drama", LastUpdate: datetime(2006, 02, 15, 4, 46, 27)},
+				Revenue:  4587.39, Rank: 4, Quartile: 4,
+			},
+			{
+				Category: Category{CategoryID: 5, CategoryName: "Comedy", LastUpdate: datetime(2006, 02, 15, 4, 46, 27)},
+				Revenue:  4383.58, Rank: 5, Quartile: 3,
+			},
+			{
+				Category: Category{CategoryID: 1, CategoryName: "Action", LastUpdate: datetime(2006, 02, 15, 4, 46, 27)},
+				Revenue:  4375.85, Rank: 6, Quartile: 3,
+			},
+			{
+				Category: Category{CategoryID: 13, CategoryName: "New", LastUpdate: datetime(2006, 02, 15, 4, 46, 27)},
+				Revenue:  4352.61, Rank: 7, Quartile: 3,
+			},
+			{
+				Category: Category{CategoryID: 10, CategoryName: "Games", LastUpdate: datetime(2006, 02, 15, 4, 46, 27)},
+				Revenue:  4381.33, Rank: 8, Quartile: 3,
+			},
+			{
+				Category: Category{CategoryID: 9, CategoryName: "Foreign", LastUpdate: datetime(2006, 02, 15, 4, 46, 27)},
+				Revenue:  4270.67, Rank: 9, Quartile: 2,
+			},
+			{
+				Category: Category{CategoryID: 8, CategoryName: "Family", LastUpdate: datetime(2006, 02, 15, 4, 46, 27)},
+				Revenue:  4235.03, Rank: 10, Quartile: 2,
+			},
+			{
+				Category: Category{CategoryID: 6, CategoryName: "Documentary", LastUpdate: datetime(2006, 02, 15, 4, 46, 27)},
+				Revenue:  4217.52, Rank: 11, Quartile: 2,
+			},
+			{
+				Category: Category{CategoryID: 11, CategoryName: "Horror", LastUpdate: datetime(2006, 02, 15, 4, 46, 27)},
+				Revenue:  3722.54, Rank: 12, Quartile: 2,
+			},
+			{
+				Category: Category{CategoryID: 3, CategoryName: "Children", LastUpdate: datetime(2006, 02, 15, 4, 46, 27)},
+				Revenue:  3655.55, Rank: 13, Quartile: 1,
+			},
+			{
+				Category: Category{CategoryID: 4, CategoryName: "Classics", LastUpdate: datetime(2006, 02, 15, 4, 46, 27)},
+				Revenue:  3639.59, Rank: 14, Quartile: 1,
+			},
+			{
+				Category: Category{CategoryID: 16, CategoryName: "Travel", LastUpdate: datetime(2006, 02, 15, 4, 46, 27)},
+				Revenue:  3549.64, Rank: 15, Quartile: 1,
+			},
+			{
+				Category: Category{CategoryID: 12, CategoryName: "Music", LastUpdate: datetime(2006, 02, 15, 4, 46, 27)},
+				Revenue:  3417.72, Rank: 16, Quartile: 1,
+			},
+		},
 		Answer10: []MonthlyRentalStats{},
 		Answer11: []Store{},
 		Answer12: []Film{},

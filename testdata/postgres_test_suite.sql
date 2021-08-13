@@ -129,7 +129,7 @@ SELECT
     category.category_id
     ,category.name
     ,category.last_update
-    ,ROUND(SUM(payment.amount)) AS revenue
+    ,ROUND(SUM(payment.amount), 2) AS revenue
     ,RANK() OVER (ORDER BY SUM(payment.amount) DESC) AS rank
     ,NTILE(4) OVER (ORDER BY SUM(payment.amount) ASC) AS quartile
 FROM
