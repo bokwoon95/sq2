@@ -14,12 +14,12 @@ type Film struct {
 	Title           string    `json:"title"`
 	Description     string    `json:"description"`
 	ReleaseYear     string    `json:"release_year"`
-	RentalDuration  int       `json:"rental_duration"`
-	RentalRate      int       `json:"rental_rate"`
-	Length          int       `json:"length"`
-	ReplacementCost int       `json:"replacement_cost"`
+	RentalDuration  int       `json:"rental_duration"`  // The length of the rental period, in days.
+	RentalRate      float64   `json:"rental_rate"`      // The cost to rent the film for the period specified in the rental_duration column.
+	Length          int       `json:"length"`           // The duration of the film, in minutes.
+	ReplacementCost float64   `json:"replacement_cost"` // The amount charged to the customer if the film is not returned or is returned in a damaged state.
 	Rating          string    `json:"rating"`
-	SpecialFeatures []string  `json:"special_features"`
+	SpecialFeatures []string  `json:"special_features"` //  Lists which common special features are included on the DVD.
 	Actors          []Actor   `json:"actors"`
 	Audience        string    `json:"audience"`
 	LengthType      string    `json:"length_type"`
@@ -127,6 +127,12 @@ type TestSuiteAnswers struct {
 }
 
 func NewTestSuiteAnswers() TestSuiteAnswers {
+	const (
+		Trailers        = "Trailers"
+		Commentaries    = "Commentaries"
+		DeletedScenes   = "Deleted Scenes"
+		BehindTheScenes = "Behind the Scenes"
+	)
 	datetime := func(year, month, day, hour, min, sec int) time.Time {
 		return time.Date(year, time.Month(month), day, hour, min, sec, 0, time.UTC)
 	}
@@ -183,7 +189,78 @@ func NewTestSuiteAnswers() TestSuiteAnswers {
 				CityID:  411, CityName: "Ponce", LastUpdate: datetime(2006, 02, 15, 4, 45, 25),
 			},
 		},
-		Answer07: []Film{},
+		Answer07: []Film{
+			{
+				FilmID: 1, Title: "ACADEMY DINOSAUR",
+				Description: "A Epic Drama of a Feminist And a Mad Scientist who must Battle a Teacher in The Canadian Rockies",
+				ReleaseYear: "2006", RentalDuration: 6, RentalRate: 0.99, Length: 86, ReplacementCost: 20.99, Rating: "PG",
+				SpecialFeatures: []string{DeletedScenes, BehindTheScenes}, Audience: "teens",
+				LengthType: "medium", LastUpdate: datetime(2006, 2, 15, 5, 03, 42),
+			},
+			{
+				FilmID: 2, Title: "ACE GOLDFINGER",
+				Description: "A Astounding Epistle of a Database Administrator And a Explorer who must Find a Car in Ancient China",
+				ReleaseYear: "2006", RentalDuration: 3, RentalRate: 4.99, Length: 48, ReplacementCost: 12.99, Rating: "G",
+				SpecialFeatures: []string{Trailers, DeletedScenes}, Audience: "family",
+				LengthType: "short", LastUpdate: datetime(2006, 2, 15, 5, 03, 42),
+			},
+			{
+				FilmID: 3, Title: "ADAPTATION HOLES",
+				Description: "A Astounding Reflection of a Lumberjack And a Car who must Sink a Lumberjack in A Baloon Factory",
+				ReleaseYear: "2006", RentalDuration: 7, RentalRate: 2.99, Length: 50, ReplacementCost: 18.99, Rating: "NC-17",
+				SpecialFeatures: []string{Trailers, DeletedScenes}, Audience: "adults",
+				LengthType: "short", LastUpdate: datetime(2006, 2, 15, 5, 03, 42),
+			},
+			{
+				FilmID: 4, Title: "AFFAIR PREJUDICE",
+				Description: "A Fanciful Documentary of a Frisbee And a Lumberjack who must Chase a Monkey in A Shark Tank",
+				ReleaseYear: "2006", RentalDuration: 5, RentalRate: 2.99, Length: 117, ReplacementCost: 26.99, Rating: "G",
+				SpecialFeatures: []string{Commentaries, BehindTheScenes}, Audience: "family",
+				LengthType: "medium", LastUpdate: datetime(2006, 2, 15, 5, 03, 42),
+			},
+			{
+				FilmID: 5, Title: "AFRICAN EGG",
+				Description: "A Fast-Paced Documentary of a Pastry Chef And a Dentist who must Pursue a Forensic Psychologist in The Gulf of Mexico",
+				ReleaseYear: "2006", RentalDuration: 6, RentalRate: 2.99, Length: 130, ReplacementCost: 22.99, Rating: "G",
+				SpecialFeatures: []string{DeletedScenes}, Audience: "family",
+				LengthType: "long", LastUpdate: datetime(2006, 2, 15, 5, 03, 42),
+			},
+			{
+				FilmID: 6, Title: "AGENT TRUMAN",
+				Description: "A Intrepid Panorama of a Robot And a Boy who must Escape a Sumo Wrestler in Ancient China",
+				ReleaseYear: "2006", RentalDuration: 3, RentalRate: 2.99, Length: 169, ReplacementCost: 17.99, Rating: "PG",
+				SpecialFeatures: []string{DeletedScenes}, Audience: "teens",
+				LengthType: "long", LastUpdate: datetime(2006, 2, 15, 5, 03, 42),
+			},
+			{
+				FilmID: 7, Title: "AIRPLANE SIERRA",
+				Description: "A Touching Saga of a Hunter And a Butler who must Discover a Butler in A Jet Boat",
+				ReleaseYear: "2006", RentalDuration: 6, RentalRate: 4.99, Length: 62, ReplacementCost: 28.99, Rating: "PG-13",
+				SpecialFeatures: []string{Trailers, DeletedScenes}, Audience: "teens",
+				LengthType: "medium", LastUpdate: datetime(2006, 2, 15, 5, 03, 42),
+			},
+			{
+				FilmID: 8, Title: "AIRPORT POLLOCK",
+				Description: "A Epic Tale of a Moose And a Girl who must Confront a Monkey in Ancient India",
+				ReleaseYear: "2006", RentalDuration: 6, RentalRate: 4.99, Length: 54, ReplacementCost: 15.99, Rating: "R",
+				SpecialFeatures: []string{Trailers}, Audience: "adults",
+				LengthType: "short", LastUpdate: datetime(2006, 2, 15, 5, 03, 42),
+			},
+			{
+				FilmID: 9, Title: "ALABAMA DEVIL",
+				Description: "A Thoughtful Panorama of a Database Administrator And a Mad Scientist who must Outgun a Mad Scientist in A Jet Boat",
+				ReleaseYear: "2006", RentalDuration: 3, RentalRate: 2.99, Length: 114, ReplacementCost: 21.99, Rating: "PG-13",
+				SpecialFeatures: []string{Trailers, DeletedScenes}, Audience: "teens",
+				LengthType: "medium", LastUpdate: datetime(2006, 2, 15, 5, 03, 42),
+			},
+			{
+				FilmID: 10, Title: "ALADDIN CALENDAR",
+				Description: "A Action-Packed Tale of a Man And a Lumberjack who must Reach a Feminist in Ancient China",
+				ReleaseYear: "2006", RentalDuration: 6, RentalRate: 4.99, Length: 63, ReplacementCost: 24.99, Rating: "NC-17",
+				SpecialFeatures: []string{Trailers, DeletedScenes}, Audience: "adults",
+				LengthType: "medium", LastUpdate: datetime(2006, 2, 15, 5, 03, 42),
+			},
+		},
 		Answer08: []FilmActorStats{},
 		Answer09: []CategoryRevenueStats{},
 		Answer10: []MonthlyRentalStats{},

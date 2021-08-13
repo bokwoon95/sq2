@@ -10,6 +10,8 @@ introspect.go
 catalog.go
 migration_commands.go
 
+move test-related scripts into testdata/ instead of stuffing everything in sql/
+
 change 'ondelete=restrict' to 'deferrable'
 remove sqlite:default=DATETIME('now'). all hail CURRENT_TIMESTAMP
 change default TimeField type from 'DATETIME' to 'TIMESTAMP'
