@@ -181,6 +181,6 @@ func (l logger) LogQueryStats(ctx context.Context, stats QueryStats, skip int) {
 		buf.WriteString(stats.QueryResults)
 	}
 	if buf.Len() > 0 {
-		l.log.Printf(buf.String())
+		l.log.Println(buf.String())
 	}
 }
