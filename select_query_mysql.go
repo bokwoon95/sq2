@@ -7,7 +7,7 @@ type MySQLSelectQuery SelectQuery
 var _ Query = MySQLSelectQuery{}
 
 func (q MySQLSelectQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int, env map[string]interface{}) error {
-	return SelectQuery(q).AppendSQL(dialect, buf, args, params, nil)
+	return SelectQuery(q).AppendSQL(dialect, buf, args, params, env)
 }
 
 func (q MySQLSelectQuery) SetFetchableFields(fields []Field) (Query, error) {

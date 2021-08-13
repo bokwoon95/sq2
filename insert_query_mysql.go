@@ -7,7 +7,7 @@ type MySQLInsertQuery InsertQuery
 var _ Query = MySQLInsertQuery{}
 
 func (q MySQLInsertQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int, env map[string]interface{}) error {
-	return InsertQuery(q).AppendSQL(dialect, buf, args, params, nil)
+	return InsertQuery(q).AppendSQL(dialect, buf, args, params, env)
 }
 
 func (q MySQLInsertQuery) SetFetchableFields(fields []Field) (Query, error) {

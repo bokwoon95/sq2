@@ -7,7 +7,7 @@ type PostgresInsertQuery InsertQuery
 var _ Query = PostgresInsertQuery{}
 
 func (q PostgresInsertQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int, env map[string]interface{}) error {
-	return InsertQuery(q).AppendSQL(dialect, buf, args, params, nil)
+	return InsertQuery(q).AppendSQL(dialect, buf, args, params, env)
 }
 
 func (q PostgresInsertQuery) SetFetchableFields(fields []Field) (Query, error) {

@@ -7,7 +7,7 @@ type MySQLDeleteQuery DeleteQuery
 var _ Query = MySQLDeleteQuery{}
 
 func (q MySQLDeleteQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int, env map[string]interface{}) error {
-	return DeleteQuery(q).AppendSQL(dialect, buf, args, params, nil)
+	return DeleteQuery(q).AppendSQL(dialect, buf, args, params, env)
 }
 
 func (q MySQLDeleteQuery) SetFetchableFields(fields []Field) (Query, error) {
