@@ -264,4 +264,50 @@ func Test_SQLiteTestSuite(t *testing.T) {
 			t.Fatal(testutil.Callers(), diff)
 		}
 	})
+
+	t.Run("Q8", func(t *testing.T) {
+		t.Parallel()
+		FILM, FILM_ACTOR := xNEW_FILM(""), xNEW_FILM_ACTOR("")
+		var answer8 []FilmActorStats
+		film_stats := NewCTE("film_stats", nil, SQLite.
+			Select(FILM_ACTOR.FILM_ID, Fieldf("COUNT(*)").As("actor_count")).
+			From(FILM_ACTOR).
+			GroupBy(FILM_ACTOR.FILM_ID),
+		)
+		_, err := Fetch(Log(db), SQLite.
+			SelectWith(film_stats).
+			From(film_stats).
+			Join(FILM, film_stats.Field("film_id").Eq(FILM.FILM_ID)).
+			Where(film_stats.Field("actor_count").Gt(SQLite.Select(Fieldf("AVG(actor_count)")).From(film_stats))).
+			OrderBy(
+				film_stats.Field("actor_count").Desc(),
+				FILM.TITLE.Asc(),
+			).
+			Limit(10),
+			func(row *Row) {
+				film := Film{
+					FilmID:          row.Int(FILM.FILM_ID),
+					Title:           row.String(FILM.TITLE),
+					Description:     row.String(FILM.DESCRIPTION),
+					ReleaseYear:     row.Int(FILM.RELEASE_YEAR),
+					RentalDuration:  row.Int(FILM.RENTAL_DURATION),
+					RentalRate:      row.Float64(FILM.RENTAL_RATE),
+					Length:          row.Int(FILM.LENGTH),
+					ReplacementCost: row.Float64(FILM.REPLACEMENT_COST),
+					Rating:          row.String(FILM.RATING),
+					LastUpdate:      row.Time(FILM.LAST_UPDATE),
+				}
+				row.ScanJSON(&film.SpecialFeatures, FILM.SPECIAL_FEATURES)
+				filmActorStats := FilmActorStats{Film: film}
+				row.ScanInto(&filmActorStats.ActorCount, film_stats.Field("actor_count"))
+				row.Process(func() { answer8 = append(answer8, filmActorStats) })
+			},
+		)
+		if err != nil {
+			t.Fatal(testutil.Callers(), err)
+		}
+		if diff := testutil.Diff(answer8, sakilaAnswer8()); diff != "" {
+			t.Fatal(testutil.Callers(), diff)
+		}
+	})
 }

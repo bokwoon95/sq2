@@ -134,17 +134,33 @@ func IsNull(f Field) Predicate { return Predicatef("{} IS NULL", f) }
 
 func IsNotNull(f Field) Predicate { return Predicatef("{} IS NOT NULL", f) }
 
-func Eq(a, b interface{}) Predicate { return Predicatef("{} = {}", a, b) }
+// TODO: if any of the values are queries, wrap them in braces
 
-func Ne(a, b interface{}) Predicate { return Predicatef("{} <> {}", a, b) }
+func cmp(a, b interface{}, operator string) Predicate {
+	_, ok1 := a.(Query)
+	_, ok2 := b.(Query)
+	if !ok1 && !ok2 {
+		return Predicatef("{} "+operator+" {}", a, b)
+	} else if !ok1 && ok2 {
+		return Predicatef("{} "+operator+" ({})", a, b)
+	} else if ok1 && !ok2 {
+		return Predicatef("({}) "+operator+" {}", a, b)
+	} else {
+		return Predicatef("({}) "+operator+" ({})", a, b)
+	}
+}
 
-func Gt(a, b interface{}) Predicate { return Predicatef("{} > {}", a, b) }
+func Eq(a, b interface{}) Predicate { return cmp(a, b, "=") }
 
-func Ge(a, b interface{}) Predicate { return Predicatef("{} >= {}", a, b) }
+func Ne(a, b interface{}) Predicate { return cmp(a, b, "<>") }
 
-func Lt(a, b interface{}) Predicate { return Predicatef("{} < {}", a, b) }
+func Gt(a, b interface{}) Predicate { return cmp(a, b, ">") }
 
-func Le(a, b interface{}) Predicate { return Predicatef("{} <= {}", a, b) }
+func Ge(a, b interface{}) Predicate { return cmp(a, b, ">=") }
+
+func Lt(a, b interface{}) Predicate { return cmp(a, b, "<") }
+
+func Le(a, b interface{}) Predicate { return cmp(a, b, "<=") }
 
 func In(a, b interface{}) Predicate {
 	if b, ok := b.(RowValue); ok {

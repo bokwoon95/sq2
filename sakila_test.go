@@ -342,7 +342,7 @@ func sakilaAnswer8() []FilmActorStats {
 				ReleaseYear: 2006, RentalDuration: 6, RentalRate: 0.99, Length: 136, ReplacementCost: 22.99, Rating: "PG",
 				SpecialFeatures: []string{Commentaries, DeletedScenes}, LastUpdate: datetime(2006, 2, 15, 5, 03, 42),
 			},
-			ActorCount: 20,
+			ActorCount: 19,
 		},
 		{
 			Film: Film{
@@ -377,7 +377,6 @@ func sakilaAnswer8() []FilmActorStats {
 				Description: "A Astounding Reflection of a Lumberjack And a Car who must Sink a Lumberjack in A Baloon Factory",
 				ReleaseYear: 2006, RentalDuration: 7, RentalRate: 2.99, Length: 50, ReplacementCost: 18.99, Rating: "NC-17",
 				SpecialFeatures: []string{Trailers, DeletedScenes}, LastUpdate: datetime(2006, 2, 15, 5, 03, 42),
-				Audience: "adults", LengthType: "short",
 			},
 			ActorCount: 16,
 		},
