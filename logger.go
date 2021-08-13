@@ -77,8 +77,7 @@ type LogSettings struct {
 
 type Logger interface {
 	LogQueryStats(ctx context.Context, stats QueryStats, skip int)
-	LogResults() (shouldLogResults bool, limit int)
-	GetLogSettings() LogSettings
+	LimitResults() (resultsLimit int)
 }
 
 type LoggerDB struct {
@@ -113,14 +112,7 @@ func VerboseLog(db DB) LoggerDB {
 	return LoggerDB{Logger: verboseLogger, DB: db}
 }
 
-func (l logger) LogResults() (shouldLogResults bool, limit int) { return true, l.resultsLimit }
-
-func (l logger) GetLogSettings() LogSettings {
-	return LogSettings{
-		ResultsLimit:  l.resultsLimit,
-		GetCallerInfo: l.logflag&Lcaller != 0,
-	}
-}
+func (l logger) LimitResults() (resultsLimit int) { return l.resultsLimit }
 
 func (l logger) LogQueryStats(ctx context.Context, stats QueryStats, skip int) {
 	select {

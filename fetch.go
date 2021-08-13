@@ -40,12 +40,11 @@ func fetchContext(ctx context.Context, db DB, q Query, rowmapper func(*Row), ski
 		return 0, errors.New("sq: cannot call Fetch/FetchContext without a rowmapper")
 	}
 	var stats QueryStats
-	var shouldLogResults bool
 	var resultsLimit int
 	var logQueryStats func(ctx context.Context, stats QueryStats, skip int)
 	if db, ok := db.(LoggerDB); ok {
 		logQueryStats = db.LogQueryStats
-		shouldLogResults, resultsLimit = db.LogResults()
+		resultsLimit = db.LimitResults()
 	}
 	stats.Dialect = q.GetDialect()
 	r := &Row{}
@@ -61,7 +60,7 @@ func fetchContext(ctx context.Context, db DB, q Query, rowmapper func(*Row), ski
 		if stats.Query == "" && err != nil {
 			stats.Query = buf.String() + "%!(error=" + err.Error() + ")"
 		}
-		if shouldLogResults {
+		if resultsLimit > 0 {
 			stats.QueryResults = resultsBuf.String()
 		}
 		buf.Reset()
@@ -74,7 +73,7 @@ func fetchContext(ctx context.Context, db DB, q Query, rowmapper func(*Row), ski
 		stats.Error = err
 		stats.RowCount.Valid = true
 		stats.RowCount.Int64 = rowCount
-		logQueryStats(ctx, stats, skip+2)
+		logQueryStats(ctx, stats, skip+1)
 	}()
 	err = q.AppendSQL(stats.Dialect, buf, &stats.Args, make(map[string][]int), nil)
 	if err != nil {
@@ -101,7 +100,7 @@ func fetchContext(ctx context.Context, db DB, q Query, rowmapper func(*Row), ski
 		if err != nil {
 			return rowCount, decorateScanError(stats.Dialect, fields, dest, err)
 		}
-		if shouldLogResults && rowCount <= int64(resultsLimit) {
+		if resultsLimit > 0 && rowCount <= int64(resultsLimit) {
 			accumulateResults(stats.Dialect, resultsBuf, fields, dest, rowCount)
 		}
 		RowReset(r)
@@ -122,7 +121,7 @@ func fetchContext(ctx context.Context, db DB, q Query, rowmapper func(*Row), ski
 	if err != nil {
 		return rowCount, err
 	}
-	if shouldLogResults && rowCount > int64(resultsLimit) {
+	if resultsLimit > 0 && rowCount > int64(resultsLimit) {
 		resultsBuf.WriteString("\n...\n(" + strconv.FormatInt(rowCount-int64(resultsLimit), 10) + " more rows)")
 	}
 	return rowCount, nil
@@ -233,7 +232,7 @@ func fetchExistsContext(ctx context.Context, db DB, q Query, skip int) (exists b
 			stats.RowCount.Valid = true
 			stats.RowCount.Int64 = 1
 		}
-		logQueryStats(ctx, stats, skip+2)
+		logQueryStats(ctx, stats, skip+1)
 	}()
 	buf.WriteString("SELECT EXISTS(")
 	err = q.AppendSQL(stats.Dialect, buf, &stats.Args, make(map[string][]int), nil)

@@ -89,7 +89,7 @@ func Test_SQLiteTestSuite(t *testing.T) {
 		t.Parallel()
 		var answer1 []string
 		ACTOR := xNEW_ACTOR("")
-		_, err := Fetch(db, SQLite.
+		_, err := Fetch(Log(db), SQLite.
 			SelectDistinct().
 			From(ACTOR).
 			OrderBy(ACTOR.LAST_NAME).
@@ -129,7 +129,7 @@ func Test_SQLiteTestSuite(t *testing.T) {
 		t.Parallel()
 		ACTOR := xNEW_ACTOR("")
 		var answer3 int
-		_, err := Fetch(db, SQLite.From(ACTOR), func(row *Row) {
+		_, err := Fetch(Log(db), SQLite.From(ACTOR), func(row *Row) {
 			answer3 = row.Int(NumberFieldf("COUNT(DISTINCT {})", ACTOR.LAST_NAME))
 			row.Close()
 		})
@@ -145,7 +145,7 @@ func Test_SQLiteTestSuite(t *testing.T) {
 		t.Parallel()
 		ACTOR := xNEW_ACTOR("")
 		var answer4 []Actor
-		_, err := Fetch(db, SQLite.
+		_, err := Fetch(Log(db), SQLite.
 			From(ACTOR).
 			Where(ACTOR.LAST_NAME.LikeString("%GEN%")).
 			OrderBy(ACTOR.ACTOR_ID),
@@ -171,7 +171,7 @@ func Test_SQLiteTestSuite(t *testing.T) {
 		t.Parallel()
 		ACTOR := xNEW_ACTOR("")
 		var answer5 []string
-		_, err := Fetch(db, SQLite.
+		_, err := Fetch(Log(db), SQLite.
 			From(ACTOR).
 			GroupBy(ACTOR.LAST_NAME).
 			Having(Fieldf("COUNT(*)").Eq(1)).
