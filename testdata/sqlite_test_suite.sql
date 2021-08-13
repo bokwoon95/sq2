@@ -122,8 +122,8 @@ LIMIT
     10
 ;
 
--- Q9) List the film categories and their total revenue (rounded to nearest
--- integer), ordered by descending revenue. Include the rank of that category
+-- Q9) List the film categories and their total revenue (rounded to 2
+-- decimals), ordered by descending revenue. Include the rank of that category
 -- and the quartile it belongs to, relative to the other categories.
 SELECT
     category.category_id

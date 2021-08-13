@@ -103,7 +103,7 @@ func Test_SQLiteTestSuite(t *testing.T) {
 		if err != nil {
 			t.Fatal(testutil.Callers(), err)
 		}
-		if diff := testutil.Diff(answers.Answer1, answer1); diff != "" {
+		if diff := testutil.Diff(answer1, answers.Answer1); diff != "" {
 			t.Fatal(testutil.Callers(), diff)
 		}
 	})
@@ -137,7 +137,7 @@ func Test_SQLiteTestSuite(t *testing.T) {
 		if err != nil {
 			t.Fatal(testutil.Callers(), err)
 		}
-		if diff := testutil.Diff(answers.Answer3, answer3); diff != "" {
+		if diff := testutil.Diff(answer3, answers.Answer3); diff != "" {
 			t.Fatal(testutil.Callers(), diff)
 		}
 	})
@@ -163,7 +163,7 @@ func Test_SQLiteTestSuite(t *testing.T) {
 		if err != nil {
 			t.Fatal(testutil.Callers(), err)
 		}
-		if diff := testutil.Diff(answers.Answer4, answer4); diff != "" {
+		if diff := testutil.Diff(answer4, answers.Answer4); diff != "" {
 			t.Fatal(testutil.Callers(), diff)
 		}
 	})
