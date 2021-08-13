@@ -310,4 +310,42 @@ func Test_SQLiteTestSuite(t *testing.T) {
 			t.Fatal(testutil.Callers(), diff)
 		}
 	})
+
+	t.Run("Q9", func(t *testing.T) {
+		t.Parallel()
+		var answer9 []CategoryRevenueStats
+		CATEGORY := xNEW_CATEGORY("")
+		FILM_CATEGORY := xNEW_FILM_CATEGORY("")
+		INVENTORY := xNEW_INVENTORY("")
+		RENTAL := xNEW_RENTAL("")
+		PAYMENT := xNEW_PAYMENT("")
+		_, err := Fetch(Log(db), SQLite.
+			From(CATEGORY).
+			Join(FILM_CATEGORY, FILM_CATEGORY.CATEGORY_ID.Eq(CATEGORY.CATEGORY_ID)).
+			Join(INVENTORY, INVENTORY.FILM_ID.Eq(FILM_CATEGORY.FILM_ID)).
+			Join(RENTAL, RENTAL.INVENTORY_ID.Eq(INVENTORY.INVENTORY_ID)).
+			Join(PAYMENT, PAYMENT.RENTAL_ID.Eq(RENTAL.RENTAL_ID)).
+			GroupBy(CATEGORY.CATEGORY_ID, CATEGORY.NAME, CATEGORY.LAST_UPDATE).
+			OrderBy(Fieldf("revenue").Desc()),
+			func(row *Row) {
+				stats := CategoryRevenueStats{
+					Category: Category{
+						CategoryID:   row.Int(CATEGORY.CATEGORY_ID),
+						CategoryName: row.String(CATEGORY.NAME),
+						LastUpdate:   row.Time(CATEGORY.LAST_UPDATE),
+					},
+					Revenue:  row.Float64(NumberFieldf("ROUND(SUM({}), 2)", PAYMENT.AMOUNT).As("revenue")),
+					Rank:     row.Int(RankOver(OrderBy(Fieldf("SUM({})", PAYMENT.AMOUNT).Desc()))),
+					Quartile: row.Int(NtileOver(4, OrderBy(Fieldf("SUM({})", PAYMENT.AMOUNT).Asc()))),
+				}
+				row.Process(func() { answer9 = append(answer9, stats) })
+			},
+		)
+		if err != nil {
+			t.Fatal(testutil.Callers(), err)
+		}
+		if diff := testutil.Diff(answer9, sakilaAnswer9()); diff != "" {
+			t.Fatal(testutil.Callers(), diff)
+		}
+	})
 }

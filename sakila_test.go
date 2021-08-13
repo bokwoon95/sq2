@@ -393,7 +393,7 @@ func sakilaAnswer9() []CategoryRevenueStats {
 			Revenue:  5314.21, Rank: 1, Quartile: 4,
 		},
 		{
-			Category: Category{CategoryID: 14, CategoryName: "Sports", LastUpdate: datetime(2006, 02, 15, 4, 46, 27)},
+			Category: Category{CategoryID: 14, CategoryName: "Sci-Fi", LastUpdate: datetime(2006, 02, 15, 4, 46, 27)},
 			Revenue:  4756.98, Rank: 2, Quartile: 4,
 		},
 		{
@@ -418,7 +418,7 @@ func sakilaAnswer9() []CategoryRevenueStats {
 		},
 		{
 			Category: Category{CategoryID: 10, CategoryName: "Games", LastUpdate: datetime(2006, 02, 15, 4, 46, 27)},
-			Revenue:  4381.33, Rank: 8, Quartile: 3,
+			Revenue:  4281.33, Rank: 8, Quartile: 3,
 		},
 		{
 			Category: Category{CategoryID: 9, CategoryName: "Foreign", LastUpdate: datetime(2006, 02, 15, 4, 46, 27)},
