@@ -71,11 +71,11 @@ type Country struct {
 }
 
 type MonthlyRentalStats struct {
-	Month       time.Time `json:"month"`
-	HorrorCount int64     `json:"horror_count"`
-	ActionCount int64     `json:"action_count"`
-	ComedyCount int64     `json:"comedy_count"`
-	ScifiCount  int64     `json:"scifi_count"`
+	Month       string `json:"month"`
+	HorrorCount int64  `json:"horror_count"`
+	ActionCount int64  `json:"action_count"`
+	ComedyCount int64  `json:"comedy_count"`
+	ScifiCount  int64  `json:"scifi_count"`
 }
 
 type Customer struct {
@@ -420,7 +420,20 @@ func NewTestSuiteAnswers() TestSuiteAnswers {
 				Revenue:  3417.72, Rank: 16, Quartile: 1,
 			},
 		},
-		Answer10: []MonthlyRentalStats{},
+		Answer10: []MonthlyRentalStats{
+			{Month: "2005 March"},
+			{Month: "2005 April"},
+			{Month: "2005 May", HorrorCount: 14, ActionCount: 15, ComedyCount: 9, ScifiCount: 12},
+			{Month: "2005 June", HorrorCount: 27, ActionCount: 32, ComedyCount: 27, ScifiCount: 26},
+			{Month: "2005 July", HorrorCount: 79, ActionCount: 91, ComedyCount: 82, ScifiCount: 83},
+			{Month: "2005 August", HorrorCount: 71, ActionCount: 88, ComedyCount: 68, ScifiCount: 76},
+			{Month: "2005 September"},
+			{Month: "2005 October"},
+			{Month: "2005 November"},
+			{Month: "2005 December"},
+			{Month: "2006 January"},
+			{Month: "2006 February", HorrorCount: 3, ActionCount: 2, ComedyCount: 6, ScifiCount: 4},
+		},
 		Answer11: []Store{},
 		Answer12: []Film{},
 	}
