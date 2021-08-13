@@ -367,7 +367,7 @@ func Test_SQLiteTestSuite(t *testing.T) {
 				{"10", "October"}, {"11", "November"}, {"12", "December"},
 			},
 		))
-		_, err := Fetch(Log(db), SQLite.
+		_, err := Fetch(VerboseLog(db), SQLite.
 			SelectWith(dates, months).
 			From(dates).
 			Join(months, months.Field("num").Eq(Fieldf(`strftime('%m', {})`, dates.Field("date_value")))).
@@ -378,7 +378,7 @@ func Test_SQLiteTestSuite(t *testing.T) {
 			OrderBy(dates.Field("date_value")),
 			func(row *Row) {
 				stats := MonthlyRentalStats{
-					Month:       row.String(StringFieldf(`strftime('%Y', {}) || ' ' || {}`, dates.Field("date_value"), months.Field("name"))),
+					Month:       row.String(StringFieldf(`strftime('%Y', {}) || ' ' || {}`, dates.Field("date_value"), months.Field("name")).As("month")),
 					HorrorCount: row.Int64(NumberFieldf("COUNT({})", Case(CATEGORY.NAME).When("Horror", 1))),
 					ActionCount: row.Int64(NumberFieldf("COUNT({})", Case(CATEGORY.NAME).When("Action", 1))),
 					ComedyCount: row.Int64(NumberFieldf("COUNT({})", Case(CATEGORY.NAME).When("Comedy", 1))),

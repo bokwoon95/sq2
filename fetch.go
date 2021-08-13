@@ -158,6 +158,8 @@ func decorateScanError(dialect string, fields []Field, dest []interface{}, err e
 	return fmt.Errorf("please check if your mapper function is correct:%s\n%w", buf.String(), err)
 }
 
+// TODO: there's no reason to actually serialize the fields []Field over and
+// over, it should be serialized once outside this function and passed in.
 func accumulateResults(dialect string, buf *bytes.Buffer, fields []Field, dest []interface{}, rowNumber int64) {
 	tmpbuf := bufpool.Get().(*bytes.Buffer)
 	tmpargs := argspool.Get().([]interface{})
@@ -172,10 +174,14 @@ func accumulateResults(dialect string, buf *bytes.Buffer, fields []Field, dest [
 		buf.WriteString("\n")
 		tmpbuf.Reset()
 		tmpargs = tmpargs[:0]
-		err := fields[i].AppendSQLExclude(dialect, tmpbuf, &tmpargs, make(map[string][]int), nil, nil)
-		if err != nil {
-			buf.WriteString("%!(error=" + err.Error() + ")")
-			continue
+		if alias := fields[i].GetAlias(); alias != "" {
+			tmpbuf.WriteString(alias)
+		} else {
+			err := fields[i].AppendSQLExclude(dialect, tmpbuf, &tmpargs, make(map[string][]int), nil, nil)
+			if err != nil {
+				buf.WriteString("%!(error=" + err.Error() + ")")
+				continue
+			}
 		}
 		lhs, err := Sprintf(dialect, tmpbuf.String(), tmpargs)
 		if err != nil {
