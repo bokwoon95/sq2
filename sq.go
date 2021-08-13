@@ -35,23 +35,31 @@ type (
 	OracleQueryBuilder    struct{ env map[string]interface{} }
 )
 
-func SQLite(env map[string]interface{}) SQLiteQueryBuilder {
+var (
+	SQLite    = SQLiteQueryBuilder{}
+	Postgres  = PostgresQueryBuilder{}
+	MySQL     = MySQLQueryBuilder{}
+	SQLServer = SQLServerQueryBuilder{}
+	Oracle    = OracleQueryBuilder{}
+)
+
+func SQLiteEnv(env map[string]interface{}) SQLiteQueryBuilder {
 	return SQLiteQueryBuilder{env: env}
 }
 
-func Postgres(env map[string]interface{}) PostgresQueryBuilder {
+func PostgresEnv(env map[string]interface{}) PostgresQueryBuilder {
 	return PostgresQueryBuilder{env: env}
 }
 
-func MySQL(env map[string]interface{}) MySQLQueryBuilder {
+func MySQLEnv(env map[string]interface{}) MySQLQueryBuilder {
 	return MySQLQueryBuilder{env: env}
 }
 
-func SQLServer(env map[string]interface{}) SQLServerQueryBuilder {
+func SQLServerEnv(env map[string]interface{}) SQLServerQueryBuilder {
 	return SQLServerQueryBuilder{env: env}
 }
 
-func Oracle(env map[string]interface{}) OracleQueryBuilder {
+func OracleEnv(env map[string]interface{}) OracleQueryBuilder {
 	return OracleQueryBuilder{env: env}
 }
 
@@ -82,6 +90,10 @@ type Table interface {
 
 type PredicateAdder interface {
 	AddPredicate(env map[string]interface{}) ([]Predicate, error)
+}
+
+type PredicateInjector interface {
+	InjectPredicate(env map[string]interface{}) (Predicate, error)
 }
 
 type SchemaTable interface {

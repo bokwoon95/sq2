@@ -31,7 +31,7 @@ func Test_MySQLInsertQuery(t *testing.T) {
 		t.Parallel()
 		var tt TT
 		ACTOR := xNEW_ACTOR("")
-		tt.item = MySQL(nil).
+		tt.item = MySQLEnv(nil).
 			InsertInto(ACTOR).
 			Columns(ACTOR.FIRST_NAME, ACTOR.LAST_NAME).
 			Values("bob", "the builder").
@@ -47,7 +47,7 @@ func Test_MySQLInsertQuery(t *testing.T) {
 		t.Parallel()
 		var tt TT
 		ACTOR := xNEW_ACTOR("")
-		tt.item = MySQL(nil).
+		tt.item = MySQLEnv(nil).
 			InsertIgnoreInto(ACTOR).
 			Valuesx(func(c *Column) error {
 				// bob
@@ -70,7 +70,7 @@ func Test_MySQLInsertQuery(t *testing.T) {
 		t.Parallel()
 		var tt TT
 		ACTOR := xNEW_ACTOR("")
-		tt.item = MySQL(nil).
+		tt.item = MySQLEnv(nil).
 			InsertInto(ACTOR).
 			Valuesx(func(c *Column) error {
 				// bob
@@ -98,7 +98,7 @@ func Test_MySQLInsertQuery(t *testing.T) {
 		t.Parallel()
 		var tt TT
 		ACTOR := xNEW_ACTOR("")
-		tt.item = MySQL(nil).
+		tt.item = MySQLEnv(nil).
 			InsertInto(ACTOR).
 			Valuesx(func(c *Column) error {
 				// bob
@@ -131,10 +131,10 @@ func Test_MySQLInsertQuery(t *testing.T) {
 		t.Parallel()
 		var tt TT
 		ACTOR1, ACTOR2 := xNEW_ACTOR(""), xNEW_ACTOR("a2")
-		tt.item = MySQL(nil).
+		tt.item = MySQLEnv(nil).
 			InsertInto(ACTOR1).
 			Columns(ACTOR1.FIRST_NAME, ACTOR1.LAST_NAME).
-			Select(MySQL(nil).
+			Select(MySQLEnv(nil).
 				Select(ACTOR2.FIRST_NAME, ACTOR2.LAST_NAME).
 				From(ACTOR2).
 				Where(ACTOR2.ACTOR_ID.In([]int64{1, 2})),

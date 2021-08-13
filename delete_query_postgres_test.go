@@ -31,7 +31,7 @@ func Test_PostgresDeleteQuery(t *testing.T) {
 		t.Parallel()
 		var tt TT
 		ACTOR := xNEW_ACTOR("a")
-		tt.item = Postgres(nil).
+		tt.item = PostgresEnv(nil).
 			DeleteFrom(ACTOR).
 			DeleteFrom(ACTOR).
 			With(NewCTE("cte", []string{"n"}, Queryf("SELECT 1"))).
@@ -59,12 +59,12 @@ func Test_PostgresDeleteQuery(t *testing.T) {
 		t.Parallel()
 		var tt TT
 		FILM, LANGUAGE, INVENTORY := xNEW_FILM("f"), xNEW_LANGUAGE("l"), xNEW_INVENTORY("i")
-		lang := NewCTE("lang", nil, Postgres(nil).
+		lang := NewCTE("lang", nil, PostgresEnv(nil).
 			Select(LANGUAGE.LANGUAGE_ID, LANGUAGE.NAME).
 			From(LANGUAGE).
 			Where(LANGUAGE.NAME.IsNotNull()),
 		)
-		tt.item = Postgres(nil).
+		tt.item = PostgresEnv(nil).
 			DeleteWith(lang).
 			DeleteFrom(FILM).
 			Using(lang).

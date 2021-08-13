@@ -31,7 +31,7 @@ func Test_SQLiteUpdateQuery(t *testing.T) {
 		t.Parallel()
 		var tt TT
 		ACTOR := xNEW_ACTOR("")
-		tt.item = SQLite(nil).
+		tt.item = SQLite.
 			Update(ACTOR).
 			With(NewCTE("cte", []string{"n"}, Queryf("SELECT 1"))).
 			Set(ACTOR.ACTOR_ID.SetInt64(1)).
@@ -58,7 +58,7 @@ func Test_SQLiteUpdateQuery(t *testing.T) {
 		t.Parallel()
 		var tt TT
 		ACTOR := xNEW_ACTOR("a")
-		tt.item = SQLite(nil).
+		tt.item = SQLite.
 			UpdateWith(NewCTE("cte", []string{"n"}, Queryf("SELECT 1"))).
 			Update(ACTOR).
 			Setx(func(c *Column) error {
@@ -84,7 +84,7 @@ func Test_SQLiteUpdateQuery(t *testing.T) {
 		t.Parallel()
 		var tt TT
 		ADDRESS, CITY, COUNTRY := xNEW_ADDRESS("a"), xNEW_CITY("ci"), xNEW_COUNTRY("co")
-		tt.item = MySQL(nil).
+		tt.item = MySQLEnv(nil).
 			Update(ADDRESS).
 			Join(CITY, CITY.CITY_ID.Eq(ADDRESS.CITY_ID)).
 			Join(COUNTRY, COUNTRY.COUNTRY_ID.Eq(CITY.COUNTRY_ID)).

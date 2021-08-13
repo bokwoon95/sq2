@@ -31,7 +31,7 @@ func Test_SQLiteInsertQuery(t *testing.T) {
 		t.Parallel()
 		var tt TT
 		ACTOR := xNEW_ACTOR("a")
-		tt.item = SQLite(nil).
+		tt.item = SQLite.
 			InsertInto(ACTOR).
 			InsertInto(ACTOR).
 			Columns(ACTOR.FIRST_NAME, ACTOR.LAST_NAME).
@@ -49,7 +49,7 @@ func Test_SQLiteInsertQuery(t *testing.T) {
 		t.Parallel()
 		var tt TT
 		ACTOR := xNEW_ACTOR("a")
-		tt.item = SQLite(nil).
+		tt.item = SQLite.
 			InsertWith(NewCTE("cte", []string{"n"}, Queryf("SELECT 1"))).
 			InsertInto(ACTOR).
 			Valuesx(func(c *Column) error {
@@ -74,7 +74,7 @@ func Test_SQLiteInsertQuery(t *testing.T) {
 		t.Parallel()
 		var tt TT
 		ACTOR := xNEW_ACTOR("a")
-		tt.item = SQLite(nil).
+		tt.item = SQLite.
 			InsertWith(NewCTE("cte", []string{"n"}, Queryf("SELECT 1"))).
 			InsertInto(ACTOR).
 			Valuesx(func(c *Column) error {
@@ -105,7 +105,7 @@ func Test_SQLiteInsertQuery(t *testing.T) {
 		t.Parallel()
 		var tt TT
 		ACTOR := xNEW_ACTOR("a")
-		tt.item = SQLite(nil).
+		tt.item = SQLite.
 			InsertWith(NewCTE("cte", []string{"n"}, Queryf("SELECT 1"))).
 			InsertInto(ACTOR).
 			Valuesx(func(c *Column) error {
@@ -138,11 +138,11 @@ func Test_SQLiteInsertQuery(t *testing.T) {
 		t.Parallel()
 		var tt TT
 		ACTOR1, ACTOR2 := xNEW_ACTOR("a1"), xNEW_ACTOR("a2")
-		tt.item = SQLite(nil).
+		tt.item = SQLite.
 			InsertWith(NewCTE("cte", []string{"n"}, Queryf("SELECT 1"))).
 			InsertInto(ACTOR1).
 			Columns(ACTOR1.FIRST_NAME, ACTOR1.LAST_NAME).
-			Select(SQLite(nil).
+			Select(SQLite.
 				Select(ACTOR2.FIRST_NAME, ACTOR2.LAST_NAME).
 				From(ACTOR2).
 				Where(ACTOR2.ACTOR_ID.In([]int64{1, 2})),

@@ -18,7 +18,7 @@ func TestSQLiteFetch(t *testing.T) {
 		t.Parallel()
 		ACTOR := xNEW_ACTOR("")
 		var gotLastNames []string
-		rowCount, err := Fetch(Log(db), SQLite(nil).SelectDistinct().From(ACTOR).OrderBy(ACTOR.LAST_NAME).Limit(4), func(row *Row) {
+		rowCount, err := Fetch(Log(db), SQLite.SelectDistinct().From(ACTOR).OrderBy(ACTOR.LAST_NAME).Limit(4), func(row *Row) {
 			lastName := row.String(ACTOR.LAST_NAME)
 			row.Process(func() error {
 				gotLastNames = append(gotLastNames, lastName)
@@ -40,7 +40,7 @@ func TestSQLiteFetch(t *testing.T) {
 	t.Run("SELECT EXISTS", func(t *testing.T) {
 		t.Parallel()
 		ACTOR := xNEW_ACTOR("")
-		exists, err := FetchExists(Log(db), SQLite(nil).From(ACTOR).Where(Or(
+		exists, err := FetchExists(Log(db), SQLite.From(ACTOR).Where(Or(
 			ACTOR.FIRST_NAME.EqString("SCARLETT"),
 			ACTOR.LAST_NAME.EqString("JOHANSSON"),
 		)))
