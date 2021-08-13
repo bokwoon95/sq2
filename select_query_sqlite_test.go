@@ -81,16 +81,43 @@ func Test_SQLiteSelectQuery(t *testing.T) {
 
 func Test_SQLiteTestSuite(t *testing.T) {
 	answers := NewTestSuiteAnswers()
-	db, err := sql.Open("sqlite3", "/Users/bokwoon/Documents/sq2/db.sqlite3")
-	if err != nil {
-		t.Fatal(testutil.Callers(), err)
-	}
 
 	t.Run("Q1", func(t *testing.T) {
 		t.Parallel()
+		db, err := sql.Open("sqlite3", "/Users/bokwoon/Documents/sq2/db.sqlite3")
+		if err != nil {
+			t.Fatal(testutil.Callers(), err)
+		}
+		var answer1 []string
+		ACTOR := xNEW_ACTOR("")
+		q := SQLiteEnv(nil).
+			SelectDistinct().
+			From(ACTOR).
+			OrderBy(ACTOR.LAST_NAME).
+			Limit(5)
+		_, err = Fetch(db, q,
+			func(row *Row) {
+				lastName := row.String(ACTOR.LAST_NAME)
+				row.Process(func() { answer1 = append(answer1, lastName) })
+			},
+		)
+		if err != nil {
+			t.Fatal(testutil.Callers(), err)
+		}
+		if diff := testutil.Diff(answers.Answer1, answer1); diff != "" {
+			t.Fatal(testutil.Callers(), diff)
+		}
+	})
+
+	t.Run("Q2", func(t *testing.T) {
+		t.Parallel()
+		db, err := sql.Open("sqlite3", "/Users/bokwoon/Documents/sq2/db.sqlite3")
+		if err != nil {
+			t.Fatal(testutil.Callers(), err)
+		}
 		var answer01 []string
 		ACTOR := xNEW_ACTOR("")
-		_, err = Fetch(db, SQLite.
+		_, err = Fetch(db, SQLiteEnv(nil).
 			SelectDistinct().
 			From(ACTOR).
 			OrderBy(ACTOR.LAST_NAME).
@@ -103,7 +130,7 @@ func Test_SQLiteTestSuite(t *testing.T) {
 		if err != nil {
 			t.Fatal(testutil.Callers(), err)
 		}
-		if diff := testutil.Diff(answers.Answer01, answer01); diff != "" {
+		if diff := testutil.Diff(answers.Answer1, answer01); diff != "" {
 			t.Fatal(testutil.Callers(), diff)
 		}
 	})

@@ -112,15 +112,15 @@ type CategoryRevenueStats struct {
 }
 
 type TestSuiteAnswers struct {
-	Answer01 []string
-	Answer02 bool
-	Answer03 int
-	Answer04 []Actor
-	Answer05 []string
-	Answer06 []City
-	Answer07 []Film
-	Answer08 []FilmActorStats
-	Answer09 []CategoryRevenueStats
+	Answer1  []string
+	Answer2  bool
+	Answer3  int
+	Answer4  []Actor
+	Answer5  []string
+	Answer6  []City
+	Answer7  []Film
+	Answer8  []FilmActorStats
+	Answer9  []CategoryRevenueStats
 	Answer10 []MonthlyRentalStats
 	Answer11 []Store
 	Answer12 []Film
@@ -137,17 +137,17 @@ func NewTestSuiteAnswers() TestSuiteAnswers {
 		return time.Date(year, time.Month(month), day, hour, min, sec, 0, time.UTC)
 	}
 	return TestSuiteAnswers{
-		Answer01: []string{"AKROYD", "ALLEN", "ASTAIRE", "BACALL", "BAILEY"},
-		Answer02: true,
-		Answer03: 121,
-		Answer04: []Actor{
+		Answer1: []string{"AKROYD", "ALLEN", "ASTAIRE", "BACALL", "BAILEY"},
+		Answer2: true,
+		Answer3: 121,
+		Answer4: []Actor{
 			{ActorID: 14, FirstName: "VIVIEN", LastName: "BERGEN", LastUpdate: datetime(2006, 2, 15, 4, 34, 33)},
 			{ActorID: 41, FirstName: "JODIE", LastName: "DEGENERES", LastUpdate: datetime(2006, 2, 15, 4, 34, 33)},
 			{ActorID: 107, FirstName: "GINA", LastName: "DEGENERES", LastUpdate: datetime(2006, 2, 15, 4, 34, 33)},
 			{ActorID: 166, FirstName: "NICK", LastName: "DEGENERES", LastUpdate: datetime(2006, 2, 15, 4, 34, 33)},
 		},
-		Answer05: []string{"ASTAIRE", "BACALL", "BALE", "BALL", "BARRYMORE"},
-		Answer06: []City{
+		Answer5: []string{"ASTAIRE", "BACALL", "BALE", "BALL", "BARRYMORE"},
+		Answer6: []City{
 			{
 				Country: Country{CountryID: 29, CountryName: "Egypt", LastUpdate: datetime(2006, 2, 15, 4, 44, 0)},
 				CityID:  79, CityName: "Bilbays", LastUpdate: datetime(2006, 02, 15, 4, 45, 25),
@@ -189,7 +189,7 @@ func NewTestSuiteAnswers() TestSuiteAnswers {
 				CityID:  411, CityName: "Ponce", LastUpdate: datetime(2006, 02, 15, 4, 45, 25),
 			},
 		},
-		Answer07: []Film{
+		Answer7: []Film{
 			{
 				FilmID: 1, Title: "ACADEMY DINOSAUR",
 				Description: "A Epic Drama of a Feminist And a Mad Scientist who must Battle a Teacher in The Canadian Rockies",
@@ -261,7 +261,7 @@ func NewTestSuiteAnswers() TestSuiteAnswers {
 				Audience: "adults", LengthType: "medium",
 			},
 		},
-		Answer08: []FilmActorStats{
+		Answer8: []FilmActorStats{
 			{
 				Film: Film{
 					FilmID: 9, Title: "ALABAMA DEVIL",
@@ -354,7 +354,7 @@ func NewTestSuiteAnswers() TestSuiteAnswers {
 				ActorCount: 16,
 			},
 		},
-		Answer09: []CategoryRevenueStats{
+		Answer9: []CategoryRevenueStats{
 			{
 				Category: Category{CategoryID: 15, CategoryName: "Sports", LastUpdate: datetime(2006, 02, 15, 4, 46, 27)},
 				Revenue:  5314.21, Rank: 1, Quartile: 4,
