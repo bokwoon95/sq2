@@ -378,11 +378,11 @@ func Test_SQLiteTestSuite(t *testing.T) {
 			OrderBy(dates.Field("date_value")),
 			func(row *Row) {
 				stats := MonthlyRentalStats{
-					Month:       row.String(StringFieldf(`strftime('%Y', {}) || ' ' || {}`, dates.Field("date_value"), months.Field("name")).As("month")),
-					HorrorCount: row.Int64(NumberFieldf("COUNT({})", Case(CATEGORY.NAME).When("Horror", 1))),
-					ActionCount: row.Int64(NumberFieldf("COUNT({})", Case(CATEGORY.NAME).When("Action", 1))),
-					ComedyCount: row.Int64(NumberFieldf("COUNT({})", Case(CATEGORY.NAME).When("Comedy", 1))),
-					ScifiCount:  row.Int64(NumberFieldf("COUNT({})", Case(CATEGORY.NAME).When("Sci-Fi", 1))),
+					Month:       row.String(StringFieldf("strftime('%Y', {}) || ' ' || {}", dates.Field("date_value"), months.Field("name")).As("month")),
+					HorrorCount: row.Int64(NumberFieldf("COUNT({})", Case(CATEGORY.NAME).When("Horror", 1)).As("horror_count")),
+					ActionCount: row.Int64(NumberFieldf("COUNT({})", Case(CATEGORY.NAME).When("Action", 1)).As("action_count")),
+					ComedyCount: row.Int64(NumberFieldf("COUNT({})", Case(CATEGORY.NAME).When("Comedy", 1)).As("comedy_count")),
+					ScifiCount:  row.Int64(NumberFieldf("COUNT({})", Case(CATEGORY.NAME).When("Sci-Fi", 1)).As("scifi_count")),
 				}
 				row.Process(func() { answer10 = append(answer10, stats) })
 			},

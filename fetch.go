@@ -91,6 +91,7 @@ func fetchContext(ctx context.Context, db DB, q Query, rowmapper func(*Row), ski
 		return 0, nil
 	}
 	RowActivate(r)
+	var fieldNames []string
 	for rows.Next() {
 		rowCount++
 		// Because dest and r.dest share the same backing array, any change
@@ -101,7 +102,10 @@ func fetchContext(ctx context.Context, db DB, q Query, rowmapper func(*Row), ski
 			return rowCount, decorateScanError(stats.Dialect, fields, dest, err)
 		}
 		if resultsLimit > 0 && rowCount <= int64(resultsLimit) {
-			accumulateResults(stats.Dialect, resultsBuf, fields, dest, rowCount)
+			if len(fieldNames) == 0 {
+				fieldNames = computeFieldNames(stats.Dialect, fields)
+			}
+			accumulateResults(stats.Dialect, resultsBuf, fieldNames, dest, rowCount)
 		}
 		RowReset(r)
 		rowmapper(r)
@@ -158,37 +162,46 @@ func decorateScanError(dialect string, fields []Field, dest []interface{}, err e
 	return fmt.Errorf("please check if your mapper function is correct:%s\n%w", buf.String(), err)
 }
 
-// TODO: there's no reason to actually serialize the fields []Field over and
-// over, it should be serialized once outside this function and passed in.
-func accumulateResults(dialect string, buf *bytes.Buffer, fields []Field, dest []interface{}, rowNumber int64) {
-	tmpbuf := bufpool.Get().(*bytes.Buffer)
-	tmpargs := argspool.Get().([]interface{})
+func computeFieldNames(dialect string, fields []Field) []string {
+	buf := bufpool.Get().(*bytes.Buffer)
+	args := argspool.Get().([]interface{})
 	defer func() {
-		tmpbuf.Reset()
-		tmpargs = tmpargs[:0]
-		bufpool.Put(tmpbuf)
-		argspool.Put(tmpargs)
+		buf.Reset()
+		args = args[:0]
+		bufpool.Put(buf)
+		argspool.Put(args)
 	}()
+	var fieldNames []string
+	for _, field := range fields {
+		if alias := field.GetAlias(); alias != "" {
+			fieldNames = append(fieldNames, alias)
+			continue
+		}
+		buf.Reset()
+		args = args[:0]
+		err := field.AppendSQLExclude(dialect, buf, &args, make(map[string][]int), nil, nil)
+		if err != nil {
+			fieldNames = append(fieldNames, "%!(error="+err.Error()+")")
+			continue
+		}
+		fieldName, err := Sprintf(dialect, buf.String(), args)
+		if err != nil {
+			fieldNames = append(fieldNames, "%!(error="+err.Error()+")")
+			continue
+		}
+		fieldNames = append(fieldNames, fieldName)
+	}
+	return fieldNames
+}
+
+func accumulateResults(dialect string, buf *bytes.Buffer, fieldNames []string, dest []interface{}, rowNumber int64) {
 	buf.WriteString("\n----[ Row " + strconv.FormatInt(rowNumber, 10) + " ]----")
 	for i := range dest {
 		buf.WriteString("\n")
-		tmpbuf.Reset()
-		tmpargs = tmpargs[:0]
-		if alias := fields[i].GetAlias(); alias != "" {
-			tmpbuf.WriteString(alias)
-		} else {
-			err := fields[i].AppendSQLExclude(dialect, tmpbuf, &tmpargs, make(map[string][]int), nil, nil)
-			if err != nil {
-				buf.WriteString("%!(error=" + err.Error() + ")")
-				continue
-			}
+		if i < len(fieldNames) {
+			buf.WriteString(fieldNames[i])
 		}
-		lhs, err := Sprintf(dialect, tmpbuf.String(), tmpargs)
-		if err != nil {
-			buf.WriteString("%!(error=" + err.Error() + ")")
-			continue
-		}
-		buf.WriteString(lhs + ": ")
+		buf.WriteString(": ")
 		rhs, err := Sprint(dialect, dest[i])
 		if err != nil {
 			buf.WriteString("%!(error=" + err.Error() + ")")
