@@ -189,4 +189,35 @@ func Test_SQLiteTestSuite(t *testing.T) {
 			t.Fatal(testutil.Callers(), diff)
 		}
 	})
+
+	t.Run("Q6", func(t *testing.T) {
+		t.Parallel()
+		CITY, COUNTRY := xNEW_CITY(""), xNEW_COUNTRY("")
+		var answer6 []City
+		_, err := Fetch(Log(db), SQLite.
+			From(CITY).
+			Join(COUNTRY, COUNTRY.COUNTRY_ID.Eq(CITY.COUNTRY_ID)).
+			Where(COUNTRY.COUNTRY.In([]string{"Egypt", "Greece", "Puerto Rico"})).
+			OrderBy(COUNTRY.COUNTRY, CITY.CITY),
+			func(row *Row) {
+				city := City{
+					Country: Country{
+						CountryID:   row.Int(COUNTRY.COUNTRY_ID),
+						CountryName: row.String(COUNTRY.COUNTRY),
+						LastUpdate:  row.Time(COUNTRY.LAST_UPDATE),
+					},
+					CityID:     row.Int(CITY.CITY_ID),
+					CityName:   row.String(CITY.CITY),
+					LastUpdate: row.Time(CITY.LAST_UPDATE),
+				}
+				row.Process(func() { answer6 = append(answer6, city) })
+			},
+		)
+		if err != nil {
+			t.Fatal(testutil.Callers(), err)
+		}
+		if diff := testutil.Diff(answer6, sakilaAnswer6()); diff != "" {
+			t.Fatal(testutil.Callers(), diff)
+		}
+	})
 }
