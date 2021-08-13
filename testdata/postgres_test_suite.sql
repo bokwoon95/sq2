@@ -69,6 +69,7 @@ SELECT
     ,replacement_cost
     ,rating
     ,special_features
+    ,last_update
     ,CASE rating
         WHEN 'G' THEN 'family'
         WHEN 'PG' THEN 'teens'
@@ -81,7 +82,6 @@ SELECT
         WHEN length > 60 AND length <= 120 THEN 'medium'
         ELSE 'long'
     END AS length_type
-    ,last_update
 FROM
     film
 ORDER BY
@@ -108,6 +108,7 @@ SELECT
     ,film.replacement_cost
     ,film.rating
     ,film.special_features
+    ,film.last_update
     ,film_stats.actor_count
 FROM
     film_stats

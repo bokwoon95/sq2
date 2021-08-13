@@ -21,9 +21,9 @@ type Film struct {
 	Rating          string    `json:"rating"`
 	SpecialFeatures []string  `json:"special_features"` //  Lists which common special features are included on the DVD.
 	Actors          []Actor   `json:"actors"`
+	LastUpdate      time.Time `json:"last_update"`
 	Audience        string    `json:"audience"`
 	LengthType      string    `json:"length_type"`
-	LastUpdate      time.Time `json:"last_update"`
 }
 
 type Rental struct {
@@ -194,74 +194,166 @@ func NewTestSuiteAnswers() TestSuiteAnswers {
 				FilmID: 1, Title: "ACADEMY DINOSAUR",
 				Description: "A Epic Drama of a Feminist And a Mad Scientist who must Battle a Teacher in The Canadian Rockies",
 				ReleaseYear: "2006", RentalDuration: 6, RentalRate: 0.99, Length: 86, ReplacementCost: 20.99, Rating: "PG",
-				SpecialFeatures: []string{DeletedScenes, BehindTheScenes}, Audience: "teens",
-				LengthType: "medium", LastUpdate: datetime(2006, 2, 15, 5, 03, 42),
+				SpecialFeatures: []string{DeletedScenes, BehindTheScenes}, LastUpdate: datetime(2006, 2, 15, 5, 03, 42),
+				Audience: "teens", LengthType: "medium",
 			},
 			{
 				FilmID: 2, Title: "ACE GOLDFINGER",
 				Description: "A Astounding Epistle of a Database Administrator And a Explorer who must Find a Car in Ancient China",
 				ReleaseYear: "2006", RentalDuration: 3, RentalRate: 4.99, Length: 48, ReplacementCost: 12.99, Rating: "G",
-				SpecialFeatures: []string{Trailers, DeletedScenes}, Audience: "family",
-				LengthType: "short", LastUpdate: datetime(2006, 2, 15, 5, 03, 42),
+				SpecialFeatures: []string{Trailers, DeletedScenes}, LastUpdate: datetime(2006, 2, 15, 5, 03, 42),
+				Audience: "family", LengthType: "short",
 			},
 			{
 				FilmID: 3, Title: "ADAPTATION HOLES",
 				Description: "A Astounding Reflection of a Lumberjack And a Car who must Sink a Lumberjack in A Baloon Factory",
 				ReleaseYear: "2006", RentalDuration: 7, RentalRate: 2.99, Length: 50, ReplacementCost: 18.99, Rating: "NC-17",
-				SpecialFeatures: []string{Trailers, DeletedScenes}, Audience: "adults",
-				LengthType: "short", LastUpdate: datetime(2006, 2, 15, 5, 03, 42),
+				SpecialFeatures: []string{Trailers, DeletedScenes}, LastUpdate: datetime(2006, 2, 15, 5, 03, 42),
+				Audience: "adults", LengthType: "short",
 			},
 			{
 				FilmID: 4, Title: "AFFAIR PREJUDICE",
 				Description: "A Fanciful Documentary of a Frisbee And a Lumberjack who must Chase a Monkey in A Shark Tank",
 				ReleaseYear: "2006", RentalDuration: 5, RentalRate: 2.99, Length: 117, ReplacementCost: 26.99, Rating: "G",
-				SpecialFeatures: []string{Commentaries, BehindTheScenes}, Audience: "family",
-				LengthType: "medium", LastUpdate: datetime(2006, 2, 15, 5, 03, 42),
+				SpecialFeatures: []string{Commentaries, BehindTheScenes}, LastUpdate: datetime(2006, 2, 15, 5, 03, 42),
+				Audience: "family", LengthType: "medium",
 			},
 			{
 				FilmID: 5, Title: "AFRICAN EGG",
 				Description: "A Fast-Paced Documentary of a Pastry Chef And a Dentist who must Pursue a Forensic Psychologist in The Gulf of Mexico",
 				ReleaseYear: "2006", RentalDuration: 6, RentalRate: 2.99, Length: 130, ReplacementCost: 22.99, Rating: "G",
-				SpecialFeatures: []string{DeletedScenes}, Audience: "family",
-				LengthType: "long", LastUpdate: datetime(2006, 2, 15, 5, 03, 42),
+				SpecialFeatures: []string{DeletedScenes}, LastUpdate: datetime(2006, 2, 15, 5, 03, 42),
+				Audience: "family", LengthType: "long",
 			},
 			{
 				FilmID: 6, Title: "AGENT TRUMAN",
 				Description: "A Intrepid Panorama of a Robot And a Boy who must Escape a Sumo Wrestler in Ancient China",
 				ReleaseYear: "2006", RentalDuration: 3, RentalRate: 2.99, Length: 169, ReplacementCost: 17.99, Rating: "PG",
-				SpecialFeatures: []string{DeletedScenes}, Audience: "teens",
-				LengthType: "long", LastUpdate: datetime(2006, 2, 15, 5, 03, 42),
+				SpecialFeatures: []string{DeletedScenes}, LastUpdate: datetime(2006, 2, 15, 5, 03, 42),
+				Audience: "teens", LengthType: "long",
 			},
 			{
 				FilmID: 7, Title: "AIRPLANE SIERRA",
 				Description: "A Touching Saga of a Hunter And a Butler who must Discover a Butler in A Jet Boat",
 				ReleaseYear: "2006", RentalDuration: 6, RentalRate: 4.99, Length: 62, ReplacementCost: 28.99, Rating: "PG-13",
-				SpecialFeatures: []string{Trailers, DeletedScenes}, Audience: "teens",
-				LengthType: "medium", LastUpdate: datetime(2006, 2, 15, 5, 03, 42),
+				SpecialFeatures: []string{Trailers, DeletedScenes}, LastUpdate: datetime(2006, 2, 15, 5, 03, 42),
+				Audience: "teens", LengthType: "medium",
 			},
 			{
 				FilmID: 8, Title: "AIRPORT POLLOCK",
 				Description: "A Epic Tale of a Moose And a Girl who must Confront a Monkey in Ancient India",
 				ReleaseYear: "2006", RentalDuration: 6, RentalRate: 4.99, Length: 54, ReplacementCost: 15.99, Rating: "R",
-				SpecialFeatures: []string{Trailers}, Audience: "adults",
-				LengthType: "short", LastUpdate: datetime(2006, 2, 15, 5, 03, 42),
+				SpecialFeatures: []string{Trailers}, LastUpdate: datetime(2006, 2, 15, 5, 03, 42),
+				Audience: "adults", LengthType: "short",
 			},
 			{
 				FilmID: 9, Title: "ALABAMA DEVIL",
 				Description: "A Thoughtful Panorama of a Database Administrator And a Mad Scientist who must Outgun a Mad Scientist in A Jet Boat",
 				ReleaseYear: "2006", RentalDuration: 3, RentalRate: 2.99, Length: 114, ReplacementCost: 21.99, Rating: "PG-13",
-				SpecialFeatures: []string{Trailers, DeletedScenes}, Audience: "teens",
-				LengthType: "medium", LastUpdate: datetime(2006, 2, 15, 5, 03, 42),
+				SpecialFeatures: []string{Trailers, DeletedScenes}, LastUpdate: datetime(2006, 2, 15, 5, 03, 42),
+				Audience: "teens", LengthType: "medium",
 			},
 			{
 				FilmID: 10, Title: "ALADDIN CALENDAR",
 				Description: "A Action-Packed Tale of a Man And a Lumberjack who must Reach a Feminist in Ancient China",
 				ReleaseYear: "2006", RentalDuration: 6, RentalRate: 4.99, Length: 63, ReplacementCost: 24.99, Rating: "NC-17",
-				SpecialFeatures: []string{Trailers, DeletedScenes}, Audience: "adults",
-				LengthType: "medium", LastUpdate: datetime(2006, 2, 15, 5, 03, 42),
+				SpecialFeatures: []string{Trailers, DeletedScenes}, LastUpdate: datetime(2006, 2, 15, 5, 03, 42),
+				Audience: "adults", LengthType: "medium",
 			},
 		},
-		Answer08: []FilmActorStats{},
+		Answer08: []FilmActorStats{
+			{
+				Film: Film{
+					FilmID: 9, Title: "ALABAMA DEVIL",
+					Description: "A Thoughtful Panorama of a Database Administrator And a Mad Scientist who must Outgun a Mad Scientist in A Jet Boat",
+					ReleaseYear: "2006", RentalDuration: 3, RentalRate: 2.99, Length: 114, ReplacementCost: 21.99, Rating: "PG-13",
+					SpecialFeatures: []string{Trailers, DeletedScenes}, LastUpdate: datetime(2006, 2, 15, 5, 03, 42),
+				},
+				ActorCount: 24,
+			},
+			{
+				Film: Film{
+					FilmID: 1, Title: "ACADEMY DINOSAUR",
+					Description: "A Epic Drama of a Feminist And a Mad Scientist who must Battle a Teacher in The Canadian Rockies",
+					ReleaseYear: "2006", RentalDuration: 6, RentalRate: 0.99, Length: 86, ReplacementCost: 20.99, Rating: "PG",
+					SpecialFeatures: []string{DeletedScenes, BehindTheScenes}, LastUpdate: datetime(2006, 2, 15, 5, 03, 42),
+				},
+				ActorCount: 23,
+			},
+			{
+				Film: Film{
+					FilmID: 14, Title: "ALICE FANTASIA",
+					Description: "A Emotional Drama of a A Shark And a Database Administrator who must Vanquish a Pioneer in Soviet Georgia",
+					ReleaseYear: "2006", RentalDuration: 6, RentalRate: 0.99, Length: 94, ReplacementCost: 23.99, Rating: "NC-17",
+					SpecialFeatures: []string{Trailers, DeletedScenes, BehindTheScenes}, LastUpdate: datetime(2006, 2, 15, 5, 03, 42),
+				},
+				ActorCount: 21,
+			},
+			{
+				Film: Film{
+					FilmID: 6, Title: "AGENT TRUMAN",
+					Description: "A Intrepid Panorama of a Robot And a Boy who must Escape a Sumo Wrestler in Ancient China",
+					ReleaseYear: "2006", RentalDuration: 3, RentalRate: 2.99, Length: 169, ReplacementCost: 17.99, Rating: "PG",
+					SpecialFeatures: []string{DeletedScenes}, LastUpdate: datetime(2006, 2, 15, 5, 03, 42),
+				},
+				ActorCount: 20,
+			},
+			{
+				Film: Film{
+					FilmID: 8, Title: "AIRPORT POLLOCK",
+					Description: "A Epic Tale of a Moose And a Girl who must Confront a Monkey in Ancient India",
+					ReleaseYear: "2006", RentalDuration: 6, RentalRate: 4.99, Length: 54, ReplacementCost: 15.99, Rating: "R",
+					SpecialFeatures: []string{Trailers}, LastUpdate: datetime(2006, 2, 15, 5, 03, 42),
+				},
+				ActorCount: 20,
+			},
+			{
+				Film: Film{
+					FilmID: 12, Title: "ALASKA PHANTOM",
+					Description: "A Fanciful Saga of a Hunter And a Pastry Chef who must Vanquish a Boy in Australia",
+					ReleaseYear: "2006", RentalDuration: 6, RentalRate: 0.99, Length: 136, ReplacementCost: 22.99, Rating: "PG",
+					SpecialFeatures: []string{Commentaries, DeletedScenes}, LastUpdate: datetime(2006, 2, 15, 5, 03, 42),
+				},
+				ActorCount: 20,
+			},
+			{
+				Film: Film{
+					FilmID: 13, Title: "ALI FOREVER",
+					Description: "A Action-Packed Drama of a Dentist And a Crocodile who must Battle a Feminist in The Canadian Rockies",
+					ReleaseYear: "2006", RentalDuration: 4, RentalRate: 4.99, Length: 150, ReplacementCost: 21.99, Rating: "PG",
+					SpecialFeatures: []string{DeletedScenes, BehindTheScenes}, LastUpdate: datetime(2006, 2, 15, 5, 03, 42),
+				},
+				ActorCount: 19,
+			},
+			{
+				Film: Film{
+					FilmID: 7, Title: "AIRPLANE SIERRA",
+					Description: "A Touching Saga of a Hunter And a Butler who must Discover a Butler in A Jet Boat",
+					ReleaseYear: "2006", RentalDuration: 6, RentalRate: 4.99, Length: 62, ReplacementCost: 28.99, Rating: "PG-13",
+					SpecialFeatures: []string{Trailers, DeletedScenes}, LastUpdate: datetime(2006, 2, 15, 5, 03, 42),
+				},
+				ActorCount: 17,
+			},
+			{
+				Film: Film{
+					FilmID: 11, Title: "ALAMO VIDEOTAPE",
+					Description: "A Boring Epistle of a Butler And a Cat who must Fight a Pastry Chef in A MySQL Convention",
+					ReleaseYear: "2006", RentalDuration: 6, RentalRate: 0.99, Length: 126, ReplacementCost: 16.99, Rating: "G",
+					SpecialFeatures: []string{Commentaries, BehindTheScenes}, LastUpdate: datetime(2006, 2, 15, 5, 03, 42),
+				},
+				ActorCount: 17,
+			},
+			{
+				Film: Film{
+					FilmID: 3, Title: "ADAPTATION HOLES",
+					Description: "A Astounding Reflection of a Lumberjack And a Car who must Sink a Lumberjack in A Baloon Factory",
+					ReleaseYear: "2006", RentalDuration: 7, RentalRate: 2.99, Length: 50, ReplacementCost: 18.99, Rating: "NC-17",
+					SpecialFeatures: []string{Trailers, DeletedScenes}, LastUpdate: datetime(2006, 2, 15, 5, 03, 42),
+					Audience: "adults", LengthType: "short",
+				},
+				ActorCount: 16,
+			},
+		},
 		Answer09: []CategoryRevenueStats{},
 		Answer10: []MonthlyRentalStats{},
 		Answer11: []Store{},
