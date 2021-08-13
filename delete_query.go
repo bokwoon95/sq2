@@ -100,18 +100,21 @@ func (q DeleteQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interf
 		}
 	}
 	// WHERE
-	var tablePredicates []Predicate
+	var wherePredicate VariadicPredicate
 	for i, table := range q.FromTables {
-		if predicateAdder, ok := table.(PredicateAdder); ok {
-			predicates, err := predicateAdder.AddPredicate(env)
+		if predicateInjector, ok := table.(PredicateInjector); ok {
+			predicate, err := predicateInjector.InjectPredicate(env)
 			if err != nil {
-				return fmt.Errorf("table #%d adding predicate: %w", i+1, err)
+				return fmt.Errorf("table #%d %s injecting predicate: %w", i+1, table.GetName(), err)
 			}
-			tablePredicates = append(tablePredicates, predicates...)
+			if predicate != nil {
+				wherePredicate.Predicates = append(wherePredicate.Predicates, predicate)
+			}
 		}
 	}
-	if len(tablePredicates) > 0 {
-		q.WherePredicate.Predicates = append(tablePredicates, q.WherePredicate.Predicates...)
+	if len(wherePredicate.Predicates) > 0 {
+		wherePredicate.Predicates = append(wherePredicate.Predicates, q.WherePredicate)
+		q.WherePredicate = wherePredicate
 	}
 	if len(q.WherePredicate.Predicates) > 0 {
 		buf.WriteString(" WHERE ")

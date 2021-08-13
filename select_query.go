@@ -94,32 +94,30 @@ func (q SelectQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interf
 		}
 	}
 	// WHERE
-	var tablePredicates []Predicate
-	if predicateAdder, ok := q.FromTable.(PredicateAdder); ok {
-		predicates, err := predicateAdder.AddPredicate(env)
+	var wherePredicate VariadicPredicate
+	if predicateInjector, ok := q.FromTable.(PredicateInjector); ok {
+		predicate, err := predicateInjector.InjectPredicate(env)
 		if err != nil {
-			return fmt.Errorf("FromTable adding predicate: %w", err)
+			return fmt.Errorf("table %s injecting predicate: %w", q.FromTable.GetName(), err)
 		}
-		tablePredicates = append(tablePredicates, predicates...)
+		if predicate != nil {
+			wherePredicate.Predicates = append(wherePredicate.Predicates, predicate)
+		}
 	}
 	for i, joinTable := range q.JoinTables {
-		if predicateAdder, ok := joinTable.Table.(PredicateAdder); ok {
-			predicates, err := predicateAdder.AddPredicate(env)
+		if predicateInjector, ok := joinTable.Table.(PredicateInjector); ok {
+			predicate, err := predicateInjector.InjectPredicate(env)
 			if err != nil {
-				return fmt.Errorf("JoinTable #%d adding predicate: %w", i+1, err)
+				return fmt.Errorf("table #%d %s injecting predicate: %w", i+1, joinTable.Table.GetName(), err)
 			}
-			tablePredicates = append(tablePredicates, predicates...)
+			if predicate != nil {
+				wherePredicate.Predicates = append(wherePredicate.Predicates, predicate)
+			}
 		}
 	}
-	if len(tablePredicates) > 0 {
-		// TODO: you shouldn't inject the tablePredicates into
-		// q.WherePredicate, because the user might have set
-		// q.WherePredicate.Or to true, rendering the effects of the injected
-		// predicates useless. Instead a new VariadicPredicate should be
-		// constructed, one where you can guarantee the top level operator is
-		// AND, and merge q.WherePredicate in as a subpredicate of the new top
-		// level predicate.
-		q.WherePredicate.Predicates = append(tablePredicates, q.WherePredicate.Predicates...)
+	if len(wherePredicate.Predicates) > 0 {
+		wherePredicate.Predicates = append(wherePredicate.Predicates, q.WherePredicate)
+		q.WherePredicate = wherePredicate
 	}
 	if len(q.WherePredicate.Predicates) > 0 {
 		buf.WriteString(" WHERE ")
