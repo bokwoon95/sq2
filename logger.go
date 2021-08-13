@@ -56,20 +56,29 @@ func init() {
 }
 
 type QueryStats struct {
-	Dialect      string
-	Query        string
-	Args         []interface{}
-	Error        error
-	RowCount     sql.NullInt64
-	RowsAffected sql.NullInt64
-	LastInsertID sql.NullInt64
-	TimeTaken    time.Duration
-	QueryResults string
+	Dialect        string
+	Query          string
+	Args           []interface{}
+	Error          error
+	RowCount       sql.NullInt64
+	RowsAffected   sql.NullInt64
+	LastInsertID   sql.NullInt64
+	TimeTaken      time.Duration
+	QueryResults   string
+	CallerFile     string
+	CallerLine     int
+	CallerFunction string
+}
+
+type LogSettings struct {
+	ResultsLimit  int
+	GetCallerInfo bool
 }
 
 type Logger interface {
 	LogQueryStats(ctx context.Context, stats QueryStats, skip int)
 	LogResults() (shouldLogResults bool, limit int)
+	GetLogSettings() LogSettings
 }
 
 type LoggerDB struct {
@@ -105,6 +114,13 @@ func VerboseLog(db DB) LoggerDB {
 }
 
 func (l logger) LogResults() (shouldLogResults bool, limit int) { return true, l.resultsLimit }
+
+func (l logger) GetLogSettings() LogSettings {
+	return LogSettings{
+		ResultsLimit:  l.resultsLimit,
+		GetCallerInfo: l.logflag&Lcaller != 0,
+	}
+}
 
 func (l logger) LogQueryStats(ctx context.Context, stats QueryStats, skip int) {
 	select {

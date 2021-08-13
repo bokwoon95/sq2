@@ -114,7 +114,7 @@ func Test_SQLiteTestSuite(t *testing.T) {
 			From(ACTOR).
 			Where(Or(
 				ACTOR.FIRST_NAME.EqString("SCARLETT"),
-				ACTOR.FIRST_NAME.EqString("JOHANSSON"),
+				ACTOR.LAST_NAME.EqString("JOHANSSON"),
 			)),
 		)
 		if err != nil {
@@ -163,6 +163,29 @@ func Test_SQLiteTestSuite(t *testing.T) {
 			t.Fatal(testutil.Callers(), err)
 		}
 		if diff := testutil.Diff(answer4, sakilaAnswer4()); diff != "" {
+			t.Fatal(testutil.Callers(), diff)
+		}
+	})
+
+	t.Run("Q5", func(t *testing.T) {
+		t.Parallel()
+		ACTOR := xNEW_ACTOR("")
+		var answer5 []string
+		_, err := Fetch(db, SQLite.
+			From(ACTOR).
+			GroupBy(ACTOR.LAST_NAME).
+			Having(Fieldf("COUNT(*)").Eq(1)).
+			OrderBy(ACTOR.LAST_NAME).
+			Limit(5),
+			func(row *Row) {
+				lastName := row.String(ACTOR.LAST_NAME)
+				row.Process(func() { answer5 = append(answer5, lastName) })
+			},
+		)
+		if err != nil {
+			t.Fatal(testutil.Callers(), err)
+		}
+		if diff := testutil.Diff(answer5, sakilaAnswer5()); diff != "" {
 			t.Fatal(testutil.Callers(), diff)
 		}
 	})

@@ -24,9 +24,9 @@ ORDER BY
     actor_id
 ;
 
--- Q5) Find actor last names that only once in the database, ordered by
--- last_name. Show only the top 10 results.
-SELECT last_name FROM actor GROUP BY last_name HAVING COUNT(*) = 1 ORDER BY last_name LIMIT 10;
+-- Q5) Find actor last names that occur only once in the database, ordered by
+-- last_name. Show only the top 5 results.
+SELECT last_name FROM actor GROUP BY last_name HAVING COUNT(*) = 1 ORDER BY last_name LIMIT 5;
 
 -- Q6) Find all the cities (and their country) of the where country is either
 -- 'Egypt', 'Greece' or 'Puerto Rico', ordered by country_name and city_name.
