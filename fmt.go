@@ -126,14 +126,14 @@ func BufferPrintValue(dialect string, buf *bytes.Buffer, args *[]interface{}, pa
 		if v.Name == "" {
 			return fmt.Errorf("sql.NamedArg name cannot be empty")
 		}
+		if strings.ContainsAny(v.Name, " \t\n\v\f\r\u0085\u00A0") {
+			return fmt.Errorf("sql.NamedArg name (%s) cannot have whitespace", v.Name)
+		}
 		if len(params[v.Name]) > 0 {
 			(*args)[params[v.Name][0]] = value
 		} else {
 			params[v.Name] = []int{len(*args)}
 			*args = append(*args, value)
-		}
-		if strings.ContainsAny(v.Name, " \t\n\v\f\r\u0085\u00A0") {
-			return fmt.Errorf("sql.NamedArg name (%s) cannot have whitespace", v.Name)
 		}
 		switch dialect {
 		case DialectSQLServer:
