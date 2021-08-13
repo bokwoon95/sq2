@@ -1,6 +1,7 @@
 package sq
 
 import (
+	"database/sql"
 	"testing"
 
 	"github.com/bokwoon95/sq/internal/testutil"
@@ -75,5 +76,35 @@ func Test_SQLiteSelectQuery(t *testing.T) {
 			" OFFSET $2"
 		tt.wantArgs = []interface{}{int64(10), int64(20)}
 		assert(t, tt)
+	})
+}
+
+func Test_SQLiteTestSuite(t *testing.T) {
+	answers := NewTestSuiteAnswers()
+	db, err := sql.Open("sqlite3", "/Users/bokwoon/Documents/sq2/db.sqlite3")
+	if err != nil {
+		t.Fatal(testutil.Callers(), err)
+	}
+
+	t.Run("Q1", func(t *testing.T) {
+		t.Parallel()
+		var answer01 []string
+		ACTOR := xNEW_ACTOR("")
+		_, err = Fetch(db, SQLite.
+			SelectDistinct().
+			From(ACTOR).
+			OrderBy(ACTOR.LAST_NAME).
+			Limit(5),
+			func(row *Row) {
+				lastName := row.String(ACTOR.LAST_NAME)
+				row.Process(func() { answer01 = append(answer01, lastName) })
+			},
+		)
+		if err != nil {
+			t.Fatal(testutil.Callers(), err)
+		}
+		if diff := testutil.Diff(answers.Answer01, answer01); diff != "" {
+			t.Fatal(testutil.Callers(), diff)
+		}
 	})
 }

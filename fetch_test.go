@@ -20,10 +20,7 @@ func TestSQLiteFetch(t *testing.T) {
 		var gotLastNames []string
 		rowCount, err := Fetch(Log(db), SQLite.SelectDistinct().From(ACTOR).OrderBy(ACTOR.LAST_NAME).Limit(4), func(row *Row) {
 			lastName := row.String(ACTOR.LAST_NAME)
-			row.Process(func() error {
-				gotLastNames = append(gotLastNames, lastName)
-				return nil
-			})
+			row.Process(func() { gotLastNames = append(gotLastNames, lastName) })
 		})
 		if err != nil {
 			t.Fatal(testutil.Callers(), err)

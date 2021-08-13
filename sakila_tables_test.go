@@ -1,12 +1,5 @@
 package sq
 
-import (
-	"fmt"
-	"testing"
-
-	"github.com/bokwoon95/sq/internal/testutil"
-)
-
 type xACTOR struct {
 	TableInfo
 	ACTOR_ID           NumberField
@@ -553,82 +546,4 @@ func NewSQLTest() SQLTest {
 			{Month: "2006 February", HorrorCount: 3, ActionCount: 2, ComedyCount: 6, ScifiCount: 4},
 		},
 	}
-}
-
-func (test *SQLTest) ValidateQueries(t *testing.T, db DB) {
-	t.Run(test.Dialect+" Q1", func(t *testing.T) {
-		t.Parallel()
-		var answer1 []string
-		fields, err := test.Query1.GetFetchableFields()
-		if err != nil {
-			t.Fatal(testutil.Callers(), err)
-		}
-		_, err = Fetch(Log(db), test.Query1, func(row *Row) {
-			var lastName string
-			row.ScanInto(&lastName, fields[0])
-			row.Process(func() error {
-				answer1 = append(answer1, lastName)
-				return nil
-			})
-		})
-		if err != nil {
-			t.Fatal(testutil.Callers(), err)
-		}
-		if diff := testutil.Diff(answer1, test.Answer1); diff != "" {
-			t.Error(testutil.Callers(), diff)
-		}
-	})
-
-	t.Run(test.Dialect+" Q2", func(t *testing.T) {
-		answer2, err := FetchExists(Log(db), test.Query2)
-		if err != nil {
-			t.Fatal(testutil.Callers(), err)
-		}
-		if answer2 != test.Answer2 {
-			t.Error(testutil.Callers(), fmt.Sprintf("got=%v want=%v\n", answer2, test.Answer2))
-		}
-	})
-
-	t.Run(test.Dialect+" Q3", func(t *testing.T) {
-		t.Parallel()
-		var answer3 int
-		fields, err := test.Query3.GetFetchableFields()
-		if err != nil {
-			t.Fatal(testutil.Callers(), err)
-		}
-		_, err = Fetch(Log(db), test.Query3, func(row *Row) {
-			row.ScanInto(&answer3, fields[0])
-		})
-		if err != nil {
-			t.Fatal(testutil.Callers(), err)
-		}
-		if answer3 != test.Answer3 {
-			t.Error(testutil.Callers(), fmt.Sprintf("got=%v want=%v\n", answer3, test.Answer3))
-		}
-	})
-
-	t.Run(test.Dialect+" Q4", func(t *testing.T) {
-		t.Parallel()
-		var answer4 []Record4
-		fields, err := test.Query4.GetFetchableFields()
-		if err != nil {
-			t.Fatal(testutil.Callers(), err)
-		}
-		_, err = Fetch(Log(db), test.Query3, func(row *Row) {
-			var record4 Record4
-			row.ScanInto(&record4.ActorID, fields[0])
-			row.ScanInto(&record4.FirstName, fields[1])
-			row.ScanInto(&record4.LastName, fields[2])
-			row.Process(func() error {
-				answer4 = append(answer4, record4)
-				return nil
-			})
-		})
-		if err != nil {
-			t.Fatal(testutil.Callers(), err)
-		}
-		if diff := testutil.Diff(answer4, test.Answer4); diff != "" {
-			t.Error(testutil.Callers(), diff)
-		}
-	})
 }

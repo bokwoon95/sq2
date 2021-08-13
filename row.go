@@ -31,7 +31,16 @@ func RowProcessingError(row *Row) error { return row.processingErr }
 
 func RowClosed(row *Row) bool { return row.closed }
 
-func (r *Row) Process(fn func() error) {
+func (r *Row) Process(fn func()) {
+	if !r.active || r.processed {
+		return
+	}
+	fn()
+	r.processed = true
+	return
+}
+
+func (r *Row) ProcessErr(fn func() error) {
 	if !r.active || r.processed {
 		return
 	}
