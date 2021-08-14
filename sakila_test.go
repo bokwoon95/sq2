@@ -287,7 +287,7 @@ func sakilaAnswer7() []Film {
 }
 
 // Q8) Find the films whose total number of actors is above the average,
-// ordered by title. Show only the top 10 results.
+// ordered by descending actor count. Show only the top 10 results.
 func sakilaAnswer8() []FilmActorStats {
 	return []FilmActorStats{
 		{

@@ -87,7 +87,8 @@ func Test_SQLiteTestSuite(t *testing.T) {
 
 	t.Run("Q1", func(t *testing.T) {
 		t.Parallel()
-		var answer1 []string
+		var gotAnswer []string
+		wantAnswer := sakilaAnswer1()
 		ACTOR := xNEW_ACTOR("")
 		_, err := Fetch(Log(db), SQLite.
 			SelectDistinct().
@@ -96,21 +97,22 @@ func Test_SQLiteTestSuite(t *testing.T) {
 			Limit(5),
 			func(row *Row) {
 				lastName := row.String(ACTOR.LAST_NAME)
-				row.Process(func() { answer1 = append(answer1, lastName) })
+				row.Process(func() { gotAnswer = append(gotAnswer, lastName) })
 			},
 		)
 		if err != nil {
 			t.Fatal(testutil.Callers(), err)
 		}
-		if diff := testutil.Diff(answer1, sakilaAnswer1()); diff != "" {
+		if diff := testutil.Diff(gotAnswer, wantAnswer); diff != "" {
 			t.Fatal(testutil.Callers(), diff)
 		}
 	})
 
 	t.Run("Q2", func(t *testing.T) {
 		t.Parallel()
+		wantAnswer := sakilaAnswer2()
 		ACTOR := xNEW_ACTOR("")
-		answer2, err := FetchExists(Log(db), SQLite.
+		gotAnswer, err := FetchExists(Log(db), SQLite.
 			From(ACTOR).
 			Where(Or(
 				ACTOR.FIRST_NAME.EqString("SCARLETT"),
@@ -120,31 +122,33 @@ func Test_SQLiteTestSuite(t *testing.T) {
 		if err != nil {
 			t.Fatal(testutil.Callers(), err)
 		}
-		if diff := testutil.Diff(answer2, sakilaAnswer2()); diff != "" {
+		if diff := testutil.Diff(gotAnswer, wantAnswer); diff != "" {
 			t.Fatal(testutil.Callers(), diff)
 		}
 	})
 
 	t.Run("Q3", func(t *testing.T) {
 		t.Parallel()
+		var gotAnswer int
+		wantAnswer := sakilaAnswer3()
 		ACTOR := xNEW_ACTOR("")
-		var answer3 int
 		_, err := Fetch(Log(db), SQLite.From(ACTOR), func(row *Row) {
-			answer3 = row.Int(NumberFieldf("COUNT(DISTINCT {})", ACTOR.LAST_NAME))
+			gotAnswer = row.Int(NumberFieldf("COUNT(DISTINCT {})", ACTOR.LAST_NAME))
 			row.Close()
 		})
 		if err != nil {
 			t.Fatal(testutil.Callers(), err)
 		}
-		if diff := testutil.Diff(answer3, sakilaAnswer3()); diff != "" {
+		if diff := testutil.Diff(gotAnswer, wantAnswer); diff != "" {
 			t.Fatal(testutil.Callers(), diff)
 		}
 	})
 
 	t.Run("Q4", func(t *testing.T) {
 		t.Parallel()
+		var gotAnswer []Actor
+		wantAnswer := sakilaAnswer4()
 		ACTOR := xNEW_ACTOR("")
-		var answer4 []Actor
 		_, err := Fetch(Log(db), SQLite.
 			From(ACTOR).
 			Where(ACTOR.LAST_NAME.LikeString("%GEN%")).
@@ -156,21 +160,22 @@ func Test_SQLiteTestSuite(t *testing.T) {
 					LastName:   row.String(ACTOR.LAST_NAME),
 					LastUpdate: row.Time(ACTOR.LAST_UPDATE),
 				}
-				row.Process(func() { answer4 = append(answer4, actor) })
+				row.Process(func() { gotAnswer = append(gotAnswer, actor) })
 			},
 		)
 		if err != nil {
 			t.Fatal(testutil.Callers(), err)
 		}
-		if diff := testutil.Diff(answer4, sakilaAnswer4()); diff != "" {
+		if diff := testutil.Diff(gotAnswer, wantAnswer); diff != "" {
 			t.Fatal(testutil.Callers(), diff)
 		}
 	})
 
 	t.Run("Q5", func(t *testing.T) {
 		t.Parallel()
+		var gotAnswer []string
+		wantAnswer := sakilaAnswer5()
 		ACTOR := xNEW_ACTOR("")
-		var answer5 []string
 		_, err := Fetch(Log(db), SQLite.
 			From(ACTOR).
 			GroupBy(ACTOR.LAST_NAME).
@@ -179,21 +184,22 @@ func Test_SQLiteTestSuite(t *testing.T) {
 			Limit(5),
 			func(row *Row) {
 				lastName := row.String(ACTOR.LAST_NAME)
-				row.Process(func() { answer5 = append(answer5, lastName) })
+				row.Process(func() { gotAnswer = append(gotAnswer, lastName) })
 			},
 		)
 		if err != nil {
 			t.Fatal(testutil.Callers(), err)
 		}
-		if diff := testutil.Diff(answer5, sakilaAnswer5()); diff != "" {
+		if diff := testutil.Diff(gotAnswer, wantAnswer); diff != "" {
 			t.Fatal(testutil.Callers(), diff)
 		}
 	})
 
 	t.Run("Q6", func(t *testing.T) {
 		t.Parallel()
+		var gotAnswer []City
+		wantAnswer := sakilaAnswer6()
 		CITY, COUNTRY := xNEW_CITY(""), xNEW_COUNTRY("")
-		var answer6 []City
 		_, err := Fetch(Log(db), SQLite.
 			From(CITY).
 			Join(COUNTRY, COUNTRY.COUNTRY_ID.Eq(CITY.COUNTRY_ID)).
@@ -210,21 +216,22 @@ func Test_SQLiteTestSuite(t *testing.T) {
 					CityName:   row.String(CITY.CITY),
 					LastUpdate: row.Time(CITY.LAST_UPDATE),
 				}
-				row.Process(func() { answer6 = append(answer6, city) })
+				row.Process(func() { gotAnswer = append(gotAnswer, city) })
 			},
 		)
 		if err != nil {
 			t.Fatal(testutil.Callers(), err)
 		}
-		if diff := testutil.Diff(answer6, sakilaAnswer6()); diff != "" {
+		if diff := testutil.Diff(gotAnswer, wantAnswer); diff != "" {
 			t.Fatal(testutil.Callers(), diff)
 		}
 	})
 
 	t.Run("Q7", func(t *testing.T) {
 		t.Parallel()
+		var gotAnswer []Film
+		wantAnswer := sakilaAnswer7()
 		FILM := xNEW_FILM("")
-		var answer7 []Film
 		_, err := Fetch(Log(db), SQLite.
 			From(FILM).
 			OrderBy(FILM.TITLE).
@@ -254,21 +261,22 @@ func Test_SQLiteTestSuite(t *testing.T) {
 					When(And(FILM.LENGTH.GtInt(60), FILM.LENGTH.LeInt(120)), "medium").
 					Else("long"),
 				)
-				row.Process(func() { answer7 = append(answer7, film) })
+				row.Process(func() { gotAnswer = append(gotAnswer, film) })
 			},
 		)
 		if err != nil {
 			t.Fatal(testutil.Callers(), err)
 		}
-		if diff := testutil.Diff(answer7, sakilaAnswer7()); diff != "" {
+		if diff := testutil.Diff(gotAnswer, wantAnswer); diff != "" {
 			t.Fatal(testutil.Callers(), diff)
 		}
 	})
 
 	t.Run("Q8", func(t *testing.T) {
 		t.Parallel()
+		var gotAnswer []FilmActorStats
+		wantAnswer := sakilaAnswer8()
 		FILM, FILM_ACTOR := xNEW_FILM(""), xNEW_FILM_ACTOR("")
-		var answer8 []FilmActorStats
 		film_stats := NewCTE("film_stats", nil, SQLite.
 			Select(FILM_ACTOR.FILM_ID, Fieldf("COUNT(*)").As("actor_count")).
 			From(FILM_ACTOR).
@@ -300,20 +308,21 @@ func Test_SQLiteTestSuite(t *testing.T) {
 				row.ScanJSON(&film.SpecialFeatures, FILM.SPECIAL_FEATURES)
 				filmActorStats := FilmActorStats{Film: film}
 				row.ScanInto(&filmActorStats.ActorCount, film_stats.Field("actor_count"))
-				row.Process(func() { answer8 = append(answer8, filmActorStats) })
+				row.Process(func() { gotAnswer = append(gotAnswer, filmActorStats) })
 			},
 		)
 		if err != nil {
 			t.Fatal(testutil.Callers(), err)
 		}
-		if diff := testutil.Diff(answer8, sakilaAnswer8()); diff != "" {
+		if diff := testutil.Diff(gotAnswer, wantAnswer); diff != "" {
 			t.Fatal(testutil.Callers(), diff)
 		}
 	})
 
 	t.Run("Q9", func(t *testing.T) {
 		t.Parallel()
-		var answer9 []CategoryRevenueStats
+		var gotAnswer []CategoryRevenueStats
+		wantAnswer := sakilaAnswer9()
 		CATEGORY := xNEW_CATEGORY("")
 		FILM_CATEGORY := xNEW_FILM_CATEGORY("")
 		INVENTORY := xNEW_INVENTORY("")
@@ -338,20 +347,21 @@ func Test_SQLiteTestSuite(t *testing.T) {
 					Rank:     row.Int(RankOver(OrderBy(Sum(PAYMENT.AMOUNT).Desc()))),
 					Quartile: row.Int(NtileOver(4, OrderBy(Sum(PAYMENT.AMOUNT).Asc()))),
 				}
-				row.Process(func() { answer9 = append(answer9, stats) })
+				row.Process(func() { gotAnswer = append(gotAnswer, stats) })
 			},
 		)
 		if err != nil {
 			t.Fatal(testutil.Callers(), err)
 		}
-		if diff := testutil.Diff(answer9, sakilaAnswer9()); diff != "" {
+		if diff := testutil.Diff(gotAnswer, wantAnswer); diff != "" {
 			t.Fatal(testutil.Callers(), diff)
 		}
 	})
 
 	t.Run("Q10", func(t *testing.T) {
 		t.Parallel()
-		var answer10 []MonthlyRentalStats
+		var gotAnswer []MonthlyRentalStats
+		wantAnswer := sakilaAnswer10()
 		RENTAL := xNEW_RENTAL("")
 		FILM_CATEGORY := xNEW_FILM_CATEGORY("")
 		CATEGORY := xNEW_CATEGORY("")
@@ -384,13 +394,13 @@ func Test_SQLiteTestSuite(t *testing.T) {
 					ComedyCount: row.Int64(Count(Case(CATEGORY.NAME).When("Comedy", 1)).As("comedy_count")),
 					ScifiCount:  row.Int64(Count(Case(CATEGORY.NAME).When("Sci-Fi", 1)).As("scifi_count")),
 				}
-				row.Process(func() { answer10 = append(answer10, stats) })
+				row.Process(func() { gotAnswer = append(gotAnswer, stats) })
 			},
 		)
 		if err != nil {
 			t.Fatal(testutil.Callers(), err)
 		}
-		if diff := testutil.Diff(answer10, sakilaAnswer10()); diff != "" {
+		if diff := testutil.Diff(gotAnswer, wantAnswer); diff != "" {
 			t.Fatal(testutil.Callers(), diff)
 		}
 	})
