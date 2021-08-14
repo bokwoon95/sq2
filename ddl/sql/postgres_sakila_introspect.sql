@@ -61,6 +61,7 @@ CREATE TABLE IF NOT EXISTS public.city (
     ,last_update TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
 
     ,CONSTRAINT city_city_id_pkey PRIMARY KEY (city_id)
+    ,CONSTRAINT city_country_id_city_key UNIQUE (country_id, city)
 );
 
 CREATE TABLE IF NOT EXISTS public.country (
@@ -69,6 +70,7 @@ CREATE TABLE IF NOT EXISTS public.country (
     ,last_update TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
 
     ,CONSTRAINT country_country_id_pkey PRIMARY KEY (country_id)
+    ,CONSTRAINT country_country_key UNIQUE (country)
 );
 
 CREATE TABLE IF NOT EXISTS public.customer (
@@ -315,35 +317,17 @@ CREATE OR REPLACE VIEW public.staff_list AS  SELECT s.staff_id AS id,
      JOIN city ci ON ci.city_id = a.city_id
      JOIN country co ON co.country_id = ci.country_id;
 
-CREATE UNIQUE INDEX IF NOT EXISTS actor_actor_id_pkey ON public.actor (actor_id);
-
 CREATE INDEX IF NOT EXISTS actor_last_name_idx ON public.actor (last_name);
-
-CREATE UNIQUE INDEX IF NOT EXISTS address_address_id_pkey ON public.address (address_id);
 
 CREATE INDEX IF NOT EXISTS address_city_id_idx ON public.address (city_id);
 
-CREATE UNIQUE INDEX IF NOT EXISTS category_category_id_pkey ON public.category (category_id);
-
-CREATE UNIQUE INDEX IF NOT EXISTS city_city_id_pkey ON public.city (city_id);
-
 CREATE INDEX IF NOT EXISTS city_country_id_idx ON public.city (country_id);
 
-CREATE UNIQUE INDEX IF NOT EXISTS country_country_id_pkey ON public.country (country_id);
-
 CREATE INDEX IF NOT EXISTS customer_address_id_idx ON public.customer (address_id);
-
-CREATE UNIQUE INDEX IF NOT EXISTS customer_customer_id_pkey ON public.customer (customer_id);
-
-CREATE UNIQUE INDEX IF NOT EXISTS customer_email_first_name_last_name_key ON public.customer (email, first_name, last_name);
-
-CREATE UNIQUE INDEX IF NOT EXISTS customer_email_key ON public.customer (email);
 
 CREATE INDEX IF NOT EXISTS customer_last_name_idx ON public.customer (last_name);
 
 CREATE INDEX IF NOT EXISTS customer_store_id_idx ON public.customer (store_id);
-
-CREATE UNIQUE INDEX IF NOT EXISTS film_film_id_pkey ON public.film (film_id);
 
 CREATE INDEX IF NOT EXISTS film_fulltext_idx ON public.film USING GIST (fulltext);
 
@@ -357,23 +341,15 @@ CREATE UNIQUE INDEX IF NOT EXISTS film_actor_actor_id_film_id_idx ON public.film
 
 CREATE INDEX IF NOT EXISTS film_actor_film_id_idx ON public.film_actor (film_id);
 
-CREATE UNIQUE INDEX IF NOT EXISTS film_actor_review_film_id_actor_id_pkey ON public.film_actor_review (film_id, actor_id);
-
 CREATE INDEX IF NOT EXISTS film_actor_review_misc ON public.film_actor_review (film_id, (substr(review_body, 2, 10)), (review_title || ' abcd'::text), ((metadata ->> 'score'::text)::integer)) INCLUDE (actor_id, last_update) WHERE delete_date IS NULL;
 
 CREATE INDEX IF NOT EXISTS film_actor_review_review_body_idx ON public.film_actor_review (review_body);
 
 CREATE INDEX IF NOT EXISTS film_actor_review_review_title_idx ON public.film_actor_review (review_title);
 
-CREATE UNIQUE INDEX IF NOT EXISTS inventory_inventory_id_pkey ON public.inventory (inventory_id);
-
 CREATE INDEX IF NOT EXISTS inventory_store_id_film_id_idx ON public.inventory (store_id, film_id);
 
-CREATE UNIQUE INDEX IF NOT EXISTS language_language_id_pkey ON public.language (language_id);
-
 CREATE INDEX IF NOT EXISTS payment_customer_id_idx ON public.payment (customer_id);
-
-CREATE UNIQUE INDEX IF NOT EXISTS payment_payment_id_pkey ON public.payment (payment_id);
 
 CREATE INDEX IF NOT EXISTS payment_staff_id_idx ON public.payment (staff_id);
 
@@ -381,19 +357,11 @@ CREATE INDEX IF NOT EXISTS rental_customer_id_idx ON public.rental (customer_id)
 
 CREATE INDEX IF NOT EXISTS rental_inventory_id_idx ON public.rental (inventory_id);
 
-CREATE INDEX IF NOT EXISTS rental_range_excl ON public.rental USING GIST (inventory_id, (tstzrange(rental_date, return_date, '[]'::text)));
-
 CREATE UNIQUE INDEX IF NOT EXISTS rental_rental_date_inventory_id_customer_id_idx ON public.rental (rental_date, inventory_id, customer_id);
-
-CREATE UNIQUE INDEX IF NOT EXISTS rental_rental_id_pkey ON public.rental (rental_id);
 
 CREATE INDEX IF NOT EXISTS rental_staff_id_idx ON public.rental (staff_id);
 
-CREATE UNIQUE INDEX IF NOT EXISTS staff_staff_id_pkey ON public.staff (staff_id);
-
 CREATE UNIQUE INDEX IF NOT EXISTS store_manager_staff_id_idx ON public.store (manager_staff_id);
-
-CREATE UNIQUE INDEX IF NOT EXISTS store_store_id_pkey ON public.store (store_id);
 
 CREATE UNIQUE INDEX IF NOT EXISTS full_address_country_id_city_id_address_id_idx ON public.full_address (country_id, city_id, address_id) INCLUDE (country, city, address, address2);
 

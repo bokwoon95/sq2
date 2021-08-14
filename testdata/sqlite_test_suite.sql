@@ -184,6 +184,41 @@ ORDER BY
 ------------
 
 -- Insert and get ID (sqlite uses both RETURNING and LastInsertID)
+DELETE FROM country WHERE country IN ('Norway', 'Ireland', 'Iceland', 'Singapore', 'Denmark', 'Luxembourg', 'Slovenia', 'Czech Republic', 'Malta', 'Cyprus', 'Andorra', 'Qatar', 'Portugal', 'Croatia', 'Russia', 'Montenegro');
+
+INSERT INTO country
+    (country)
+VALUES
+    ('Norway')
+    ,('Ireland')
+    ,('Iceland')
+    ,('Singapore')
+    ,('Denmark')
+    ,('Luxembourg')
+    ,('Slovenia')
+RETURNING country_id, country;
+
+INSERT INTO country
+    (country)
+VALUES
+    ('Norway')
+    ,('Ireland')
+    ,('Iceland')
+    ,('Singapore')
+    ,('Denmark')
+    ,('Luxembourg')
+    ,('Slovenia')
+    ,('Czech Republic')
+    ,('Malta')
+    ,('Cyprus')
+    ,('Andorra')
+    ,('Qatar')
+    ,('Portugal')
+    ,('Croatia')
+    ,('Russia')
+    ,('Montenegro')
+ON CONFLICT DO NOTHING
+RETURNING country_id, country;
 
 -- Insert the same row with the ID but ignore conflicts
 

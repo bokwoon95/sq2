@@ -32,6 +32,7 @@ CREATE TABLE IF NOT EXISTS city (
     ,country_id INT NOT NULL
     ,last_update DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 
+    ,CONSTRAINT city_country_id_city_key UNIQUE (country_id, city)
     ,CONSTRAINT city_country_id_fkey FOREIGN KEY (country_id) REFERENCES country (country_id) ON UPDATE CASCADE ON DELETE RESTRICT
 );
 
@@ -39,6 +40,8 @@ CREATE TABLE IF NOT EXISTS country (
     country_id INTEGER PRIMARY KEY
     ,country TEXT NOT NULL
     ,last_update DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+
+    ,CONSTRAINT country_country_key UNIQUE (country)
 );
 
 CREATE TABLE IF NOT EXISTS customer (

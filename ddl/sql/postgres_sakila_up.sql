@@ -51,6 +51,7 @@ CREATE TABLE IF NOT EXISTS city (
     ,last_update TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
 
     ,CONSTRAINT city_city_id_pkey PRIMARY KEY (city_id)
+    ,CONSTRAINT city_country_id_city_key UNIQUE (country_id, city)
 );
 
 CREATE TABLE IF NOT EXISTS country (
@@ -59,6 +60,7 @@ CREATE TABLE IF NOT EXISTS country (
     ,last_update TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
 
     ,CONSTRAINT country_country_id_pkey PRIMARY KEY (country_id)
+    ,CONSTRAINT country_country_key UNIQUE (country)
 );
 
 CREATE TABLE IF NOT EXISTS customer (

@@ -40,6 +40,7 @@ CREATE TABLE IF NOT EXISTS db.city (
     ,country_id INT NOT NULL
     ,last_update DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 
+    ,CONSTRAINT city_country_id_city_key UNIQUE (country_id, city)
     ,PRIMARY KEY (city_id)
     ,INDEX city_country_id_idx (country_id)
 );
@@ -49,6 +50,7 @@ CREATE TABLE IF NOT EXISTS db.country (
     ,country VARCHAR(50) NOT NULL COLLATE utf8mb4_0900_ai_ci
     ,last_update DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 
+    ,CONSTRAINT country_country_key UNIQUE (country)
     ,PRIMARY KEY (country_id)
 );
 
@@ -68,8 +70,6 @@ CREATE TABLE IF NOT EXISTS db.customer (
     ,CONSTRAINT customer_email_key UNIQUE (email)
     ,PRIMARY KEY (customer_id)
     ,INDEX customer_address_id_idx (address_id)
-    ,UNIQUE INDEX customer_email_first_name_last_name_key (email, first_name, last_name)
-    ,UNIQUE INDEX customer_email_key (email)
     ,INDEX customer_last_name_idx (last_name)
     ,INDEX customer_store_id_idx (store_id)
 );
@@ -102,7 +102,6 @@ CREATE TABLE IF NOT EXISTS db.film_actor (
     ,last_update DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 
     ,CONSTRAINT film_actor_actor_id_film_id_idx UNIQUE (actor_id, film_id)
-    ,UNIQUE INDEX film_actor_actor_id_film_id_idx (actor_id, film_id)
     ,INDEX film_actor_film_id_idx (film_id)
 );
 
@@ -124,9 +123,6 @@ CREATE TABLE IF NOT EXISTS db.film_category (
     film_id INT NOT NULL
     ,category_id INT NOT NULL
     ,last_update DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-
-    ,INDEX film_category_category_id_fkey (category_id)
-    ,INDEX film_category_film_id_fkey (film_id)
 );
 
 CREATE TABLE IF NOT EXISTS db.film_text (
@@ -145,7 +141,6 @@ CREATE TABLE IF NOT EXISTS db.inventory (
     ,last_update DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 
     ,PRIMARY KEY (inventory_id)
-    ,INDEX inventory_film_id_fkey (film_id)
     ,INDEX inventory_store_id_film_id_idx (store_id, film_id)
 );
 
@@ -167,7 +162,6 @@ CREATE TABLE IF NOT EXISTS db.payment (
 
     ,PRIMARY KEY (payment_id)
     ,INDEX payment_customer_id_idx (customer_id)
-    ,INDEX payment_rental_id_fkey (rental_id)
     ,INDEX payment_staff_id_idx (staff_id)
 );
 
@@ -184,7 +178,6 @@ CREATE TABLE IF NOT EXISTS db.rental (
     ,CONSTRAINT rental_rental_date_inventory_id_customer_id_idx UNIQUE (rental_date, inventory_id, customer_id)
     ,INDEX rental_customer_id_idx (customer_id)
     ,INDEX rental_inventory_id_idx (inventory_id)
-    ,UNIQUE INDEX rental_rental_date_inventory_id_customer_id_idx (rental_date, inventory_id, customer_id)
     ,INDEX rental_staff_id_idx (staff_id)
 );
 
@@ -202,8 +195,6 @@ CREATE TABLE IF NOT EXISTS db.staff (
     ,picture BLOB NOT NULL
 
     ,PRIMARY KEY (staff_id)
-    ,INDEX staff_address_id_fkey (address_id)
-    ,INDEX staff_store_id_fkey (store_id)
 );
 
 CREATE TABLE IF NOT EXISTS db.store (
@@ -214,8 +205,6 @@ CREATE TABLE IF NOT EXISTS db.store (
 
     ,PRIMARY KEY (store_id)
     ,CONSTRAINT store_manager_staff_id_idx UNIQUE (manager_staff_id)
-    ,INDEX store_address_id_fkey (address_id)
-    ,UNIQUE INDEX store_manager_staff_id_idx (manager_staff_id)
 );
 
 CREATE OR REPLACE VIEW db.actor_info AS select `a`.`actor_id` AS `actor_id`,`a`.`first_name` AS `first_name`,`a`.`last_name` AS `last_name`,json_objectagg(`c`.`name`,(select json_arrayagg(`f`.`title`) from ((`db`.`film` `f` join `db`.`film_category` `fc` on((`fc`.`film_id` = `f`.`film_id`))) join `db`.`film_actor` `fa` on((`fa`.`film_id` = `f`.`film_id`))) where ((`fc`.`category_id` = `c`.`category_id`) and (`fa`.`actor_id` = `a`.`actor_id`)) group by `fa`.`actor_id`)) AS `film_info` from (((`db`.`actor` `a` left join `db`.`film_actor` `fa` on((`fa`.`actor_id` = `a`.`actor_id`))) left join `db`.`film_category` `fc` on((`fc`.`film_id` = `fa`.`film_id`))) left join `db`.`category` `c` on((`c`.`category_id` = `fc`.`category_id`))) group by `a`.`actor_id`,`a`.`first_name`,`a`.`last_name`;

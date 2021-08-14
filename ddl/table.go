@@ -562,6 +562,9 @@ func (cmd CreateTableCommand) AppendSQL(dialect string, buf *bytes.Buffer, args 
 	var newlineWritten bool
 	if cmd.IncludeConstraints {
 		for i, constraint := range cmd.Table.Constraints {
+			if constraint.Ignore {
+				continue
+			}
 			if dialect == sq.DialectSQLite && constraint.ConstraintType == PRIMARY_KEY && len(constraint.Columns) == 1 {
 				// SQLite PRIMARY KEY is always be defined inline with the column,
 				// so we don't have to do it here.
@@ -597,6 +600,9 @@ func (cmd CreateTableCommand) AppendSQL(dialect string, buf *bytes.Buffer, args 
 			return fmt.Errorf("%s does not allow defining indexes inside CREATE TABLE", dialect)
 		}
 		for i, createIndexCmd := range cmd.CreateIndexCmds {
+			if createIndexCmd.Ignore {
+				continue
+			}
 			if !newlineWritten {
 				buf.WriteString("\n")
 				newlineWritten = true
