@@ -203,7 +203,7 @@ END;`, tbl)
 		t.Trigger(`
 CREATE TRIGGER film_fts5_after_update_trg AFTER UPDATE ON {1} BEGIN
     INSERT INTO film_text (film_text, ROWID, title, description) VALUES ('delete', OLD.film_id, OLD.title, OLD.description);
-    INSERT INTO film_text (film_text, ROWID, title, description) VALUES (NEW.film_id, NEW.title, NEW.description);
+    INSERT INTO film_text (ROWID, title, description) VALUES (NEW.film_id, NEW.title, NEW.description);
 END;`, tbl)
 	}
 	if dialect == sq.DialectPostgres {
