@@ -102,7 +102,7 @@ func (q DeleteQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interf
 	// WHERE
 	var wherePredicate VariadicPredicate
 	for i, table := range q.FromTables {
-		if predicateInjector, ok := table.(PredicateInjector); ok {
+		if predicateInjector, ok := table.(PredicateHook); ok {
 			predicate, err := predicateInjector.InjectPredicate(env)
 			if err != nil {
 				return fmt.Errorf("table #%d %s injecting predicate: %w", i+1, table.GetName(), err)

@@ -95,8 +95,8 @@ func (q SelectQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interf
 	}
 	// WHERE
 	var wherePredicate VariadicPredicate
-	if predicateInjector, ok := q.FromTable.(PredicateInjector); ok {
-		predicate, err := predicateInjector.InjectPredicate(env)
+	if predicateHook, ok := q.FromTable.(PredicateHook); ok {
+		predicate, err := predicateHook.InjectPredicate(env)
 		if err != nil {
 			return fmt.Errorf("table %s injecting predicate: %w", q.FromTable.GetName(), err)
 		}
@@ -105,8 +105,8 @@ func (q SelectQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interf
 		}
 	}
 	for i, joinTable := range q.JoinTables {
-		if predicateInjector, ok := joinTable.Table.(PredicateInjector); ok {
-			predicate, err := predicateInjector.InjectPredicate(env)
+		if predicateHook, ok := joinTable.Table.(PredicateHook); ok {
+			predicate, err := predicateHook.InjectPredicate(env)
 			if err != nil {
 				return fmt.Errorf("table #%d %s injecting predicate: %w", i+1, joinTable.Table.GetName(), err)
 			}

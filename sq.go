@@ -88,11 +88,7 @@ type Table interface {
 	GetName() string // Table name must exclude the schema (if any)
 }
 
-type PredicateAdder interface {
-	AddPredicate(env map[string]interface{}) ([]Predicate, error)
-}
-
-type PredicateInjector interface {
+type PredicateHook interface {
 	InjectPredicate(env map[string]interface{}) (Predicate, error)
 }
 
