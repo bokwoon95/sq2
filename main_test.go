@@ -17,7 +17,7 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
-//go:embed testdata
+//go:embed ddl/testdata
 var embeddedFiles embed.FS
 
 var (
@@ -58,27 +58,27 @@ func initializeDBs() {
 		{
 			driverName:     "sqlite3",
 			dataSourceName: *sqliteDSNFlag,
-			downScript:     "testdata/sqlite_sakila_down.sql",
-			upScript:       "testdata/sqlite_sakila_up.sql",
-			dataScript:     "testdata/sqlite_sakila_data.sql",
+			downScript:     "ddl/testdata/sqlite_sakila_down.sql",
+			upScript:       "ddl/testdata/sqlite_sakila_up.sql",
+			dataScript:     "ddl/testdata/sqlite_sakila_data.sql",
 			tableQuery:     "SELECT EXISTS(SELECT 1 FROM sqlite_schema WHERE tbl_name = 'actor')",
 			dataQuery:      "SELECT EXISTS(SELECT 1 from actor)",
 		},
 		{
 			driverName:     "postgres",
 			dataSourceName: *postgresDSNFlag,
-			downScript:     "testdata/postgres_sakila_down.sql",
-			upScript:       "testdata/postgres_sakila_up.sql",
-			dataScript:     "testdata/postgres_sakila_data.sql",
+			downScript:     "ddl/testdata/postgres_sakila_down.sql",
+			upScript:       "ddl/testdata/postgres_sakila_up.sql",
+			dataScript:     "ddl/testdata/postgres_sakila_data.sql",
 			tableQuery:     "SELECT EXISTS(SELECT 1 FROM pg_class WHERE relkind = 'r' AND relname = 'actor')",
 			dataQuery:      "SELECT EXISTS(SELECT 1 from actor)",
 		},
 		{
 			driverName:     "mysql",
 			dataSourceName: *mysqlDSNFlag,
-			downScript:     "testdata/mysql_sakila_down.sql",
-			upScript:       "testdata/mysql_sakila_up.sql",
-			dataScript:     "testdata/mysql_sakila_data.sql",
+			downScript:     "ddl/testdata/mysql_sakila_down.sql",
+			upScript:       "ddl/testdata/mysql_sakila_up.sql",
+			dataScript:     "ddl/testdata/mysql_sakila_data.sql",
 			tableQuery:     "SELECT EXISTS(SELECT 1 FROM information_schema.tables WHERE table_type = 'BASE TABLE' AND table_name = 'actor')",
 			dataQuery:      "SELECT EXISTS(SELECT 1 from actor)",
 		},

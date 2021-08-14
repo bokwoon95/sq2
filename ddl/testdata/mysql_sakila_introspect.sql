@@ -223,15 +223,15 @@ CREATE OR REPLACE VIEW db.sales_by_store AS select concat(`ci`.`city`,',',`co`.`
 
 CREATE OR REPLACE VIEW db.staff_list AS select `s`.`staff_id` AS `id`,concat(`s`.`first_name`,' ',`s`.`last_name`) AS `name`,`a`.`address` AS `address`,`a`.`postal_code` AS `zip code`,`a`.`phone` AS `phone`,`ci`.`city` AS `city`,`co`.`country` AS `country`,`s`.`store_id` AS `sid` from (((`db`.`staff` `s` join `db`.`address` `a` on((`a`.`address_id` = `s`.`address_id`))) join `db`.`city` `ci` on((`ci`.`city_id` = `a`.`city_id`))) join `db`.`country` `co` on((`co`.`country_id` = `ci`.`country_id`)));
 
-DELIMITER ;;
+-- DELIMITER ;;
 
 CREATE TRIGGER film_after_delete_trg AFTER DELETE ON db.film FOR EACH ROW BEGIN
     DELETE FROM film_text WHERE film_id = OLD.film_id;
-END;;
+END; -- ;;
 
 CREATE TRIGGER film_after_insert_trg AFTER INSERT ON db.film FOR EACH ROW BEGIN
     INSERT INTO film_text (film_id, title, description) VALUES (NEW.film_id, NEW.title, NEW.description);
-END;;
+END; -- ;;
 
 CREATE TRIGGER film_after_update_trg AFTER UPDATE ON db.film FOR EACH ROW BEGIN
     IF OLD.title <> NEW.title OR OLD.description <> NEW.description THEN
@@ -239,9 +239,9 @@ CREATE TRIGGER film_after_update_trg AFTER UPDATE ON db.film FOR EACH ROW BEGIN
         SET title = NEW.title, description = NEW.description, film_id = NEW.film_id
         WHERE film_id = OLD.film_id;
     END IF;
-END;;
+END; -- ;;
 
-DELIMITER ;
+-- DELIMITER ;
 
 ALTER TABLE db.address
     ADD CONSTRAINT address_city_id_fkey FOREIGN KEY (city_id) REFERENCES db.city (city_id) ON UPDATE CASCADE ON DELETE RESTRICT;

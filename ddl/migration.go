@@ -525,7 +525,7 @@ func (m *Migration) WriteSQL(w io.Writer) error {
 		query = strings.TrimSpace(query)
 		io.WriteString(w, query)
 		if isMySQLFunction {
-			io.WriteString(w, ";;")
+			io.WriteString(w, "; -- ;;")
 		} else {
 			if last := len(query) - 1; query[last] != ';' {
 				io.WriteString(w, ";")
@@ -553,7 +553,7 @@ func (m *Migration) WriteSQL(w io.Writer) error {
 	}
 	if len(m.CreateFunctionCmds) > 0 {
 		if m.Dialect == sq.DialectMySQL {
-			io.WriteString(w, "\n\nDELIMITER ;;")
+			io.WriteString(w, "\n\n-- DELIMITER ;;")
 		}
 		for _, cmd := range m.CreateFunctionCmds {
 			if cmd.Ignore {
@@ -565,7 +565,7 @@ func (m *Migration) WriteSQL(w io.Writer) error {
 			}
 		}
 		if m.Dialect == sq.DialectMySQL {
-			io.WriteString(w, "\n\nDELIMITER ;")
+			io.WriteString(w, "\n\n-- DELIMITER ;")
 		}
 	}
 	for _, cmd := range m.CreateTableCmds {
@@ -606,7 +606,7 @@ func (m *Migration) WriteSQL(w io.Writer) error {
 	}
 	if len(m.CreateTriggerCmds) > 0 {
 		if m.Dialect == sq.DialectMySQL {
-			io.WriteString(w, "\n\nDELIMITER ;;")
+			io.WriteString(w, "\n\n-- DELIMITER ;;")
 		}
 		for _, cmd := range m.CreateTriggerCmds {
 			if cmd.Ignore {
@@ -618,7 +618,7 @@ func (m *Migration) WriteSQL(w io.Writer) error {
 			}
 		}
 		if m.Dialect == sq.DialectMySQL {
-			io.WriteString(w, "\n\nDELIMITER ;")
+			io.WriteString(w, "\n\n-- DELIMITER ;")
 		}
 	}
 	for _, cmd := range m.AddForeignKeyCmds {

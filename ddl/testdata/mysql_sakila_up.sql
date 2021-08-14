@@ -221,11 +221,11 @@ CREATE OR REPLACE VIEW sales_by_store AS SELECT CONCAT(ci.city, ',', co.country)
 
 CREATE OR REPLACE VIEW staff_list AS SELECT s.staff_id AS id, CONCAT(s.first_name, ' ', s.last_name) AS name, a.address, a.postal_code AS `zip code`, a.phone, ci.city, co.country, s.store_id AS sid FROM staff AS s JOIN address AS a ON a.address_id = s.address_id JOIN city AS ci ON ci.city_id = a.city_id JOIN country AS co ON co.country_id = ci.country_id;
 
-DELIMITER ;;
+-- DELIMITER ;;
 
 CREATE TRIGGER film_after_insert_trg AFTER INSERT ON film FOR EACH ROW BEGIN
     INSERT INTO film_text (film_id, title, description) VALUES (NEW.film_id, NEW.title, NEW.description);
-END;;
+END; -- ;;
 
 CREATE TRIGGER film_after_update_trg AFTER UPDATE ON film FOR EACH ROW BEGIN
     IF OLD.title <> NEW.title OR OLD.description <> NEW.description THEN
@@ -233,13 +233,13 @@ CREATE TRIGGER film_after_update_trg AFTER UPDATE ON film FOR EACH ROW BEGIN
         SET title = NEW.title, description = NEW.description, film_id = NEW.film_id
         WHERE film_id = OLD.film_id;
     END IF;
-END;;
+END; -- ;;
 
 CREATE TRIGGER film_after_delete_trg AFTER DELETE ON film FOR EACH ROW BEGIN
     DELETE FROM film_text WHERE film_id = OLD.film_id;
-END;;
+END; -- ;;
 
-DELIMITER ;
+-- DELIMITER ;
 
 ALTER TABLE address
     ADD CONSTRAINT address_city_id_fkey FOREIGN KEY (city_id) REFERENCES city (city_id) ON UPDATE CASCADE ON DELETE RESTRICT;
