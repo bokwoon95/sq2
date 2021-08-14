@@ -216,6 +216,7 @@ func Sprintf(dialect string, query string, args []interface{}) (string, error) {
 		'=': true, '>': true, '<': true,
 		'+': true, '-': true, '*': true, '/': true,
 		'\t': true, '\n': true, '\v': true, '\f': true, '\r': true, ' ': true, 0x85: true, 0xA0: true,
+		':': true,
 	}
 	for i, char := range query {
 		// do we unconditionally write in the current char?

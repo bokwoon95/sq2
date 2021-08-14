@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"reflect"
 	"time"
+
+	"github.com/lib/pq"
 )
 
 // Row represents the state of a row after a call to rows.Next().
@@ -136,9 +138,19 @@ func (r *Row) ScanInto(dest interface{}, field Field) {
 	r.index++
 }
 
-// TODO: ScanArray isn't strictly necessary because the user can wrap pq.Array
-// themselves, but having array scanning work out of the box will delight the
-// user (esepcially beginners)
+func (r *Row) ScanArray(dest interface{}, field Field) {
+	if !r.active {
+		if reflect.TypeOf(dest).Kind() != reflect.Ptr {
+			panic(fmt.Errorf("cannot pass in non pointer value (%#v) as dest", dest))
+		}
+		r.fields = append(r.fields, field)
+		r.dest = append(r.dest, pq.Array(dest))
+		return
+	}
+	destValue := reflect.ValueOf(pq.Array(dest))
+	destValue.Elem().Set(reflect.ValueOf(r.dest[r.index]).Elem())
+	r.index++
+}
 
 func (r *Row) ScanJSON(dest interface{}, field Field) {
 	if !r.active {
