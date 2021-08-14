@@ -64,19 +64,19 @@ func CountOver(window Window) NumberField {
 	return NumberFieldf("COUNT(*) OVER {}", window)
 }
 
-func SumOver(field interface{}, window Window) NumberField {
+func SumOver(field Field, window Window) NumberField {
 	return NumberFieldf("SUM({}) OVER {}", field, window)
 }
 
-func AvgOver(field interface{}, window Window) NumberField {
+func AvgOver(field Field, window Window) NumberField {
 	return NumberFieldf("AVG({}) OVER {}", field, window)
 }
 
-func MinOver(field interface{}, window Window) NumberField {
+func MinOver(field Field, window Window) NumberField {
 	return NumberFieldf("MIN({}) OVER {}", field, window)
 }
 
-func MaxOver(field interface{}, window Window) NumberField {
+func MaxOver(field Field, window Window) NumberField {
 	return NumberFieldf("MAX({}) OVER {}", field, window)
 }
 
@@ -100,17 +100,11 @@ func CumeDistOver(window Window) NumberField {
 	return NumberFieldf("CUME_DIST() OVER {}", window)
 }
 
-func LeadOver(field interface{}, offset interface{}, fallback interface{}, window Window) CustomField {
-	if offset == nil {
-		offset = 1
-	}
+func LeadOver(field Field, offset int, fallback interface{}, window Window) CustomField {
 	return Fieldf("LEAD({}, {}, {}) OVER {}", field, offset, fallback, window)
 }
 
-func LagOver(field interface{}, offset interface{}, fallback interface{}, window Window) CustomField {
-	if offset == nil {
-		offset = 1
-	}
+func LagOver(field Field, offset int, fallback interface{}, window Window) CustomField {
 	return Fieldf("LAG({}, {}, {}) OVER {}", field, offset, fallback, window)
 }
 
@@ -118,15 +112,15 @@ func NtileOver(n int, window Window) NumberField {
 	return NumberFieldf("NTILE({}) OVER {}", n, window)
 }
 
-func FirstValueOver(field interface{}, window Window) CustomField {
+func FirstValueOver(field Field, window Window) CustomField {
 	return Fieldf("FIRST_VALUE({}) OVER {}", field, window)
 }
 
-func LastValueOver(field interface{}, window Window) CustomField {
+func LastValueOver(field Field, window Window) CustomField {
 	return Fieldf("LAST_VALUE({}) OVER {}", field, window)
 }
 
-func NthValueOver(field interface{}, n int, window Window) CustomField {
+func NthValueOver(field Field, n int, window Window) CustomField {
 	return Fieldf("NTH_VALUE({}, {}) OVER {}", field, n, window)
 }
 
