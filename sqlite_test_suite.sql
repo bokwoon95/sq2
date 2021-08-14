@@ -4,14 +4,48 @@
 
 DELETE FROM country WHERE country IN ('Norway', 'Ireland', 'Iceland', 'Singapore', 'Denmark', 'Luxembourg', 'Slovenia', 'Czech Republic', 'Malta', 'Cyprus', 'Andorra', 'Qatar', 'Portugal', 'Croatia', 'Russia', 'Montenegro') RETURNING country_id, country;
 
+-- TODO: scrap the country, insert into customers instead. We can use email as the conflict field.
+
 -- Insert and get ID with last_insert_rowid()
 BEGIN;
 
 INSERT INTO country (country) VALUES ('Norway');
+
 SELECT EXISTS(SELECT 1 FROM country WHERE country_id = last_insert_rowid() AND country = 'Norway');
-INSERT INTO country (country) VALUES ('Norway') ON CONFLICT DO NOTHING;
+
+INSERT INTO country (country_id, country) VALUES (last_insert_id(), 'Norway') ON CONFLICT DO NOTHING;
+
 SELECT last_insert_rowid() = 0;
-INSERT INTO country (country) VALUES ('Ireland') ON CONFLICT (country) DO UPDATE SET country;
+
+INSERT INTO country (country_id, country) VALUES (last_insert_id(), 'Ireland') ON CONFLICT (country_id) DO UPDATE SET country;
+
+SELECT EXISTS(SELECT 1 FROM country WHERE country_id = last_insert_rowid() AND country = 'Ireland');
+
+INSERT INTO country (country_id, country) VALUES (last_insert_id(), 'Shamrock Town') ON CONFLICT (country_id) DO UPDATE SET country;
+
+SELECT EXISTS(SELECT 1 FROM country WHERE country_id = last_insert_rowid() AND country = 'Shamrock Town');
+
+INSERT INTO country
+    (country)
+VALUES
+    ('Iceland')
+    ('Singapore')
+    ('Denmark')
+    ('Luxembourg')
+    ('Slovenia')
+    ('Czech Republic')
+    ('Malta')
+;
+
+SELECT
+    EXISTS(SELECT 1 FROM country WHERE country_id = $id AND country = 'Iceland')
+    AND EXISTS(SELECT 1 FROM COUNTRY WHERE country_id = $id AND country = 'Singapore')
+    AND EXISTS(SELECT 1 FROM COUNTRY WHERE country_id = $id AND country = 'Denmark')
+    AND EXISTS(SELECT 1 FROM COUNTRY WHERE country_id = $id AND country = 'Luxembourg')
+    AND EXISTS(SELECT 1 FROM COUNTRY WHERE country_id = $id AND country = 'Slovenia')
+    AND EXISTS(SELECT 1 FROM COUNTRY WHERE country_id = $id AND country = 'Czech Republic')
+    AND EXISTS(SELECT 1 FROM COUNTRY WHERE country_id = $id AND country = 'Malta')
+;
 
 -- Insert and get ID with RETURNING
 INSERT INTO country
