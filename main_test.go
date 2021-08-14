@@ -21,7 +21,7 @@ import (
 var embeddedFiles embed.FS
 
 var (
-	dropTablesFlag  = flag.Bool("drop-tables", false, "")
+	resetdbFlag     = flag.Bool("resetdb", false, "")
 	sqliteDSNFlag   = flag.String("sqlite-dsn", "./db.sqlite3", "")
 	postgresDSNFlag = flag.String("postgres-dsn", "postgres://postgres:postgres@localhost:5452/db?sslmode=disable&timezone=UTC", "")
 	mysqlDSNFlag    = flag.String("mysql-dsn", "root:root@tcp(localhost:3326)/db?parseTime=true&time_zone=UTC&multiStatements=true", "")
@@ -91,7 +91,7 @@ func initializeDBs() {
 			if err != nil {
 				return err
 			}
-			if *dropTablesFlag {
+			if *resetdbFlag {
 				fmt.Printf("[%8s] dropping tables\n", dbinfo.driverName)
 				err = runScript(gctx, db, embeddedFiles, dbinfo.downScript)
 				if err != nil {
