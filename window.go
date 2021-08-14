@@ -60,7 +60,11 @@ func (w Window) Frame(frameDefinition string) Window {
 	return w
 }
 
-func CountOver(window Window) NumberField {
+func CountOver(field Field, window Window) NumberField {
+	return NumberFieldf("COUNT({}) OVER {}", field, window)
+}
+
+func CountAllOver(window Window) NumberField {
 	return NumberFieldf("COUNT(*) OVER {}", window)
 }
 
