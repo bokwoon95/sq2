@@ -156,7 +156,7 @@ WITH RECURSIVE dates (date_value) AS (
     SELECT date_add(date_value, INTERVAL 1 MONTH) FROM dates WHERE date_value < '2006-02-01'
 )
 SELECT
-    date_format(dates.date_value, '%Y %M')
+    date_format(dates.date_value, '%Y %M') AS month
     ,COUNT(CASE category.name WHEN 'Horror' THEN 1 END) AS horror_count
     ,COUNT(CASE category.name WHEN 'Action' THEN 1 END) AS action_count
     ,COUNT(CASE category.name WHEN 'Comedy' THEN 1 END) AS comedy_count

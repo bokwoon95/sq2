@@ -156,7 +156,7 @@ WITH RECURSIVE dates (date_value) AS (
     SELECT (date_value + '1 month'::INTERVAL)::DATE FROM dates WHERE date_value < '2006-02-01'
 )
 SELECT
-    to_char(dates.date_value, 'YYYY FMMonth')
+    to_char(dates.date_value, 'YYYY FMMonth') AS month
     ,COUNT(CASE category.name WHEN 'Horror' THEN 1 END) AS horror_count
     ,COUNT(CASE category.name WHEN 'Action' THEN 1 END) AS action_count
     ,COUNT(CASE category.name WHEN 'Comedy' THEN 1 END) AS comedy_count
