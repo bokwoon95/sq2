@@ -39,7 +39,6 @@ CREATE TABLE IF NOT EXISTS city (
     ,last_update DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 
     ,PRIMARY KEY (city_id)
-    ,CONSTRAINT city_country_id_city_key UNIQUE (country_id, city)
     ,INDEX city_country_id_idx (country_id)
 );
 
@@ -49,7 +48,6 @@ CREATE TABLE IF NOT EXISTS country (
     ,last_update DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 
     ,PRIMARY KEY (country_id)
-    ,CONSTRAINT country_country_key UNIQUE (country)
 );
 
 CREATE TABLE IF NOT EXISTS customer (

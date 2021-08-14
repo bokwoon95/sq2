@@ -2,9 +2,18 @@
 -- INSERT --
 ------------
 
--- Insert and get ID (sqlite uses both RETURNING and LastInsertID)
-DELETE FROM country WHERE country IN ('Norway', 'Ireland', 'Iceland', 'Singapore', 'Denmark', 'Luxembourg', 'Slovenia', 'Czech Republic', 'Malta', 'Cyprus', 'Andorra', 'Qatar', 'Portugal', 'Croatia', 'Russia', 'Montenegro');
+DELETE FROM country WHERE country IN ('Norway', 'Ireland', 'Iceland', 'Singapore', 'Denmark', 'Luxembourg', 'Slovenia', 'Czech Republic', 'Malta', 'Cyprus', 'Andorra', 'Qatar', 'Portugal', 'Croatia', 'Russia', 'Montenegro') RETURNING country_id, country;
 
+-- Insert and get ID with last_insert_rowid()
+BEGIN;
+
+INSERT INTO country (country) VALUES ('Norway');
+SELECT EXISTS(SELECT 1 FROM country WHERE country_id = last_insert_rowid() AND country = 'Norway');
+INSERT INTO country (country) VALUES ('Norway') ON CONFLICT DO NOTHING;
+SELECT last_insert_rowid() = 0;
+INSERT INTO country (country) VALUES ('Ireland') ON CONFLICT (country) DO UPDATE SET country;
+
+-- Insert and get ID with RETURNING
 INSERT INTO country
     (country)
 VALUES
@@ -15,7 +24,10 @@ VALUES
     ,('Denmark')
     ,('Luxembourg')
     ,('Slovenia')
-RETURNING country_id, country;
+    ,('Czech Republic')
+RETURNING country_id;
+
+-- Insert the same row with the ID but ignore conflicts
 
 INSERT INTO country
     (country)
@@ -38,8 +50,6 @@ VALUES
     ,('Montenegro')
 ON CONFLICT DO NOTHING
 RETURNING country_id, country;
-
--- Insert the same row with the ID but ignore conflicts
 
 -- Upsert a row, get ID (sqlite uses both RETURNING and LastInsertID)
 

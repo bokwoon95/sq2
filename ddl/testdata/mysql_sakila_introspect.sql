@@ -40,7 +40,6 @@ CREATE TABLE IF NOT EXISTS db.city (
     ,country_id INT NOT NULL
     ,last_update DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 
-    ,CONSTRAINT city_country_id_city_key UNIQUE (country_id, city)
     ,PRIMARY KEY (city_id)
     ,INDEX city_country_id_idx (country_id)
 );
@@ -50,7 +49,6 @@ CREATE TABLE IF NOT EXISTS db.country (
     ,country VARCHAR(50) NOT NULL COLLATE utf8mb4_0900_ai_ci
     ,last_update DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 
-    ,CONSTRAINT country_country_key UNIQUE (country)
     ,PRIMARY KEY (country_id)
 );
 

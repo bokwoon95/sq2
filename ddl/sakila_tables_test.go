@@ -69,7 +69,7 @@ func (tbl CATEGORY) DDL(dialect string, t *T) {
 type COUNTRY struct {
 	sq.TableInfo
 	COUNTRY_ID  sq.NumberField `ddl:"sqlite:type=INTEGER primarykey auto_increment identity"`
-	COUNTRY     sq.StringField `ddl:"notnull mysql:type=VARCHAR(50) unique"`
+	COUNTRY     sq.StringField `ddl:"notnull mysql:type=VARCHAR(50)"`
 	LAST_UPDATE sq.TimeField   `ddl:"notnull default=CURRENT_TIMESTAMP onupdatecurrenttimestamp"`
 }
 
@@ -91,7 +91,7 @@ func (tbl COUNTRY) DDL(dialect string, t *T) {
 type CITY struct {
 	sq.TableInfo
 	CITY_ID     sq.NumberField `ddl:"sqlite:type=INTEGER primarykey auto_increment identity"`
-	CITY        sq.StringField `ddl:"notnull mysql:type=VARCHAR(50) unique={. cols=country_id,city}"`
+	CITY        sq.StringField `ddl:"notnull mysql:type=VARCHAR(50)"`
 	COUNTRY_ID  sq.NumberField `ddl:"notnull references={country.country_id onupdate=cascade ondelete=restrict} index"`
 	LAST_UPDATE sq.TimeField   `ddl:"notnull default=CURRENT_TIMESTAMP onupdatecurrenttimestamp"`
 }

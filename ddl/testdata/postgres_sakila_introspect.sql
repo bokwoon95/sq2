@@ -61,7 +61,6 @@ CREATE TABLE IF NOT EXISTS public.city (
     ,last_update TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
 
     ,CONSTRAINT city_city_id_pkey PRIMARY KEY (city_id)
-    ,CONSTRAINT city_country_id_city_key UNIQUE (country_id, city)
 );
 
 CREATE TABLE IF NOT EXISTS public.country (
@@ -70,7 +69,6 @@ CREATE TABLE IF NOT EXISTS public.country (
     ,last_update TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
 
     ,CONSTRAINT country_country_id_pkey PRIMARY KEY (country_id)
-    ,CONSTRAINT country_country_key UNIQUE (country)
 );
 
 CREATE TABLE IF NOT EXISTS public.customer (
