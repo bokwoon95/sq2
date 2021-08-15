@@ -317,8 +317,7 @@ func TestSQLiteSakilaInsert(t *testing.T) {
 	rowCount, err := Fetch(Log(tx), SQLite.
 		InsertInto(CUSTOMER).
 		Valuesx(func(col *Column) error {
-			for i := 0; i < 4; i++ {
-				customer := customers[i]
+			for _, customer := range customers[:4] {
 				col.SetInt(CUSTOMER.STORE_ID, customer.StoreID)
 				col.SetString(CUSTOMER.FIRST_NAME, customer.FirstName)
 				col.SetString(CUSTOMER.LAST_NAME, customer.LastName)
@@ -344,8 +343,7 @@ func TestSQLiteSakilaInsert(t *testing.T) {
 	}
 
 	predicate := And()
-	for i := 0; i < 4; i++ {
-		customer := customers[i]
+	for _, customer := range customers[:4] {
 		predicate = predicate.Append(Exists(SQLite.
 			SelectOne().
 			From(CUSTOMER).
@@ -367,8 +365,7 @@ func TestSQLiteSakilaInsert(t *testing.T) {
 	rowCount, err = Fetch(Log(tx), SQLite.
 		InsertInto(CUSTOMER).
 		Valuesx(func(col *Column) error {
-			for i := 4; i < len(customers); i++ {
-				customer := customers[i]
+			for _, customer := range customers[4:] {
 				col.SetInt(CUSTOMER.STORE_ID, customer.StoreID)
 				col.SetString(CUSTOMER.FIRST_NAME, customer.FirstName)
 				col.SetString(CUSTOMER.LAST_NAME, customer.LastName)
@@ -395,8 +392,7 @@ func TestSQLiteSakilaInsert(t *testing.T) {
 	}
 
 	predicate = And()
-	for i := 4; i < len(customers); i++ {
-		customer := customers[i]
+	for _, customer := range customers[4:] {
 		predicate = predicate.Append(Exists(SQLite.
 			SelectOne().
 			From(CUSTOMER).
