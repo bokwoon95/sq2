@@ -122,6 +122,11 @@ func (p VariadicPredicate) GetAlias() string { return p.Alias }
 
 func (p VariadicPredicate) GetName() string { return "" }
 
+func (p VariadicPredicate) Append(predicates ...Predicate) VariadicPredicate {
+	p.Predicates = append(p.Predicates, predicates...)
+	return p
+}
+
 func And(predicates ...Predicate) VariadicPredicate {
 	return VariadicPredicate{Or: false, Predicates: predicates}
 }
@@ -169,6 +174,6 @@ func In(a, b interface{}) Predicate {
 	return Predicatef("{} IN ({})", a, b)
 }
 
-func Exists(q Query) Predicate { return Predicatef("EXISTS ({})", q) }
+func Exists(q Query) Predicate { return Predicatef("EXISTS({})", q) }
 
-func NotExists(q Query) Predicate { return Predicatef("NOT EXISTS ({})", q) }
+func NotExists(q Query) Predicate { return Predicatef("NOT EXISTS({})", q) }

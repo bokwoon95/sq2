@@ -39,14 +39,6 @@ func execContext(ctx context.Context, db DB, q Query, execflag int, skip int) (r
 			return
 		}
 		stats.Error = err
-		if ErowsAffected&execflag != 0 {
-			stats.RowsAffected.Valid = true
-			stats.RowsAffected.Int64 = rowsAffected
-		}
-		if ElastInsertID&execflag != 0 {
-			stats.LastInsertID.Valid = true
-			stats.LastInsertID.Int64 = rowsAffected
-		}
 		logQueryStats(ctx, stats, skip+2)
 	}()
 	err = q.AppendSQL(stats.Dialect, buf, &stats.Args, make(map[string][]int), nil)
@@ -65,12 +57,16 @@ func execContext(ctx context.Context, db DB, q Query, execflag int, skip int) (r
 		if err != nil {
 			return 0, 0, err
 		}
+		stats.RowsAffected.Valid = true
+		stats.RowsAffected.Int64 = rowsAffected
 	}
 	if result != nil && ElastInsertID&execflag != 0 {
 		lastInsertID, err = result.LastInsertId()
 		if err != nil {
 			return 0, 0, err
 		}
+		stats.LastInsertID.Valid = true
+		stats.LastInsertID.Int64 = lastInsertID
 	}
 	return rowsAffected, lastInsertID, nil
 }

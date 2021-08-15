@@ -67,7 +67,7 @@ func Test_SQLiteDeleteQuery(t *testing.T) {
 			"SELECT l.language_id, l.name FROM language AS l WHERE l.name IS NOT NULL" +
 			")" +
 			" DELETE FROM film AS f1" +
-			" WHERE EXISTS (" +
+			" WHERE EXISTS(" +
 			"SELECT 1" +
 			" FROM film AS f2" +
 			" JOIN lang ON lang.language_id = f2.language_id" +

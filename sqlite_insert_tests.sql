@@ -86,7 +86,7 @@ VALUES
     ,(1, 'THOMAS', 'BINDER', 'thomas_binder@email.com', 1)
     ,(1, 'ASTRID', 'SILVA', 'astrid_silva@email.com', 1)
     ,(1, 'HARPER', 'CRAIG', 'harper_craig@email.com', 1)
-    ,(1, 'SAMANTHA', 'STVENSON', 'samantha_stevenson@email.com', 1)
+    ,(1, 'SAMANTHA', 'STEVENSON', 'samantha_stevenson@email.com', 1)
     ,(1, 'PHILIP', 'REID', 'philip_reid@email.com', 1)
 ON CONFLICT DO NOTHING
 RETURNING

@@ -63,6 +63,7 @@ type QueryStats struct {
 	RowCount       sql.NullInt64
 	RowsAffected   sql.NullInt64
 	LastInsertID   sql.NullInt64
+	Exists         sql.NullBool
 	TimeTaken      time.Duration
 	QueryResults   string
 	CallerFile     string
@@ -152,6 +153,9 @@ func (l logger) LogQueryStats(ctx context.Context, stats QueryStats, skip int) {
 		buf.WriteString(" |")
 	}
 	buf.WriteString(blue + " timeTaken" + reset + "=" + stats.TimeTaken.String())
+	if stats.Exists.Valid {
+		buf.WriteString(blue + " exists" + reset + "=" + strconv.FormatBool(stats.Exists.Bool))
+	}
 	if stats.RowCount.Valid {
 		buf.WriteString(blue + " rowCount" + reset + "=" + strconv.FormatInt(stats.RowCount.Int64, 10))
 	}

@@ -87,9 +87,11 @@ type MonthlyRentalStats struct {
 
 type Customer struct {
 	CustomerID int       `json:"customer_id"`
+	StoreID    int       `json:"store_id"`
 	FirstName  string    `json:"first_name"`
 	LastName   string    `json:"last_name"`
 	Email      string    `json:"name"`
+	AddressID  int       `json:"address_id"`
 	Active     bool      `json:"active"`
 	CreateDate time.Time `json:"create_date"`
 	LastUpdate time.Time `json:"last_update"`

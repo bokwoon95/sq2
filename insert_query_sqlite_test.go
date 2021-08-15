@@ -157,14 +157,261 @@ func Test_SQLiteInsertQuery(t *testing.T) {
 	})
 }
 
-// func TestSQLiteSakilaInsert(t *testing.T) {
-// 	db, err := sql.Open("sqlite3", "/Users/bokwoon/Documents/sq2/db.sqlite3")
-// 	if err != nil {
-// 		t.Fatal(testutil.Callers(), err)
-// 	}
-// 	tx, err := db.Begin()
-// 	if err != nil {
-// 		t.Fatal(testutil.Callers(), err)
-// 	}
-// 	defer tx.Rollback()
-// }
+func TestSQLiteSakilaInsert(t *testing.T) {
+	tx, err := sqliteDB.Begin()
+	if err != nil {
+		t.Fatal(testutil.Callers(), err)
+	}
+	defer tx.Rollback()
+	CUSTOMER := xNEW_CUSTOMER("")
+
+	customer1 := Customer{
+		StoreID:   1,
+		FirstName: "REGINA", LastName: "TATE",
+		Email:     "regina_tate@email.com",
+		AddressID: 1,
+	}
+	rowsAffected, lastInsertID, err := Exec(Log(tx), SQLite.
+		InsertInto(CUSTOMER).
+		Valuesx(func(col *Column) error {
+			col.SetInt(CUSTOMER.STORE_ID, customer1.StoreID)
+			col.SetString(CUSTOMER.FIRST_NAME, customer1.FirstName)
+			col.SetString(CUSTOMER.LAST_NAME, customer1.LastName)
+			col.SetString(CUSTOMER.EMAIL, customer1.Email)
+			col.SetInt(CUSTOMER.ADDRESS_ID, customer1.AddressID)
+			return nil
+		}),
+		ErowsAffected|ElastInsertID,
+	)
+	if err != nil {
+		t.Fatal(testutil.Callers(), err)
+	}
+	if rowsAffected != 1 {
+		t.Fatal(testutil.Callers(), "expected 1 row to be affected but got %d", rowsAffected)
+	}
+	customer1.CustomerID = int(lastInsertID)
+
+	exists, err := FetchExists(Log(tx), SQLite.From(CUSTOMER).Where(
+		CUSTOMER.CUSTOMER_ID.EqInt(customer1.CustomerID),
+		CUSTOMER.STORE_ID.EqInt(customer1.StoreID),
+		CUSTOMER.FIRST_NAME.EqString(customer1.FirstName),
+		CUSTOMER.LAST_NAME.EqString(customer1.LastName),
+		CUSTOMER.EMAIL.EqString(customer1.Email),
+		CUSTOMER.ADDRESS_ID.EqInt(customer1.AddressID),
+	))
+	if err != nil {
+		t.Fatal(testutil.Callers(), err)
+	}
+	if !exists {
+		t.Fatal(testutil.Callers(), "expected inserted customer %+v to exist", customer1)
+	}
+
+	rowsAffected, lastInsertID, err = Exec(Log(tx), SQLite.
+		InsertInto(CUSTOMER).
+		Valuesx(func(col *Column) error {
+			col.SetInt(CUSTOMER.CUSTOMER_ID, customer1.CustomerID)
+			col.SetInt(CUSTOMER.STORE_ID, customer1.StoreID)
+			col.SetString(CUSTOMER.FIRST_NAME, customer1.FirstName)
+			col.SetString(CUSTOMER.LAST_NAME, customer1.LastName)
+			col.SetString(CUSTOMER.EMAIL, customer1.Email)
+			col.SetInt(CUSTOMER.ADDRESS_ID, customer1.AddressID)
+			return nil
+		}).
+		OnConflict(CUSTOMER.CUSTOMER_ID).DoNothing(),
+		ErowsAffected|ElastInsertID,
+	)
+	if rowsAffected != 0 {
+		t.Fatal(testutil.Callers(), "expected an second identical insert to affect 0 rows, got %d instead", rowsAffected)
+	}
+
+	customer2 := Customer{
+		StoreID: 1, AddressID: 1,
+		FirstName: "ANTHONY", LastName: "CURTIS",
+		Email: "anthony_curtis@email.com",
+	}
+	rowsAffected, lastInsertID, err = Exec(Log(tx), SQLite.
+		InsertInto(CUSTOMER).
+		Valuesx(func(col *Column) error {
+			col.SetInt(CUSTOMER.STORE_ID, customer2.StoreID)
+			col.SetString(CUSTOMER.FIRST_NAME, customer2.FirstName)
+			col.SetString(CUSTOMER.LAST_NAME, customer2.LastName)
+			col.SetString(CUSTOMER.EMAIL, customer2.Email)
+			col.SetInt(CUSTOMER.ADDRESS_ID, customer2.AddressID)
+			return nil
+		}).
+		OnConflict(CUSTOMER.EMAIL).
+		DoUpdateSet(
+			AssignExcluded(CUSTOMER.STORE_ID),
+			AssignExcluded(CUSTOMER.FIRST_NAME),
+			AssignExcluded(CUSTOMER.LAST_NAME),
+			AssignExcluded(CUSTOMER.ADDRESS_ID),
+		),
+		ErowsAffected|ElastInsertID,
+	)
+	if err != nil {
+		t.Fatal(testutil.Callers(), err)
+	}
+	if rowsAffected != 1 {
+		t.Fatal(testutil.Callers(), "expected 1 row to be affected but got %d", rowsAffected)
+	}
+	customer2.CustomerID = int(lastInsertID)
+
+	exists, err = FetchExists(Log(tx), SQLite.From(CUSTOMER).Where(
+		CUSTOMER.CUSTOMER_ID.EqInt(customer2.CustomerID),
+		CUSTOMER.STORE_ID.EqInt(customer2.StoreID),
+		CUSTOMER.FIRST_NAME.EqString(customer2.FirstName),
+		CUSTOMER.LAST_NAME.EqString(customer2.LastName),
+		CUSTOMER.EMAIL.EqString(customer2.Email),
+		CUSTOMER.ADDRESS_ID.EqInt(customer2.AddressID),
+	))
+	if err != nil {
+		t.Fatal(testutil.Callers(), err)
+	}
+	if !exists {
+		t.Fatal(testutil.Callers(), "expected inserted customer %+v to exist", customer1)
+	}
+
+	customers := []Customer{
+		{
+			StoreID: 1, AddressID: 1,
+			FirstName: "JULIA", LastName: "HAYWARD",
+			Email: "julia_hayward@email.com",
+		},
+		{
+			StoreID: 1, AddressID: 1,
+			FirstName: "DUNCAN", LastName: "PEARSON",
+			Email: "duncan_pearson@email.com",
+		},
+		{
+			StoreID: 1, AddressID: 1,
+			FirstName: "IDA", LastName: "WATKINS",
+			Email: "ida_watkins@email.com",
+		},
+		{
+			StoreID: 1, AddressID: 1,
+			FirstName: "THOMAS", LastName: "BINDER",
+			Email: "thomas_binder@email.com",
+		},
+		{
+			StoreID: 1, AddressID: 1,
+			FirstName: "ASTRID", LastName: "SILVA",
+			Email: "astrid_silva@email.com",
+		},
+		{
+			StoreID: 1, AddressID: 1,
+			FirstName: "HARPER", LastName: "CRAIG",
+			Email: "harper_craig@email.com",
+		},
+		{
+			StoreID: 1, AddressID: 1,
+			FirstName: "SAMANTHA", LastName: "STEVENSON",
+			Email: "samantha_stevenson@email.com",
+		},
+		{
+			StoreID: 1, AddressID: 1,
+			FirstName: "PHILIP", LastName: "REID",
+			Email: "philip_reid@email.com",
+		},
+	}
+	var customerIDs []int
+	rowCount, err := Fetch(Log(tx), SQLite.
+		InsertInto(CUSTOMER).
+		Valuesx(func(col *Column) error {
+			for i := 0; i < 4; i++ {
+				customer := customers[i]
+				col.SetInt(CUSTOMER.STORE_ID, customer.StoreID)
+				col.SetString(CUSTOMER.FIRST_NAME, customer.FirstName)
+				col.SetString(CUSTOMER.LAST_NAME, customer.LastName)
+				col.SetString(CUSTOMER.EMAIL, customer.Email)
+				col.SetInt(CUSTOMER.ADDRESS_ID, customer.AddressID)
+			}
+			return nil
+		}).
+		Returning(CUSTOMER.CUSTOMER_ID),
+		func(row *Row) {
+			customerID := row.Int(CUSTOMER.CUSTOMER_ID)
+			row.Process(func() { customerIDs = append(customerIDs, customerID) })
+		},
+	)
+	if err != nil {
+		t.Fatal(testutil.Callers(), err)
+	}
+	if rowCount != 4 {
+		t.Fatal(testutil.Callers(), "expected 4 rows inserted but got %d", rowsAffected)
+	}
+	for i := 0; i < 4; i++ {
+		customers[i].CustomerID = customerIDs[i]
+	}
+
+	predicate := And()
+	for i := 0; i < 4; i++ {
+		customer := customers[i]
+		predicate = predicate.Append(Exists(SQLite.
+			SelectOne().
+			From(CUSTOMER).
+			Where(
+				CUSTOMER.CUSTOMER_ID.EqInt(customer.CustomerID),
+				CUSTOMER.STORE_ID.EqInt(customer.StoreID),
+				CUSTOMER.FIRST_NAME.EqString(customer.FirstName),
+				CUSTOMER.LAST_NAME.EqString(customer.LastName),
+				CUSTOMER.EMAIL.EqString(customer.Email),
+				CUSTOMER.ADDRESS_ID.EqInt(customer.AddressID),
+			),
+		))
+	}
+	_, err = Fetch(Log(tx), SQLite.Select(), func(row *Row) { exists = row.Bool(predicate) })
+	if !exists {
+		t.Fatal(testutil.Callers(), "expected inserted customers %+v to exist", customers[:4])
+	}
+
+	rowCount, err = Fetch(Log(tx), SQLite.
+		InsertInto(CUSTOMER).
+		Valuesx(func(col *Column) error {
+			for i := 4; i < len(customers); i++ {
+				customer := customers[i]
+				col.SetInt(CUSTOMER.STORE_ID, customer.StoreID)
+				col.SetString(CUSTOMER.FIRST_NAME, customer.FirstName)
+				col.SetString(CUSTOMER.LAST_NAME, customer.LastName)
+				col.SetString(CUSTOMER.EMAIL, customer.Email)
+				col.SetInt(CUSTOMER.ADDRESS_ID, customer.AddressID)
+			}
+			return nil
+		}).
+		OnConflict().DoNothing().
+		Returning(CUSTOMER.CUSTOMER_ID),
+		func(row *Row) {
+			customerID := row.Int(CUSTOMER.CUSTOMER_ID)
+			row.Process(func() { customerIDs = append(customerIDs, customerID) })
+		},
+	)
+	if err != nil {
+		t.Fatal(testutil.Callers(), err)
+	}
+	if int(rowCount) != len(customers)-4 {
+		t.Fatal(testutil.Callers(), "expected %d rows inserted but got %d", len(customers)-4, rowsAffected)
+	}
+	for i := 4; i < len(customers); i++ {
+		customers[i].CustomerID = customerIDs[i]
+	}
+
+	predicate = And()
+	for i := 4; i < len(customers); i++ {
+		customer := customers[i]
+		predicate = predicate.Append(Exists(SQLite.
+			SelectOne().
+			From(CUSTOMER).
+			Where(
+				CUSTOMER.CUSTOMER_ID.EqInt(customer.CustomerID),
+				CUSTOMER.STORE_ID.EqInt(customer.StoreID),
+				CUSTOMER.FIRST_NAME.EqString(customer.FirstName),
+				CUSTOMER.LAST_NAME.EqString(customer.LastName),
+				CUSTOMER.EMAIL.EqString(customer.Email),
+				CUSTOMER.ADDRESS_ID.EqInt(customer.AddressID),
+			),
+		))
+	}
+	_, err = Fetch(Log(tx), SQLite.Select(), func(row *Row) { exists = row.Bool(predicate) })
+	if !exists {
+		t.Fatal(testutil.Callers(), "expected inserted customers %+v to exist", customers[:4])
+	}
+}

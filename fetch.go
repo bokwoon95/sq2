@@ -232,9 +232,15 @@ func fetchExistsContext(ctx context.Context, db DB, q Query, skip int) (exists b
 		logQueryStats = db.LogQueryStats
 	}
 	stats.Dialect = q.GetDialect()
-	q, err = q.SetFetchableFields([]Field{Literal("1")})
+	fields, err := q.GetFetchableFields()
 	if err != nil {
 		return false, err
+	}
+	if len(fields) == 0 {
+		q, err = q.SetFetchableFields([]Field{Literal("1")})
+		if err != nil {
+			return false, err
+		}
 	}
 	buf := bufpool.Get().(*bytes.Buffer)
 	defer func() {
@@ -247,10 +253,8 @@ func fetchExistsContext(ctx context.Context, db DB, q Query, skip int) (exists b
 			return
 		}
 		stats.Error = err
-		if exists {
-			stats.RowCount.Valid = true
-			stats.RowCount.Int64 = 1
-		}
+		stats.Exists.Valid = true
+		stats.Exists.Bool = exists
 		logQueryStats(ctx, stats, skip+1)
 	}()
 	buf.WriteString("SELECT EXISTS(")

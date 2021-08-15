@@ -57,6 +57,7 @@ func (as Assignments) AppendSQLExclude(dialect string, buf *bytes.Buffer, args *
 	return nil
 }
 
+// TODO: SetExcluded? sounds way better. SetAlias is bad, but AssignAlias sounds just as confusing.
 func AssignExcluded(field Field) Assignment {
 	name := field.GetName()
 	return Assign(Literal(name), Literal("EXCLUDED."+name))
