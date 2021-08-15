@@ -26,6 +26,7 @@ type InsertQuery struct {
 	ConflictConstraint  string
 	ConflictFields      Fields
 	ConflictPredicate   VariadicPredicate
+	ConflictDoNothing   bool
 	Resolution          Assignments
 	ResolutionPredicate VariadicPredicate
 	// RETURNING
@@ -117,7 +118,7 @@ func (q InsertQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interf
 	// ON CONFLICT
 	switch dialect {
 	case DialectSQLite, DialectPostgres:
-		if q.ConflictConstraint == "" && len(q.ConflictFields) == 0 {
+		if q.ConflictConstraint == "" && len(q.ConflictFields) == 0 && !q.ConflictDoNothing {
 			break
 		}
 		buf.WriteString(" ON CONFLICT")
@@ -142,7 +143,7 @@ func (q InsertQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interf
 				}
 			}
 		}
-		if len(q.Resolution) == 0 {
+		if len(q.Resolution) == 0 || q.ConflictDoNothing {
 			buf.WriteString(" DO NOTHING")
 			break
 		}

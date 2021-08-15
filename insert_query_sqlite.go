@@ -84,7 +84,9 @@ func (c SQLiteInsertConflict) Where(predicates ...Predicate) SQLiteInsertConflic
 }
 
 func (c SQLiteInsertConflict) DoNothing() SQLiteInsertQuery {
-	return *c.insertQuery
+	q := c.insertQuery
+	q.ConflictDoNothing = true
+	return *q
 }
 
 func (c SQLiteInsertConflict) DoUpdateSet(assignments ...Assignment) SQLiteInsertQuery {
