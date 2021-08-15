@@ -211,6 +211,10 @@ func Sprintf(dialect string, query string, args []interface{}) (string, error) {
 	var openingQuote rune
 	var mustWriteCharAt int
 	var paramName []rune
+	// TODO: instead of a blacklist, I think I could maintain a whitelist of
+	// permitted characters that can appear in a parameter name. the moment I
+	// encounter a character that is not in the whitelist, I can consider the
+	// current name terminated.
 	nameTerminatingChars := map[rune]bool{
 		',': true, '(': true, ')': true, ';': true,
 		'=': true, '>': true, '<': true,
