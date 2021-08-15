@@ -25,6 +25,8 @@ var (
 	sqliteDSNFlag   = flag.String("sqlite-dsn", "./db.sqlite3", "")
 	postgresDSNFlag = flag.String("postgres-dsn", "postgres://postgres:postgres@localhost:5452/db?sslmode=disable&timezone=UTC", "")
 	mysqlDSNFlag    = flag.String("mysql-dsn", "root:root@tcp(localhost:3326)/db?parseTime=true&time_zone=UTC&multiStatements=true", "")
+
+	sqliteDB *sql.DB
 )
 
 func TestMain(m *testing.M) {
@@ -90,6 +92,11 @@ func initializeDBs() {
 			db, err := sql.Open(dbinfo.driverName, dbinfo.dataSourceName)
 			if err != nil {
 				return err
+			}
+			if dbinfo.driverName == "sqlite3" {
+				sqliteDB = db
+			} else {
+				defer db.Close()
 			}
 			if *resetdbFlag {
 				fmt.Printf("[%8s] dropping tables\n", dbinfo.driverName)

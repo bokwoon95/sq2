@@ -1,7 +1,6 @@
 package sq
 
 import (
-	"database/sql"
 	"testing"
 
 	"github.com/bokwoon95/sq/internal/testutil"
@@ -79,18 +78,13 @@ func Test_SQLiteSelectQuery(t *testing.T) {
 	})
 }
 
-func Test_SQLiteDBSelect(t *testing.T) {
-	db, err := sql.Open("sqlite3", "/Users/bokwoon/Documents/sq2/db.sqlite3")
-	if err != nil {
-		t.Fatal(testutil.Callers(), err)
-	}
-
+func TestSQLiteSakilaSelect(t *testing.T) {
 	t.Run("Q1", func(t *testing.T) {
 		t.Parallel()
 		var gotAnswer []string
 		wantAnswer := sakilaAnswer1()
 		ACTOR := xNEW_ACTOR("")
-		_, err := Fetch(Log(db), SQLite.
+		_, err := Fetch(Log(sqliteDB), SQLite.
 			SelectDistinct().
 			From(ACTOR).
 			OrderBy(ACTOR.LAST_NAME).
@@ -112,7 +106,7 @@ func Test_SQLiteDBSelect(t *testing.T) {
 		t.Parallel()
 		wantAnswer := sakilaAnswer2()
 		ACTOR := xNEW_ACTOR("")
-		gotAnswer, err := FetchExists(Log(db), SQLite.
+		gotAnswer, err := FetchExists(Log(sqliteDB), SQLite.
 			From(ACTOR).
 			Where(Or(
 				ACTOR.FIRST_NAME.EqString("SCARLETT"),
@@ -132,7 +126,7 @@ func Test_SQLiteDBSelect(t *testing.T) {
 		var gotAnswer int
 		wantAnswer := sakilaAnswer3()
 		ACTOR := xNEW_ACTOR("")
-		_, err := Fetch(Log(db), SQLite.From(ACTOR), func(row *Row) {
+		_, err := Fetch(Log(sqliteDB), SQLite.From(ACTOR), func(row *Row) {
 			gotAnswer = row.Int(NumberFieldf("COUNT(DISTINCT {})", ACTOR.LAST_NAME))
 			row.Close()
 		})
@@ -149,7 +143,7 @@ func Test_SQLiteDBSelect(t *testing.T) {
 		var gotAnswer []Actor
 		wantAnswer := sakilaAnswer4()
 		ACTOR := xNEW_ACTOR("")
-		_, err := Fetch(Log(db), SQLite.
+		_, err := Fetch(Log(sqliteDB), SQLite.
 			From(ACTOR).
 			Where(ACTOR.LAST_NAME.LikeString("%GEN%")).
 			OrderBy(ACTOR.ACTOR_ID),
@@ -176,7 +170,7 @@ func Test_SQLiteDBSelect(t *testing.T) {
 		var gotAnswer []string
 		wantAnswer := sakilaAnswer5()
 		ACTOR := xNEW_ACTOR("")
-		_, err := Fetch(Log(db), SQLite.
+		_, err := Fetch(Log(sqliteDB), SQLite.
 			From(ACTOR).
 			GroupBy(ACTOR.LAST_NAME).
 			Having(Fieldf("COUNT(*)").Eq(1)).
@@ -200,7 +194,7 @@ func Test_SQLiteDBSelect(t *testing.T) {
 		var gotAnswer []City
 		wantAnswer := sakilaAnswer6()
 		CITY, COUNTRY := xNEW_CITY(""), xNEW_COUNTRY("")
-		_, err := Fetch(Log(db), SQLite.
+		_, err := Fetch(Log(sqliteDB), SQLite.
 			From(CITY).
 			Join(COUNTRY, COUNTRY.COUNTRY_ID.Eq(CITY.COUNTRY_ID)).
 			Where(COUNTRY.COUNTRY.In([]string{"Egypt", "Greece", "Puerto Rico"})).
@@ -232,7 +226,7 @@ func Test_SQLiteDBSelect(t *testing.T) {
 		var gotAnswer []Film
 		wantAnswer := sakilaAnswer7()
 		FILM := xNEW_FILM("")
-		_, err := Fetch(Log(db), SQLite.
+		_, err := Fetch(Log(sqliteDB), SQLite.
 			From(FILM).
 			OrderBy(FILM.TITLE).
 			Limit(10),
@@ -282,7 +276,7 @@ func Test_SQLiteDBSelect(t *testing.T) {
 			From(FILM_ACTOR).
 			GroupBy(FILM_ACTOR.FILM_ID),
 		)
-		_, err := Fetch(Log(db), SQLite.
+		_, err := Fetch(Log(sqliteDB), SQLite.
 			SelectWith(film_stats).
 			From(film_stats).
 			Join(FILM, film_stats.Field("film_id").Eq(FILM.FILM_ID)).
@@ -328,7 +322,7 @@ func Test_SQLiteDBSelect(t *testing.T) {
 		INVENTORY := xNEW_INVENTORY("")
 		RENTAL := xNEW_RENTAL("")
 		PAYMENT := xNEW_PAYMENT("")
-		_, err := Fetch(Log(db), SQLite.
+		_, err := Fetch(Log(sqliteDB), SQLite.
 			From(CATEGORY).
 			Join(FILM_CATEGORY, FILM_CATEGORY.CATEGORY_ID.Eq(CATEGORY.CATEGORY_ID)).
 			Join(INVENTORY, INVENTORY.FILM_ID.Eq(FILM_CATEGORY.FILM_ID)).
@@ -377,7 +371,7 @@ func Test_SQLiteDBSelect(t *testing.T) {
 				{"10", "October"}, {"11", "November"}, {"12", "December"},
 			},
 		))
-		_, err := Fetch(VerboseLog(db), SQLite.
+		_, err := Fetch(VerboseLog(sqliteDB), SQLite.
 			SelectWith(dates, months).
 			From(dates).
 			Join(months, months.Field("num").Eq(Fieldf(`strftime('%m', {})`, dates.Field("date_value")))).

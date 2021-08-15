@@ -156,3 +156,15 @@ func Test_SQLiteInsertQuery(t *testing.T) {
 		assert(t, tt)
 	})
 }
+
+// func TestSQLiteSakilaInsert(t *testing.T) {
+// 	db, err := sql.Open("sqlite3", "/Users/bokwoon/Documents/sq2/db.sqlite3")
+// 	if err != nil {
+// 		t.Fatal(testutil.Callers(), err)
+// 	}
+// 	tx, err := db.Begin()
+// 	if err != nil {
+// 		t.Fatal(testutil.Callers(), err)
+// 	}
+// 	defer tx.Rollback()
+// }
