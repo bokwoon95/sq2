@@ -230,7 +230,7 @@ func TestSQLiteSakilaInsert(t *testing.T) {
 			col.SetInt(CUSTOMER.ADDRESS_ID, regina.AddressID)
 			return nil
 		}).
-		OnConflict(CUSTOMER.CUSTOMER_ID).DoNothing(),
+		OnConflict().DoNothing(),
 		ErowsAffected|ElastInsertID,
 	)
 	if rowsAffected != 0 {
@@ -307,7 +307,7 @@ func TestSQLiteSakilaInsert(t *testing.T) {
 		t.Fatal(testutil.Callers(), err)
 	}
 	if rowCount != 2 {
-		t.Fatal(testutil.Callers(), "expected 2 rows inserted but got %d", rowsAffected)
+		t.Fatal(testutil.Callers(), "expected 2 rows inserted but got %d", rowCount)
 	}
 	for i := 0; i < 2; i++ {
 		customers[i].CustomerID = customerIDs[i]
@@ -383,7 +383,7 @@ func TestSQLiteSakilaInsert(t *testing.T) {
 		t.Fatal(testutil.Callers(), err)
 	}
 	if int(rowCount) != 2 {
-		t.Fatal(testutil.Callers(), "expected %d rows inserted but got %d", len(customers)-4, rowsAffected)
+		t.Fatal(testutil.Callers(), "expected 2 rows inserted but got %d", rowCount)
 	}
 	for i := 2; i < 4; i++ {
 		customers[i].CustomerID = customerIDs[i]

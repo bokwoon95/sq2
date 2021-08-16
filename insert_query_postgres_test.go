@@ -161,130 +161,22 @@ func TestPostgresSakilaInsert(t *testing.T) {
 	if testing.Short() {
 		return
 	}
-	tx, err := sqliteDB.Begin()
+	tx, err := postgresDB.Begin()
 	if err != nil {
 		t.Fatal(testutil.Callers(), err)
 	}
 	defer tx.Rollback()
 	CUSTOMER := xNEW_CUSTOMER("")
-	regina := Customer{StoreID: 1, AddressID: 1, FirstName: "REGINA", LastName: "TATE", Email: "regina_tate@email.com"}
 	customers := []Customer{
 		{StoreID: 1, AddressID: 1, FirstName: "JULIA", LastName: "HAYWARD", Email: "julia_hayward@email.com"},
 		{StoreID: 1, AddressID: 1, FirstName: "DUNCAN", LastName: "PEARSON", Email: "duncan_pearson@email.com"},
 		{StoreID: 1, AddressID: 1, FirstName: "IDA", LastName: "WATKINS", Email: "ida_watkins@email.com"},
 		{StoreID: 1, AddressID: 1, FirstName: "THOMAS", LastName: "BINDER", Email: "thomas_binder@email.com"},
 	}
-	// {StoreID: 1, AddressID: 1, FirstName: "ASTRID", LastName: "SILVA", Email: "astrid_silva@email.com"},
-	// {StoreID: 1, AddressID: 1, FirstName: "HARPER", LastName: "CRAIG", Email: "harper_craig@email.com"},
-	// {StoreID: 1, AddressID: 1, FirstName: "SAMANTHA", LastName: "STEVENSON", Email: "samantha_stevenson@email.com"},
-	// {StoreID: 1, AddressID: 1, FirstName: "PHILIP", LastName: "REID", Email: "philip_reid@email.com"},
-
-	// add regina
-	rowsAffected, lastInsertID, err := Exec(Log(tx), SQLite.
-		InsertInto(CUSTOMER).
-		Valuesx(func(col *Column) error {
-			col.SetInt(CUSTOMER.STORE_ID, regina.StoreID)
-			col.SetString(CUSTOMER.FIRST_NAME, regina.FirstName)
-			col.SetString(CUSTOMER.LAST_NAME, regina.LastName)
-			col.SetString(CUSTOMER.EMAIL, regina.Email)
-			col.SetInt(CUSTOMER.ADDRESS_ID, regina.AddressID)
-			return nil
-		}),
-		ErowsAffected|ElastInsertID,
-	)
-	if err != nil {
-		t.Fatal(testutil.Callers(), err)
-	}
-	if rowsAffected != 1 {
-		t.Fatal(testutil.Callers(), "expected 1 row to be affected but got %d", rowsAffected)
-	}
-	regina.CustomerID = int(lastInsertID)
-
-	// ensure regina exists
-	exists, err := FetchExists(Log(tx), SQLite.From(CUSTOMER).Where(
-		CUSTOMER.CUSTOMER_ID.EqInt(regina.CustomerID),
-		CUSTOMER.STORE_ID.EqInt(regina.StoreID),
-		CUSTOMER.FIRST_NAME.EqString(regina.FirstName),
-		CUSTOMER.LAST_NAME.EqString(regina.LastName),
-		CUSTOMER.EMAIL.EqString(regina.Email),
-		CUSTOMER.ADDRESS_ID.EqInt(regina.AddressID),
-	))
-	if err != nil {
-		t.Fatal(testutil.Callers(), err)
-	}
-	if !exists {
-		t.Fatal(testutil.Callers(), "expected inserted customer %+v to exist", regina)
-	}
-
-	// add regina again and check that ON CONFLICT DO NOTHING kicks in
-	rowsAffected, lastInsertID, err = Exec(Log(tx), SQLite.
-		InsertInto(CUSTOMER).
-		Valuesx(func(col *Column) error {
-			col.SetInt(CUSTOMER.CUSTOMER_ID, regina.CustomerID)
-			col.SetInt(CUSTOMER.STORE_ID, regina.StoreID)
-			col.SetString(CUSTOMER.FIRST_NAME, regina.FirstName)
-			col.SetString(CUSTOMER.LAST_NAME, regina.LastName)
-			col.SetString(CUSTOMER.EMAIL, regina.Email)
-			col.SetInt(CUSTOMER.ADDRESS_ID, regina.AddressID)
-			return nil
-		}).
-		OnConflict(CUSTOMER.CUSTOMER_ID).DoNothing(),
-		ErowsAffected|ElastInsertID,
-	)
-	if rowsAffected != 0 {
-		t.Fatal(testutil.Callers(), "expected an second identical insert to affect 0 rows, got %d instead", rowsAffected)
-	}
-
-	// modify and upsert regina
-	regina.FirstName = regina.FirstName[:1] + strings.ToLower(regina.FirstName[1:])
-	regina.LastName = regina.LastName[:1] + strings.ToLower(regina.LastName[1:])
-	rowsAffected, lastInsertID, err = Exec(Log(tx), SQLite.
-		InsertInto(CUSTOMER).
-		Valuesx(func(col *Column) error {
-			col.SetInt(CUSTOMER.CUSTOMER_ID, regina.CustomerID)
-			col.SetInt(CUSTOMER.STORE_ID, regina.StoreID)
-			col.SetString(CUSTOMER.FIRST_NAME, regina.FirstName)
-			col.SetString(CUSTOMER.LAST_NAME, regina.LastName)
-			col.SetString(CUSTOMER.EMAIL, regina.Email)
-			col.SetInt(CUSTOMER.ADDRESS_ID, regina.AddressID)
-			return nil
-		}).
-		OnConflict(CUSTOMER.CUSTOMER_ID).
-		DoUpdateSet(
-			AssignExcluded(CUSTOMER.STORE_ID),
-			AssignExcluded(CUSTOMER.FIRST_NAME),
-			AssignExcluded(CUSTOMER.LAST_NAME),
-			AssignExcluded(CUSTOMER.EMAIL),
-			AssignExcluded(CUSTOMER.ADDRESS_ID),
-		),
-		ErowsAffected|ElastInsertID,
-	)
-	if err != nil {
-		t.Fatal(testutil.Callers(), err)
-	}
-	if rowsAffected != 1 {
-		t.Fatal(testutil.Callers(), "expected 1 row to be upserted but got %d", rowsAffected)
-	}
-
-	// ensure the modified regina exists
-	exists, err = FetchExists(Log(tx), SQLite.From(CUSTOMER).Where(
-		CUSTOMER.CUSTOMER_ID.EqInt(regina.CustomerID),
-		CUSTOMER.STORE_ID.EqInt(regina.StoreID),
-		CUSTOMER.FIRST_NAME.EqString(regina.FirstName),
-		CUSTOMER.LAST_NAME.EqString(regina.LastName),
-		CUSTOMER.EMAIL.EqString(regina.Email),
-		CUSTOMER.ADDRESS_ID.EqInt(regina.AddressID),
-	))
-	if err != nil {
-		t.Fatal(testutil.Callers(), err)
-	}
-	if !exists {
-		t.Fatal(testutil.Callers(), "expected inserted customer %+v to exist", regina)
-	}
 
 	// add the first 2 customers
 	var customerIDs []int
-	rowCount, err := Fetch(Log(tx), SQLite.
+	rowCount, err := Fetch(Log(tx), Postgres.
 		InsertInto(CUSTOMER).
 		Valuesx(func(col *Column) error {
 			for _, customer := range customers[:2] {
@@ -305,16 +197,17 @@ func TestPostgresSakilaInsert(t *testing.T) {
 		t.Fatal(testutil.Callers(), err)
 	}
 	if rowCount != 2 {
-		t.Fatal(testutil.Callers(), "expected 2 rows inserted but got %d", rowsAffected)
+		t.Fatal(testutil.Callers(), "expected 2 rows inserted but got %d", rowCount)
 	}
 	for i := 0; i < 2; i++ {
 		customers[i].CustomerID = customerIDs[i]
 	}
 
 	// ensure the first 2 customers exist
+	var exists bool
 	predicate := And()
 	for _, customer := range customers[:2] {
-		predicate = predicate.Append(Exists(SQLite.
+		predicate = predicate.Append(Exists(Postgres.
 			SelectOne().
 			From(CUSTOMER).
 			Where(
@@ -327,13 +220,13 @@ func TestPostgresSakilaInsert(t *testing.T) {
 			),
 		))
 	}
-	_, err = Fetch(Log(tx), SQLite.Select(), func(row *Row) { exists = row.Bool(predicate) })
+	_, err = Fetch(Log(tx), Postgres.Select(), func(row *Row) { exists = row.Bool(predicate) })
 	if !exists {
 		t.Fatal(testutil.Callers(), "expected inserted customers %+v to exist", customers[:2])
 	}
 
 	// add the first 2 customers again and ensure ON CONFLICT DO NOTHING kicks in
-	rowCount, err = Fetch(Log(tx), SQLite.
+	rowCount, err = Fetch(Log(tx), Postgres.
 		InsertInto(CUSTOMER).
 		Valuesx(func(col *Column) error {
 			for _, customer := range customers[:2] {
@@ -359,7 +252,7 @@ func TestPostgresSakilaInsert(t *testing.T) {
 	}
 
 	// add all 4 customers and check that only the last 2 customers got added
-	rowCount, err = Fetch(Log(tx), SQLite.
+	rowCount, err = Fetch(Log(tx), Postgres.
 		InsertInto(CUSTOMER).
 		Valuesx(func(col *Column) error {
 			for _, customer := range customers {
@@ -381,7 +274,7 @@ func TestPostgresSakilaInsert(t *testing.T) {
 		t.Fatal(testutil.Callers(), err)
 	}
 	if int(rowCount) != 2 {
-		t.Fatal(testutil.Callers(), "expected %d rows inserted but got %d", len(customers)-4, rowsAffected)
+		t.Fatal(testutil.Callers(), "expected 2 rows inserted but got %d", rowCount)
 	}
 	for i := 2; i < 4; i++ {
 		customers[i].CustomerID = customerIDs[i]
@@ -390,7 +283,7 @@ func TestPostgresSakilaInsert(t *testing.T) {
 	// check that all 4 customers exist
 	predicate = And()
 	for _, customer := range customers {
-		predicate = predicate.Append(Exists(SQLite.
+		predicate = predicate.Append(Exists(Postgres.
 			SelectOne().
 			From(CUSTOMER).
 			Where(
@@ -403,7 +296,7 @@ func TestPostgresSakilaInsert(t *testing.T) {
 			),
 		))
 	}
-	_, err = Fetch(Log(tx), SQLite.Select(), func(row *Row) { exists = row.Bool(predicate) })
+	_, err = Fetch(Log(tx), Postgres.Select(), func(row *Row) { exists = row.Bool(predicate) })
 	if !exists {
 		t.Fatalf(testutil.Callers()+" expected inserted customers %+v to exist", customers[:4])
 	}
@@ -413,7 +306,7 @@ func TestPostgresSakilaInsert(t *testing.T) {
 		customers[i].FirstName = customer.FirstName[:1] + strings.ToLower(customer.FirstName[1:])
 		customers[i].LastName = customer.LastName[:1] + strings.ToLower(customer.LastName[1:])
 	}
-	rowsAffected, _, err = Exec(Log(tx), SQLite.
+	rowsAffected, _, err := Exec(Log(tx), Postgres.
 		InsertInto(CUSTOMER).
 		Valuesx(func(col *Column) error {
 			for _, customer := range customers[:2] {
@@ -446,7 +339,7 @@ func TestPostgresSakilaInsert(t *testing.T) {
 	// check that all 4 customers (including the modified 2) exist
 	predicate = And()
 	for _, customer := range customers {
-		predicate = predicate.Append(Exists(SQLite.
+		predicate = predicate.Append(Exists(Postgres.
 			SelectOne().
 			From(CUSTOMER).
 			Where(
@@ -459,7 +352,7 @@ func TestPostgresSakilaInsert(t *testing.T) {
 			),
 		))
 	}
-	_, err = Fetch(Log(tx), SQLite.Select(), func(row *Row) { exists = row.Bool(predicate) })
+	_, err = Fetch(Log(tx), Postgres.Select(), func(row *Row) { exists = row.Bool(predicate) })
 	if !exists {
 		t.Fatal(testutil.Callers(), "expected inserted customers %+v to exist", customers[:4])
 	}

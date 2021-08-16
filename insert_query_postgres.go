@@ -91,7 +91,9 @@ func (c PostgresInsertConflict) Where(predicates ...Predicate) PostgresInsertCon
 }
 
 func (c PostgresInsertConflict) DoNothing() PostgresInsertQuery {
-	return *c.insertQuery
+	q := c.insertQuery
+	q.ConflictDoNothing = true
+	return *q
 }
 
 func (c PostgresInsertConflict) DoUpdateSet(assignments ...Assignment) PostgresInsertQuery {
