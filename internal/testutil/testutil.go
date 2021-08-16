@@ -40,6 +40,6 @@ func Callers() string {
 		}
 		buf.WriteString(callsites[i])
 	}
-	buf.WriteString("]")
+	buf.WriteString("] ")
 	return buf.String()
 }

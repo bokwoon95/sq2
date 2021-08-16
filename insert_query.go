@@ -33,7 +33,7 @@ type InsertQuery struct {
 	ReturningFields AliasFields
 }
 
-var _ Query = InsertQuery{}
+var _ Query = (*InsertQuery)(nil)
 
 func (q InsertQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int, env map[string]interface{}) error {
 	if env == nil && q.Env != nil {

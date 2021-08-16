@@ -52,8 +52,12 @@ func (q MySQLInsertQuery) Valuesx(mapper func(*Column) error) MySQLInsertQuery {
 	return q
 }
 
-func (q MySQLInsertQuery) As(rowAlias string, columnAliases ...string) MySQLInsertQuery {
+func (q MySQLInsertQuery) AsRow(rowAlias string) MySQLInsertQuery {
 	q.RowAlias = rowAlias
+	return q
+}
+
+func (q MySQLInsertQuery) AsColumns(columnAliases ...string) MySQLInsertQuery {
 	q.ColumnAliases = columnAliases
 	return q
 }

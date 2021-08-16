@@ -63,6 +63,7 @@ func AssignExcluded(field Field) Assignment {
 	return Assign(Literal(name), Literal("EXCLUDED."+name))
 }
 
+// TODO: should the argument order be swapped instead? alias then field?
 func AssignAlias(field Field, alias string) Assignment {
 	name := field.GetName()
 	return Assign(Literal(name), Literal(alias+"."+name))
@@ -71,4 +72,9 @@ func AssignAlias(field Field, alias string) Assignment {
 func AssignSelf(field Field) Assignment {
 	name := field.GetName()
 	return Assign(Literal(name), Literal(name))
+}
+
+func AssignValues(field Field) Assignment {
+	name := field.GetName()
+	return Assign(Literal(name), Literal("VALUES("+name+")"))
 }
