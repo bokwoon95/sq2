@@ -160,6 +160,9 @@ func Test_SQLiteInsertQuery(t *testing.T) {
 }
 
 func TestSQLiteSakilaInsert(t *testing.T) {
+	if testing.Short() {
+		return
+	}
 	tx, err := sqliteDB.Begin()
 	if err != nil {
 		t.Fatal(testutil.Callers(), err)

@@ -1,7 +1,6 @@
 package sq
 
 import (
-	"database/sql"
 	"testing"
 
 	"github.com/bokwoon95/sq/internal/testutil"
@@ -95,9 +94,8 @@ func Test_PostgresSelectQuery(t *testing.T) {
 }
 
 func Test_PostgresTestSuite(t *testing.T) {
-	db, err := sql.Open("postgres", "postgres://postgres:postgres@localhost:5452/db?sslmode=disable&timezone=UTC")
-	if err != nil {
-		t.Fatal(testutil.Callers(), err)
+	if testing.Short() {
+		return
 	}
 
 	t.Run("Q1", func(t *testing.T) {
@@ -105,7 +103,7 @@ func Test_PostgresTestSuite(t *testing.T) {
 		var gotAnswer []string
 		wantAnswer := sakilaAnswer1()
 		ACTOR := xNEW_ACTOR("")
-		_, err := Fetch(Log(db), Postgres.
+		_, err := Fetch(Log(postgresDB), Postgres.
 			SelectDistinct().
 			From(ACTOR).
 			OrderBy(ACTOR.LAST_NAME).
@@ -127,7 +125,7 @@ func Test_PostgresTestSuite(t *testing.T) {
 		t.Parallel()
 		wantAnswer := sakilaAnswer2()
 		ACTOR := xNEW_ACTOR("")
-		gotAnswer, err := FetchExists(Log(db), Postgres.
+		gotAnswer, err := FetchExists(Log(postgresDB), Postgres.
 			From(ACTOR).
 			Where(Or(
 				ACTOR.FIRST_NAME.EqString("SCARLETT"),
@@ -147,7 +145,7 @@ func Test_PostgresTestSuite(t *testing.T) {
 		var gotAnswer int
 		wantAnswer := sakilaAnswer3()
 		ACTOR := xNEW_ACTOR("")
-		_, err := Fetch(Log(db), Postgres.From(ACTOR), func(row *Row) {
+		_, err := Fetch(Log(postgresDB), Postgres.From(ACTOR), func(row *Row) {
 			gotAnswer = row.Int(NumberFieldf("COUNT(DISTINCT {})", ACTOR.LAST_NAME))
 			row.Close()
 		})
@@ -164,7 +162,7 @@ func Test_PostgresTestSuite(t *testing.T) {
 		var gotAnswer []Actor
 		wantAnswer := sakilaAnswer4()
 		ACTOR := xNEW_ACTOR("")
-		_, err := Fetch(Log(db), Postgres.
+		_, err := Fetch(Log(postgresDB), Postgres.
 			From(ACTOR).
 			Where(ACTOR.LAST_NAME.LikeString("%GEN%")).
 			OrderBy(ACTOR.ACTOR_ID),
@@ -191,7 +189,7 @@ func Test_PostgresTestSuite(t *testing.T) {
 		var gotAnswer []string
 		wantAnswer := sakilaAnswer5()
 		ACTOR := xNEW_ACTOR("")
-		_, err := Fetch(Log(db), Postgres.
+		_, err := Fetch(Log(postgresDB), Postgres.
 			From(ACTOR).
 			GroupBy(ACTOR.LAST_NAME).
 			Having(Fieldf("COUNT(*)").Eq(1)).
@@ -215,7 +213,7 @@ func Test_PostgresTestSuite(t *testing.T) {
 		var gotAnswer []City
 		wantAnswer := sakilaAnswer6()
 		CITY, COUNTRY := xNEW_CITY(""), xNEW_COUNTRY("")
-		_, err := Fetch(Log(db), Postgres.
+		_, err := Fetch(Log(postgresDB), Postgres.
 			From(CITY).
 			Join(COUNTRY, COUNTRY.COUNTRY_ID.Eq(CITY.COUNTRY_ID)).
 			Where(COUNTRY.COUNTRY.In([]string{"Egypt", "Greece", "Puerto Rico"})).
@@ -247,7 +245,7 @@ func Test_PostgresTestSuite(t *testing.T) {
 		var gotAnswer []Film
 		wantAnswer := sakilaAnswer7()
 		FILM := xNEW_FILM("")
-		_, err := Fetch(Log(db), Postgres.
+		_, err := Fetch(Log(postgresDB), Postgres.
 			From(FILM).
 			OrderBy(FILM.TITLE).
 			Limit(10),
@@ -297,7 +295,7 @@ func Test_PostgresTestSuite(t *testing.T) {
 			From(FILM_ACTOR).
 			GroupBy(FILM_ACTOR.FILM_ID),
 		)
-		_, err := Fetch(Log(db), Postgres.
+		_, err := Fetch(Log(postgresDB), Postgres.
 			SelectWith(film_stats).
 			From(film_stats).
 			Join(FILM, film_stats.Field("film_id").Eq(FILM.FILM_ID)).
@@ -343,7 +341,7 @@ func Test_PostgresTestSuite(t *testing.T) {
 		INVENTORY := xNEW_INVENTORY("")
 		RENTAL := xNEW_RENTAL("")
 		PAYMENT := xNEW_PAYMENT("")
-		_, err := Fetch(Log(db), Postgres.
+		_, err := Fetch(Log(postgresDB), Postgres.
 			From(CATEGORY).
 			Join(FILM_CATEGORY, FILM_CATEGORY.CATEGORY_ID.Eq(CATEGORY.CATEGORY_ID)).
 			Join(INVENTORY, INVENTORY.FILM_ID.Eq(FILM_CATEGORY.FILM_ID)).
@@ -384,7 +382,7 @@ func Test_PostgresTestSuite(t *testing.T) {
 			Postgres.Select(Fieldf("{}::DATE", "2005-03-01")),
 			Postgres.Select(Fieldf("(date_value + '1 month'::INTERVAL)::DATE")).From(Tablef("dates")).Where(Predicatef("date_value < {}", "2006-02-01")),
 		))
-		_, err := Fetch(VerboseLog(db), Postgres.
+		_, err := Fetch(VerboseLog(postgresDB), Postgres.
 			SelectWith(dates).
 			From(dates).
 			LeftJoin(RENTAL, Predicatef(`to_char({}, 'YYYY FMMonth') = to_char({}, 'YYYY FMMonth')`, RENTAL.RENTAL_DATE, dates.Field("date_value"))).

@@ -1,6 +1,8 @@
 package sq
 
 import (
+	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/bokwoon95/sq/internal/testutil"
@@ -153,4 +155,312 @@ func Test_PostgresInsertQuery(t *testing.T) {
 		tt.wantArgs = []interface{}{int64(1), int64(2)}
 		assert(t, tt)
 	})
+}
+
+func TestPostgresSakilaInsert(t *testing.T) {
+	if testing.Short() {
+		return
+	}
+	tx, err := sqliteDB.Begin()
+	if err != nil {
+		t.Fatal(testutil.Callers(), err)
+	}
+	defer tx.Rollback()
+	CUSTOMER := xNEW_CUSTOMER("")
+	regina := Customer{StoreID: 1, AddressID: 1, FirstName: "REGINA", LastName: "TATE", Email: "regina_tate@email.com"}
+	customers := []Customer{
+		{StoreID: 1, AddressID: 1, FirstName: "JULIA", LastName: "HAYWARD", Email: "julia_hayward@email.com"},
+		{StoreID: 1, AddressID: 1, FirstName: "DUNCAN", LastName: "PEARSON", Email: "duncan_pearson@email.com"},
+		{StoreID: 1, AddressID: 1, FirstName: "IDA", LastName: "WATKINS", Email: "ida_watkins@email.com"},
+		{StoreID: 1, AddressID: 1, FirstName: "THOMAS", LastName: "BINDER", Email: "thomas_binder@email.com"},
+	}
+	// {StoreID: 1, AddressID: 1, FirstName: "ASTRID", LastName: "SILVA", Email: "astrid_silva@email.com"},
+	// {StoreID: 1, AddressID: 1, FirstName: "HARPER", LastName: "CRAIG", Email: "harper_craig@email.com"},
+	// {StoreID: 1, AddressID: 1, FirstName: "SAMANTHA", LastName: "STEVENSON", Email: "samantha_stevenson@email.com"},
+	// {StoreID: 1, AddressID: 1, FirstName: "PHILIP", LastName: "REID", Email: "philip_reid@email.com"},
+
+	// add regina
+	rowsAffected, lastInsertID, err := Exec(Log(tx), SQLite.
+		InsertInto(CUSTOMER).
+		Valuesx(func(col *Column) error {
+			col.SetInt(CUSTOMER.STORE_ID, regina.StoreID)
+			col.SetString(CUSTOMER.FIRST_NAME, regina.FirstName)
+			col.SetString(CUSTOMER.LAST_NAME, regina.LastName)
+			col.SetString(CUSTOMER.EMAIL, regina.Email)
+			col.SetInt(CUSTOMER.ADDRESS_ID, regina.AddressID)
+			return nil
+		}),
+		ErowsAffected|ElastInsertID,
+	)
+	if err != nil {
+		t.Fatal(testutil.Callers(), err)
+	}
+	if rowsAffected != 1 {
+		t.Fatal(testutil.Callers(), "expected 1 row to be affected but got %d", rowsAffected)
+	}
+	regina.CustomerID = int(lastInsertID)
+
+	// ensure regina exists
+	exists, err := FetchExists(Log(tx), SQLite.From(CUSTOMER).Where(
+		CUSTOMER.CUSTOMER_ID.EqInt(regina.CustomerID),
+		CUSTOMER.STORE_ID.EqInt(regina.StoreID),
+		CUSTOMER.FIRST_NAME.EqString(regina.FirstName),
+		CUSTOMER.LAST_NAME.EqString(regina.LastName),
+		CUSTOMER.EMAIL.EqString(regina.Email),
+		CUSTOMER.ADDRESS_ID.EqInt(regina.AddressID),
+	))
+	if err != nil {
+		t.Fatal(testutil.Callers(), err)
+	}
+	if !exists {
+		t.Fatal(testutil.Callers(), "expected inserted customer %+v to exist", regina)
+	}
+
+	// add regina again and check that ON CONFLICT DO NOTHING kicks in
+	rowsAffected, lastInsertID, err = Exec(Log(tx), SQLite.
+		InsertInto(CUSTOMER).
+		Valuesx(func(col *Column) error {
+			col.SetInt(CUSTOMER.CUSTOMER_ID, regina.CustomerID)
+			col.SetInt(CUSTOMER.STORE_ID, regina.StoreID)
+			col.SetString(CUSTOMER.FIRST_NAME, regina.FirstName)
+			col.SetString(CUSTOMER.LAST_NAME, regina.LastName)
+			col.SetString(CUSTOMER.EMAIL, regina.Email)
+			col.SetInt(CUSTOMER.ADDRESS_ID, regina.AddressID)
+			return nil
+		}).
+		OnConflict(CUSTOMER.CUSTOMER_ID).DoNothing(),
+		ErowsAffected|ElastInsertID,
+	)
+	if rowsAffected != 0 {
+		t.Fatal(testutil.Callers(), "expected an second identical insert to affect 0 rows, got %d instead", rowsAffected)
+	}
+
+	// modify and upsert regina
+	regina.FirstName = regina.FirstName[:1] + strings.ToLower(regina.FirstName[1:])
+	regina.LastName = regina.LastName[:1] + strings.ToLower(regina.LastName[1:])
+	rowsAffected, lastInsertID, err = Exec(Log(tx), SQLite.
+		InsertInto(CUSTOMER).
+		Valuesx(func(col *Column) error {
+			col.SetInt(CUSTOMER.CUSTOMER_ID, regina.CustomerID)
+			col.SetInt(CUSTOMER.STORE_ID, regina.StoreID)
+			col.SetString(CUSTOMER.FIRST_NAME, regina.FirstName)
+			col.SetString(CUSTOMER.LAST_NAME, regina.LastName)
+			col.SetString(CUSTOMER.EMAIL, regina.Email)
+			col.SetInt(CUSTOMER.ADDRESS_ID, regina.AddressID)
+			return nil
+		}).
+		OnConflict(CUSTOMER.CUSTOMER_ID).
+		DoUpdateSet(
+			AssignExcluded(CUSTOMER.STORE_ID),
+			AssignExcluded(CUSTOMER.FIRST_NAME),
+			AssignExcluded(CUSTOMER.LAST_NAME),
+			AssignExcluded(CUSTOMER.EMAIL),
+			AssignExcluded(CUSTOMER.ADDRESS_ID),
+		),
+		ErowsAffected|ElastInsertID,
+	)
+	if err != nil {
+		t.Fatal(testutil.Callers(), err)
+	}
+	if rowsAffected != 1 {
+		t.Fatal(testutil.Callers(), "expected 1 row to be upserted but got %d", rowsAffected)
+	}
+
+	// ensure the modified regina exists
+	exists, err = FetchExists(Log(tx), SQLite.From(CUSTOMER).Where(
+		CUSTOMER.CUSTOMER_ID.EqInt(regina.CustomerID),
+		CUSTOMER.STORE_ID.EqInt(regina.StoreID),
+		CUSTOMER.FIRST_NAME.EqString(regina.FirstName),
+		CUSTOMER.LAST_NAME.EqString(regina.LastName),
+		CUSTOMER.EMAIL.EqString(regina.Email),
+		CUSTOMER.ADDRESS_ID.EqInt(regina.AddressID),
+	))
+	if err != nil {
+		t.Fatal(testutil.Callers(), err)
+	}
+	if !exists {
+		t.Fatal(testutil.Callers(), "expected inserted customer %+v to exist", regina)
+	}
+
+	// add the first 2 customers
+	var customerIDs []int
+	rowCount, err := Fetch(Log(tx), SQLite.
+		InsertInto(CUSTOMER).
+		Valuesx(func(col *Column) error {
+			for _, customer := range customers[:2] {
+				col.SetInt(CUSTOMER.STORE_ID, customer.StoreID)
+				col.SetString(CUSTOMER.FIRST_NAME, customer.FirstName)
+				col.SetString(CUSTOMER.LAST_NAME, customer.LastName)
+				col.SetString(CUSTOMER.EMAIL, customer.Email)
+				col.SetInt(CUSTOMER.ADDRESS_ID, customer.AddressID)
+			}
+			return nil
+		}),
+		func(row *Row) {
+			customerID := row.Int(CUSTOMER.CUSTOMER_ID)
+			row.Process(func() { customerIDs = append(customerIDs, customerID) })
+		},
+	)
+	if err != nil {
+		t.Fatal(testutil.Callers(), err)
+	}
+	if rowCount != 2 {
+		t.Fatal(testutil.Callers(), "expected 2 rows inserted but got %d", rowsAffected)
+	}
+	for i := 0; i < 2; i++ {
+		customers[i].CustomerID = customerIDs[i]
+	}
+
+	// ensure the first 2 customers exist
+	predicate := And()
+	for _, customer := range customers[:2] {
+		predicate = predicate.Append(Exists(SQLite.
+			SelectOne().
+			From(CUSTOMER).
+			Where(
+				CUSTOMER.CUSTOMER_ID.EqInt(customer.CustomerID),
+				CUSTOMER.STORE_ID.EqInt(customer.StoreID),
+				CUSTOMER.FIRST_NAME.EqString(customer.FirstName),
+				CUSTOMER.LAST_NAME.EqString(customer.LastName),
+				CUSTOMER.EMAIL.EqString(customer.Email),
+				CUSTOMER.ADDRESS_ID.EqInt(customer.AddressID),
+			),
+		))
+	}
+	_, err = Fetch(Log(tx), SQLite.Select(), func(row *Row) { exists = row.Bool(predicate) })
+	if !exists {
+		t.Fatal(testutil.Callers(), "expected inserted customers %+v to exist", customers[:2])
+	}
+
+	// add the first 2 customers again and ensure ON CONFLICT DO NOTHING kicks in
+	rowCount, err = Fetch(Log(tx), SQLite.
+		InsertInto(CUSTOMER).
+		Valuesx(func(col *Column) error {
+			for _, customer := range customers[:2] {
+				col.SetInt(CUSTOMER.CUSTOMER_ID, customer.CustomerID)
+				col.SetInt(CUSTOMER.STORE_ID, customer.StoreID)
+				col.SetString(CUSTOMER.FIRST_NAME, customer.FirstName)
+				col.SetString(CUSTOMER.LAST_NAME, customer.LastName)
+				col.SetString(CUSTOMER.EMAIL, customer.Email)
+				col.SetInt(CUSTOMER.ADDRESS_ID, customer.AddressID)
+			}
+			return nil
+		}).
+		OnConflict().DoNothing(),
+		func(row *Row) {
+			_ = row.Int(CUSTOMER.CUSTOMER_ID)
+		},
+	)
+	if err != nil {
+		t.Fatal(testutil.Callers(), err)
+	}
+	if rowCount != 0 {
+		t.Fatal(testutil.Callers(), "expected an second identical insert to affect 0 rows, got %d instead", rowCount)
+	}
+
+	// add all 4 customers and check that only the last 2 customers got added
+	rowCount, err = Fetch(Log(tx), SQLite.
+		InsertInto(CUSTOMER).
+		Valuesx(func(col *Column) error {
+			for _, customer := range customers {
+				col.SetInt(CUSTOMER.STORE_ID, customer.StoreID)
+				col.SetString(CUSTOMER.FIRST_NAME, customer.FirstName)
+				col.SetString(CUSTOMER.LAST_NAME, customer.LastName)
+				col.SetString(CUSTOMER.EMAIL, customer.Email)
+				col.SetInt(CUSTOMER.ADDRESS_ID, customer.AddressID)
+			}
+			return nil
+		}).
+		OnConflict().DoNothing(),
+		func(row *Row) {
+			customerID := row.Int(CUSTOMER.CUSTOMER_ID)
+			row.Process(func() { customerIDs = append(customerIDs, customerID) })
+		},
+	)
+	if err != nil {
+		t.Fatal(testutil.Callers(), err)
+	}
+	if int(rowCount) != 2 {
+		t.Fatal(testutil.Callers(), "expected %d rows inserted but got %d", len(customers)-4, rowsAffected)
+	}
+	for i := 2; i < 4; i++ {
+		customers[i].CustomerID = customerIDs[i]
+	}
+
+	// check that all 4 customers exist
+	predicate = And()
+	for _, customer := range customers {
+		predicate = predicate.Append(Exists(SQLite.
+			SelectOne().
+			From(CUSTOMER).
+			Where(
+				CUSTOMER.CUSTOMER_ID.EqInt(customer.CustomerID),
+				CUSTOMER.STORE_ID.EqInt(customer.StoreID),
+				CUSTOMER.FIRST_NAME.EqString(customer.FirstName),
+				CUSTOMER.LAST_NAME.EqString(customer.LastName),
+				CUSTOMER.EMAIL.EqString(customer.Email),
+				CUSTOMER.ADDRESS_ID.EqInt(customer.AddressID),
+			),
+		))
+	}
+	_, err = Fetch(Log(tx), SQLite.Select(), func(row *Row) { exists = row.Bool(predicate) })
+	if !exists {
+		t.Fatalf(testutil.Callers()+" expected inserted customers %+v to exist", customers[:4])
+	}
+
+	// modify and upsert the first 2 customers
+	for i, customer := range customers[:2] {
+		customers[i].FirstName = customer.FirstName[:1] + strings.ToLower(customer.FirstName[1:])
+		customers[i].LastName = customer.LastName[:1] + strings.ToLower(customer.LastName[1:])
+	}
+	rowsAffected, _, err = Exec(Log(tx), SQLite.
+		InsertInto(CUSTOMER).
+		Valuesx(func(col *Column) error {
+			for _, customer := range customers[:2] {
+				col.SetInt(CUSTOMER.CUSTOMER_ID, customer.CustomerID)
+				col.SetInt(CUSTOMER.STORE_ID, customer.StoreID)
+				col.SetString(CUSTOMER.FIRST_NAME, customer.FirstName)
+				col.SetString(CUSTOMER.LAST_NAME, customer.LastName)
+				col.SetString(CUSTOMER.EMAIL, customer.Email)
+				col.SetInt(CUSTOMER.ADDRESS_ID, customer.AddressID)
+			}
+			return nil
+		}).
+		OnConflict(CUSTOMER.CUSTOMER_ID).
+		DoUpdateSet(
+			AssignExcluded(CUSTOMER.STORE_ID),
+			AssignExcluded(CUSTOMER.FIRST_NAME),
+			AssignExcluded(CUSTOMER.LAST_NAME),
+			AssignExcluded(CUSTOMER.EMAIL),
+			AssignExcluded(CUSTOMER.ADDRESS_ID),
+		),
+		ErowsAffected,
+	)
+	if err != nil {
+		t.Fatal(testutil.Callers(), err)
+	}
+	if rowsAffected != 2 {
+		t.Fatal(testutil.Callers(), fmt.Sprintf("expected 2 rows to be upserted but got %d", rowsAffected))
+	}
+
+	// check that all 4 customers (including the modified 2) exist
+	predicate = And()
+	for _, customer := range customers {
+		predicate = predicate.Append(Exists(SQLite.
+			SelectOne().
+			From(CUSTOMER).
+			Where(
+				CUSTOMER.CUSTOMER_ID.EqInt(customer.CustomerID),
+				CUSTOMER.STORE_ID.EqInt(customer.StoreID),
+				CUSTOMER.FIRST_NAME.EqString(customer.FirstName),
+				CUSTOMER.LAST_NAME.EqString(customer.LastName),
+				CUSTOMER.EMAIL.EqString(customer.Email),
+				CUSTOMER.ADDRESS_ID.EqInt(customer.AddressID),
+			),
+		))
+	}
+	_, err = Fetch(Log(tx), SQLite.Select(), func(row *Row) { exists = row.Bool(predicate) })
+	if !exists {
+		t.Fatal(testutil.Callers(), "expected inserted customers %+v to exist", customers[:4])
+	}
 }

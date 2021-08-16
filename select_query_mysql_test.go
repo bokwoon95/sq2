@@ -1,7 +1,6 @@
 package sq
 
 import (
-	"database/sql"
 	"testing"
 
 	"github.com/bokwoon95/sq/internal/testutil"
@@ -106,9 +105,8 @@ func Test_MySQLSelectQuery(t *testing.T) {
 }
 
 func Test_MySQLTestSuite(t *testing.T) {
-	db, err := sql.Open("mysql", "root:root@tcp(localhost:3326)/db?parseTime=true&time_zone=UTC&multiStatements=true")
-	if err != nil {
-		t.Fatal(testutil.Callers(), err)
+	if testing.Short() {
+		return
 	}
 
 	t.Run("Q1", func(t *testing.T) {
@@ -116,7 +114,7 @@ func Test_MySQLTestSuite(t *testing.T) {
 		var gotAnswer []string
 		wantAnswer := sakilaAnswer1()
 		ACTOR := xNEW_ACTOR("")
-		_, err := Fetch(Log(db), MySQL.
+		_, err := Fetch(Log(mysqlDB), MySQL.
 			SelectDistinct().
 			From(ACTOR).
 			OrderBy(ACTOR.LAST_NAME).
@@ -138,7 +136,7 @@ func Test_MySQLTestSuite(t *testing.T) {
 		t.Parallel()
 		wantAnswer := sakilaAnswer2()
 		ACTOR := xNEW_ACTOR("")
-		gotAnswer, err := FetchExists(Log(db), MySQL.
+		gotAnswer, err := FetchExists(Log(mysqlDB), MySQL.
 			From(ACTOR).
 			Where(Or(
 				ACTOR.FIRST_NAME.EqString("SCARLETT"),
@@ -158,7 +156,7 @@ func Test_MySQLTestSuite(t *testing.T) {
 		var gotAnswer int
 		wantAnswer := sakilaAnswer3()
 		ACTOR := xNEW_ACTOR("")
-		_, err := Fetch(Log(db), MySQL.From(ACTOR), func(row *Row) {
+		_, err := Fetch(Log(mysqlDB), MySQL.From(ACTOR), func(row *Row) {
 			gotAnswer = row.Int(NumberFieldf("COUNT(DISTINCT {})", ACTOR.LAST_NAME))
 			row.Close()
 		})
@@ -175,7 +173,7 @@ func Test_MySQLTestSuite(t *testing.T) {
 		var gotAnswer []Actor
 		wantAnswer := sakilaAnswer4()
 		ACTOR := xNEW_ACTOR("")
-		_, err := Fetch(Log(db), MySQL.
+		_, err := Fetch(Log(mysqlDB), MySQL.
 			From(ACTOR).
 			Where(ACTOR.LAST_NAME.LikeString("%GEN%")).
 			OrderBy(ACTOR.ACTOR_ID),
@@ -202,7 +200,7 @@ func Test_MySQLTestSuite(t *testing.T) {
 		var gotAnswer []string
 		wantAnswer := sakilaAnswer5()
 		ACTOR := xNEW_ACTOR("")
-		_, err := Fetch(Log(db), MySQL.
+		_, err := Fetch(Log(mysqlDB), MySQL.
 			From(ACTOR).
 			GroupBy(ACTOR.LAST_NAME).
 			Having(Fieldf("COUNT(*)").Eq(1)).
@@ -226,7 +224,7 @@ func Test_MySQLTestSuite(t *testing.T) {
 		var gotAnswer []City
 		wantAnswer := sakilaAnswer6()
 		CITY, COUNTRY := xNEW_CITY(""), xNEW_COUNTRY("")
-		_, err := Fetch(Log(db), MySQL.
+		_, err := Fetch(Log(mysqlDB), MySQL.
 			From(CITY).
 			Join(COUNTRY, COUNTRY.COUNTRY_ID.Eq(CITY.COUNTRY_ID)).
 			Where(COUNTRY.COUNTRY.In([]string{"Egypt", "Greece", "Puerto Rico"})).
@@ -258,7 +256,7 @@ func Test_MySQLTestSuite(t *testing.T) {
 		var gotAnswer []Film
 		wantAnswer := sakilaAnswer7()
 		FILM := xNEW_FILM("")
-		_, err := Fetch(Log(db), MySQL.
+		_, err := Fetch(Log(mysqlDB), MySQL.
 			From(FILM).
 			OrderBy(FILM.TITLE).
 			Limit(10),
@@ -308,7 +306,7 @@ func Test_MySQLTestSuite(t *testing.T) {
 			From(FILM_ACTOR).
 			GroupBy(FILM_ACTOR.FILM_ID),
 		)
-		_, err := Fetch(Log(db), MySQL.
+		_, err := Fetch(Log(mysqlDB), MySQL.
 			SelectWith(film_stats).
 			From(film_stats).
 			Join(FILM, film_stats.Field("film_id").Eq(FILM.FILM_ID)).
@@ -354,7 +352,7 @@ func Test_MySQLTestSuite(t *testing.T) {
 		INVENTORY := xNEW_INVENTORY("")
 		RENTAL := xNEW_RENTAL("")
 		PAYMENT := xNEW_PAYMENT("")
-		_, err := Fetch(Log(db), MySQL.
+		_, err := Fetch(Log(mysqlDB), MySQL.
 			From(CATEGORY).
 			Join(FILM_CATEGORY, FILM_CATEGORY.CATEGORY_ID.Eq(CATEGORY.CATEGORY_ID)).
 			Join(INVENTORY, INVENTORY.FILM_ID.Eq(FILM_CATEGORY.FILM_ID)).
@@ -395,7 +393,7 @@ func Test_MySQLTestSuite(t *testing.T) {
 			MySQL.Select(Fieldf("CAST({} AS DATE)", "2005-03-01")),
 			MySQL.Select(Fieldf("date_add(date_value, INTERVAL 1 MONTH)")).From(Tablef("dates")).Where(Predicatef("date_value < {}", "2006-02-01")),
 		))
-		_, err := Fetch(VerboseLog(db), MySQL.
+		_, err := Fetch(VerboseLog(mysqlDB), MySQL.
 			SelectWith(dates).
 			From(dates).
 			LeftJoin(RENTAL, Predicatef(`date_format({}, '%Y %M') = date_format({}, '%Y %M')`, RENTAL.RENTAL_DATE, dates.Field("date_value"))).

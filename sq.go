@@ -257,7 +257,7 @@ func caller(skip int) (file string, line int, function string) {
 	 */
 	// Skip two extra frames to account for this function and runtime.Caller
 	// itself.
-	pc, file, line, _ := runtime.Caller(skip+2)
+	pc, file, line, _ := runtime.Caller(skip + 2)
 	fn := runtime.FuncForPC(pc)
 	function = fn.Name()
 	return file, line, function

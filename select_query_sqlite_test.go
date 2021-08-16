@@ -79,6 +79,10 @@ func Test_SQLiteSelectQuery(t *testing.T) {
 }
 
 func TestSQLiteSakilaSelect(t *testing.T) {
+	if testing.Short() {
+		return
+	}
+
 	t.Run("Q1", func(t *testing.T) {
 		t.Parallel()
 		var gotAnswer []string
