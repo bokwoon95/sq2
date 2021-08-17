@@ -135,7 +135,7 @@ func TestMySQLSakilaUpdate(t *testing.T) {
 		t.Fatal(testutil.Callers(), err)
 	}
 	if rowsAffected != 21 {
-		t.Fatal(testutil.Callers()+"expected 21 rows affected, got %d", rowsAffected)
+		t.Fatalf(testutil.Callers()+"expected 21 rows affected, got %d", rowsAffected)
 	}
 
 	// make sure the film descriptions are updated
@@ -149,7 +149,99 @@ func TestMySQLSakilaUpdate(t *testing.T) {
 	}
 	for _, description := range descriptions {
 		if !strings.HasSuffix(description, " starring THORA TEMPLE") {
-			t.Error(testutil.Callers()+"description '%s' does not have the correct suffix", description)
+			t.Errorf(testutil.Callers()+"description '%s' does not have the correct suffix", description)
+		}
+	}
+
+	// multi table update (without alias)
+	ADDRESS := xNEW_ADDRESS("")
+	CITY := xNEW_CITY("")
+	COUNTRY := xNEW_COUNTRY("")
+	rowsAffected, _, err = Exec(Log(tx), MySQL.
+		Update(ADDRESS).
+		Join(CITY, CITY.CITY_ID.Eq(ADDRESS.CITY_ID)).
+		Join(COUNTRY, COUNTRY.COUNTRY_ID.Eq(CITY.COUNTRY_ID)).
+		Set(
+			ADDRESS.ADDRESS.Set(Fieldf("CONCAT({}, {})", ADDRESS.ADDRESS, " (modified)")),
+			CITY.CITY.Set(Fieldf("CONCAT({}, {})", CITY.CITY, " (modified)")),
+			COUNTRY.COUNTRY.Set(Fieldf("CONCAT({}, {})", COUNTRY.COUNTRY, " (modified)")),
+		).
+		Where(ADDRESS.ADDRESS_ID.EqInt(632)),
+		ErowsAffected,
+	)
+	if err != nil {
+		t.Fatal(testutil.Callers(), err)
+	}
+	if rowsAffected != 3 {
+		t.Fatalf(testutil.Callers()+"expected 3 rows affected, got %d", rowsAffected)
+	}
+
+	// make sure the address, city, country names are updated
+	var names []string
+	_, err = Fetch(Log(tx), MySQL.
+		From(ADDRESS).
+		Join(CITY, CITY.CITY_ID.Eq(ADDRESS.CITY_ID)).
+		Join(COUNTRY, COUNTRY.COUNTRY_ID.Eq(CITY.COUNTRY_ID)).
+		Where(ADDRESS.ADDRESS_ID.EqInt(632)),
+		func(row *Row) {
+			address := row.String(ADDRESS.ADDRESS)
+			city := row.String(CITY.CITY)
+			country := row.String(COUNTRY.COUNTRY)
+			row.Process(func() { names = append(names, address, city, country) })
+		},
+	)
+	if err != nil {
+		t.Fatal(testutil.Callers(), err)
+	}
+	for _, name := range names {
+		if !strings.HasSuffix(name, " (modified)") {
+			t.Errorf(testutil.Callers()+"name '%s' does not have the correct suffix", name)
+		}
+	}
+
+	// multi table update (with alias)
+	a := xNEW_ADDRESS("a")
+	ci := xNEW_CITY("ci")
+	co := xNEW_COUNTRY("co")
+	rowsAffected, _, err = Exec(Log(tx), MySQL.
+		Update(a).
+		Join(ci, ci.CITY_ID.Eq(a.CITY_ID)).
+		Join(co, co.COUNTRY_ID.Eq(ci.COUNTRY_ID)).
+		Set(
+			a.ADDRESS.Set(Fieldf("TRIM(TRAILING {2} FROM {1})", a.ADDRESS, " (modified)")),
+			ci.CITY.Set(Fieldf("TRIM(TRAILING {2} FROM {1})", ci.CITY, " (modified)")),
+			co.COUNTRY.Set(Fieldf("TRIM(TRAILING {2} FROM {1})", co.COUNTRY, " (modified)")),
+		).
+		Where(a.ADDRESS_ID.EqInt(632)),
+		ErowsAffected,
+	)
+	if err != nil {
+		t.Fatal(testutil.Callers(), err)
+	}
+	if rowsAffected != 3 {
+		t.Fatalf(testutil.Callers()+"expected 3 rows affected, got %d", rowsAffected)
+	}
+
+	// make sure the address, city, country names are updated
+	names = names[:0]
+	_, err = Fetch(Log(tx), MySQL.
+		From(ADDRESS).
+		Join(CITY, CITY.CITY_ID.Eq(ADDRESS.CITY_ID)).
+		Join(COUNTRY, COUNTRY.COUNTRY_ID.Eq(CITY.COUNTRY_ID)).
+		Where(ADDRESS.ADDRESS_ID.EqInt(632)),
+		func(row *Row) {
+			address := row.String(ADDRESS.ADDRESS)
+			city := row.String(CITY.CITY)
+			country := row.String(COUNTRY.COUNTRY)
+			row.Process(func() { names = append(names, address, city, country) })
+		},
+	)
+	if err != nil {
+		t.Fatal(testutil.Callers(), err)
+	}
+	for _, name := range names {
+		if strings.HasSuffix(name, " (modified)") {
+			t.Errorf(testutil.Callers()+"name '%s' did not have its suffix trimmed", name)
 		}
 	}
 }
