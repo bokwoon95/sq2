@@ -415,7 +415,7 @@ func TestPostgresSakilaInsert(t *testing.T) {
 	}
 
 	// check that the rentalID returned has the attributes we want
-	exists, err = FetchExists(VerboseLog(tx), Postgres.
+	exists, err = FetchExists(Log(tx), Postgres.
 		From(RENTAL).
 		Join(CUSTOMER, CUSTOMER.CUSTOMER_ID.Eq(RENTAL.CUSTOMER_ID)).
 		Join(STAFF, STAFF.STAFF_ID.Eq(RENTAL.STAFF_ID)).
