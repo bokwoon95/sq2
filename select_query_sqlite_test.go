@@ -1,6 +1,7 @@
 package sq
 
 import (
+	"database/sql"
 	"testing"
 
 	"github.com/bokwoon95/sq/internal/testutil"
@@ -110,11 +111,11 @@ func TestSQLiteSakilaSelect(t *testing.T) {
 		t.Parallel()
 		wantAnswer := sakilaAnswer2()
 		ACTOR := xNEW_ACTOR("")
-		gotAnswer, err := FetchExists(Log(sqliteDB), SQLite.
+		gotAnswer, err := FetchExists(VerboseLog(sqliteDB), SQLite.
 			From(ACTOR).
 			Where(Or(
-				ACTOR.FIRST_NAME.EqString("SCARLETT"),
-				ACTOR.LAST_NAME.EqString("JOHANSSON"),
+				Eq(ACTOR.FIRST_NAME, sql.Named("first_name", "SCARLETT")),
+				Eq(ACTOR.LAST_NAME, sql.Named("last_name", "JOHANSSON")),
 			)),
 		)
 		if err != nil {
