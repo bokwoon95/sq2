@@ -33,6 +33,8 @@ func (r RowValue) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface
 
 func (r RowValue) In(v interface{}) Predicate { return In(r, v) }
 
+func (r RowValue) Eq(v interface{}) Predicate { return Eq(r, v) }
+
 type RowValues []RowValue
 
 func (rs RowValues) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interface{}, params map[string][]int, env map[string]interface{}) error {

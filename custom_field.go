@@ -121,7 +121,15 @@ type FieldValue struct {
 
 var _ Field = FieldValue{}
 
-func (f FieldValue) GetAlias() string { return f.alias }
+func (f FieldValue) GetAlias() string {
+	if f.alias != "" {
+		return f.alias
+	}
+	if v, ok := f.value.(interface{ GetAlias() string }); ok {
+		return v.GetAlias()
+	}
+	return ""
+}
 
 func (f FieldValue) GetName() string { return "" }
 

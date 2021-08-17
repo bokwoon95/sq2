@@ -151,7 +151,7 @@ SELECT
 FROM
     film
     JOIN inventory ON inventory.film_id = film.film_id
-    JOIN store ON store.store_id = inventory.inventory_id
+    JOIN store ON store.store_id = inventory.store_id
 WHERE
     film.title = 'ACADEMY DINOSAUR'
     AND store.store_id = 1
