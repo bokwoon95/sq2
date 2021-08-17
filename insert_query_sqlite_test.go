@@ -546,6 +546,6 @@ func TestSQLiteSakilaInsert(t *testing.T) {
 		t.Fatal(testutil.Callers(), err)
 	}
 	if !exists {
-		t.Fatalf(testutil.Callers()+"expected rental with rental_id %d to exist", rentalID)
+		t.Fatalf(testutil.Callers()+"record record with rental_id %d does not have the attributes we want", rentalID)
 	}
 }
