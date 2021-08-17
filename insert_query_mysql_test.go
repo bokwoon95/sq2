@@ -341,4 +341,81 @@ func TestMySQLSakilaInsert(t *testing.T) {
 
 	// ensure the modified regina exists
 	ensureCustomerExists(regina)
+
+	// Customer 'MARY SMITH' rents the film 'ACADEMY DINOSAUR' from staff 'Mike
+	// Hillyer' at Store 1 on 9th of August 2021 4pm. Insert a rental record
+	// representing that transaction (INSERT with SELECT).
+	STAFF := xNEW_STAFF("")
+	FILM := xNEW_FILM("")
+	INVENTORY := xNEW_INVENTORY("")
+	STORE := xNEW_STORE("")
+	RENTAL := xNEW_RENTAL("")
+	customer_id := NewSubquery("customer_id", MySQL.
+		Select(CUSTOMER.CUSTOMER_ID).
+		From(CUSTOMER).
+		Where(RowValue{CUSTOMER.FIRST_NAME, CUSTOMER.LAST_NAME}.Eq(RowValue{"MARY", "SMITH"})).
+		Limit(1),
+	)
+	staff_id := NewSubquery("staff_id", MySQL.
+		Select(STAFF.STAFF_ID).
+		From(STAFF).
+		Where(
+			STAFF.STORE_ID.EqInt(1),
+			RowValue{STAFF.FIRST_NAME, STAFF.LAST_NAME}.Eq(RowValue{"Mike", "Hillyer"}),
+		).
+		Limit(1),
+	)
+	_, rentalID, err := Exec(Log(tx), MySQL.
+		InsertInto(RENTAL).
+		Columns(RENTAL.INVENTORY_ID, RENTAL.CUSTOMER_ID, RENTAL.STAFF_ID, RENTAL.RENTAL_DATE).
+		Select(MySQL.
+			Select(
+				INVENTORY.INVENTORY_ID,
+				Value(customer_id),
+				Value(staff_id),
+				Value(datetime(2021, 8, 9, 16, 0, 0)).As("rental_date"),
+			).
+			From(FILM).
+			Join(INVENTORY, INVENTORY.FILM_ID.Eq(FILM.FILM_ID)).
+			Join(STORE, STORE.STORE_ID.Eq(INVENTORY.STORE_ID)).
+			Where(
+				FILM.TITLE.EqString("ACADEMY DINOSAUR"),
+				STORE.STORE_ID.EqInt(1),
+				Not(Exists(MySQL.
+					SelectOne().
+					From(RENTAL).
+					Where(RENTAL.INVENTORY_ID.Eq(INVENTORY.INVENTORY_ID), RENTAL.RENTAL_DATE.IsNull()),
+				)),
+			).
+			OrderBy(INVENTORY.INVENTORY_ID).
+			Limit(1),
+		),
+		ErowsAffected|ElastInsertID,
+	)
+	if err != nil {
+		t.Fatal(testutil.Callers(), err)
+	}
+
+	// check that the rentalID returned has the attributes we want
+	exists, err := FetchExists(VerboseLog(tx), MySQL.
+		From(RENTAL).
+		Join(CUSTOMER, CUSTOMER.CUSTOMER_ID.Eq(RENTAL.CUSTOMER_ID)).
+		Join(STAFF, STAFF.STAFF_ID.Eq(RENTAL.STAFF_ID)).
+		Join(INVENTORY, INVENTORY.INVENTORY_ID.Eq(RENTAL.INVENTORY_ID)).
+		Join(FILM, FILM.FILM_ID.Eq(INVENTORY.FILM_ID)).
+		Where(
+			RENTAL.RENTAL_ID.EqInt64(rentalID),
+			RowValue{CUSTOMER.FIRST_NAME, CUSTOMER.LAST_NAME}.Eq(RowValue{"MARY", "SMITH"}),
+			STAFF.STORE_ID.EqInt(1),
+			RowValue{STAFF.FIRST_NAME, STAFF.LAST_NAME}.Eq(RowValue{"Mike", "Hillyer"}),
+			FILM.TITLE.EqString("ACADEMY DINOSAUR"),
+			RENTAL.RENTAL_DATE.EqTime(datetime(2021, 8, 9, 16, 0, 0)),
+		),
+	)
+	if err != nil {
+		t.Fatal(testutil.Callers(), err)
+	}
+	if !exists {
+		t.Fatalf(testutil.Callers()+"record record with rental_id %d does not have the attributes we want", rentalID)
+	}
 }
