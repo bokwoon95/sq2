@@ -257,7 +257,7 @@ func fetchExistsContext(ctx context.Context, db DB, q Query, skip int) (exists b
 		stats.Exists.Bool = exists
 		logQueryStats(ctx, stats, skip+1)
 	}()
-	buf.WriteString("SELECT EXISTS(")
+	buf.WriteString("SELECT EXISTS (")
 	err = q.AppendSQL(stats.Dialect, buf, &stats.Args, make(map[string][]int), nil)
 	if err != nil {
 		return false, err
