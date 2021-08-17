@@ -1,6 +1,7 @@
 package sq
 
 import (
+	"sort"
 	"strings"
 	"testing"
 
@@ -168,6 +169,7 @@ func TestSQLiteSakilaUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(testutil.Callers(), err)
 	}
+	sort.Ints(filmIDs)
 	if diff := testutil.Diff(filmIDs, thoraTempleFilmIDs()); diff != "" {
 		t.Fatal(testutil.Callers(), diff)
 	}
