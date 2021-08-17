@@ -477,3 +477,12 @@ func sakilaAnswer10() []MonthlyRentalStats {
 		{Month: "2006 February", HorrorCount: 3, ActionCount: 2, ComedyCount: 6, ScifiCount: 4},
 	}
 }
+
+func thoraTempleFilmIDs() []int {
+	return []int{
+		5, 10, 49, 80, 116, 121,
+		149, 346, 419, 462, 465,
+		474, 537, 538, 544, 714,
+		879, 912, 945, 958, 993,
+	}
+}

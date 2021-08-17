@@ -201,7 +201,7 @@ func (q UpdateQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interf
 
 func (q UpdateQuery) SetFetchableFields(fields []Field) (Query, error) {
 	switch q.Dialect {
-	case DialectPostgres:
+	case DialectPostgres, DialectSQLite:
 		q.ReturningFields = fields
 		return q, nil
 	default:
@@ -211,7 +211,7 @@ func (q UpdateQuery) SetFetchableFields(fields []Field) (Query, error) {
 
 func (q UpdateQuery) GetFetchableFields() ([]Field, error) {
 	switch q.Dialect {
-	case DialectPostgres:
+	case DialectPostgres, DialectSQLite:
 		return q.ReturningFields, nil
 	default:
 		return nil, fmt.Errorf("%s UPDATE %w", q.Dialect, ErrNonFetchableQuery)

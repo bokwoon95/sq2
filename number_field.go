@@ -117,6 +117,8 @@ func (f NumberField) LtFloat64(val float64) Predicate { return Lt(f, val) }
 
 func (f NumberField) LeFloat64(val float64) Predicate { return Le(f, val) }
 
+func (f NumberField) Set(val interface{}) Assignment { return Assign(f, val) }
+
 func (f NumberField) SetInt(val int) Assignment { return Assign(f, val) }
 
 func (f NumberField) SetInt64(val int64) Assignment { return Assign(f, val) }

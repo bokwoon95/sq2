@@ -77,4 +77,6 @@ func (f BooleanField) EqBool(val bool) Predicate { return Eq(f, val) }
 
 func (f BooleanField) NeBool(val bool) Predicate { return Ne(f, val) }
 
+func (f BooleanField) Set(val interface{}) Assignment { return Assign(f, val) }
+
 func (f BooleanField) SetBool(val bool) Assignment { return Assign(f, val) }

@@ -94,4 +94,6 @@ func (f TimeField) LtTime(val time.Time) Predicate { return Lt(f, val) }
 
 func (f TimeField) LeTime(val time.Time) Predicate { return Le(f, val) }
 
+func (f TimeField) Set(val interface{}) Assignment { return Assign(f, val) }
+
 func (f TimeField) SetTime(val time.Time) Assignment { return Assign(f, val) }

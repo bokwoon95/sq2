@@ -79,4 +79,6 @@ func (f StringField) LikeString(val string) Predicate { return Predicatef("{} LI
 
 func (f StringField) ILikeString(val string) Predicate { return Predicatef("{} ILIKE {}", f, val) }
 
+func (f StringField) Set(val interface{}) Assignment { return Assign(f, val) }
+
 func (f StringField) SetString(val string) Assignment { return Assign(f, val) }

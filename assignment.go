@@ -12,6 +12,7 @@ type Assignment struct {
 
 var _ SQLExcludeAppender = Assignment{}
 
+// TODO: rename this to Set, for parity with (XXXField).Set()
 func Assign(LHS, RHS interface{}) Assignment {
 	return Assignment{LHS: LHS, RHS: RHS}
 }

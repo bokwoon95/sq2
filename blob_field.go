@@ -58,4 +58,6 @@ func (f BlobField) IsNull() Predicate { return IsNull(f) }
 
 func (f BlobField) IsNotNull() Predicate { return IsNotNull(f) }
 
+func (f BlobField) Set(val interface{}) Assignment { return Assign(f, val) }
+
 func (f BlobField) SetBlob(val []byte) Assignment { return Assign(f, val) }
