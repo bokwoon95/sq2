@@ -29,7 +29,7 @@ func execContext(ctx context.Context, db DB, q Query, execflag int, skip int) (r
 		logQueryStats = db.LogQueryStats
 		logSettings = db.GetLogSettings()
 	}
-	if logSettings.GetCallerInfo {
+	if logQueryStats != nil && logSettings.GetCallerInfo {
 		stats.CallerFile, stats.CallerLine, stats.CallerFunction = caller(skip)
 	}
 	switch q := q.(type) {
