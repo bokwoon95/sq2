@@ -12,25 +12,11 @@ subquery_field.go | cte.go
 ...
 window.go (at very last because nothing depends on it)
 
-queries to test:
-- SELECT
-- SELECT DISTINCT
-- SELECT DISTINCT ON
-- SELECT EXISTS
-- INSERT last_insert_id
-- INSERT ignore duplicates
-- Upsert (first to insert, then to update)
-- INSERT from SELECT
-- UPDATE with JOIN
-- Multi-table UPDATE
-- DELETE with JOIN
-- Multi-table DELETE
-
-sakila exercises
-- test subqueries
-- test CTEs
-
-FOR UPDATE, FOR NO KEY UPDATE, FOR SHARE, FOR KEY SHARE 
+Triggers system
+- BeforeQuery
+- AfterQuery
+- InsteadOfQuery
+how to get the column values? need to figure it out
 
 sq README needs a FAQ section, just like how Maddy mail server does. I naturally gravitaed towards the FAQ link in order to learn more about maddy, and was able to learn so much it just from reading the FAQ alone.
 

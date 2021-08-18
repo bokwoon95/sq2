@@ -10,12 +10,9 @@ introspect.go
 catalog.go
 migration_commands.go
 
-move test-related scripts into testdata/ instead of stuffing everything in sql/
+implement WriteStructs(*WriteStructOptions)
 
-change 'ondelete=restrict' to 'deferrable'
-remove sqlite:default=DATETIME('now'). all hail CURRENT_TIMESTAMP
-change default TimeField type from 'DATETIME' to 'TIMESTAMP'
-investigate postgres table partitions
+migrationDir support
 
 bah gawd. types. domains. enums.
 ALSO: functions may be user-defined aggregate functions or user-defined windows
@@ -24,8 +21,6 @@ add comments to introspect functions
 postgres comments are stored in pg_description
 
 // pass a tx in explicitly to run everything in a transaction
-
-implement WriteStructs(*WriteStructOptions)
 
 001.up.sql
 001.down.sql
