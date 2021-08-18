@@ -45,13 +45,15 @@ func execContext(ctx context.Context, db DB, q Query, execflag int, skip int) (r
 	stats.Dialect = q.GetDialect()
 	buf := bufpool.Get().(*bytes.Buffer)
 	defer func() {
-		if stats.Query == "" && err != nil {
-			stats.Query = buf.String() + "%!(error=" + err.Error() + ")"
-		}
 		buf.Reset()
 		bufpool.Put(buf)
+	}()
+	defer func() {
 		if logQueryStats == nil {
 			return
+		}
+		if stats.Query == "" && err != nil {
+			stats.Query = buf.String() + "%!(error=" + err.Error() + ")"
 		}
 		stats.Error = err
 		go logQueryStats(ctx, stats)

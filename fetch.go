@@ -46,7 +46,7 @@ func fetchContext(ctx context.Context, db DB, q Query, rowmapper func(*Row), ski
 		logQueryStats = db.LogQueryStats
 		logSettings = db.GetLogSettings()
 	}
-	if logSettings.GetCallerInfo {
+	if logQueryStats != nil && logSettings.GetCallerInfo {
 		stats.CallerFile, stats.CallerLine, stats.CallerFunction = caller(skip)
 	}
 	switch q := q.(type) {
@@ -70,18 +70,20 @@ func fetchContext(ctx context.Context, db DB, q Query, rowmapper func(*Row), ski
 	buf := bufpool.Get().(*bytes.Buffer)
 	resultsBuf := bufpool.Get().(*bytes.Buffer)
 	defer func() {
+		buf.Reset()
+		resultsBuf.Reset()
+		bufpool.Put(buf)
+		bufpool.Put(resultsBuf)
+	}()
+	defer func() {
+		if logQueryStats == nil {
+			return
+		}
 		if stats.Query == "" && err != nil {
 			stats.Query = buf.String() + "%!(error=" + err.Error() + ")"
 		}
 		if logSettings.ResultsLimit > 0 {
 			stats.QueryResults = resultsBuf.String()
-		}
-		buf.Reset()
-		resultsBuf.Reset()
-		bufpool.Put(buf)
-		bufpool.Put(resultsBuf)
-		if logQueryStats == nil {
-			return
 		}
 		stats.Error = err
 		stats.RowCount.Valid = true
@@ -246,7 +248,7 @@ func fetchExistsContext(ctx context.Context, db DB, q Query, skip int) (exists b
 		logQueryStats = db.LogQueryStats
 		logSettings = db.GetLogSettings()
 	}
-	if logSettings.GetCallerInfo {
+	if logQueryStats != nil && logSettings.GetCallerInfo {
 		stats.CallerFile, stats.CallerLine, stats.CallerFunction = caller(skip)
 	}
 	switch q := q.(type) {
@@ -272,13 +274,15 @@ func fetchExistsContext(ctx context.Context, db DB, q Query, skip int) (exists b
 	}
 	buf := bufpool.Get().(*bytes.Buffer)
 	defer func() {
-		if stats.Query == "" && err != nil {
-			stats.Query = buf.String() + "%!(error=" + err.Error() + ")"
-		}
 		buf.Reset()
 		bufpool.Put(buf)
+	}()
+	defer func() {
 		if logQueryStats == nil {
 			return
+		}
+		if stats.Query == "" && err != nil {
+			stats.Query = buf.String() + "%!(error=" + err.Error() + ")"
 		}
 		stats.Error = err
 		stats.Exists.Valid = true
