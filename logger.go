@@ -78,8 +78,8 @@ type LogSettings struct {
 }
 
 type Logger interface {
-	LogQueryStats(ctx context.Context, stats QueryStats, skip int)
-	LimitResults() (resultsLimit int)
+	LogQueryStats(ctx context.Context, stats QueryStats)
+	GetLogSettings() LogSettings
 }
 
 type LoggerDB struct {
@@ -114,9 +114,14 @@ func VerboseLog(db DB) LoggerDB {
 	return LoggerDB{Logger: verboseLogger, DB: db}
 }
 
-func (l logger) LimitResults() (resultsLimit int) { return l.resultsLimit }
+func (l logger) GetLogSettings() LogSettings {
+	return LogSettings{
+		ResultsLimit:  l.resultsLimit,
+		GetCallerInfo: Lcaller&l.logflag != 0,
+	}
+}
 
-func (l logger) LogQueryStats(ctx context.Context, stats QueryStats, skip int) {
+func (l logger) LogQueryStats(ctx context.Context, stats QueryStats) {
 	select {
 	case <-ctx.Done():
 		return
@@ -167,8 +172,7 @@ func (l logger) LogQueryStats(ctx context.Context, stats QueryStats, skip int) {
 		buf.WriteString(blue + " lastInsertID" + reset + "=" + strconv.FormatInt(stats.LastInsertID.Int64, 10))
 	}
 	if Lcaller&l.logflag != 0 {
-		file, line, function := caller(skip + 1)
-		buf.WriteString(blue + " caller" + reset + "=" + file + ":" + strconv.Itoa(line) + ":" + filepath.Base(function))
+		buf.WriteString(blue + " caller" + reset + "=" + stats.CallerFile + ":" + strconv.Itoa(stats.CallerLine) + ":" + filepath.Base(stats.CallerFunction))
 	}
 	if Lbeforeafter&l.logflag != 0 {
 		// Log multiline

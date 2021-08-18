@@ -23,9 +23,14 @@ func execContext(ctx context.Context, db DB, q Query, execflag int, skip int) (r
 		return 0, 0, errors.New("sq: query is nil")
 	}
 	var stats QueryStats
-	var logQueryStats func(ctx context.Context, stats QueryStats, skip int)
+	var logQueryStats func(ctx context.Context, stats QueryStats)
+	var logSettings LogSettings
 	if db, ok := db.(LoggerDB); ok {
 		logQueryStats = db.LogQueryStats
+		logSettings = db.GetLogSettings()
+	}
+	if logSettings.GetCallerInfo {
+		stats.CallerFile, stats.CallerLine, stats.CallerFunction = caller(skip)
 	}
 	switch q := q.(type) {
 	case SelectQuery:
@@ -49,7 +54,7 @@ func execContext(ctx context.Context, db DB, q Query, execflag int, skip int) (r
 			return
 		}
 		stats.Error = err
-		logQueryStats(ctx, stats, skip+2)
+		go logQueryStats(ctx, stats)
 	}()
 	err = q.AppendSQL(stats.Dialect, buf, &stats.Args, make(map[string][]int), nil)
 	if err != nil {

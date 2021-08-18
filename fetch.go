@@ -40,11 +40,14 @@ func fetchContext(ctx context.Context, db DB, q Query, rowmapper func(*Row), ski
 		return 0, errors.New("sq: cannot call Fetch/FetchContext without a rowmapper")
 	}
 	var stats QueryStats
-	var resultsLimit int
-	var logQueryStats func(ctx context.Context, stats QueryStats, skip int)
+	var logSettings LogSettings
+	var logQueryStats func(ctx context.Context, stats QueryStats)
 	if db, ok := db.(LoggerDB); ok {
 		logQueryStats = db.LogQueryStats
-		resultsLimit = db.LimitResults()
+		logSettings = db.GetLogSettings()
+	}
+	if logSettings.GetCallerInfo {
+		stats.CallerFile, stats.CallerLine, stats.CallerFunction = caller(skip)
 	}
 	switch q := q.(type) {
 	case SelectQuery:
@@ -70,7 +73,7 @@ func fetchContext(ctx context.Context, db DB, q Query, rowmapper func(*Row), ski
 		if stats.Query == "" && err != nil {
 			stats.Query = buf.String() + "%!(error=" + err.Error() + ")"
 		}
-		if resultsLimit > 0 {
+		if logSettings.ResultsLimit > 0 {
 			stats.QueryResults = resultsBuf.String()
 		}
 		buf.Reset()
@@ -83,7 +86,7 @@ func fetchContext(ctx context.Context, db DB, q Query, rowmapper func(*Row), ski
 		stats.Error = err
 		stats.RowCount.Valid = true
 		stats.RowCount.Int64 = rowCount
-		logQueryStats(ctx, stats, skip+1)
+		go logQueryStats(ctx, stats)
 	}()
 	err = q.AppendSQL(stats.Dialect, buf, &stats.Args, make(map[string][]int), nil)
 	if err != nil {
@@ -111,7 +114,7 @@ func fetchContext(ctx context.Context, db DB, q Query, rowmapper func(*Row), ski
 		if err != nil {
 			return rowCount, decorateScanError(stats.Dialect, fields, dest, err)
 		}
-		if resultsLimit > 0 && rowCount <= int64(resultsLimit) {
+		if logSettings.ResultsLimit > 0 && rowCount <= int64(logSettings.ResultsLimit) {
 			if len(fieldNames) == 0 {
 				fieldNames = computeFieldNames(stats.Dialect, fields)
 			}
@@ -135,8 +138,8 @@ func fetchContext(ctx context.Context, db DB, q Query, rowmapper func(*Row), ski
 	if err != nil {
 		return rowCount, err
 	}
-	if resultsLimit > 0 && rowCount > int64(resultsLimit) {
-		resultsBuf.WriteString("\n...\n(" + strconv.FormatInt(rowCount-int64(resultsLimit), 10) + " more rows)")
+	if logSettings.ResultsLimit > 0 && rowCount > int64(logSettings.ResultsLimit) {
+		resultsBuf.WriteString("\n...\n(" + strconv.FormatInt(rowCount-int64(logSettings.ResultsLimit), 10) + " more rows)")
 	}
 	return rowCount, nil
 }
@@ -237,9 +240,14 @@ func fetchExistsContext(ctx context.Context, db DB, q Query, skip int) (exists b
 		return false, errors.New("sq: query is nil")
 	}
 	var stats QueryStats
-	var logQueryStats func(ctx context.Context, stats QueryStats, skip int)
+	var logQueryStats func(ctx context.Context, stats QueryStats)
+	var logSettings LogSettings
 	if db, ok := db.(LoggerDB); ok {
 		logQueryStats = db.LogQueryStats
+		logSettings = db.GetLogSettings()
+	}
+	if logSettings.GetCallerInfo {
+		stats.CallerFile, stats.CallerLine, stats.CallerFunction = caller(skip)
 	}
 	switch q := q.(type) {
 	case SelectQuery:
@@ -275,7 +283,7 @@ func fetchExistsContext(ctx context.Context, db DB, q Query, skip int) (exists b
 		stats.Error = err
 		stats.Exists.Valid = true
 		stats.Exists.Bool = exists
-		logQueryStats(ctx, stats, skip+1)
+		go logQueryStats(ctx, stats)
 	}()
 	buf.WriteString("SELECT EXISTS (")
 	err = q.AppendSQL(stats.Dialect, buf, &stats.Args, make(map[string][]int), nil)
