@@ -56,6 +56,7 @@ func init() {
 }
 
 type QueryStats struct {
+	Env            map[string]interface{}
 	Dialect        string
 	Query          string
 	Args           []interface{}

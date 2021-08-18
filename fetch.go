@@ -46,6 +46,16 @@ func fetchContext(ctx context.Context, db DB, q Query, rowmapper func(*Row), ski
 		logQueryStats = db.LogQueryStats
 		resultsLimit = db.LimitResults()
 	}
+	switch q := q.(type) {
+	case SelectQuery:
+		stats.Env = q.Env
+	case InsertQuery:
+		stats.Env = q.Env
+	case UpdateQuery:
+		stats.Env = q.Env
+	case DeleteQuery:
+		stats.Env = q.Env
+	}
 	stats.Dialect = q.GetDialect()
 	r := &Row{}
 	rowmapper(r)
@@ -230,6 +240,16 @@ func fetchExistsContext(ctx context.Context, db DB, q Query, skip int) (exists b
 	var logQueryStats func(ctx context.Context, stats QueryStats, skip int)
 	if db, ok := db.(LoggerDB); ok {
 		logQueryStats = db.LogQueryStats
+	}
+	switch q := q.(type) {
+	case SelectQuery:
+		stats.Env = q.Env
+	case InsertQuery:
+		stats.Env = q.Env
+	case UpdateQuery:
+		stats.Env = q.Env
+	case DeleteQuery:
+		stats.Env = q.Env
 	}
 	stats.Dialect = q.GetDialect()
 	fields, err := q.GetFetchableFields()

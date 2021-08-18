@@ -27,6 +27,16 @@ func execContext(ctx context.Context, db DB, q Query, execflag int, skip int) (r
 	if db, ok := db.(LoggerDB); ok {
 		logQueryStats = db.LogQueryStats
 	}
+	switch q := q.(type) {
+	case SelectQuery:
+		stats.Env = q.Env
+	case InsertQuery:
+		stats.Env = q.Env
+	case UpdateQuery:
+		stats.Env = q.Env
+	case DeleteQuery:
+		stats.Env = q.Env
+	}
 	stats.Dialect = q.GetDialect()
 	buf := bufpool.Get().(*bytes.Buffer)
 	defer func() {
