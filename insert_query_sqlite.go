@@ -78,8 +78,8 @@ func (q SQLiteInsertQuery) OnConflict(fields ...Field) SQLiteInsertConflict {
 	return c
 }
 
-func (c SQLiteInsertConflict) Where(predicates ...Predicate) SQLiteInsertConflict {
-	c.insertQuery.ConflictPredicate.Predicates = append(c.insertQuery.ConflictPredicate.Predicates, predicates...)
+func (c SQLiteInsertConflict) Where(conflictPredicate Predicate) SQLiteInsertConflict {
+	c.insertQuery.ConflictPredicate = conflictPredicate
 	return c
 }
 

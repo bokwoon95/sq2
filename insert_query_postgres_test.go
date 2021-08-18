@@ -91,7 +91,7 @@ func Test_PostgresInsertQuery(t *testing.T) {
 				return nil
 			}).
 			OnConflict(ACTOR.ACTOR_ID).
-			Where(ACTOR.ACTOR_ID.IsNotNull(), ACTOR.FIRST_NAME.NeString("")).
+			Where(And(ACTOR.ACTOR_ID.IsNotNull(), ACTOR.FIRST_NAME.NeString(""))).
 			DoNothing()
 		tt.wantQuery = "WITH cte (n) AS (SELECT 1)" +
 			" INSERT INTO actor AS a (actor_id, first_name, last_name)" +

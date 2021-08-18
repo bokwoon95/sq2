@@ -78,15 +78,15 @@ func (q PostgresInsertQuery) OnConflict(fields ...Field) PostgresInsertConflict 
 	return c
 }
 
-func (q PostgresInsertQuery) OnConflictOnConstraint(name string) PostgresInsertConflict {
+func (q PostgresInsertQuery) OnConflictOnConstraint(constraintName string) PostgresInsertConflict {
 	var c PostgresInsertConflict
-	q.ConflictConstraint = name
+	q.ConflictConstraint = constraintName
 	c.insertQuery = &q
 	return c
 }
 
-func (c PostgresInsertConflict) Where(predicates ...Predicate) PostgresInsertConflict {
-	c.insertQuery.ConflictPredicate.Predicates = append(c.insertQuery.ConflictPredicate.Predicates, predicates...)
+func (c PostgresInsertConflict) Where(conflictPredicate Predicate) PostgresInsertConflict {
+	c.insertQuery.ConflictPredicate = conflictPredicate
 	return c
 }
 

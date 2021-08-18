@@ -25,7 +25,7 @@ type InsertQuery struct {
 	// ON CONFLICT
 	ConflictConstraint  string
 	ConflictFields      Fields
-	ConflictPredicate   VariadicPredicate
+	ConflictPredicate   Predicate
 	ConflictDoNothing   bool
 	Resolution          Assignments
 	ResolutionPredicate VariadicPredicate
@@ -108,6 +108,13 @@ func (q InsertQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interf
 		}
 	case q.SelectQuery != nil:
 		buf.WriteString(" ")
+		// sqlite INSERT ... SELECT FROM ... ON CONFLICT has parsing
+		// ambiguity if the SELECT doesn't have a WHERE clause, so we
+		// always make sure there is at least one predicate in the WHERE
+		// clause
+		if dialect == DialectSQLite && len(q.SelectQuery.WherePredicate.Predicates) == 0 {
+			q.SelectQuery.WherePredicate.Predicates = []Predicate{Predicatef("TRUE")}
+		}
 		err = q.SelectQuery.AppendSQL(dialect, buf, args, params, env)
 		if err != nil {
 			return fmt.Errorf("SELECT: %w", err)
@@ -134,10 +141,14 @@ func (q InsertQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interf
 				return fmt.Errorf("ON CONFLICT (fields): %w", err)
 			}
 			buf.WriteString(")")
-			if len(q.ConflictPredicate.Predicates) > 0 {
+			if q.ConflictPredicate != nil {
+				predicate := q.ConflictPredicate
+				if p, ok := predicate.(VariadicPredicate); ok {
+					p.Toplevel = true
+					predicate = p
+				}
 				buf.WriteString(" WHERE ")
-				q.ConflictPredicate.Toplevel = true
-				err = q.ConflictPredicate.AppendSQLExclude(dialect, buf, args, params, env, excludedTableQualifiers)
+				err = predicate.AppendSQLExclude(dialect, buf, args, params, env, excludedTableQualifiers)
 				if err != nil {
 					return fmt.Errorf("ON CONFLICT ... WHERE: %w", err)
 				}
