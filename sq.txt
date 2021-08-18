@@ -18,6 +18,50 @@ Triggers system
 - InsteadOfQuery
 how to get the column values? need to figure it out
 
+InsertHandler
+UpdateHandler
+DeleteHandler
+// oh no the predicate is not enough, what if it references a CTE too? Should we just include the whole CTE?
+func HandleUpdate(ctx context.Context, rows *HandlerRows, query UpdateQuery) error
+func HandleDelete(ctx context.Context, rows *HandlerRows, query DeleteQuery) error
+func HandleInsert(ctx context.Context, rows *HandlerRows, query InsertQuery) error
+
+var isset, isnull, issql bool
+for i := 0; i < rows.Len(); i++ {
+    var actor Actor
+    isset, isnull, issql, actor.ActorID = rows.GetInt(i, ACTOR.ACTOR_ID)
+    if isset && !isnull && !issql {
+        if actor.ActorID < 0 {
+            rows.SetInt(i, ACTOR.ACTOR_ID, -actor.ActorID)
+            rows.Set(i, ACTOR.ACTOR_ID, nil)
+        }
+    }
+    actor.FirstName, isset, isnull, issql = rows.GetString(i, ACTOR.FIRST_NAME)
+    if isset && !isnull && !issql {
+    }
+    actor.LastName, isset, isnull, issql = rows.GetString(i, ACTOR.LAST_NAME)
+    if isset && !isnull && !issql {
+    }
+    actor.LastUpdate, isset, isnull, issql = rows.GetTime(i, ACTOR.LAST_UPDATE)
+    if isset && !isnull && !issql {
+    }
+}
+rows.Exec()
+if err != nil {
+    return err
+}
+
+now the problem is: even after an insert there is no way of knowing which rows
+were just inserted. Unlike the Update and Delete queries, there is no predicate
+for Insert queries you can't just convert an Insert query into an equivalent
+Select query like you can with an Update query.
+
+I think scrap this idea. The best way is still to do your pre-query and
+post-query processing using manually called functions, and you can write more
+functions to automate that process (the onus is on you to call those functions
+in the first place of course). That way you get full visibility of what data is
+going in, what data was returned from INSERT/UPDATE/DELETE ... RETURNING.
+
 sq README needs a FAQ section, just like how Maddy mail server does. I naturally gravitaed towards the FAQ link in order to learn more about maddy, and was able to learn so much it just from reading the FAQ alone.
 
 IMPORTANT: before I do any kind of performance testing, I need to know:
