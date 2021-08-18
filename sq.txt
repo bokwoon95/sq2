@@ -51,6 +51,12 @@ if err != nil {
     return err
 }
 
+if you want people to be able to log who did what on a table using
+logQueryStats, you need to provide the operation and tables affected as well.
+At last for inserts and updates and deletes, the table name must be provided.
+So that you can dispatch on that and insert the tenantID and the query run into
+the corresponding audit table.
+
 now the problem is: even after an insert there is no way of knowing which rows
 were just inserted. Unlike the Update and Delete queries, there is no predicate
 for Insert queries you can't just convert an Insert query into an equivalent

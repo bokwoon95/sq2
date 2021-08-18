@@ -35,12 +35,30 @@ func execContext(ctx context.Context, db DB, q Query, execflag int, skip int) (r
 	switch q := q.(type) {
 	case SelectQuery:
 		stats.Env = q.Env
+		stats.QueryType = "SELECT"
 	case InsertQuery:
 		stats.Env = q.Env
+		stats.QueryType = "INSERT"
+		if table := q.IntoTable; table != nil {
+			stats.TableModified[0] = table.GetSchema()
+			stats.TableModified[1] = table.GetName()
+		}
 	case UpdateQuery:
 		stats.Env = q.Env
+		stats.QueryType = "UPDATE"
+		if table := q.UpdateTable; table != nil {
+			stats.TableModified[0] = table.GetSchema()
+			stats.TableModified[1] = table.GetName()
+		}
 	case DeleteQuery:
 		stats.Env = q.Env
+		stats.QueryType = "DELETE"
+		if len(q.FromTables) > 0 {
+			if table := q.FromTables[0]; table != nil {
+				stats.TableModified[0] = table.GetSchema()
+				stats.TableModified[1] = table.GetName()
+			}
+		}
 	}
 	stats.Dialect = q.GetDialect()
 	buf := bufpool.Get().(*bytes.Buffer)

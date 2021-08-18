@@ -58,6 +58,8 @@ func init() {
 type QueryStats struct {
 	Env            map[string]interface{}
 	Dialect        string
+	QueryType      string
+	TableModified  [2]string
 	Query          string
 	Args           []interface{}
 	Error          error

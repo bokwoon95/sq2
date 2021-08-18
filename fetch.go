@@ -52,12 +52,16 @@ func fetchContext(ctx context.Context, db DB, q Query, rowmapper func(*Row), ski
 	switch q := q.(type) {
 	case SelectQuery:
 		stats.Env = q.Env
+		stats.QueryType = "SELECT"
 	case InsertQuery:
 		stats.Env = q.Env
+		stats.QueryType = "INSERT"
 	case UpdateQuery:
 		stats.Env = q.Env
+		stats.QueryType = "UPDATE"
 	case DeleteQuery:
 		stats.Env = q.Env
+		stats.QueryType = "DELETE"
 	}
 	stats.Dialect = q.GetDialect()
 	r := &Row{}
@@ -251,6 +255,7 @@ func fetchExistsContext(ctx context.Context, db DB, q Query, skip int) (exists b
 	if logQueryStats != nil && logSettings.GetCallerInfo {
 		stats.CallerFile, stats.CallerLine, stats.CallerFunction = caller(skip)
 	}
+	stats.QueryType = "SELECT"
 	switch q := q.(type) {
 	case SelectQuery:
 		stats.Env = q.Env
