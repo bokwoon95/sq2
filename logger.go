@@ -102,7 +102,7 @@ func NewLogger(out io.Writer, logflag int, resultsLimit int) Logger {
 }
 
 var (
-	defaultLogger = NewLogger(os.Stdout, Linterpolate|Lcaller|Lcolor, 5) // Lcaller rationale: logging is for debugging, so we should provide caller info by default
+	defaultLogger = NewLogger(os.Stdout, Linterpolate|Lcaller|Lcolor, -1) // Lcaller rationale: logging is for debugging, so we should provide caller info by default
 	verboseLogger = NewLogger(os.Stdout, Lbeforeafter|Lcaller|Lcolor|Lresults, 5)
 )
 
