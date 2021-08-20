@@ -58,6 +58,8 @@ func init() {
 type QueryStats struct {
 	Env            map[string]interface{}
 	Dialect        string
+	// Rethink whether I need these fields. Do I really want post-query
+	// auditing code to be put inside the logger function?
 	QueryType      string
 	TableModified  [2]string
 	Query          string
