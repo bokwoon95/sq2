@@ -15,6 +15,8 @@ import (
 	"github.com/bokwoon95/sq"
 )
 
+// TODO: rename the contents to just 'UnsupportedFeature', then the error that
+// embeds UnsupportedFeature can write full sentences on describing the error
 var ErrUnsupportedFeature = errors.New("dialect does not support this feature")
 
 type Filter struct {
@@ -774,6 +776,9 @@ func (dbi *DatabaseIntrospector) GetFunctions(ctx context.Context, filter *Filte
 	case sq.DialectSQLite:
 		return nil, fmt.Errorf("{%w} dialect=sqlite feature=functions", ErrUnsupportedFeature)
 	case sq.DialectPostgres:
+		// TODO: pg_proc.prokind to differentiate between functions and
+		// procedures.  Only supported by Postgres 11 and above. Means need to
+		// check version numbers as well.
 		rows, err = dbi.queryContext(ctx, embeddedFiles, "sql/postgres_functions.sql", filter)
 		if err != nil {
 			return nil, err
