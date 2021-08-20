@@ -152,15 +152,12 @@ func TestSQLiteSakilaUpdate(t *testing.T) {
 	_, err = Fetch(Log(tx), SQLite.
 		Update(FILM).
 		Set(FILM.DESCRIPTION.Set(Fieldf("{} || {}", FILM.DESCRIPTION, " starring THORA TEMPLE"))).
-		Where(Exists(SQLite.
-			SelectOne().
-			From(FILM_ACTOR).
-			Join(ACTOR, ACTOR.ACTOR_ID.Eq(FILM_ACTOR.ACTOR_ID)).
-			Where(
-				FILM_ACTOR.FILM_ID.Eq(FILM.FILM_ID),
-				RowValue{ACTOR.FIRST_NAME, ACTOR.LAST_NAME}.Eq(RowValue{"THORA", "TEMPLE"}),
-			),
-		)),
+		From(FILM_ACTOR).
+		Join(ACTOR, ACTOR.ACTOR_ID.Eq(FILM_ACTOR.ACTOR_ID)).
+		Where(
+			FILM_ACTOR.FILM_ID.Eq(FILM.FILM_ID),
+			RowValue{ACTOR.FIRST_NAME, ACTOR.LAST_NAME}.Eq(RowValue{"THORA", "TEMPLE"}),
+		),
 		func(row *Row) {
 			filmID := row.Int(FILM.FILM_ID)
 			row.Process(func() { filmIDs = append(filmIDs, filmID) })
