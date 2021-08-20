@@ -80,6 +80,30 @@ func Test_MySQLUpdateQuery(t *testing.T) {
 		tt.wantArgs = []interface{}{int64(1), int64(1), int64(10)}
 		assert(t, tt)
 	})
+
+	t.Run("Multi-table UPDATE", func(t *testing.T) {
+		t.Parallel()
+		var tt TT
+		ADDRESS, CITY, COUNTRY := xNEW_ADDRESS("a"), xNEW_CITY("ci"), xNEW_COUNTRY("co")
+		tt.item = MySQL.
+			Update(ADDRESS).
+			Join(CITY, CITY.CITY_ID.Eq(ADDRESS.CITY_ID)).
+			Join(COUNTRY, COUNTRY.COUNTRY_ID.Eq(CITY.COUNTRY_ID)).
+			Setx(func(c *Column) error {
+				c.SetString(ADDRESS.ADDRESS, "3 CC Street (modified)")
+				c.SetString(CITY.CITY, "City C-C (modified)")
+				c.SetString(COUNTRY.COUNTRY, "Country C (modified)")
+				return nil
+			}).
+			Where(ADDRESS.ADDRESS_ID.EqInt(632))
+		tt.wantQuery = "UPDATE address AS a" +
+			" JOIN city AS ci ON ci.city_id = a.city_id" +
+			" JOIN country AS co ON co.country_id = ci.country_id" +
+			" SET a.address = ?, ci.city = ?, co.country = ?" +
+			" WHERE a.address_id = ?"
+		tt.wantArgs = []interface{}{"3 CC Street (modified)", "City C-C (modified)", "Country C (modified)", 632}
+		assert(t, tt)
+	})
 }
 
 func TestMySQLSakilaUpdate(t *testing.T) {
