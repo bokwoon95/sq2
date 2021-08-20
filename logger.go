@@ -189,7 +189,7 @@ func (l logger) LogQueryStats(ctx context.Context, stats QueryStats) {
 		}
 		buf.WriteString("\n" + query)
 	}
-	if Lresults&l.logflag != 0 && stats.QueryResults != "" {
+	if Lresults&l.logflag != 0 {
 		buf.WriteString("\n" + purple + "----[ Fetched result ]----" + reset)
 		buf.WriteString(stats.QueryResults)
 	}
