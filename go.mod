@@ -9,6 +9,8 @@ require (
 	github.com/lib/pq v1.10.2
 	github.com/mattn/go-sqlite3 v1.14.8
 	github.com/pkg/errors v0.9.1 // indirect
+	github.com/yuin/goldmark v1.4.0
+	github.com/yuin/goldmark-highlighting v0.0.0-20210516132338-9216f9c5aa01
 	golang.org/x/crypto v0.0.0-20210711020723-a769d52b0f97 // indirect
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
 )

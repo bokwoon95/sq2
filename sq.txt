@@ -13,7 +13,6 @@ subquery_field.go | cte.go
 window.go (at very last because nothing depends on it)
 
 tasks:
-- write delete tests
 - documentation site (stitchdocs)
 - clone master branch and build go 1.18 from scratch to test typeparams
 
