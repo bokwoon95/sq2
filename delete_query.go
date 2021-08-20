@@ -129,8 +129,8 @@ func (q DeleteQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interf
 		if dialect != DialectMySQL && dialect != DialectSQLite {
 			return fmt.Errorf("%s DELETE does not support ORDER BY", dialect)
 		}
-		if q.UsingTable != nil {
-			return fmt.Errorf("ORDER BY not allowed in a multi-table DELETE")
+		if q.UsingTable != nil || len(q.JoinTables) > 0 {
+			return fmt.Errorf("ORDER BY not allowed when using multi-table DELETE syntax")
 		}
 		buf.WriteString(" ORDER BY ")
 		err = q.OrderByFields.AppendSQLExclude(dialect, buf, args, params, env, nil)
@@ -143,8 +143,8 @@ func (q DeleteQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interf
 		if dialect != DialectMySQL && dialect != DialectSQLite {
 			return fmt.Errorf("%s DELETE does not support LIMIT", dialect)
 		}
-		if q.UsingTable != nil {
-			return fmt.Errorf("LIMIT not allowed in a multi-table DELETE")
+		if q.UsingTable != nil || len(q.JoinTables) > 0 {
+			return fmt.Errorf("LIMIT not allowed when using multi-table DELETE syntax")
 		}
 		err = BufferPrintf(dialect, buf, args, params, env, nil, " LIMIT {}", []interface{}{q.RowLimit.Int64})
 		if err != nil {

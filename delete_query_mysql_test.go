@@ -114,3 +114,106 @@ func Test_MySQLDeleteQuery(t *testing.T) {
 		assert(t, tt)
 	})
 }
+
+func TestMySQLSakilaDelete(t *testing.T) {
+	if testing.Short() {
+		return
+	}
+	tx, err := mysqlDB.Begin()
+	if err != nil {
+		t.Fatal(testutil.Callers(), err)
+	}
+	defer tx.Rollback()
+
+	// delete address with address_id 617
+	ADDRESS := xNEW_ADDRESS("")
+	CITY := xNEW_CITY("")
+	COUNTRY := xNEW_COUNTRY("")
+	rowsAffected, _, err := Exec(Log(tx), MySQL.DeleteFrom(ADDRESS).Where(ADDRESS.ADDRESS_ID.EqInt(617)), ErowsAffected)
+	if err != nil {
+		t.Fatal(testutil.Callers(), err)
+	}
+	if rowsAffected != 1 {
+		t.Fatalf(testutil.Callers()+"expected 1 row to be affected but got %d", rowsAffected)
+	}
+
+	// make sure address was deleted
+	exists, err := FetchExists(Log(tx), MySQL.From(ADDRESS).Where(ADDRESS.ADDRESS_ID.EqInt(617)))
+	if err != nil {
+		t.Fatal(testutil.Callers(), err)
+	}
+	if exists {
+		t.Fatal(testutil.Callers(), "address_id 617 was not successfully deleted")
+	}
+
+	// delete all addresses with country 'Singapore'
+	rowsAffected, _, err = Exec(Log(tx), MySQL.
+		DeleteFrom(ADDRESS).
+		Using(ADDRESS).
+		Join(CITY, CITY.CITY_ID.Eq(ADDRESS.CITY_ID)).
+		Join(COUNTRY, COUNTRY.COUNTRY_ID.Eq(CITY.COUNTRY_ID)).
+		Where(COUNTRY.COUNTRY.EqString("Singapore")),
+		ErowsAffected,
+	)
+	if err != nil {
+		t.Fatal(testutil.Callers(), err)
+	}
+	if rowsAffected != 9 {
+		t.Fatalf(testutil.Callers()+" expected 9 rows to be affected, got %d", rowsAffected)
+	}
+
+	// make sure addresses were deleted
+	exists, err = FetchExists(Log(tx), MySQL.
+		From(ADDRESS).
+		Join(CITY, CITY.CITY_ID.Eq(ADDRESS.CITY_ID)).
+		Join(COUNTRY, COUNTRY.COUNTRY_ID.Eq(CITY.COUNTRY_ID)).
+		Where(COUNTRY.COUNTRY.EqString("Singapore")),
+	)
+	if err != nil {
+		t.Fatal(testutil.Callers(), err)
+	}
+	if exists {
+		t.Fatal(testutil.Callers(), "addresses with country 'Singapore' were not successfully deleted")
+	}
+
+	// delete with ORDER BY and LIMIT
+	rowsAffected, _, err = Exec(Log(tx), MySQL.
+		DeleteFrom(ADDRESS).
+		Where(Exists(MySQL.
+			SelectOne().
+			From(CITY).
+			Where(
+				CITY.CITY_ID.Eq(ADDRESS.CITY_ID),
+				CITY.CITY.EqString("Oslo"),
+			),
+		)).
+		OrderBy(ADDRESS.ADDRESS_ID).
+		Limit(1),
+		ErowsAffected,
+	)
+	if err != nil {
+		t.Fatal(testutil.Callers(), err)
+	}
+	if rowsAffected != 1 {
+		t.Fatalf(testutil.Callers()+" expected 1 row to be affected, got %d", rowsAffected)
+	}
+
+	// make sure the other two Oslo addresses were unaffected by the delete
+	var addressNames []string
+	Fetch(Log(tx), MySQL.
+		From(ADDRESS).
+		Join(CITY, CITY.CITY_ID.Eq(ADDRESS.CITY_ID)).
+		Where(CITY.CITY.EqString("Oslo")).
+		OrderBy(ADDRESS.ADDRESS_ID),
+		func(row *Row) {
+			addressName := row.String(ADDRESS.ADDRESS)
+			row.Process(func() { addressNames = append(addressNames, addressName) })
+		},
+	)
+	if err != nil {
+		t.Fatal(testutil.Callers(), err)
+	}
+	if diff := testutil.Diff(addressNames, []string{"187 Shadowmar Drive", "5034 Camden Street"}); diff != "" {
+		t.Fatal(testutil.Callers(), diff)
+	}
+}

@@ -162,6 +162,8 @@ func TestMySQLSakilaUpdate(t *testing.T) {
 		t.Fatalf(testutil.Callers()+"expected 21 rows affected, got %d", rowsAffected)
 	}
 
+	// TODO: update with LIMIT and ORDER BY. then make sure only a subset of rows were actually modified
+
 	// make sure the film descriptions are updated
 	var descriptions []string
 	_, err = Fetch(Log(tx), MySQL.From(FILM).Where(FILM.FILM_ID.In(thoraTempleFilmIDs())), func(row *Row) {
