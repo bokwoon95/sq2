@@ -188,7 +188,10 @@ func (dbi *DatabaseIntrospector) GetDatabaseName(ctx context.Context) (databaseN
 	var rows *sql.Rows
 	switch dbi.dialect {
 	case sq.DialectSQLite:
-		return "", nil
+		rows, err = dbi.db.QueryContext(ctx, "SELECT file FROM pragma_database_list WHERE file = 'main'")
+		if err != nil {
+			return "", err
+		}
 	case sq.DialectPostgres:
 		rows, err = dbi.db.QueryContext(ctx, "SELECT current_database()")
 		if err != nil {
