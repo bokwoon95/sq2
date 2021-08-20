@@ -177,7 +177,7 @@ func (q DeleteQuery) AppendSQL(dialect string, buf *bytes.Buffer, args *[]interf
 
 func (q DeleteQuery) SetFetchableFields(fields []Field) (Query, error) {
 	switch q.Dialect {
-	case DialectPostgres:
+	case DialectPostgres, DialectSQLite:
 		q.ReturningFields = fields
 		return q, nil
 	default:
@@ -187,7 +187,7 @@ func (q DeleteQuery) SetFetchableFields(fields []Field) (Query, error) {
 
 func (q DeleteQuery) GetFetchableFields() ([]Field, error) {
 	switch q.Dialect {
-	case DialectPostgres:
+	case DialectPostgres, DialectSQLite:
 		return q.ReturningFields, nil
 	default:
 		return nil, fmt.Errorf("%s DELETE %w", q.Dialect, ErrNonFetchableQuery)
