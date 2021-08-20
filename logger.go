@@ -58,7 +58,7 @@ func init() {
 type QueryStats struct {
 	Env            map[string]interface{}
 	Dialect        string
-	// Rethink whether I need these fields. Do I really want post-query
+	// TODO: Rethink whether I need these fields. Do I really want post-query
 	// auditing code to be put inside the logger function?
 	QueryType      string
 	TableModified  [2]string
@@ -181,7 +181,7 @@ func (l logger) LogQueryStats(ctx context.Context, stats QueryStats) {
 	if Lbeforeafter&l.logflag != 0 {
 		// Log multiline
 		buf.WriteString("\n" + purple + "----[ Executing query ]----" + reset)
-		buf.WriteString("\n" + stats.Query + " " + fmt.Sprint(stats.Args))
+		buf.WriteString("\n" + stats.Query + " " + fmt.Sprintf("%#v\n", stats.Args))
 		buf.WriteString("\n" + purple + "----[ with bind values ]----" + reset)
 		query, err := Sprintf(stats.Dialect, stats.Query, stats.Args)
 		if err != nil {
