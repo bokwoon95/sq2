@@ -12,44 +12,10 @@ subquery_field.go | cte.go
 ...
 window.go (at very last because nothing depends on it)
 
-Triggers system
-- BeforeQuery
-- AfterQuery
-- InsteadOfQuery
-how to get the column values? need to figure it out
-
-InsertHandler
-UpdateHandler
-DeleteHandler
-// oh no the predicate is not enough, what if it references a CTE too? Should we just include the whole CTE?
-func HandleUpdate(ctx context.Context, rows *HandlerRows, query UpdateQuery) error
-func HandleDelete(ctx context.Context, rows *HandlerRows, query DeleteQuery) error
-func HandleInsert(ctx context.Context, rows *HandlerRows, query InsertQuery) error
-
-var isset, isnull, issql bool
-for i := 0; i < rows.Len(); i++ {
-    var actor Actor
-    isset, isnull, issql, actor.ActorID = rows.GetInt(i, ACTOR.ACTOR_ID)
-    if isset && !isnull && !issql {
-        if actor.ActorID < 0 {
-            rows.SetInt(i, ACTOR.ACTOR_ID, -actor.ActorID)
-            rows.Set(i, ACTOR.ACTOR_ID, nil)
-        }
-    }
-    actor.FirstName, isset, isnull, issql = rows.GetString(i, ACTOR.FIRST_NAME)
-    if isset && !isnull && !issql {
-    }
-    actor.LastName, isset, isnull, issql = rows.GetString(i, ACTOR.LAST_NAME)
-    if isset && !isnull && !issql {
-    }
-    actor.LastUpdate, isset, isnull, issql = rows.GetTime(i, ACTOR.LAST_UPDATE)
-    if isset && !isnull && !issql {
-    }
-}
-rows.Exec()
-if err != nil {
-    return err
-}
+tasks:
+- write delete tests
+- documentation site (stitchdocs)
+- clone master branch and build go 1.18 from scratch to test typeparams
 
 if you want people to be able to log who did what on a table using
 logQueryStats, you need to provide the operation and tables affected as well.
