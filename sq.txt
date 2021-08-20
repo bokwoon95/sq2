@@ -78,3 +78,29 @@ IMPORTANT: before I do any kind of performance testing, I need to know:
     - I need to know this because it determines if I want to pass the Query interface to LogQueryStats for analytics purposes.
     - If LogQueryStats gets the Query interface, it can do interesting things like analyzing which tables and columns were most commonly used
     - But if performance takes a hit compared to just passing in the compiled query string and args, then maybe I'll leave it out
+
+pagination_table r good
+CREATE TABLE pagination_table (
+    table_name TEXT COLLATE "C"
+    ,order_by TEXT COLLATE "C"
+    ,page_limit INT
+    ,page_number INT
+    ,starting_id TEXT
+);
+
+CREATE UNIQUE INDEX pagination_table_idx ON pagination_table (table_name, order_by, page_limit, page_number) INCLUDE (starting_id);
+
+-- reading
+SELECT starting_id FROM pagination_table WHERE (table_name, order_by, page_limit) = ('posts', 'created_at', 10) AND page_number = 3;
+SELECT * FROM posts WHERE post_id = $starting_id ORDER BY created_at LIMIT 10;
+
+-- and writing...? how to do the writing?
+INSERT INTO posts VALUES (...);
+SELECT
+    COUNT(*) > 10
+FROM
+    posts
+    JOIN pagination_table ON
+        pagination_table.table_name = 'posts'
+        AND pagination_table.order_by = 'created_at'
+        AND pagination_table.page_limit = 10
