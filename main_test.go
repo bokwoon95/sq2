@@ -95,6 +95,10 @@ func initializeDBs() {
 			if err != nil {
 				return err
 			}
+			err = db.Ping()
+			if err != nil {
+				return fmt.Errorf("could not ping %s, is the database reachable? %w", dbinfo.dataSourceName, err)
+			}
 			switch dbinfo.driverName {
 			case "sqlite3":
 				sqliteDB = db

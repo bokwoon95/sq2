@@ -1,0 +1,76 @@
+> folders
+>> files
+>>> template sections
+
+note: need to make multi-dialect queries prominent section later on. When I have a clear example of a codebase that supports multiple dialects at once using sq, then I can make it a selling point.
+
+note: the query-building overhead can even be eliminated: queries can be compiled once and used over and over with speeds identical to raw sql querying with `database/sql`.
+
+note: A single table struct can be used to generate DDL for all three SQL dialects. Dialect-specific DDL is supported. View an [example for the Sakila database](#), defined as structs, targeting [SQLite](#), [Postgres](#) and [MySQL](#) at once.
+
+an entire h1 section dedicated to `ddl`
+- need to include the entire reference list for struct annotations as well as the corresponding DDL() method (need to explain the DDL() method in the first place)
+
+== Basics ==
+
+cover DDL
+- how to generate structs?
+- how to define tables?
+    - SQL types to sq types mapping (NumberField, StringField, etc)
+        - Numbers -> NumberField
+        - Strings -> StringField
+        - time.Time -> TimeField
+        - JSON -> JSONField
+        - []byte -> BlobField
+        - uuid.UUID -> UUIDField
+        - arrays, tsvector, everything else -> CustomField
+    - struct annotations
+    - DDL() method
+- how to handle migration?
+    - AutoMigrate
+    - Migrate
+
+cover FetchOne/FetchSlice
+- cover Fetch, but present it as the Last Resort
+
+cover Exec
+
+don't cover ToSQL
+
+cover Fieldf/Predicatef/Tablef/Queryf
+- which covers the printf-style formatting
+    - advanced topic: explain how anything that implements AppendSQL or AppendSQLExclude will get expanded. also explain the difference between AppendSQL and AppendSQLExclude
+- mention how calling custom functions can be done via Fieldf/Predicatef/Tablef
+
+cover Logging
+- logging must be enabled manually for each query (via the DB interface)
+
+== Query Building ==
+
+SELECT examples
+
+INSERT examples
+
+UPDATE examples
+
+DELETE examples
+
+How to reuse the same predicate across SELECT/UPDATE/DELETE
+
+== SQL ==
+
+Aggregate functions
+
+Window functions
+
+Subqueries
+
+WITH (Common Table Expressions)
+
+ORDER BY
+
+IN
+
+UNION, INTERSECT, EXCEPT
+
+CASE

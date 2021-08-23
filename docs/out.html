@@ -1,0 +1,58 @@
+<p><code>sq</code> is a type-safe query builder and data mapper for Go. It supports the SQLite, Postgres and MySQL dialects.</p>
+<ul>
+<li>
+<p>database-first generation</p>
+</li>
+<li>
+<p>database schema as code</p>
+</li>
+</ul>
+<pre style="background-color:#fff"><span style="color:#998;font-style:italic">-- sql table
+</span><span style="color:#998;font-style:italic"></span><span style="color:#000;font-weight:bold">CREATE</span> <span style="color:#000;font-weight:bold">TABLE</span> actor (
+    actor_id <span style="color:#0086b3">BIGINT</span> <span style="color:#000;font-weight:bold">PRIMARY</span> <span style="color:#000;font-weight:bold">KEY</span>
+    ,first_name <span style="color:#0086b3">TEXT</span> <span style="color:#000;font-weight:bold">NOT</span> <span style="color:#000;font-weight:bold">NULL</span>
+    ,last_name <span style="color:#0086b3">TEXT</span> <span style="color:#000;font-weight:bold">NOT</span> <span style="color:#000;font-weight:bold">NULL</span>
+    ,last_update DATETIME <span style="color:#000;font-weight:bold">NOT</span> <span style="color:#000;font-weight:bold">NULL</span> <span style="color:#000;font-weight:bold">DEFAULT</span> <span style="color:#000;font-weight:bold">CURRENT_TIMESTAMP</span>
+);
+</pre><pre style="background-color:#fff"><span style="color:#998;font-style:italic">// table struct
+</span><span style="color:#998;font-style:italic"></span><span style="color:#000;font-weight:bold">type</span> ACTOR <span style="color:#000;font-weight:bold">struct</span> {
+    sq.TableInfo
+    ACTOR_ID    sq.NumberField <span style="color:#d14">`ddl:&#34;type=BIGINT primarykey&#34;`</span>
+    FIRST_NAME  sq.StringField <span style="color:#d14">`ddl:&#34;notnull&#34;`</span>
+    LAST_NAME   sq.StringField <span style="color:#d14">`ddl:&#34;notnull&#34;`</span>
+    LAST_UPDATE sq.TimeField   <span style="color:#d14">`ddl:&#34;notnull default=CURRENT_TIMESTAMP&#34;`</span>
+}
+
+<span style="color:#998;font-style:italic">// select
+</span><span style="color:#998;font-style:italic"></span>sq.SQLite.<span style="color:#900;font-weight:bold">Select</span>(ACTOR.FIRST_NAME, ACTOR.LAST_NAME).<span style="color:#900;font-weight:bold">From</span>(ACTOR).<span style="color:#900;font-weight:bold">Where</span>(ACTOR.ACTOR_ID.<span style="color:#900;font-weight:bold">EqInt</span>(<span style="color:#099">1</span>))
+<span style="color:#998;font-style:italic">// insert
+</span><span style="color:#998;font-style:italic"></span>sq.SQLite.<span style="color:#900;font-weight:bold">InsertInto</span>(ACTOR).<span style="color:#900;font-weight:bold">Columns</span>(ACTOR.FIRST_NAME, ACTOR.LAST_NAME).<span style="color:#900;font-weight:bold">Values</span>(<span style="color:#d14">&#34;PENELOPE&#34;</span>, <span style="color:#d14">&#34;GUINESS&#34;</span>)
+<span style="color:#998;font-style:italic">// update
+</span><span style="color:#998;font-style:italic"></span>sq.SQLite.<span style="color:#900;font-weight:bold">Update</span>(ACTOR).
+    <span style="color:#900;font-weight:bold">Set</span>(
+        ACTOR.FIRST_NAME.<span style="color:#900;font-weight:bold">SetString</span>(<span style="color:#d14">&#34;Penelope&#34;</span>),
+        ACTOR.LAST_NAME.<span style="color:#900;font-weight:bold">SetString</span>(<span style="color:#d14">&#34;Guiness&#34;</span>),
+    ).
+    <span style="color:#900;font-weight:bold">Where</span>(ACTOR.ACTOR_ID.<span style="color:#900;font-weight:bold">EqInt</span>(<span style="color:#099">1</span>))
+<span style="color:#998;font-style:italic">// delete
+</span><span style="color:#998;font-style:italic"></span>sq.SQLite.<span style="color:#900;font-weight:bold">DeleteFrom</span>(ACTOR).<span style="color:#900;font-weight:bold">Where</span>(ACTOR.ACTOR_ID.<span style="color:#900;font-weight:bold">EqInt</span>(<span style="color:#099">1</span>))
+</pre><p>Unlike other query builders, sq covers the entire lifecycle of SQL management in an application.</p>
+<p>These table structs can be maintained in one of three ways:</p>
+<ul>
+<li><strong>As a source of truth</strong>
+<ul>
+<li>You write the structs, and generate SQL DDL from them</li>
+</ul>
+</li>
+<li><strong>As a secondary source of truth</strong>
+<ul>
+<li>You write the structs, and use it to check that the tables actually exist in the database</li>
+</ul>
+</li>
+<li><strong>As code-generated output by introspecting the database</strong>
+<ul>
+<li>your database is the source of truth, generate Go structs from it</li>
+</ul>
+</li>
+</ul>
+<p>Once you have your table-representative structs, you can use them in the query builders.</p>
