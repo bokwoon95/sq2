@@ -100,7 +100,7 @@ func main() {
     }
     log.Printf("INSERT: %d rows inserted\n", rowsAffected)
 
-    // SELECT
+    // SELECT (uses FetchOne)
     var penelope Actor
     _, err = sq.Fetch(sq.Log(db), sq.SQLite.
         From(ACTOR).
@@ -148,8 +148,8 @@ func main() {
         log.Fatalln(err)
     }
 
-    // print table contents
-    actors = actors[:0]
+    // print table contents (uses FetchAll)
+    actors = actors[:0] // don't overwrite actors slice, create new slice. so that people can tinker with the code and print it side-by-side
     _, err = sq.Fetch(sq.Log(db), sq.SQLite.From(ACTOR).OrderBy(ACTOR.ACTOR_ID), func(row *sq.Row) {
         actor := Actor{
             ActorID:    row.Int(ACTOR.ACTOR_ID),
