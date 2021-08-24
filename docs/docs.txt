@@ -11,9 +11,30 @@ note: A single table struct can be used to generate DDL for all three SQL dialec
 an entire h1 section dedicated to `ddl`
 - need to include the entire reference list for struct annotations as well as the corresponding DDL() method (need to explain the DDL() method in the first place)
 
+quickstart:
+- here's a link to each SQL feature
+- here's a link to each SQL query reference
+- here's a link to the FAQs
+
 == Basics ==
 
+every section must be prefixed with a question
+
+where does the FAQ go?
+
+Quickstart
+
+DDL
+
+Basics
+
+SQL
+
+FAQ
+
 cover DDL
+- introduction covering how DDL works two ways (is this needed?)
+    - show an example call that covers everything (tables, views, functions, extensions, enums, constraints, indexes, triggers)
 - how to generate structs?
 - how to define tables?
     - SQL types to sq types mapping (NumberField, StringField, etc)
@@ -26,51 +47,75 @@ cover DDL
         - arrays, tsvector, everything else -> CustomField
     - struct annotations
     - DDL() method
+- how to define views?
+- how to define functions?
+- how to define extensions? (postgres only)
+- how to define enums?
+- how to define constraints?
+    - struct annotations
+    - DDL() method
+- how to define indexes?
+    - struct annotations
+    - DDL() method
+- how to define triggers?
+    - struct annotations
+    - DDL() method
 - how to handle migration?
     - AutoMigrate
     - Migrate
 
+[How do I run queries that return data?]
 cover FetchOne/FetchSlice
 - cover Fetch, but present it as the Last Resort
 
+[How do I run queries that don't return data?]
 cover Exec
 
 don't cover ToSQL
 
+[How do I do a complex SQL expression?]
 cover Fieldf/Predicatef/Tablef/Queryf
 - which covers the printf-style formatting
     - advanced topic: explain how anything that implements AppendSQL or AppendSQLExclude will get expanded. also explain the difference between AppendSQL and AppendSQLExclude
 - mention how calling custom functions can be done via Fieldf/Predicatef/Tablef
+
+How do I write multi-dialect queries?
+
+Can I build a just query once and reuse it for every request?
 
 cover Logging
 - logging must be enabled manually for each query (via the DB interface)
 
 == Query Building ==
 
-SELECT examples
+SELECT reference
 
-INSERT examples
+INSERT reference
 
-UPDATE examples
+UPDATE reference
 
-DELETE examples
+DELETE reference
 
-How to reuse the same predicate across SELECT/UPDATE/DELETE
+How do I reuse the same predicate across SELECT/UPDATE/DELETE?
 
 == SQL ==
 
-Aggregate functions
-
-Window functions
-
-Subqueries
-
-WITH (Common Table Expressions)
-
-ORDER BY
-
-IN
-
+RETURNING
+Joins
+AS (Aliases)
 UNION, INTERSECT, EXCEPT
-
+Recursive Queries
+Aggregate functions
+Window functions
+Subqueries
+WITH (Common Table Expressions)
+DISTINCT
+ORDER BY
+GROUP BY HAVING
+JSON
+ARRAY (postgres only)
+IN
+LIMIT OFFSET
 CASE
+"Tuples" (Row Value Expressions) (mark this as important somehow because people are not going to know wtf it is)
+VALUES

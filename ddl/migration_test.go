@@ -22,6 +22,10 @@ func Test_SakilaSQLite(t *testing.T) {
 	if err != nil {
 		t.Fatal(testutil.Callers(), err)
 	}
+	err = db.Ping()
+	if err != nil {
+		t.Fatal(fmt.Errorf("could not ping sqlite3, is the database reachable? %w", err))
+	}
 	tx, err := db.Begin()
 	if err != nil {
 		t.Fatal(testutil.Callers(), err)
@@ -167,6 +171,10 @@ func Test_SakilaPostgres(t *testing.T) {
 	db, err := sql.Open("postgres", "postgres://postgres:postgres@localhost:5452/db?sslmode=disable&timezone=UTC")
 	if err != nil {
 		t.Fatal(testutil.Callers(), err)
+	}
+	err = db.Ping()
+	if err != nil {
+		t.Fatal(fmt.Errorf("could not ping postgres, is the database reachable? %w", err))
 	}
 	tx, err := db.Begin()
 	if err != nil {
@@ -332,6 +340,10 @@ func Test_SakilaMySQL(t *testing.T) {
 	db, err := sql.Open("mysql", "root:root@tcp(localhost:3326)/db?parseTime=true&time_zone=UTC&multiStatements=true")
 	if err != nil {
 		t.Fatal(testutil.Callers(), err)
+	}
+	err = db.Ping()
+	if err != nil {
+		t.Fatal(fmt.Errorf("could not ping mysql, is the database reachable? %w", err))
 	}
 	err = AutoMigrate(dialect, db, DropExtraneous|DropCascade)
 	if err != nil {
