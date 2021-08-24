@@ -2,12 +2,34 @@
 
 `sq` is a type-safe query builder and data mapper for Go. It supports the **SQLite**, **Postgres** and **MySQL** dialects. Among its features are:
 
-- [**Type-safety**](#)
-- [**Declarative schema as code (provided by the `ddl` companion package)**](#)
-    - NOTE: it is not enough to say that defining tables are supported, you must mention that almost everything else (extensions, functions, enums, constraints, indexes, triggers, views) are supported as well
-- [**Able to utilize Go generics for data fetching**](#)
-- [**Emulates each SQL dialect faithfully**](#)
-- [**Application-side Row Level Security (i.e. multitenancy support)**](#)
+- **Type-safety**
+    - Every table gets a struct type.
+    - Every column gets a struct field.
+    - You no longer have to hardcode tables and columns as raw strings (even [ORMs](https://gorm.io/docs/query.html#Conditions) are guilty of this).
+- **Two-way schema generation (with the companion `ddl` package)**
+    - Generate table structs from your database.
+    - Generate database DDL from your table structs.
+    - Serialize your database schema into JSON.
+        - This allows you to generate migrations against a production database without needing a live connection to it for introspection.
+        - Instead you introspect the production database separately, serialize the result to JSON and use that as a reference during development.
+    - Define your database schema in code declaratively.
+        - `ddl` will figure out which columns or tables to add or remove.
+    - `ddl` schema definition supports all major SQL features (even Postgres-specific ones):
+        - (Materialized) Views, Extensions, Functions, Enums, Constraints, Indexes, Triggers
+    - [more info](#)
+- **Able to utilize Go generics for data fetching**
+    - Data fetching uses [callback mapper functions](#).
+        - Any column that you map in the callback function is automatically added to SELECT.
+        - This means you select only the columns you need (say no to `SELECT *`).
+    - These callback mapper functions can return any type you want, and that return type is automatically returned by the generic [FetchOne/FetchSlice](#) functions.
+- **Use your favourite SQL dialect as-is**
+    - `sq` does not abstract away SQL dialects. Use all dialect-specific features in their full glory.
+    - Any missing features can be trivially added without cross-dialect compatibility headaches.
+    - This does not mean that queries are not portable: queries are as portable as the SQL that you write.
+    - Sticking with a common subset of SQL (e.g. ANSI SQL) means that the queries you write can be ported across different database dialects by simply changing the `Dialect` field.
+- **Built-in Authorization support a.k.a Application-side Row Level Security**
+
+NOTE: I can't remove the code sample, no matter how unsightly it is there's a chance someone will only browse the start and not the end.
 
 ```go
 package main
