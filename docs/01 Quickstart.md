@@ -4,6 +4,7 @@
 
 - [**Type-safety**](#)
 - [**Declarative schema as code (provided by the `ddl` companion package)**](#)
+    - NOTE: it is not enough to say that defining tables are supported, you must mention that almost everything else (extensions, functions, enums, constraints, indexes, triggers, views) are supported as well
 - [**Able to utilize Go generics for data fetching**](#)
 - [**Emulates each SQL dialect faithfully**](#)
 - [**Application-side Row Level Security (i.e. multitenancy support)**](#)

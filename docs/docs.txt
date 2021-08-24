@@ -80,6 +80,9 @@ cover Fieldf/Predicatef/Tablef/Queryf
 - mention how calling custom functions can be done via Fieldf/Predicatef/Tablef
 
 How do I write multi-dialect queries?
+- mention how all dialects query builders are basically the same query builder struct
+- mention how the params style changes based on the query builder dialect
+- mention how the identifier quoting style changes based on the query builder dialect
 
 Can I build a just query once and reuse it for every request?
 
@@ -104,11 +107,11 @@ RETURNING
 Joins
 AS (Aliases)
 UNION, INTERSECT, EXCEPT
-Recursive Queries
 Aggregate functions
 Window functions
 Subqueries
 WITH (Common Table Expressions)
+Recursive Queries
 DISTINCT
 ORDER BY
 GROUP BY HAVING
