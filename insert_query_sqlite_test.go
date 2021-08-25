@@ -192,7 +192,6 @@ func TestSQLiteSakilaInsert(t *testing.T) {
 			col.SetInt(CUSTOMER.ADDRESS_ID, regina.AddressID)
 			return nil
 		}),
-		ErowsAffected|ElastInsertID,
 	)
 	if err != nil {
 		t.Fatal(testutil.Callers(), err)
@@ -231,7 +230,6 @@ func TestSQLiteSakilaInsert(t *testing.T) {
 			return nil
 		}).
 		OnConflict().DoNothing(),
-		ErowsAffected|ElastInsertID,
 	)
 	if rowsAffected != 0 {
 		t.Fatal(testutil.Callers(), "expected an second identical insert to affect 0 rows, got %d instead", rowsAffected)
@@ -259,7 +257,6 @@ func TestSQLiteSakilaInsert(t *testing.T) {
 			AssignExcluded(CUSTOMER.EMAIL),
 			AssignExcluded(CUSTOMER.ADDRESS_ID),
 		),
-		ErowsAffected|ElastInsertID,
 	)
 	if err != nil {
 		t.Fatal(testutil.Callers(), err)
@@ -436,7 +433,6 @@ func TestSQLiteSakilaInsert(t *testing.T) {
 			AssignExcluded(CUSTOMER.EMAIL),
 			AssignExcluded(CUSTOMER.ADDRESS_ID),
 		),
-		ErowsAffected,
 	)
 	if err != nil {
 		t.Fatal(testutil.Callers(), err)

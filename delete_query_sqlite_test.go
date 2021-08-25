@@ -104,7 +104,7 @@ func TestSQLiteSakilaDelete(t *testing.T) {
 	ADDRESS := xNEW_ADDRESS("")
 	CITY := xNEW_CITY("")
 	COUNTRY := xNEW_COUNTRY("")
-	rowsAffected, _, err := Exec(Log(tx), SQLite.DeleteFrom(ADDRESS).Where(ADDRESS.ADDRESS_ID.EqInt(617)), ErowsAffected)
+	rowsAffected, _, err := Exec(Log(tx), SQLite.DeleteFrom(ADDRESS).Where(ADDRESS.ADDRESS_ID.EqInt(617)))
 	if err != nil {
 		t.Fatal(testutil.Callers(), err)
 	}

@@ -122,7 +122,6 @@ func TestMySQLSakilaUpdate(t *testing.T) {
 		Update(FILM).
 		Set(FILM.DESCRIPTION.SetString("this is a film with film_id 1")).
 		Where(FILM.FILM_ID.EqInt(1)),
-		ErowsAffected,
 	)
 	if err != nil {
 		t.Fatal(testutil.Callers(), err)
@@ -153,7 +152,6 @@ func TestMySQLSakilaUpdate(t *testing.T) {
 		Join(FILM_ACTOR, FILM_ACTOR.FILM_ID.Eq(FILM.FILM_ID)).
 		Join(ACTOR, ACTOR.ACTOR_ID.Eq(FILM_ACTOR.ACTOR_ID)).
 		Where(RowValue{ACTOR.FIRST_NAME, ACTOR.LAST_NAME}.Eq(RowValue{"THORA", "TEMPLE"})),
-		ErowsAffected,
 	)
 	if err != nil {
 		t.Fatal(testutil.Callers(), err)
@@ -193,7 +191,6 @@ func TestMySQLSakilaUpdate(t *testing.T) {
 			COUNTRY.COUNTRY.Set(Fieldf("CONCAT({}, {})", COUNTRY.COUNTRY, " (modified)")),
 		).
 		Where(ADDRESS.ADDRESS_ID.EqInt(632)),
-		ErowsAffected,
 	)
 	if err != nil {
 		t.Fatal(testutil.Callers(), err)
@@ -239,7 +236,6 @@ func TestMySQLSakilaUpdate(t *testing.T) {
 			co.COUNTRY.Set(Fieldf("TRIM(TRAILING {2} FROM {1})", co.COUNTRY, " (modified)")),
 		).
 		Where(a.ADDRESS_ID.EqInt(632)),
-		ErowsAffected,
 	)
 	if err != nil {
 		t.Fatal(testutil.Callers(), err)

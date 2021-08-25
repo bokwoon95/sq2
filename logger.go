@@ -23,12 +23,6 @@ const (
 	Lcolor       = 0b10000 // Colorize log output
 )
 
-const (
-	ExecActive    = 0b1   // Used by Logger to discern between Fetch and Exec queries
-	ElastInsertID = 0b10  // Get last inserted ID
-	ErowsAffected = 0b100 // Get number of rows affected
-)
-
 var (
 	colorReset  = "\x1b[0m"
 	colorRed    = "\x1b[31m"

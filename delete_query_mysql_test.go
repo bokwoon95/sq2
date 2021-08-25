@@ -129,7 +129,7 @@ func TestMySQLSakilaDelete(t *testing.T) {
 	ADDRESS := xNEW_ADDRESS("")
 	CITY := xNEW_CITY("")
 	COUNTRY := xNEW_COUNTRY("")
-	rowsAffected, _, err := Exec(Log(tx), MySQL.DeleteFrom(ADDRESS).Where(ADDRESS.ADDRESS_ID.EqInt(617)), ErowsAffected)
+	rowsAffected, _, err := Exec(Log(tx), MySQL.DeleteFrom(ADDRESS).Where(ADDRESS.ADDRESS_ID.EqInt(617)))
 	if err != nil {
 		t.Fatal(testutil.Callers(), err)
 	}
@@ -153,7 +153,6 @@ func TestMySQLSakilaDelete(t *testing.T) {
 		Join(CITY, CITY.CITY_ID.Eq(ADDRESS.CITY_ID)).
 		Join(COUNTRY, COUNTRY.COUNTRY_ID.Eq(CITY.COUNTRY_ID)).
 		Where(COUNTRY.COUNTRY.EqString("Singapore")),
-		ErowsAffected,
 	)
 	if err != nil {
 		t.Fatal(testutil.Callers(), err)
@@ -189,7 +188,6 @@ func TestMySQLSakilaDelete(t *testing.T) {
 		)).
 		OrderBy(ADDRESS.ADDRESS_ID).
 		Limit(1),
-		ErowsAffected,
 	)
 	if err != nil {
 		t.Fatal(testutil.Callers(), err)

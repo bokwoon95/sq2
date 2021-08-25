@@ -99,7 +99,6 @@ func TestPostgresSakilaUpdate(t *testing.T) {
 		Update(FILM).
 		Set(FILM.DESCRIPTION.SetString("this is a film with film_id 1")).
 		Where(FILM.FILM_ID.EqInt(1)),
-		ErowsAffected,
 	)
 	if err != nil {
 		t.Fatal(testutil.Callers(), err)

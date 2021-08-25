@@ -327,7 +327,6 @@ func TestPostgresSakilaInsert(t *testing.T) {
 			AssignExcluded(CUSTOMER.EMAIL),
 			AssignExcluded(CUSTOMER.ADDRESS_ID),
 		),
-		ErowsAffected,
 	)
 	if err != nil {
 		t.Fatal(testutil.Callers(), err)

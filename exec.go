@@ -7,15 +7,15 @@ import (
 	"time"
 )
 
-func Exec(db DB, q Query, execflag int) (rowsAffected, lastInsertID int64, err error) {
-	return execContext(context.Background(), db, q, execflag, 1)
+func Exec(db DB, q Query) (rowsAffected, lastInsertID int64, err error) {
+	return execContext(context.Background(), db, q, 1)
 }
 
-func ExecContext(ctx context.Context, db DB, q Query, execflag int) (rowsAffected, lastInsertID int64, err error) {
-	return execContext(ctx, db, q, execflag, 1)
+func ExecContext(ctx context.Context, db DB, q Query) (rowsAffected, lastInsertID int64, err error) {
+	return execContext(ctx, db, q, 1)
 }
 
-func execContext(ctx context.Context, db DB, q Query, execflag int, skip int) (rowsAffected, lastInsertID int64, err error) {
+func execContext(ctx context.Context, db DB, q Query, skip int) (rowsAffected, lastInsertID int64, err error) {
 	if db == nil {
 		return 0, 0, errors.New("sq: db is nil")
 	}
@@ -87,15 +87,13 @@ func execContext(ctx context.Context, db DB, q Query, execflag int, skip int) (r
 	if err != nil {
 		return 0, 0, err
 	}
-	if result != nil && ErowsAffected&execflag != 0 {
-		rowsAffected, err = result.RowsAffected()
-		if err != nil {
-			return 0, 0, err
-		}
-		stats.RowsAffected.Valid = true
-		stats.RowsAffected.Int64 = rowsAffected
+	rowsAffected, err = result.RowsAffected()
+	if err != nil {
+		return 0, 0, err
 	}
-	if result != nil && ElastInsertID&execflag != 0 {
+	stats.RowsAffected.Valid = true
+	stats.RowsAffected.Int64 = rowsAffected
+	if stats.Dialect == DialectSQLite || stats.Dialect == DialectMySQL {
 		lastInsertID, err = result.LastInsertId()
 		if err != nil {
 			return 0, 0, err

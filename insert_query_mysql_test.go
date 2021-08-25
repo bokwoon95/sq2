@@ -189,7 +189,6 @@ func TestMySQLSakilaInsert(t *testing.T) {
 			col.SetInt(CUSTOMER.ADDRESS_ID, regina.AddressID)
 			return nil
 		}),
-		ErowsAffected|ElastInsertID,
 	)
 	if err != nil {
 		t.Fatal(testutil.Callers(), err)
@@ -214,7 +213,6 @@ func TestMySQLSakilaInsert(t *testing.T) {
 			col.SetInt(CUSTOMER.ADDRESS_ID, regina.AddressID)
 			return nil
 		}),
-		ErowsAffected|ElastInsertID,
 	)
 	if rowsAffected != 0 {
 		t.Fatal(testutil.Callers(), "expected an second identical insert to affect 0 rows, got %d instead", rowsAffected)
@@ -233,7 +231,6 @@ func TestMySQLSakilaInsert(t *testing.T) {
 			return nil
 		}).
 		OnDuplicateKeyUpdate(AssignSelf(CUSTOMER.CUSTOMER_ID)),
-		ErowsAffected|ElastInsertID,
 	)
 	if rowsAffected != 0 {
 		t.Fatal(testutil.Callers(), "expected an second identical insert to affect 0 rows, got %d instead", rowsAffected)
@@ -260,7 +257,6 @@ func TestMySQLSakilaInsert(t *testing.T) {
 			AssignValues(CUSTOMER.EMAIL),
 			AssignValues(CUSTOMER.ADDRESS_ID),
 		),
-		ErowsAffected|ElastInsertID,
 	)
 	if err != nil {
 		t.Fatal(testutil.Callers(), err)
@@ -296,7 +292,6 @@ func TestMySQLSakilaInsert(t *testing.T) {
 			AssignAlias(CUSTOMER.EMAIL, "NEW"),
 			AssignAlias(CUSTOMER.ADDRESS_ID, "NEW"),
 		),
-		ErowsAffected|ElastInsertID,
 	)
 	if err != nil {
 		t.Fatal(testutil.Callers(), err)
@@ -330,7 +325,6 @@ func TestMySQLSakilaInsert(t *testing.T) {
 			Assign(CUSTOMER.EMAIL, Literal("NEW.email")),
 			Assign(CUSTOMER.ADDRESS_ID, Literal("aid")),
 		),
-		ErowsAffected|ElastInsertID,
 	)
 	if err != nil {
 		t.Fatal(testutil.Callers(), err)
@@ -390,7 +384,6 @@ func TestMySQLSakilaInsert(t *testing.T) {
 			OrderBy(INVENTORY.INVENTORY_ID).
 			Limit(1),
 		),
-		ErowsAffected|ElastInsertID,
 	)
 	if err != nil {
 		t.Fatal(testutil.Callers(), err)
