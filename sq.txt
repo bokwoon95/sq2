@@ -14,7 +14,28 @@ window.go (at very last because nothing depends on it)
 
 tasks:
 - documentation site (stitchdocs)
-- clone master branch and build go 1.18 from scratch to test typeparams
+- Select().ForUpdate().ForShare().SkipLocked()
+- GroupBy().Cube().Rollup().GroupingSets()
+
+err := sq.Tx(func(tx *sql.Tx) error {
+})
+
+err := sq.TxContext(ctx, sq.TxRepeatableRead|sq.TxReadOnly, func(tx *sql.Tx) error {
+})
+
+// optimistic concurrency control!
+tries := 0
+err := sq.RetryTxContext(ctx, 0, func(tx *sql.Tx) error {
+    version := ...
+    rowsAffected, _, err := sq.Exec(Update ... Where version = $version...)
+    if rowsAffected < 0 {
+        return ErrRetryTx
+    }
+}, func(txErr error) bool {
+    tries++
+    time.Sleep(random.Float()*time.Second)
+    return tries < 10
+})
 
 if you want people to be able to log who did what on a table using
 logQueryStats, you need to provide the operation and tables affected as well.
