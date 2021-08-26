@@ -29,12 +29,12 @@ err := sq.RetryTxContext(ctx, 0, func(tx *sql.Tx) error {
     version := ...
     rowsAffected, _, err := sq.Exec(Update ... Where version = $version...)
     if rowsAffected < 0 {
-        return ErrRetryTx
+        return sq.ErrRetryTx
     }
 }, func(txErr error) bool {
     tries++
     time.Sleep(random.Float()*time.Second)
-    return tries < 10
+    return errors.Is(txErr, sq.ErrRetryTx) && tries < 10
 })
 
 if you want people to be able to log who did what on a table using
