@@ -69,13 +69,13 @@ var (
 )
 
 func main() {
-    // create empty database
+    // open database
     db, err := sql.Open("sqlite3", ":memory:")
     if err != nil {
         log.Fatalln(err)
     }
 
-    // setup actor table
+	// initialize database
     ACTOR := ACTOR{}
     _ = sq.ReflectTable(&ACTOR, "")
     err = ddl.AutoMigrate(sq.DialectSQLite, db, ddl.CreateMissing|ddl.UpdateExisting,
@@ -101,7 +101,7 @@ func main() {
     if err != nil {
         log.Fatalln(err)
     }
-    log.Printf("INSERT: %d rows inserted\n", rowsAffected)
+    log.Printf("%d rows inserted\n", rowsAffected)
 
     // SELECT actor 'PENELOPE GUINESS' (uses FetchOne)
     var penelope Actor
@@ -121,7 +121,7 @@ func main() {
     if err != nil {
         log.Fatalln(err)
     }
-    log.Printf("%+v\n", penelope)
+    log.Printf("penelope: %+v\n", penelope)
 
     // UPDATE actor 'PENELOPE GUINESS' to 'Penelope Guiness'
     _, _, err = sq.Exec(sq.Log(db), sq.SQLite.
@@ -138,30 +138,34 @@ func main() {
     }
 
     // DELETE actor 'ED CHASE'
-    _, _, err = sq.Exec(sq.Log(db), sq.SQLite.
+    rowsAffected, _, err = sq.Exec(sq.Log(db), sq.SQLite.
         DeleteFrom(ACTOR).
         Where(
             ACTOR.FIRST_NAME.EqString("ED"),
             ACTOR.LAST_NAME.EqString("CHASE"),
         ),
-        0,
     )
     if err != nil {
         log.Fatalln(err)
     }
+    log.Printf("%d row deleted\n", rowsAffected)
 
     // SELECT all actors, ordered by actor_id (uses FetchSlice)
     var allActors []Actor
-    _, err = sq.Fetch(sq.Log(db), sq.SQLite.From(ACTOR).OrderBy(ACTOR.ACTOR_ID), func(row *sq.Row) {
-        actor := Actor{
-            ActorID:    row.Int(ACTOR.ACTOR_ID),
-            FirstName:  row.String(ACTOR.FIRST_NAME),
-            LastName:   row.String(ACTOR.LAST_NAME),
-            LastUpdate: row.Time(ACTOR.LAST_UPDATE),
-        }
-        row.Process(func() { allActors = append(allActors, actor) })
-    })
-    log.Printf("actors: %#v\n", allActors)
+    _, err = sq.Fetch(sq.Log(db), sq.SQLite.
+        From(ACTOR).
+        OrderBy(ACTOR.ACTOR_ID),
+        func(row *sq.Row) {
+            actor := Actor{
+                ActorID:    row.Int(ACTOR.ACTOR_ID),
+                FirstName:  row.String(ACTOR.FIRST_NAME),
+                LastName:   row.String(ACTOR.LAST_NAME),
+                LastUpdate: row.Time(ACTOR.LAST_UPDATE),
+            }
+            row.Process(func() { allActors = append(allActors, actor) })
+        },
+    )
+    log.Printf("actors: %+v\n", allActors)
 }
 ```
 

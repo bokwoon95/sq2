@@ -92,7 +92,11 @@ func fetchContext(ctx context.Context, db DB, q Query, rowmapper func(*Row), ski
 		stats.Error = err
 		stats.RowCount.Valid = true
 		stats.RowCount.Int64 = rowCount
-		go logQueryStats(ctx, stats)
+		if logSettings.AsyncLogging {
+			go logQueryStats(ctx, stats)
+		} else {
+			logQueryStats(ctx, stats)
+		}
 	}()
 	err = q.AppendSQL(stats.Dialect, buf, &stats.Args, make(map[string][]int), nil)
 	if err != nil {
@@ -292,7 +296,11 @@ func fetchExistsContext(ctx context.Context, db DB, q Query, skip int) (exists b
 		stats.Error = err
 		stats.Exists.Valid = true
 		stats.Exists.Bool = exists
-		go logQueryStats(ctx, stats)
+		if logSettings.AsyncLogging {
+			go logQueryStats(ctx, stats)
+		} else {
+			logQueryStats(ctx, stats)
+		}
 	}()
 	buf.WriteString("SELECT EXISTS (")
 	err = q.AppendSQL(stats.Dialect, buf, &stats.Args, make(map[string][]int), nil)

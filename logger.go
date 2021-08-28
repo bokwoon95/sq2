@@ -15,12 +15,10 @@ import (
 )
 
 const (
-	// TODO: bruh I need a better naming system than Linterpolate vs Lbeforeafter
-	Linterpolate = 0b1     // Interpolate the args into the query
-	Lbeforeafter = 0b10    // Show the query before and after interpolation
-	Lcaller      = 0b100   // Show caller information i.e. filename, line number, function name
-	Lresults     = 0b1000  // Show the first 5 results if applicable. Lmultiline must be enabled.
-	Lcolor       = 0b10000 // Colorize log output
+	Linterpolate = 1 << iota // Interpolate the args into the query
+	Lbeforeafter             // Show the query before and after interpolation
+	Lcaller                  // Show caller information i.e. filename, line number, function name
+	Lcolor                   // Colorize log output
 )
 
 var (
@@ -50,12 +48,14 @@ func init() {
 }
 
 type QueryStats struct {
-	Env            map[string]interface{}
-	Dialect        string
+	Env     map[string]interface{}
+	Dialect string
+
 	// TODO: Rethink whether I need these fields. Do I really want post-query
 	// auditing code to be put inside the logger function?
-	QueryType      string
-	TableModified  [2]string
+	QueryType     string
+	TableModified [2]string
+
 	Query          string
 	Args           []interface{}
 	Error          error
@@ -73,6 +73,7 @@ type QueryStats struct {
 type LogSettings struct {
 	ResultsLimit  int
 	GetCallerInfo bool
+	AsyncLogging  bool
 }
 
 type Logger interface {
@@ -101,7 +102,7 @@ func NewLogger(out io.Writer, logflag int, resultsLimit int) Logger {
 
 var (
 	defaultLogger = NewLogger(os.Stdout, Linterpolate|Lcaller|Lcolor, -1) // Lcaller rationale: logging is for debugging, so we should provide caller info by default
-	verboseLogger = NewLogger(os.Stdout, Lbeforeafter|Lcaller|Lcolor|Lresults, 5)
+	verboseLogger = NewLogger(os.Stdout, Lbeforeafter|Lcaller|Lcolor, 5)
 )
 
 func Log(db DB) LoggerDB {
@@ -175,7 +176,7 @@ func (l logger) LogQueryStats(ctx context.Context, stats QueryStats) {
 	if Lbeforeafter&l.logflag != 0 {
 		// Log multiline
 		buf.WriteString("\n" + purple + "----[ Executing query ]----" + reset)
-		buf.WriteString("\n" + stats.Query + " " + fmt.Sprintf("%#v\n", stats.Args))
+		buf.WriteString("\n" + stats.Query + " " + fmt.Sprintf("%#v", stats.Args))
 		buf.WriteString("\n" + purple + "----[ with bind values ]----" + reset)
 		query, err := Sprintf(stats.Dialect, stats.Query, stats.Args)
 		if err != nil {
@@ -183,7 +184,7 @@ func (l logger) LogQueryStats(ctx context.Context, stats QueryStats) {
 		}
 		buf.WriteString("\n" + query)
 	}
-	if Lresults&l.logflag != 0 {
+	if stats.QueryResults != "" {
 		buf.WriteString("\n" + purple + "----[ Fetched result ]----" + reset)
 		buf.WriteString(stats.QueryResults)
 	}

@@ -74,7 +74,11 @@ func execContext(ctx context.Context, db DB, q Query, skip int) (rowsAffected, l
 			stats.Query = buf.String() + "%!(error=" + err.Error() + ")"
 		}
 		stats.Error = err
-		go logQueryStats(ctx, stats)
+		if logSettings.AsyncLogging {
+			go logQueryStats(ctx, stats)
+		} else {
+			logQueryStats(ctx, stats)
+		}
 	}()
 	err = q.AppendSQL(stats.Dialect, buf, &stats.Args, make(map[string][]int), nil)
 	if err != nil {

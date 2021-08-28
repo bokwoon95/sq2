@@ -10,6 +10,7 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
+// actor table
 type ACTOR struct {
 	sq.TableInfo
 	ACTOR_ID    sq.NumberField `ddl:"type=INTEGER primarykey"`
@@ -18,6 +19,7 @@ type ACTOR struct {
 	LAST_UPDATE sq.TimeField   `ddl:"notnull default=CURRENT_TIMESTAMP"`
 }
 
+// actor type
 type Actor struct {
 	ActorID    int
 	FirstName  string
@@ -36,18 +38,23 @@ var (
 )
 
 func main() {
+	// open database
 	db, err := sql.Open("sqlite3", ":memory:")
 	if err != nil {
 		log.Fatalln(err)
 	}
+
+	// initialize database
 	ACTOR := ACTOR{}
 	_ = sq.ReflectTable(&ACTOR, "")
-	err = ddl.AutoMigrate(sq.DialectSQLite, db, ddl.CreateMissing, ddl.WithTables(ACTOR))
+	err = ddl.AutoMigrate(sq.DialectSQLite, db, ddl.CreateMissing|ddl.UpdateExisting,
+		ddl.WithTables(ACTOR),
+	)
 	if err != nil {
 		log.Fatalln(err)
 	}
 
-	// INSERT
+	// INSERT actors
 	rowsAffected, _, err := sq.Exec(sq.Log(db), sq.SQLite.
 		InsertInto(ACTOR).
 		Valuesx(func(col *sq.Column) error {
@@ -59,14 +66,13 @@ func main() {
 			}
 			return nil
 		}),
-		sq.ErowsAffected,
 	)
 	if err != nil {
 		log.Fatalln(err)
 	}
-	log.Printf("INSERT: %d rows inserted\n", rowsAffected)
+	log.Printf("%d rows inserted\n", rowsAffected)
 
-	// SELECT
+	// SELECT actor 'PENELOPE GUINESS' (uses FetchOne)
 	var penelope Actor
 	_, err = sq.Fetch(sq.Log(db), sq.SQLite.
 		From(ACTOR).
@@ -84,9 +90,9 @@ func main() {
 	if err != nil {
 		log.Fatalln(err)
 	}
-	log.Printf("%+v\n", penelope)
+	log.Printf("penelope: %+v\n", penelope)
 
-	// UPDATE
+	// UPDATE actor 'PENELOPE GUINESS' to 'Penelope Guiness'
 	_, _, err = sq.Exec(sq.Log(db), sq.SQLite.
 		Update(ACTOR).
 		Setx(func(col *sq.Column) error {
@@ -95,35 +101,38 @@ func main() {
 			return nil
 		}).
 		Where(ACTOR.ACTOR_ID.EqInt(penelope.ActorID)),
-		0,
 	)
 	if err != nil {
 		log.Fatalln(err)
 	}
 
-	// DELETE
-	_, _, err = sq.Exec(sq.Log(db), sq.SQLite.
+	// DELETE actor 'ED CHASE'
+	rowsAffected, _, err = sq.Exec(sq.Log(db), sq.SQLite.
 		DeleteFrom(ACTOR).
 		Where(
 			ACTOR.FIRST_NAME.EqString("ED"),
 			ACTOR.LAST_NAME.EqString("CHASE"),
 		),
-		0,
 	)
 	if err != nil {
 		log.Fatalln(err)
 	}
+	log.Printf("%d row deleted\n", rowsAffected)
 
-	// print table contents
-	actors = actors[:0]
-	_, err = sq.Fetch(sq.Log(db), sq.SQLite.From(ACTOR).OrderBy(ACTOR.ACTOR_ID), func(row *sq.Row) {
-		actor := Actor{
-			ActorID:    row.Int(ACTOR.ACTOR_ID),
-			FirstName:  row.String(ACTOR.FIRST_NAME),
-			LastName:   row.String(ACTOR.LAST_NAME),
-			LastUpdate: row.Time(ACTOR.LAST_UPDATE),
-		}
-		row.Process(func() { actors = append(actors, actor) })
-	})
-	log.Printf("actors: %+v\n", actors)
+	// SELECT all actors, ordered by actor_id (uses FetchSlice)
+	var allActors []Actor
+	_, err = sq.Fetch(sq.Log(db), sq.SQLite.
+		From(ACTOR).
+		OrderBy(ACTOR.ACTOR_ID),
+		func(row *sq.Row) {
+			actor := Actor{
+				ActorID:    row.Int(ACTOR.ACTOR_ID),
+				FirstName:  row.String(ACTOR.FIRST_NAME),
+				LastName:   row.String(ACTOR.LAST_NAME),
+				LastUpdate: row.Time(ACTOR.LAST_UPDATE),
+			}
+			row.Process(func() { allActors = append(allActors, actor) })
+		},
+	)
+	log.Printf("actors: %+v\n", allActors)
 }
