@@ -15,10 +15,10 @@ import (
 )
 
 const (
-	Linterpolate = 1 << iota // Interpolate the args into the query
-	Lbeforeafter             // Show the query before and after interpolation
-	Lcaller                  // Show caller information i.e. filename, line number, function name
-	Lcolor                   // Colorize log output
+	Linterpolate        = 1 << iota // Interpolate the args into the query
+	LinterpolateVerbose             // Show the query before and after interpolation
+	Lcaller                         // Show caller information i.e. filename, line number, function name
+	Lcolor                          // Colorize log output
 )
 
 var (
@@ -101,8 +101,8 @@ func NewLogger(out io.Writer, logflag int, resultsLimit int) Logger {
 }
 
 var (
-	defaultLogger = NewLogger(os.Stdout, Linterpolate|Lcaller|Lcolor, -1) // Lcaller rationale: logging is for debugging, so we should provide caller info by default
-	verboseLogger = NewLogger(os.Stdout, Lbeforeafter|Lcaller|Lcolor, 5)
+	defaultLogger = NewLogger(os.Stdout, Lcaller|Lcolor|Linterpolate, 0)
+	verboseLogger = NewLogger(os.Stdout, Lcaller|Lcolor|LinterpolateVerbose, 5)
 )
 
 func Log(db DB) LoggerDB {
@@ -144,8 +144,7 @@ func (l logger) LogQueryStats(ctx context.Context, stats QueryStats) {
 	} else {
 		buf.WriteString(red + "[FAIL]" + reset)
 	}
-	if Lbeforeafter&l.logflag == 0 {
-		// Log one-liner
+	if LinterpolateVerbose&l.logflag == 0 {
 		if Linterpolate&l.logflag != 0 {
 			query, err := Sprintf(stats.Dialect, stats.Query, stats.Args)
 			if err != nil {
@@ -173,8 +172,7 @@ func (l logger) LogQueryStats(ctx context.Context, stats QueryStats) {
 	if Lcaller&l.logflag != 0 {
 		buf.WriteString(blue + " caller" + reset + "=" + stats.CallerFile + ":" + strconv.Itoa(stats.CallerLine) + ":" + filepath.Base(stats.CallerFunction))
 	}
-	if Lbeforeafter&l.logflag != 0 {
-		// Log multiline
+	if LinterpolateVerbose&l.logflag != 0 {
 		buf.WriteString("\n" + purple + "----[ Executing query ]----" + reset)
 		buf.WriteString("\n" + stats.Query + " " + fmt.Sprintf("%#v", stats.Args))
 		buf.WriteString("\n" + purple + "----[ with bind values ]----" + reset)
