@@ -8,12 +8,12 @@
     - You no longer have to hardcode tables and columns as raw strings (even [ORMs](https://gorm.io/docs/query.html#Conditions) are guilty of this).
 - **Bidirectional Schema definition**
     - Code-generate table structs from your database (database-first).
-    - Generate DDL from your table structs (code-first).
+    - Generate SQL commands (DDL) from your table structs (code-first).
         - DDL generation is idempotent, missing tables and columns are added as needed.
     - What is supported: schemas, tables, columns, constraints, indexes, (materialized) views, triggers, functions, extensions, enums
 - **Uses Go generics for data fetching**
-    - Data mapping is built on [callback mapper functions](#)
-    - [FetchOne/FetchSlice](#) are generic fetch functions that return whatever the callback mapper function returns
+    - Data mapping is built on [callback mapper functions](#) which can return any type.
+    - Whatever type a  mapper functions is automatically returned by the generic functions [FetchOne and FetchSlice](#).
 - **Faithful emulation of each SQL dialect**
     - Each dialect has its own query builder that can leverage dialect-specific syntax.
     - This does not mean that queries are not portable: queries are as portable as the SQL that you write.
@@ -167,14 +167,15 @@ func main() {
 ```bash
 go install github.com/bokwoon95/sq/cmd/sq-ddl
 DATABASE_URL='postgres://username:password@localhost:5432/db?sslmode=disable'
-sq-ddl $DATABASE_URL -format=ddl
-sq-ddl $DATABASE_URL -format=json
-sq-ddl $DATABASE_URL -format=structs
-sq-ddl $DATABASE_URL \
-    -format=structs \
-    -outfile=tables.go \
-    -pkg=tables \
-    -with-schemas=public,main \
-    -without-tables=schema_migrations \
-    -overwrite
+# driver dialect can be inferred if it starts with postgres:// or mysql://. else use sqlite
+sq-ddl -dsn=$DATABASE_URL
+sq-ddl -dsn=$DATABASE_URL -output=ddl -outfile=schema.sql
+sq-ddl -dsn=$DATABASE_URL -output=json -outfile=db.json
+sq-ddl -dsn=$DATABASE_URL -output=structs -outfile=tables.go -pkg=tables -overwrite
+sq-ddl -dsn=$DATABASE_URL -with-schemas=main,public,db -without-tables=schema_migrations
+# -db-driver -db-user -db-pass -db-port -db-host -db-name
 ```
+
+## How do I define tables in code?
+
+## How do I handle migrations?
