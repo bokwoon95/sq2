@@ -1,0 +1,25 @@
+`sq` is a type-safe query builder and data mapper for Go. It supports the **SQLite**, **Postgres** and **MySQL** dialects. Among its features are:
+
+- **Type-safety**
+    - Every table gets a struct type.
+    - Every column gets a struct field.
+    - You no longer have to hardcode tables and columns as raw strings (even [ORMs](https://gorm.io/docs/query.html#Conditions) are guilty of this).
+- **Bidirectional Schema definition**
+    - Code-generate table structs from your database (database-first).
+    - Generate DDL from your table structs (code-first).
+        - DDL generation is idempotent, missing tables and columns are added as needed.
+    - What is supported: schemas, tables, columns, constraints, indexes, (materialized) views, triggers, functions, extensions, enums
+- **Uses Go generics for data fetching**
+    - Data mapping is built on [callback mapper functions](#)
+    - [FetchOne/FetchSlice](#) are generic fetch functions that return whatever the callback mapper function returns
+- **Faithful emulation of each SQL dialect**
+    - Each dialect has its own query builder that can leverage dialect-specific syntax.
+    - This does not mean that queries are not portable: queries are as portable as the SQL that you write.
+    - `sq` comes with its own [tricks](#) to help with writing queries that can target multiple dialects.
+- **Application-side Row Level Security (i.e. multitenancy support)**
+    - Query-level variables can be added by passing in a `map[string]interface{}`.
+    - Based on these variables, tables participating in a query that implement the [PredicateInjector](#) interface can inject additional predicates to exclude rows from a SELECT, UPDATE or DELETE.
+    - This emulates Postgres' [Row Level Security feature](#), but more importantly it plays well with `database/sql`'s connection pooling since variables are set per-query and not per-session.
+    - SQLite and MySQL get Row Level Security for free.
+- **And many more**
+    - Multiple schemas, Generated Columns, Full Text Search, JSON, Collations.
