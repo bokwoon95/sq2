@@ -6,23 +6,23 @@
     - Every table gets a struct type.
     - Every column gets a struct field.
     - You no longer have to hardcode tables and columns as raw strings (even [ORMs](https://gorm.io/docs/query.html#Conditions) are guilty of this).
-- **Bidirectional Schema definition**
+- **Bidirectional schema definition**
     - Code-generate table structs from your database (database-first).
     - Generate SQL commands (DDL) from your table structs (code-first).
         - DDL generation is idempotent, missing tables and columns are added as needed.
     - What is supported: schemas, tables, columns, constraints, indexes, (materialized) views, triggers, functions, extensions, enums
 - **Uses Go generics for data fetching**
     - Data mapping is built on [callback mapper functions](#) which can return any type.
-    - Whatever type a  mapper functions is automatically returned by the generic functions [FetchOne and FetchSlice](#).
+    - Whatever type a mapper functions returns, it is automatically returned by the generic functions [FetchOne and FetchSlice](#).
 - **Faithful emulation of each SQL dialect**
     - Each dialect has its own query builder that can leverage dialect-specific syntax.
     - This does not mean that queries are not portable: queries are as portable as the SQL that you write.
     - `sq` comes with its own [tricks](#) to help with writing queries that can target multiple dialects.
 - **Application-side Row Level Security (i.e. multitenancy support)**
-    - Query-level variables can be added by passing in a `map[string]interface{}`.
-    - Based on these variables, tables participating in a query that implement the [PredicateInjector](#) interface can inject additional predicates to exclude rows from a SELECT, UPDATE or DELETE.
-    - This emulates Postgres' [Row Level Security feature](#), but more importantly it plays well with `database/sql`'s connection pooling since variables are set per-query and not per-session.
-    - SQLite and MySQL get Row Level Security for free.
+    - Variables can be associated with a query via a `map[string]interface{}`.
+    - Based on those variables, tables implementing the [PredicateInjector](#) interface can inject additional predicates into a query whenever they are invoked.
+    - This emulates Postgres' [Row Level Security](#), but without needing to mess around with `current_user` or session-level variables.
+    - Since it's implemented application-side, MySQL and SQLite can use Row Level Security too.
 - **And many more**
     - Multiple schemas, Generated Columns, Full Text Search, JSON, Collations.
 
@@ -41,6 +41,7 @@ import (
     _ "github.com/mattn/go-sqlite3"
 )
 
+// actor table
 type ACTOR struct {
     sq.TableInfo
     ACTOR_ID    sq.NumberField `ddl:"type=INTEGER primarykey"`
@@ -49,6 +50,7 @@ type ACTOR struct {
     LAST_UPDATE sq.TimeField   `ddl:"notnull default=CURRENT_TIMESTAMP"`
 }
 
+// actor type
 type Actor struct {
     ActorID    int
     FirstName  string
@@ -67,10 +69,13 @@ var (
 )
 
 func main() {
+    // create empty database
     db, err := sql.Open("sqlite3", ":memory:")
     if err != nil {
         log.Fatalln(err)
     }
+
+    // setup actor table
     ACTOR := ACTOR{}
     _ = sq.ReflectTable(&ACTOR, "")
     err = ddl.AutoMigrate(sq.DialectSQLite, db, ddl.CreateMissing|ddl.UpdateExisting,
@@ -80,7 +85,7 @@ func main() {
         log.Fatalln(err)
     }
 
-    // INSERT
+    // INSERT actors
     rowsAffected, _, err := sq.Exec(sq.Log(db), sq.SQLite.
         InsertInto(ACTOR).
         Valuesx(func(col *sq.Column) error {
@@ -98,7 +103,7 @@ func main() {
     }
     log.Printf("INSERT: %d rows inserted\n", rowsAffected)
 
-    // SELECT (uses FetchOne)
+    // SELECT actor 'PENELOPE GUINESS' (uses FetchOne)
     var penelope Actor
     _, err = sq.Fetch(sq.Log(db), sq.SQLite.
         From(ACTOR).
@@ -118,7 +123,7 @@ func main() {
     }
     log.Printf("%+v\n", penelope)
 
-    // UPDATE
+    // UPDATE actor 'PENELOPE GUINESS' to 'Penelope Guiness'
     _, _, err = sq.Exec(sq.Log(db), sq.SQLite.
         Update(ACTOR).
         Setx(func(col *sq.Column) error {
@@ -132,7 +137,7 @@ func main() {
         log.Fatalln(err)
     }
 
-    // DELETE
+    // DELETE actor 'ED CHASE'
     _, _, err = sq.Exec(sq.Log(db), sq.SQLite.
         DeleteFrom(ACTOR).
         Where(
@@ -145,8 +150,8 @@ func main() {
         log.Fatalln(err)
     }
 
-    // print table contents (uses FetchSlice)
-    var dbActors []Actor
+    // SELECT all actors, ordered by actor_id (uses FetchSlice)
+    var allActors []Actor
     _, err = sq.Fetch(sq.Log(db), sq.SQLite.From(ACTOR).OrderBy(ACTOR.ACTOR_ID), func(row *sq.Row) {
         actor := Actor{
             ActorID:    row.Int(ACTOR.ACTOR_ID),
@@ -154,9 +159,9 @@ func main() {
             LastName:   row.String(ACTOR.LAST_NAME),
             LastUpdate: row.Time(ACTOR.LAST_UPDATE),
         }
-        row.Process(func() { dbActors = append(dbActors, actor) })
+        row.Process(func() { allActors = append(allActors, actor) })
     })
-    log.Printf("db actors: %#v\n", dbActors)
+    log.Printf("actors: %#v\n", allActors)
 }
 ```
 
