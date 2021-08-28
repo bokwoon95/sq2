@@ -20,6 +20,16 @@ tasks:
 err := sq.Tx(func(tx *sql.Tx) error {
 })
 
+I think each dialect can get its own query builder
+- pgsq
+- mysq
+- sqlt
+- sqsv
+- ora
+- then 'integration tests' would reside wholly inside a separate package and wouldn't be able to contribute to the test coverage of sq, but maybe that's enough
+- I'd still need to open an sqlite :memory: database in order to test the *Row and *Column interactions though.
+- ohshit but then they'd lose access to the sakila_tables_test.go. keep this on the backburner for now
+
 err := sq.TxContext(ctx, sq.TxRepeatableRead|sq.TxReadOnly, func(tx *sql.Tx) error {
 })
 

@@ -75,7 +75,7 @@ func main() {
         log.Fatalln(err)
     }
 
-	// initialize database
+    // initialize database
     ACTOR := ACTOR{}
     _ = sq.ReflectTable(&ACTOR, "")
     err = ddl.AutoMigrate(sq.DialectSQLite, db, ddl.CreateMissing|ddl.UpdateExisting,
@@ -186,5 +186,22 @@ sq-ddl -dsn=$DATABASE_URL -with-schemas=main,public,db -without-tables=schema_mi
 ```
 
 ## How do I define tables in code?
+
+Mention how the flow is you define a struct that embeds sq.TableInfo, then how each field should correspond to a column in the table.
+
+[Types]
+
+Each field has types: bring up the type mapping table (as well as the backup `CustomField` for anything else).
+
+[Naming]
+
+Each table's name is determined by setting the Name field in the embedded sq.TableInfo struct.
+Each field's name is determined when calling the Field constructor (list the field constructor examples).
+Since setting the table and field names manually each time will be tedious, `sq` provides a helper function New() and NewAliased() which instantiates a table struct via reflection.
+They will first check for an `sq.name` struct annotation, followed by lowercasing the field name (for columns) or struct name (for tables).
+
+each field's name is determined upon setting
+each field's name will be implicitly mapped by simply uppercasing or lowercasing depending on the mapping direction.
+mention how the user can override this behaviour by adding the sq.name struct annotation, but it would only be picked up by sq.New/sq.NewAliased
 
 ## How do I handle migrations?

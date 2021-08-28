@@ -3,6 +3,7 @@ package sq
 import (
 	"bytes"
 	"database/sql"
+	"fmt"
 	"sort"
 )
 
@@ -21,7 +22,7 @@ type FieldInfo struct {
 	TableAlias  string
 	FieldName   string
 	FieldAlias  string
-	Formats     map[string]string
+	Formats     [][2]string
 	Values      []interface{}
 	Descending  sql.NullBool
 	NullsFirst  sql.NullBool
@@ -39,9 +40,23 @@ func (f FieldInfo) AppendSQLExclude(dialect string, buf *bytes.Buffer, args *[]i
 		return f.Err
 	}
 	if len(f.Formats) > 0 {
-		format, ok := f.Formats[dialect]
-		if !ok {
-			format = f.Formats["default"]
+		var dialectFormat, defaultFormat sql.NullString
+		for _, tuple := range f.Formats {
+			switch tuple[0] {
+			case "default":
+				defaultFormat.Valid = true
+				defaultFormat.String = tuple[1]
+			case dialect:
+				dialectFormat.Valid = true
+				dialectFormat.String = tuple[1]
+			}
+		}
+		if !defaultFormat.Valid {
+			return fmt.Errorf("CustomField formats %+v has no default format", f.Formats)
+		}
+		format := dialectFormat.String
+		if !dialectFormat.Valid {
+			format = defaultFormat.String
 		}
 		err := BufferPrintf(dialect, buf, args, params, env, excludedTableQualifiers, format, f.Values)
 		if err != nil {

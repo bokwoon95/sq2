@@ -27,7 +27,7 @@ func NewStringField(fieldName string, tableInfo TableInfo) StringField {
 
 func StringFieldf(format string, values ...interface{}) StringField {
 	return StringField{info: FieldInfo{
-		Formats: map[string]string{"default": format},
+		Formats: [][2]string{{"default", format}},
 		Values:  values,
 	}}
 }

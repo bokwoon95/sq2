@@ -30,7 +30,7 @@ func NewTimeField(fieldName string, tableInfo TableInfo) TimeField {
 
 func TimeFieldf(format string, values ...interface{}) TimeField {
 	return TimeField{info: FieldInfo{
-		Formats: map[string]string{"default": format},
+		Formats: [][2]string{{"default", format}},
 		Values:  values,
 	}}
 }

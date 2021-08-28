@@ -30,16 +30,20 @@ func (f CustomField) AppendSQLExclude(dialect string, buf *bytes.Buffer, args *[
 
 func Fieldf(format string, values ...interface{}) CustomField {
 	return CustomField{info: FieldInfo{
-		Formats: map[string]string{"default": format},
+		Formats: [][2]string{{"default", format}},
 		Values:  values,
 	}}
 }
 
 func FieldfDialect(formats map[string]string, values ...interface{}) CustomField {
-	return CustomField{info: FieldInfo{
-		Formats: formats,
+	customField := CustomField{info: FieldInfo{
+		Formats: make([][2]string, 0, len(formats)),
 		Values:  values,
 	}}
+	for dialect, format := range formats {
+		customField.info.Formats = append(customField.info.Formats, [2]string{dialect, format})
+	}
+	return customField
 }
 
 func (f CustomField) As(alias string) CustomField {
