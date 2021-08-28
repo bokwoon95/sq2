@@ -215,7 +215,4 @@ Once you have your table-representative structs, you can use them in the query b
 
 {{ block "02" . -}}
 
-- Fantastic material. [https://github.com/CourseOrchestra/2bass](https://github.com/CourseOrchestra/2bass)
-- [https://dzone.com/articles/trouble-free-database-migration-idempotence-and-co](https://dzone.com/articles/trouble-free-database-migration-idempotence-and-co)
-
 {{- end }}

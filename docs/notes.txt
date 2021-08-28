@@ -11,6 +11,9 @@ note: A single table struct can be used to generate DDL for all three SQL dialec
 an entire h1 section dedicated to `ddl`
 - need to include the entire reference list for struct annotations as well as the corresponding DDL() method (need to explain the DDL() method in the first place)
 
+- Fantastic material. [https://github.com/CourseOrchestra/2bass](https://github.com/CourseOrchestra/2bass)
+- [https://dzone.com/articles/trouble-free-database-migration-idempotence-and-co](https://dzone.com/articles/trouble-free-database-migration-idempotence-and-co)
+
 quickstart:
 - here's a link to each SQL feature
 - here's a link to each SQL query reference
