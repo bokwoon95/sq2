@@ -272,7 +272,7 @@ ACTOR.LAST_UPDATE        // "Actor".last_update
 
 ### Available Field types
 
-`sq` provides several built-in Field types for mapping column types to. All other SQL field types (e.g. INT[], TEXT[], TSVECTOR) would fall under `CustomField`, which can be used to represent any column type.
+`sq` provides several built-in Field types for mapping column types to. Any other SQL type (e.g. INT[], TEXT[], TSVECTOR) would fall under `CustomField`.
 
 | Field | Go Type | Default SQL type |
 |-------|-----|-------|
