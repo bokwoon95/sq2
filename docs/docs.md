@@ -180,28 +180,111 @@ DATABASE_URL='postgres://username:password@localhost:5432/db?sslmode=disable'
 sq-ddl -dsn=$DATABASE_URL
 sq-ddl -dsn=$DATABASE_URL -output=ddl -outfile=schema.sql
 sq-ddl -dsn=$DATABASE_URL -output=json -outfile=db.json
-sq-ddl -dsn=$DATABASE_URL -output=structs -outfile=tables.go -pkg=tables -overwrite
+sq-ddl -dsn=$DATABASE_URL -output=structs,constructors -outfile=tables.go -pkg=tables -overwrite
 sq-ddl -dsn=$DATABASE_URL -with-schemas=main,public,db -without-tables=schema_migrations
 # -db-driver -db-user -db-pass -db-port -db-host -db-name
 ```
 
 ## How do I define tables in code?
 
-Mention how the flow is you define a struct that embeds sq.TableInfo, then how each field should correspond to a column in the table.
+A table struct is a struct that embeds an `sq.TableInfo` followed by one or more `Field`s. The embedded `sq.TableInfo` must be the very first field in the struct.
 
-[Types]
+The utility of defining table structs by hand instead of code generating them is that they can then be used to automatically generate (and apply) DDL via the [Migrate/AutoMigrate](#) functions. When used that way, the structs become the source of truth for your table schema.
 
-Each field has types: bring up the type mapping table (as well as the backup `CustomField` for anything else).
+An example:
 
-[Naming]
+```go
+type ACTOR struct {
+    sq.TableInfo
+    ACTOR_ID    sq.NumberField
+    FIRST_NAME  sq.StringField
+    LAST_NAME   sq.StringField
+    LAST_UPDATE sq.TimeField
+}
+ACTOR := sq.New[ACTOR]()
+err := sq.AutoMigrate("sqlite", db, sq.CreateMissing, sq.WithTables(ACTOR))
+```
 
-Each table's name is determined by setting the Name field in the embedded sq.TableInfo struct.
-Each field's name is determined when calling the Field constructor (list the field constructor examples).
-Since setting the table and field names manually each time will be tedious, `sq` provides a helper function New() and NewAliased() which instantiates a table struct via reflection.
-They will first check for an `sq.name` struct annotation, followed by lowercasing the field name (for columns) or struct name (for tables).
+which corresponds to
 
-each field's name is determined upon setting
-each field's name will be implicitly mapped by simply uppercasing or lowercasing depending on the mapping direction.
-mention how the user can override this behaviour by adding the sq.name struct annotation, but it would only be picked up by sq.New/sq.NewAliased
+```sql
+CREATE TABLE IF NOT EXISTS actor (
+    actor_id INT
+    ,first_name TEXT
+    ,last_name TEXT
+    ,last_update DATETIME
+);
+```
+
+### Instantiating table structs with `sq.New`
+Prior to usage, tables structs must be instantiated using `sq.New`. That fills in the table and column names in the struct via reflection. If you wish to avoid the reflection overhead, you can use a custom constructor function instead (either handwritten or generated from the database with [`sq-ddl`](#)).
+
+`sq.NewAliased` performs the same thing as `sq.New`, except it also sets the table alias.
+
+```go
+type ACTOR struct {
+    sq.TableInfo
+    ACTOR_ID    sq.NumberField
+    FIRST_NAME  sq.StringField
+    LAST_NAME   sq.StringField
+    LAST_UPDATE sq.TimeField
+}
+
+ACTOR := sq.New[ACTOR]()       // FROM actor
+
+a := sq.NewAliased[ACTOR]("a") // FROM actor AS a
+
+// Custom constructor function
+func NEW_ACTOR() ACTOR {
+    tableInfo := sq.TableInfo{TableName: "actor"}
+    return ACTOR{
+        TableInfo:   tableInfo,
+        ACTOR_ID:    sq.NewNumberField("actor_id", tableInfo),
+        FIRST_NAME:  sq.NewStringField("first_name", tableInfo)
+        LAST_NAME:   sq.NewStringField("last_name", tableInfo),
+        LAST_UPDATE: sq.NewTimeField("last_update", tableInfo),
+    }
+}
+ACTOR := NEW_ACTOR()     // FROM actor
+ACTOR.ACTOR_ID           // actor.actor_id
+ACTOR.FIRST_NAME         // actor.first_name
+ACTOR.LAST_NAME          // actor.last_name
+ACTOR.LAST_UPDATE        // actor.last_update
+```
+
+By default, the default name assigned by `sq.New` is simply the lowercased struct name/field name. This naming default can be overridden with an `sq.name` struct annotation for the corresponding table or field. Note that names (i.e. SQL identifiers) are quoted accordingly based on the database dialect.
+
+```go
+type ACTOR struct {
+    sq.TableInfo `sq:"name=Actor"`
+    ACTOR_ID     sq.NumberField `sq:"name=ActorID"`
+    FIRST_NAME   sq.StringField `sq:"name=firstname"`
+    LastName     sq.StringField
+    Last_Update  sq.TimeField
+}
+
+ACTOR := sq.New[ACTOR]() // FROM "Actor"
+ACTOR.ACTOR_ID           // "Actor"."ActorID"
+ACTOR.FIRST_NAME         // "Actor".firstname
+ACTOR.LAST_NAME          // "Actor".lastname
+ACTOR.LAST_UPDATE        // "Actor".last_update
+```
+
+### Available Field types
+
+`sq` provides several built-in Field types for mapping column types to. All other SQL field types (e.g. INT[], TEXT[], TSVECTOR) would fall under `CustomField`, which can be used to represent any column type.
+
+| Field | Go Type | Default SQL type |
+|-------|-----|-------|
+| `sq.BlobField` | `[]byte` | `BLOB` (SQLite/MySQL), `BYTEA` (Postgres) |
+| `sq.BooleanField` | `bool` | `BOOLEAN` |
+| `sq.NumberField` | `int, int64, float64, etc` | `INT` |
+| `sq.StringField` | `string` | `TEXT` (SQLite/Postgres), `VARCHAR(255)` (MySQL) |
+| `sq.TimeField` | `time.Time` | `DATETIME` (SQLite/MySQL), `TIMESTAMPTZ` (Postgres) |
+| `sq.JSONField` | any JSON compatible type | `JSON` (SQLite/MySQL), `JSONB` (Postgres) |
+| `sq.UUIDField` | google/uuid | `BINARY(16)` (SQLite/MySQL), `UUID` (Postgres) |
+| `sq.CustomField` | - | - |
+
+TODO: consider moving the comprehensive reference of ddl annotations into ddl/docs instead. A separate documentation file can then be generated for ddl, and it will be hosted an a different URL.
 
 ## How do I handle migrations?
