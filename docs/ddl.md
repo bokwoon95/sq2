@@ -92,8 +92,78 @@ CREATE TABLE actor (
 );
 ```
 
+## Dialect-specific DDL
+
+## Constraints and Indexes have default generated names
+
 ## DDL struct tag reference
 
-### 
+### `type`
+
+### `auto_increment`, `autoincrement`, `identity`, `alwaysidentity`
+
+### `notnull`
+
+### `onupdatecurrenttimestamp`
+
+### `generated`
+
+### `stored`
+
+### `virtual` (column)
+
+### `virtual` (table)
+
+### `collate`
+
+### `default`
+
+### `primarykey`
+
+### `primarykey.cols`
+
+### `primarykey.deferrable`
+
+### `primarykey.deferred`
+
+### `primarykey.ignore`
+
+### `references`
+
+### `references.name`
+
+### `references.cols`
+
+### `references.onupdate`
+
+### `references.ondelete`
+
+### `references.deferrable`
+
+### `references.deferred`
+
+### `references.ignore`
+
+### `unique`
+
+### `unique.cols`
+
+### `unique.ignore`
+
+### `index`
+
+### `index.cols`
+
+### `index.unique`
+
+### `index.using`
+
+### `index.where`
+
+### `index.include`
+
+### `index.ignore`
+
+### `ignore`
 
 note: why aren't sequences supported? I don't think sequences are ever used explicitly, they're almost always created as an implementation side effect of using auto incremented values. If you have a need for defining sequences explicitly and would like to see it in this package, please file an issue detailing why you use them and what you want the API to look like.
