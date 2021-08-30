@@ -786,11 +786,6 @@ func (tbl *Table) LoadTable(dialect string, table sq.SchemaTable) (err error) {
 			if err != nil {
 				return fmt.Errorf("%s: %s", qualifiedTable, err.Error())
 			}
-		case "check":
-			err = tbl.loadConstraintConfig(dialect, CHECK, tbl.TableSchema, tbl.TableName, nil, modifier[1])
-			if err != nil {
-				return fmt.Errorf("%s: %s", qualifiedTable, err.Error())
-			}
 		case "index":
 			err = tbl.loadIndexConfig(dialect, tbl.TableSchema, tbl.TableName, nil, modifier[1])
 			if err != nil {

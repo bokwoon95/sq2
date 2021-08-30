@@ -343,8 +343,6 @@ func (tbl *Table) loadConstraintConfig(dialect, constraintType, tableSchema, tab
 			default:
 				return fmt.Errorf("unknown value '%s' for 'references.ondelete' modifier", modifier[1])
 			}
-		case "check":
-			constraint.CheckExpr = modifier[1]
 		case "deferrable":
 			if dialect != sq.DialectMySQL {
 				constraint.IsDeferrable = true
@@ -460,11 +458,6 @@ func (tbl *Table) loadColumnConfig(dialect, columnName, columnType, config strin
 			}
 		case "unique":
 			err = tbl.loadConstraintConfig(dialect, UNIQUE, column.TableSchema, column.TableName, []string{column.ColumnName}, modifier[1])
-			if err != nil {
-				return fmt.Errorf("%s: %s", qualifiedColumn, err.Error())
-			}
-		case "check":
-			err = tbl.loadConstraintConfig(dialect, CHECK, column.TableSchema, column.TableName, []string{column.ColumnName}, modifier[1])
 			if err != nil {
 				return fmt.Errorf("%s: %s", qualifiedColumn, err.Error())
 			}
