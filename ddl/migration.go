@@ -19,6 +19,7 @@ const (
 	UpdateExisting
 	DropExtraneous
 	DropCascade
+	ValidateColumnReferences // TODO: validate indexes, pkey, unique, fkey, excl
 )
 
 type Migration struct {
