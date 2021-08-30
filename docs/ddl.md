@@ -21,7 +21,7 @@ Every Field provided by `sq` has a default SQL type, so you don't have to explic
 | `sq.UUIDField` | google/uuid | `BINARY(16)` (SQLite/MySQL), `UUID` (Postgres) |
 | `sq.CustomField` | - | - |
 
-## How to use DDL Struct tags
+## How to use DDL struct tags
 
 A `ddl` struct tag consists of one or more modifiers. Modifiers are delimited by spaces.
 
@@ -82,12 +82,16 @@ CREATE TABLE film_actor (
 
 <br>
 
-Values themselves may have additional modifiers. Since modifiers are delimited by spaces, values with modifiers must always be {brace quoted}.
+Modifier values themselves may have additional submodifiers. Since modifiers are delimited by spaces, modifier values containing such submodifiers must always be {brace quoted} in order to differentiate between the submodifiers and the top-level modifiers.
 
 ```go
 type FILM_ACTOR struct {
     sq.TableInfo
     ACTOR_ID    sq.NumberField `ddl:"notnull references={actor.actor_id onupdate=cascade ondelete=restrict}"`
+    //                               └─────┘ │           └────────────┘ └──────────────┘ └───────────────┘│
+    //                              modifier │           modifier value    submodifier      submodifier   │
+    //                                       └────────────────────────────────────────────────────────────┘
+    //                                                                  modifier
     LAST_UPDATE sq.TimeField   `ddl:"notnull default=CURRENT_TIMESTAMP"`
 }
 ```
@@ -187,11 +191,13 @@ CREATE INDEX lorem_ipsum_dolor_sit_amet ON film (description);
 
 ## How to specify multiple columns for an index or constraint?
 
-The `primarykey`, `unique` and `index` modifiers each accept a submodifier `cols` which takes in a comma-separated list of columns participating in the constraint or index. By default this submodifier is not provided, so the column that the modifier is defined on is used implicitly. But in order to define a multicolumn constraint or index, the `cols` submodifier must be provided explicitly. When the `cols` submodifier is provided, the modifier no longer needs to be associated with a column and can be defined on the sq.TableInfo field:
+The `primarykey`, `unique` and `index` modifiers each accept a submodifier `cols` which takes in a comma-separated list of columns participating in the constraint or index. By default this submodifier is not provided, so the column that the modifier is defined on is used implicitly. But in order to define a multicolumn constraint or index, the `cols` submodifier must be provided explicitly. When the `cols` submodifier is provided, the modifier no longer needs to be defined on a column field and can be defined on the sq.TableInfo field:
 
 ```go
 type FILM_ACTOR struct {
     sq.TableInfo `ddl:"index={my_multicolumn_index cols=film_id,actor_id unique}"`
+    //                                                  └──────────────┘
+    //                                                  explicit columns
     FILM_ID      sq.NumberField `ddl:"references=film.film_id"`
     ACTOR_ID     sq.NumberField `ddl:"references=actor.actor_id"`
 }
@@ -205,9 +211,11 @@ CREATE TABLE film_actor (
     ,CONSTRAINT film_actor_actor_id_fkey FOREIGN KEY (actor_di) REFERENCES actor (actor_id)
 )
 CREATE UNIQUE INDEX my_multicolumn_index ON film_actor (film_id, actor_id);
+--                                                      └───────────────┘
+--                                                      explicit columns
 ```
 
-Notice how the index name `my_multicolumn_index` was passed in to the index modifier. The way `ddl` struct tags work, if you want to specify a submodifier for a modifier you have to first pass in a value. If you want to use the [default naming convention](#), you can use a period `.` as the value to signal that you wish for the name to be automatically generated.
+Notice how the index name `my_multicolumn_index` was passed in to the index modifier. The way `ddl` struct tags work, if you want to specify a modifier you have to first pass in a value (in this case the index name). If you want to use the [default naming convention](#), you can use a period `.` as the value to signal that you wish for the name to be automatically generated.
 
 ```go
 type FILM_ACTOR struct {
@@ -234,46 +242,50 @@ CREATE UNIQUE INDEX film_actor_film_id_actor_id_idx ON film_actor (film_id, acto
 ## DDL struct tag reference
 
 ### `type`
-Applies to columns only.
+Value: the column type.
 
 ### `auto_increment`
-Applies to columns only.
+Value: N.A.
 
 ### `autoincrement`
-Applies to columns only.
+Value: N.A.
 
 ### `identity`
-Applies to columns only.
+Value: N.A.
 
 ### `alwaysidentity`
-Applies to columns only.
+Value: N.A.
 
 ### `notnull`
-Applies to columns only.
+Value: N.A.
 
 ### `onupdatecurrenttimestamp`
-Applies to columns only.
+Value: N.A.
 
 ### `generated`
-Applies to columns only.
+Value: the generated column expression.
 
 ### `stored`
 Applies to columns only.
 
+Value: N.A.
+
 ### `virtual` (column)
 Applies when defined on a column (i.e. not sq.TableInfo).
+
+Value: N.A.
 
 ### `virtual` (table)
 Applies when defined on a table (i.e. sq.TableInfo).
 
 ### `collate`
-Applies to columns only.
+Value: the column collation.
 
 ### `default`
-Applies to columns only.
+Value: the column default.
 
 ### `primarykey`
-Applies to both tables and columns.
+Value: the name of the primary key constraint.
 
 ### `primarykey.cols`
 
@@ -284,9 +296,10 @@ Applies to both tables and columns.
 ### `primarykey.ignore`
 
 ### `references`
-Applies to both tables and columns.
+Value: the name of the referenced column.
 
 ### `references.name`
+Value: the name of the foreign key constraint.
 
 ### `references.cols`
 
@@ -301,14 +314,14 @@ Applies to both tables and columns.
 ### `references.ignore`
 
 ### `unique`
-Applies to both tables and columns.
+Value: the name of the unique constraint.
 
 ### `unique.cols`
 
 ### `unique.ignore`
 
 ### `index`
-Applies to both tables and columns.
+Value: the name of the index.
 
 ### `index.cols`
 
