@@ -189,7 +189,7 @@ sq-ddl -dsn=$DATABASE_URL -with-schemas=main,public,db -without-tables=schema_mi
 
 A table struct is a struct that embeds an `sq.TableInfo` followed by one or more `Field`s. The embedded `sq.TableInfo` must be the very first field in the struct.
 
-The utility of defining table structs by hand instead of code generating them is that they can then be used to automatically generate (and apply) DDL via the [Migrate/AutoMigrate](#) functions. When used that way, the structs become the source of truth for your table schema.
+The utility of defining table structs by hand instead of code generating them is that they can then be used to automatically generate (and apply) DDL via the [ddl.Migrate/ddl.AutoMigrate](#) functions. When used that way, the structs become the source of truth for your table schema.
 
 An example:
 
@@ -202,7 +202,7 @@ type ACTOR struct {
     LAST_UPDATE sq.TimeField
 }
 ACTOR := sq.New[ACTOR]()
-err := sq.AutoMigrate("sqlite", db, sq.CreateMissing, sq.WithTables(ACTOR))
+err := ddl.AutoMigrate("sqlite", db, sq.CreateMissing, sq.WithTables(ACTOR))
 ```
 
 which corresponds to
@@ -287,4 +287,8 @@ ACTOR.LAST_UPDATE        // "Actor".last_update
 
 TODO: consider moving the comprehensive reference of ddl annotations into ddl/docs instead. A separate documentation file can then be generated for ddl, and it will be hosted an a different URL.
 
+For more information about type mapping, see the [documentation for ddl](#)
+
 ## How do I handle migrations?
+
+See [migrations](#).
