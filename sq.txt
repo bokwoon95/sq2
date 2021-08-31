@@ -53,6 +53,14 @@ sq.RetryTxContext
 sq.Retry
 sq.RetryContext
 
+for i := 0; i < 10; i++ {
+    db.DoThing()
+    if err != nil {
+        continue
+    }
+    break
+}
+
 if you want people to be able to log who did what on a table using
 logQueryStats, you need to provide the operation and tables affected as well.
 At last for inserts and updates and deletes, the table name must be provided.
