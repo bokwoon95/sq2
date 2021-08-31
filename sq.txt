@@ -47,6 +47,12 @@ err := sq.RetryTxContext(ctx, 0, func(tx *sql.Tx) error {
     return errors.Is(txErr, sq.ErrRetryTx) && tries < 10
 })
 
+sq.Tx
+sq.TxContext
+sq.RetryTxContext
+sq.Retry
+sq.RetryContext
+
 if you want people to be able to log who did what on a table using
 logQueryStats, you need to provide the operation and tables affected as well.
 At last for inserts and updates and deletes, the table name must be provided.
