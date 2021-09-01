@@ -81,6 +81,8 @@ type Logger interface {
 	GetLogSettings() LogSettings
 }
 
+// TODO: LoggerDB should no longer be a struct because I want users to be able
+// to pass in their own database wrappers that implement logging.
 type LoggerDB struct {
 	Logger
 	DB
