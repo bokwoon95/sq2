@@ -1,14 +1,17 @@
-`ddl` is a package that can read `sq` tables and generate the DDL commands needed to construct them.
+`ddl` is a package that introspects `sq` table structs and creates them in the database. A typical user flow looks like this:
 
-Table and column attributes can be defined on a table struct either via **struct tags** or the **`DDLTable` interface** (or both).
+1. Define table structs corresponding to SQL tables.
+2. Pass those table structs to [Migrate/AutoMigrate](#) to generate the necessary DDL needed to create those tables.
+
+Table and column attributes can be defined either via **struct tags** or the **`DDLTable` interface** (or both).
 
 `ddl` does not handle the setting of the table name or column name, that is handled by `sq` (see the documentation for [`sq.New`](#)).
 
-## How are `sq` Fields mapped to SQL types?
+## How do `sq` Fields map to SQL types?
 
 Every Field provided by `sq` has a default SQL type, so you don't have to explicitly specify the type if the default is what you already want.
 
-`sq.CustomField` is a catch-all field that is meant to accomodate other SQL types not mentioned here e.g. `INT[]`, `TEXT[]`, `TSVECTOR`. `sq.CustomField` has no default SQL type, therefore a type must always be specified.
+`sq.CustomField` is the exception, it is a catch-all field that is meant to accomodate other SQL types not mentioned here e.g. `INT[]`, `TEXT[]`, `TSVECTOR`. `sq.CustomField` has no default SQL type, therefore a type must always be specified.
 
 | Field | Go Type | Default SQL type |
 |-------|-----|-------|
@@ -29,6 +32,8 @@ A `ddl` struct tag consists of one or more modifiers. Modifiers are delimited by
 type ACTOR struct {
     sq.TableInfo
     ACTOR_ID sq.NumberField `ddl:"notnull primarykey identity"`
+    //                            └─────┘ └────────┘ └──────┘
+    //                           modifier  modifier   modifier
 }
 ```
 ```sql
@@ -41,13 +46,17 @@ CREATE TABLE actor (
 
 <br>
 
-Modifiers may be have values associated with them on the right hand side of an equals '=' sign. No spaces are allowed around the '=' sign, since a space would start a new modifier.
-Notice how the value for the `default` modifier `DATETIME('now')` has no spaces, so no brace quoting is necessary.
+Modifiers may have values associated with them on the right hand side of an equals '=' sign. No spaces are allowed around the '=' sign, since a space would start a new modifier.
+Notice how the value for the `default` modifier `DATETIME('now')` has no spaces, so no {brace quoting} is necessary.
 
 ```go
 type ACTOR struct {
     sq.TableInfo
+    //                                modifier value               modifier value
+    //                                  ┌───────┐                 ┌─────────────┐
     LAST_UPDATE sq.TimeField `ddl:"type=TIMESTAMP notnull default=DATETIME('now')"`
+    //                             └────────────┘ └─────┘ └─────────────────────┘
+    //                                modifier    modifier       modifier
 }
 ```
 ```sql
@@ -64,9 +73,11 @@ If a modifier value does contain spaces, the entire value has to be {brace quote
 type FILM_ACTOR struct {
     sq.TableInfo
     ACTOR_ID    sq.NumberField `ddl:"notnull references=actor.actor_id"`
+    //                                             brace quoted because of whitespace
+    //                                               ┌────────────────────────────┐
     LAST_UPDATE sq.TimeField   `ddl:"notnull default={DATETIME('now', 'localtime')}"`
-    //                                                               ↑
-    //                                                          whitespace
+    //                               └─────┘ └────────────────────────────────────┘
+    //                               modifier               modifier
 }
 ```
 ```sql
@@ -82,16 +93,16 @@ CREATE TABLE film_actor (
 
 <br>
 
-Modifier values themselves may have additional submodifiers. Since modifiers are delimited by spaces, modifier values containing such submodifiers must always be {brace quoted} in order to differentiate between the submodifiers and the top-level modifiers.
+A modifier may have additional submodifiers. Such submodifiers are always defined after an initial modifier value, which has to be provided. When submodifiers are present, brace quoting is always necessary so that submodifiers are differentiated from top-level modifiers.
 
 ```go
 type FILM_ACTOR struct {
     sq.TableInfo
+    //                                                   modifier value    submodifier      submodifier
+    //                                                   ┌────────────┐ ┌──────────────┐ ┌───────────────┐
     ACTOR_ID    sq.NumberField `ddl:"notnull references={actor.actor_id onupdate=cascade ondelete=restrict}"`
-    //                               └─────┘ │           └────────────┘ └──────────────┘ └───────────────┘│
-    //                              modifier │           modifier value    submodifier      submodifier   │
-    //                                       └────────────────────────────────────────────────────────────┘
-    //                                                                  modifier
+    //                               └─────┘ └────────────────────────────────────────────────────────────┘
+    //                              modifier                         modifier
     LAST_UPDATE sq.TimeField   `ddl:"notnull default=CURRENT_TIMESTAMP"`
 }
 ```
@@ -120,11 +131,13 @@ Some modifiers are already dialect-specific e.g. `auto_increment` only applies t
 type FILM struct {
     sq.TableInfo
     FILM_ID          sq.NumberField `ddl:"sqlite:type=INTEGER primarykey auto_increment identity"`
-    TITLE            sq.StringField `ddl:"mysql:type=VARCHAR(500)"`
+    TITLE            sq.StringField `ddl:"mysql:type=VARCHAR(50)"`
     SPECIAL_FEATURES sq.CustomField `ddl:"type=JSON postgres:type=TEXT[]"`
 }
 ```
 ```sql
+-- One struct maps to idiomatic tables for three different dialects
+
 -- sqlite
 CREATE TABLE film (
     film_id INTEGER PRIMARY KEY
@@ -144,7 +157,7 @@ CREATE TABLE film (
 -- mysql
 CREATE TABLE film (
     film_id INT AUTO_INCREMENT
-    ,title VARCHAR(500)
+    ,title VARCHAR(50)
     ,special_features JSON
 
     ,PRIMARY KEY (film_id)
@@ -153,7 +166,7 @@ CREATE TABLE film (
 
 ## Default names for Constraints and Indexes
 
-Constraints and indexes will have default names automatically generated for them if you do not provide one. The names follow [Postgres' naming convention](https://stackoverflow.com/a/4108266) of
+Constraints and indexes will have default names automatically generated for them if you do not provide one. The generated names follow [Postgres' naming convention](https://stackoverflow.com/a/4108266) of
 
 `{tablename}_{columnname(s)}_{suffix}`
 
@@ -193,13 +206,15 @@ CREATE INDEX lorem_ipsum_dolor_sit_amet ON film (description);
 
 ## How to specify multiple columns for an index or constraint?
 
-The `primarykey`, `unique` and `index` modifiers each accept a submodifier `cols` which takes in a comma-separated list of columns participating in the constraint or index. By default this submodifier is not provided, so the column that the modifier is defined on is used implicitly. But in order to define a multicolumn constraint or index, the `cols` submodifier must be provided explicitly. When the `cols` submodifier is provided, the modifier no longer needs to be defined on a column field and can be defined on the sq.TableInfo field:
+The `primarykey`, `unique` and `index` modifiers each accept a submodifier `cols` which takes in a comma-separated list of columns participating in the constraint or index.
+Usually this is not needed when the struct tag is defined on a table field, as the field would implicitly be used for `cols`. But if multiple columns are needed, the `cols` submodifier must be defined explicitly defined.
+In this case, the modifier can be defined in the sq.TableInfo struct tag (although any other struct tag would also work):
 
 ```go
 type FILM_ACTOR struct {
     sq.TableInfo `ddl:"index={my_multicolumn_index cols=film_id,actor_id unique}"`
-    //                                                  └──────────────┘
-    //                                                  explicit columns
+    //                                 ↑                └──────────────┘
+    //                          custom index name       explicit columns
     FILM_ID      sq.NumberField `ddl:"references=film.film_id"`
     ACTOR_ID     sq.NumberField `ddl:"references=actor.actor_id"`
 }
@@ -213,11 +228,11 @@ CREATE TABLE film_actor (
     ,CONSTRAINT film_actor_actor_id_fkey FOREIGN KEY (actor_di) REFERENCES actor (actor_id)
 )
 CREATE UNIQUE INDEX my_multicolumn_index ON film_actor (film_id, actor_id);
---                                                      └───────────────┘
---                                                      explicit columns
+--                            ↑                         └───────────────┘
+--                     custom index name                explicit columns
 ```
 
-Notice how the index name `my_multicolumn_index` was passed in to the index modifier. The way `ddl` struct tags work, if you want to specify a modifier you have to first pass in a value (in this case the index name). If you want to use the [default naming convention](#), you can use a period `.` as the value to signal that you wish for the name to be automatically generated.
+Notice how the index name `my_multicolumn_index` was passed in to the index modifier. If you're fine with the [default naming convention](#), you can use a period `.` in place of the name to signal that you want to use the default name.
 
 ```go
 type FILM_ACTOR struct {
@@ -238,18 +253,45 @@ CREATE TABLE film_actor (
 )
 CREATE UNIQUE INDEX film_actor_film_id_actor_id_idx ON film_actor (film_id, actor_id);
 --                                 ↑
---                    automatically generated name
+--                        default index name
 ```
 
 ## DDL struct tag reference
 
 ### `type`
-Value: the column type.
+Value: the column type. Any value passed in is literally passed to the database.
 
 ```go
+type FILM struct {
+    sq.TableInfo
+    TITLE       sq.StringField `ddl:"type=VARCHAR(50)"`
+    LAST_UPDATE sq.TimeField   `ddl:"type={TIMESTAMP WITH TIME ZONE}"`
+}
 ```
 ```sql
+CREATE TABLE film (
+    title VARCHAR(50)
+    ,last_update TIMESTAMP WITH TIME ZONE
+);
 ```
+
+This is also where you can define special types like SERIAL or ENUM.
+
+```go
+type FILM struct {
+    sq.TableInfo
+    FILM_ID     sq.NumberField `ddl:"type=SERIAL primarykey"`
+    FILM_RATING sq.StringField `ddl:"type={ENUM('G', 'PG', 'PG-13', 'R', 'NC-17')} default='G'"`
+}
+```
+```sql
+CREATE TABLE film (
+    film_id SERIAL PRIMARY KEY
+    ,film_rating ENUM('G', 'PG', 'PG-13', 'R', 'NC-17') DEFAULT 'G'
+);
+```
+
+NOTE: if your Postgres version is 10 or higher, [you should not be using SERIAL](https://stackoverflow.com/a/55300741/3030828). Instead, use [`identity`](#).
 
 ### `auto_increment`
 Value: N.A.
@@ -257,8 +299,17 @@ Value: N.A.
 MySQL only. Sets the column to be `AUTO_INCREMENT`.
 
 ```go
+type FILM struct {
+    sq.TableInfo
+    FILM_ID sq.NumberField `ddl:"primarykey auto_increment"`
+}
 ```
 ```sql
+CREATE TABLE film (
+    film_id INT AUTO_INCREMENT
+
+    ,PRIMARY KEY (film_id)
+);
 ```
 
 ### `autoincrement`
@@ -267,9 +318,19 @@ Value: N.A.
 SQLite only. Sets the column to be `AUTOINCREMENT`.
 
 ```go
+type FILM struct {
+    sq.TableInfo
+    FILM_ID sq.NumberField `ddl:"type=INTEGER primarykey autoincrement"`
+}
 ```
 ```sql
+CREATE TABLE film (
+    film_id INTEGER PRIMARY KEY AUTOINCREMENT
+);
 ```
+
+NOTE: SQLite's author [recommends against using AUTOINCREMENT](https://www.sqlite.org/autoinc.html) if you just need an automatically generated primary key.
+Defining `INTEGER PRIMARY KEY` on a column is enough to guarantee automatically generated values, and using AUTOINCREMENT will impose additional CPU and memory load on the database.
 
 ### `identity`
 Value: N.A.
@@ -277,8 +338,17 @@ Value: N.A.
 Postgres only. Sets the column to be `GENERATED BY DEFAULT AS IDENTITY`.
 
 ```go
+type FILM struct {
+    sq.TableInfo
+    FILM_ID sq.NumberField `ddl:"primarykey identity"`
+}
 ```
 ```sql
+CREATE TABLE film (
+    film_id INT GENERATED BY DEFAULT AS IDENTITY
+
+    ,CONSTRAINT film_film_id_pkey PRIMARY KEY (film_id)
+);
 ```
 
 ### `alwaysidentity`
@@ -287,8 +357,17 @@ Value: N.A.
 Postgres only. Sets the column to be `GENERATED ALWAYS AS IDENTITY`.
 
 ```go
+type FILM struct {
+    sq.TableInfo
+    FILM_ID sq.NumberField `ddl:"primarykey alwaysidentity"`
+}
 ```
 ```sql
+CREATE TABLE film (
+    film_id INT GENERATED ALWAYS AS IDENTITY
+
+    ,CONSTRAINT film_film_id_pkey PRIMARY KEY (film_id)
+);
 ```
 
 ### `notnull`
@@ -297,8 +376,15 @@ Value: N.A.
 Sets the column to be `NOT NULL`.
 
 ```go
+type ACTOR struct {
+    sq.TableInfo
+    FIRST_NAME sq.StringField `ddl:"type=VARCHAR(255) notnull"`
+}
 ```
 ```sql
+CREATE TABLE actor (
+    first_name VARCHAR(255) NOT NULL
+);
 ```
 
 ### `onupdatecurrenttimestamp`
@@ -307,8 +393,15 @@ Value: N.A.
 MySQL only. Enables `ON UPDATE CURRENT_TIMESTAMP` for the column.
 
 ```go
+type ACTOR struct {
+    sq.TableInfo
+    LAST_UPDATE sq.TimeField `ddl:"default=CURRENT_TIMESTAMP onupdatecurrenttimestamp"`
+}
 ```
 ```sql
+CREATE TABLE actor (
+    last_update DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
 ```
 
 ### `generated`
@@ -317,54 +410,132 @@ Value: the generated column expression.
 Sets the column's generated expression.
 
 ```go
+type ACTOR struct {
+    sq.TableInfo
+    FIRST_NAME sq.StringField
+    LAST_NAME  sq.StringField
+    FULL_NAME  sq.StringField `ddl:"generated={first_name || ' ' || last_name} virtual"`
+}
 ```
 ```sql
+CREATE TABLE actor (
+    first_name TEXT
+    ,last_name TEXT
+    ,full_name TEXT GENERATED ALWAYS AS (first_name || ' ' || last_name) VIRTUAL
+)
 ```
 
 ### `stored`
 Value: N.A.
 
+Marks the column's generated expression as STORED. It does nothing if the column does not have a generated expression.
+
 ```go
+type ACTOR struct {
+    sq.TableInfo
+    FIRST_NAME sq.StringField
+    LAST_NAME  sq.StringField
+    FULL_NAME  sq.StringField `ddl:"generated={first_name || ' ' || last_name} stored"`
+}
 ```
 ```sql
+CREATE TABLE actor (
+    first_name TEXT
+    ,last_name TEXT
+    ,full_name TEXT GENERATED ALWAYS AS (first_name || ' ' || last_name) STORED
+)
 ```
 
 ### `virtual` (column)
-Applies when defined on a column (i.e. not sq.TableInfo).
+Applies when defined on a column (i.e. not sq.TableInfo). For the other definition when defined on a table, see [`virtual`](#).
 
 Value: N.A.
 
+Marks the column's generated expression as VIRTUAL. It does nothing if the column does not have a generated expression.
+
 ```go
+type ACTOR struct {
+    sq.TableInfo
+    FIRST_NAME sq.StringField
+    LAST_NAME  sq.StringField
+    FULL_NAME  sq.StringField `ddl:"generated={first_name || ' ' || last_name} virtual"`
+}
 ```
 ```sql
+CREATE TABLE actor (
+    first_name TEXT
+    ,last_name TEXT
+    ,full_name TEXT GENERATED ALWAYS AS (first_name || ' ' || last_name) VIRTUAL
+)
 ```
+
+NOTE: Postgres does not support `VIRTUAL` generated columns. Even if you mark a generated columns as `virtual`, `ddl` will continue to treat the generated column as `STORED`. This restriction will be lifted if Postgres eventually supports `VIRTUAL` generated columns.
 
 ### `virtual` (table)
-Applies when defined on a table (i.e. sq.TableInfo).
+Applies when defined on a table (i.e. sq.TableInfo). For the other definition when defined on a column, see [`virtual`](#).
+
+Value: The name of an SQLite virtual table module (e.g. FTS5).
+
+SQLite only. Module arguments can be supplied after the module name (delimited by spaces). When the module specified is 'fts5' (case insensitive), the table struct columns will also be passed in as module arguments.
 
 ```go
+type FILM_TEXT struct {
+    sq.TableInfo `ddl:"virtual={fts5 content='film' content_rowid='film_id'}"`
+    TITLE        sq.StringField
+    DESCRIPTION  sq.StringField
+}
 ```
 ```sql
+CREATE VIRTUAL TABLE film_text USING fts5 (
+    title
+    ,description
+    ,content='film'
+    ,content_rowid='film_id'
+);
 ```
 
 ### `collate`
 Value: the column collation.
 
+For Postgres, the column collation will always be quoted with double quotes. I do not know why this is necessary, but Postgres seems to require it. The other databases do not have this behaviour.
+
 ```go
+type FILM_ACTOR_REVIEW struct {
+    sq.TableInfo
+    REVIEW_BODY sq.StringField `ddl:"collate=C"`
+}
 ```
 ```sql
+CREATE TABLE film_actor_review (
+    review_body TEXT COLLATE "C"
+);
 ```
 
 ### `default`
 Value: the column default.
 
+If the column default is anything other than a string, number, `TRUE`, `FALSE`, `CURRENT_DATE`, `CURRENT_TIME` or `CURRENT_TIMESTAMP`, it will be considered an SQL expression. For SQlite and MySQL, `ddl` will automatically wrap expressions in (brackets). This does not happen for Postgres, since Postgres does not have this restriction.
+
 ```go
+type FILM struct {
+    sq.TableInfo
+    TITLE       sq.StringField `ddl:"default=''"`
+    RENTAL_RATE sq.NumberField `ddl:"type=DECIMAL(4,2) default=4.99"`
+    RATING      sq.StringField `ddl:"default='G'"`
+    LAST_UPDATE sq.NumberField `ddl:"default=DATETIME('now')"`
+}
 ```
 ```sql
+CREATE TABLE film (
+    title TEXT DEFAULT ''
+    rental_rate DECIMAL(4,2) DEFAULT 4.99
+    rating TEXT DEFAULT 'G'
+    last_update DATETIME DEFAULT (DATETIME('now'))
+);
 ```
 
 ### `primarykey`
-Value: the name of the primary key constraint.
+Value: the name of the primary key constraint. If the name is omitted, the [default name](#) will be used instead.
 
 ```go
 ```
