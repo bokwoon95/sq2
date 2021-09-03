@@ -106,6 +106,8 @@ func defaultColumnType(dialect string, field sq.Field) (columnType string) {
 }
 
 // for outgoing values to the db
+// TODO: cleanup the mess between needsExpressionBrackets and toExpr. I should
+// only need one function, figure out the common ground.
 func needsExpressionBrackets(s string) bool {
 	if len(s) >= 2 && s[0] == '\'' && s[len(s)-1] == '\'' {
 		return false

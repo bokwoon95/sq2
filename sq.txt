@@ -16,6 +16,9 @@ tasks:
 - documentation site (stitchdocs)
 - Select().ForUpdate().ForShare().SkipLocked()
 - GroupBy().Cube().Rollup().GroupingSets()
+- .Collate() can be called on each field, allowing DDL to no longer require sq.FieldLiteral for collation
+    - This means that indexes can also utilize ASC/DESC NULLS FIRST/NULLS LAST without obscuring the field name
+- Postgres indexed expressions apparently don't need enclosing brackets. Remove them and check if the tests break.
 
 err := sq.Tx(func(tx *sql.Tx) error {
 })
