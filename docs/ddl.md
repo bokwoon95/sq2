@@ -1,7 +1,7 @@
-`ddl` is a package that introspects `sq` table structs and creates them in the database. A typical user flow looks like this:
+`ddl` is a package that introspects `sq` table structs and creates them in the database if they do not already exist. A typical workflow looks like this:
 
 1. Define table structs corresponding to SQL tables.
-2. Pass those table structs to [Migrate/AutoMigrate](#) to generate the necessary DDL needed to create those tables.
+2. On application startup, pass those table structs to [Migrate/AutoMigrate](#) ensure the tables exist in the database.
 
 Table and column attributes can be defined either via **struct tags** or the **`DDLTable` interface** (or both).
 
@@ -473,7 +473,7 @@ CREATE TABLE actor (
 )
 ```
 
-NOTE: Postgres does not support `VIRTUAL` generated columns. Even if you mark a generated columns as `virtual`, `ddl` will continue to treat the generated column as `STORED`. This restriction will be lifted if Postgres eventually supports `VIRTUAL` generated columns.
+NOTE: Postgres does not support `VIRTUAL` generated columns. Even if you mark a generated column as `virtual`, `ddl` will continue to treat the generated column as `STORED`. This restriction will be lifted if Postgres eventually supports `VIRTUAL` generated columns.
 
 ### `virtual` (table)
 Applies when defined on a table (i.e. sq.TableInfo). For the other definition when defined on a column, see [`virtual`](#).
@@ -503,8 +503,6 @@ CREATE VIRTUAL TABLE film_text USING fts5 (
 ### `collate`
 Value: the column collation.
 
-For Postgres, the column collation will always be quoted with double quotes. I do not know why this is necessary, but Postgres seems to require it. The other databases do not have this behaviour.
-
 ```go
 type FILM_ACTOR_REVIEW struct {
     sq.TableInfo
@@ -516,6 +514,8 @@ CREATE TABLE film_actor_review (
     review_body TEXT COLLATE "C"
 );
 ```
+
+For Postgres, the column collation will always be quoted with double quotes. I do not know why this is necessary, but Postgres seems to require it. The other databases do not have this behaviour.
 
 ### `default`
 Value: the column default.
@@ -542,9 +542,65 @@ CREATE TABLE film (
 
 ### `ignore`
 
+Value: a comma separated list of dialects. For these dialects, the column will be ignored. If the value is empty, all dialects will be ignored.
+
+Use `ignore` on an sq.TableInfo field to ignore the entire table.
+
 ```go
+type FILM struct {
+    sq.TableInfo
+    FILM_ID     sq.NumberField `ddl:"type=INTEGER primarykey"`
+    TITLE       sq.StringField
+    DESCRIPTION sq.StringField
+    FULLTEXT sq.StringField `ddl:"type=TSVECTOR ignore=sqlite,mysql"`
+}
+
+type FILM_TEXT struct {
+    sq.TableInfo `ddl:"ignore=postgres virtual={fts5 content='film' content_rowid='film_id'}"`
+    FILM_ID       sq.NumberField `ddl:"ignore=sqlite primarykey"`
+    TITLE         sq.StringField
+    DESCRIPTION   sq.StringField
+}
 ```
 ```sql
+-- sqlite
+CREATE TABLE film (
+    film_id INTEGER PRIMARY KEY
+    ,title TEXT
+    ,description TEXT
+);
+CREATE VIRTUAL TABLE film_text using fts5 (
+    title
+    ,description
+    ,content='film'
+    ,content_rowid=fil
+);
+
+-- postgres
+CREATE TABLE film (
+    film_id INTEGER
+    ,title TEXT
+    ,description TEXT
+    ,fulltext TSVECTOR
+
+    ,CONSTRAINT film_film_id_pkey PRIMARY KEY (film_id)
+);
+
+-- mysql
+CREATE TABLE film (
+    film_id INTEGER
+    ,title TEXT
+    ,description TEXT
+
+    ,PRIMARY KEY (film_id)
+);
+CREATE TABLE film_text (
+    film_id INT
+    ,title VARCHAR(255)
+    ,description VARCHAR(255)
+
+    ,PRIMARY KEY (film_id)
+);
 ```
 
 ### `primarykey`
@@ -718,8 +774,8 @@ CREATE TABLE film_actor (
     ,actor_id INT
 
     ,CONSTRAINT film_actor_film_id_actor_id_pkey PRIMARY KEY (film_id, actor_id)
-    ,CONSTRAINT film_actor_film_id_fkey FOREIGN KEY film_id REFERENCES film (film_id)
-    ,CONSTRAINT film_actor_actor_id_fkey FOREIGN KEY actor_id REFERENCES actor (actor_id)
+    ,CONSTRAINT film_actor_film_id_fkey FOREIGN KEY (film_id) REFERENCES film (film_id)
+    ,CONSTRAINT film_actor_actor_id_fkey FOREIGN KEY (actor_id) REFERENCES actor (actor_id)
 );
 
 CREATE TABLE film_actor_review (
@@ -746,8 +802,8 @@ CREATE TABLE film_actor (
     film_id INT
     ,actor_id INT
 
-    ,CONSTRAINT film_actor_film_id_fkey FOREIGN KEY film_id REFERENCES film (film_id)
-    ,CONSTRAINT actor_ref FOREIGN KEY actor_id REFERENCES actor (actor_id)
+    ,CONSTRAINT film_actor_film_id_fkey FOREIGN KEY (film_id) REFERENCES film (film_id)
+    ,CONSTRAINT actor_ref FOREIGN KEY (actor_id) REFERENCES actor (actor_id)
 );
 ```
 
@@ -756,90 +812,283 @@ CREATE TABLE film_actor (
 Value: a comma separated list of columns in the foreign key.
 
 ```go
+type FILM_ACTOR_REVIEW struct {
+    sq.TableInfo `ddl:"references={film_actor.film_id,actor_id cols=film_id,actor_id}"`
+    FILM_ID      sq.NumberField
+    ACTOR_ID     sq.NumberField
+    REVIEW_BODY  sq.StringField
+}
 ```
 ```sql
+CREATE TABLE film_actor_review (
+    film_id INT
+    ,actor_id INT
+    ,review_body TEXT
+
+    ,CONSTRAINT film_actor_review_film_id_actor_id_fkey FOREIGN KEY (film_id, actor_id) REFERENCES film_review (film_id, actor_id)
+);
 ```
 
 ### `references.onupdate`
 
+Value: `cascade`, `restrict`, `noaction`, `setnull` or `setdefault`.
+
 ```go
+type FILM struct {
+    sq.TableInfo
+    LANGUAGE_ID sq.NumberField `ddl:"references={language.language_id onupdate=cascade}"`
+}
 ```
 ```sql
+CREATE TABLE film (
+    language_id INT
+
+    ,CONSTRAINT film_language_id_fkey FOREIGN KEY (language_id) REFERENCES language (language_id) ON UPDATE CASCADE
+);
 ```
 
 ### `references.ondelete`
 
+Value: `cascade`, `restrict`, `noaction`, `setnull` or `setdefault`.
+
 ```go
+type FILM struct {
+    sq.TableInfo
+    LANGUAGE_ID sq.NumberField `ddl:"references={language.language_id ondelete=restrict}"`
+}
 ```
 ```sql
+CREATE TABLE film (
+    language_id INT
+
+    ,CONSTRAINT film_language_id_fkey FOREIGN KEY (language_id) REFERENCES language (language_id) ON DELETE RESTRICT
+);
 ```
 
 ### `references.deferrable`
 
+Value: N.A.
+
+SQLite and Postgres only. Sets the foreign key constraint to `DEFERRABLE`.
+
 ```go
+type FILM struct {
+    sq.TableInfo
+    LANGUAGE_ID sq.NumberField `ddl:"references={language.language_id deferrable}"`
+}
 ```
 ```sql
+CREATE TABLE film (
+    language_id INT
+
+    ,CONSTRAINT film_language_id_fkey FOREIGN KEY (language_id) REFERENCES language (language_id) DEFERRABLE
+);
 ```
 
 ### `references.deferred`
 
+Value: N.A.
+
+SQLite and Postgres only. Sets the foreign key constraint to `DEFERRABLE INITIALLY DEFERRED`.
+
 ```go
+type FILM struct {
+    sq.TableInfo
+    LANGUAGE_ID sq.NumberField `ddl:"references={language.language_id deferred}"`
+}
 ```
 ```sql
+CREATE TABLE film (
+    language_id INT
+
+    ,CONSTRAINT film_language_id_fkey FOREIGN KEY (language_id) REFERENCES language (language_id) DEFERRABLE INITIALLY DEFERRED
+);
 ```
 
 ### `references.ignore`
 
+Value: a comma separated list of dialects. For these dialects, the foreign key constraint will be ignored. If the value is empty, all dialects will be ignored.
+
 ```go
+type FILM struct {
+    sq.TableInfo
+    LANGUAGE_ID sq.NumberField `ddl:"references={language.language_id ignore=sqlite,mysql}"`
+}
 ```
 ```sql
+-- sqlite
+CREATE TABLE film (
+    language_id INT
+);
+
+-- postgres
+CREATE TABLE film (
+    language_id INT
+
+    ,CONSTRAINT film_language_id_fkey FOREIGN KEY (language_id) REFERENCES language (language_id) DEFERRABLE INITIALLY DEFERRED
+);
+
+-- mysql
+CREATE TABLE film (
+    language_id INT
+);
 ```
 
 ### `unique`
-Value: the name of the unique constraint.
+
+Value: the name of the unique constraint. If the name is omitted or is a period `.`, the [default name](#) will be used instead.
 
 ```go
+type CUSTOMER struct {
+    sq.TableInfo
+    CUSTOMER_ID sq.NumberField `ddl:"unique=uniq_cid"`
+    EMAIL       sq.StringField `ddl:"unique"`
+}
 ```
 ```sql
+CREATE TABLE customer (
+    customer_id INT
+    ,email TEXT
+
+    ,CONSTRAINT uniq_cid UNIQUE (customer_id)
+    ,CONSTRAINT customer_email_key UNIQUE (email)
+);
 ```
 
 ### `unique.cols`
 
+Value: a comma separated list of columns in the unique constraint. If this is omitted, the column field that the struct tag belongs to is used.
+
 ```go
+type CUSTOMER struct {
+    sq.TableInfo `ddl:"unique={. cols=first_name,last_name}"`
+    FIRST_NAME   sq.StringField
+    LAST_NAME    sq.StringField
+    EMAIL        sq.StringField `ddl:"unique"`
+}
 ```
 ```sql
+CREATE TABLE customer (
+    first_name TEXT
+    ,last_name TEXT
+    ,email TEXT
+
+    ,CONSTRAINT customer_first_name_last_name_key UNIQUE (first_name, last_name)
+    ,CONSTRAINT customer_email_key UNIQUE (email)
+);
 ```
 
 ### `unique.ignore`
 
+Value: a comma separated list of dialects. For these dialects, the unique constraint will be ignored. If the value is empty, all dialects will be ignored.
+
 ```go
+type CUSTOMER struct {
+    sq.TableInfo `ddl:"unique={. cols=first_name,last_name ignore=sqlite,mysql}"`
+    FIRST_NAME   sq.StringField
+    LAST_NAME    sq.StringField
+    EMAIL        sq.StringField `ddl:"unique={. ignore=postgres}"`
+}
 ```
 ```sql
+-- sqlite
+CREATE TABLE customer (
+    first_name TEXT
+    ,last_name TEXT
+    ,email TEXT
+
+    ,CONSTRAINT customer_email_key UNIQUE (email)
+);
+
+-- postgres
+CREATE TABLE customer (
+    first_name TEXT
+    ,last_name TEXT
+    ,email TEXT
+
+    ,CONSTRAINT customer_first_name_last_name_key UNIQUE (first_name, last_name)
+);
+
+-- mysql
+CREATE TABLE customer (
+    first_name TEXT
+    ,last_name TEXT
+    ,email TEXT
+
+    ,CONSTRAINT customer_email_key UNIQUE (email)
+);
 ```
 
 ### `index`
-Value: the name of the index.
+
+Value: the name of the index. If the name is omitted or is a period `.`, the [default name](#) will be used instead.
 
 ```go
+type FILM struct {
+    sq.TableInfo
+    TITLE       sq.StringField `ddl:"index=ix_title"`
+    DESCRIPTION sq.StringField `ddl:"index"`
+}
 ```
 ```sql
+CREATE TABLE film (
+    title TEXT
+    ,description TEXT
+);
+CREATE INDEX ix_title ON film (title);
+CREATE INDEX film_description_idx ON film (title);
 ```
 
 ### `index.cols`
 
+Value: a comma separated list of columns in the index. If this is omitted, the column field that the struct tag belongs to is used.
+
 ```go
+type CUSTOMER struct {
+    sq.TableInfo `ddl:"index={. cols=first_name,last_name}"`
+    FIRST_NAME   sq.StringField
+    LAST_NAME    sq.StringField
+    EMAIL        sq.StringField `ddl:"index"`
+}
 ```
 ```sql
+CREATE TABLE customer (
+    first_name TEXT
+    ,last_name TEXT
+    ,email TEXT
+);
+CREATE INDEX customer_first_name_last_name_idx ON customer (first_name, last_name);
+CREATE INDEX customer_email_idx ON customer (email);
 ```
 
 ### `index.unique`
 
+Value: N.A.
+
+Marks the index as `UNIQUE`.
+
 ```go
+type CUSTOMER struct {
+    sq.TableInfo
+    EMAIL sq.StringField `ddl:"index={. unique}"`
+}
 ```
 ```sql
+CREATE TABLE customer (
+    email TEXT
+);
+CREATE UNIQUE INDEX customer_email_idx ON customer (email);
 ```
 
 ### `index.using`
+
+Value: the index type.
+
+Postgres and MySQL only. 
+
+For MySQL, `CREATE FULLTEXT INDEX` and `CREATE SPATIAL INDEX` are defined with `using=fulltext` and `using=spatial` respectively.
+
+TODO: what the hell is USING GIST(geom)? GIST(geom gist\_geometry\_ops)? How many GIST indexes accept an argument?
 
 ```go
 ```

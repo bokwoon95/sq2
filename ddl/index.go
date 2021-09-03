@@ -37,7 +37,7 @@ func (cmd CreateIndexCommand) AppendSQL(dialect string, buf *bytes.Buffer, args 
 	if dialect != sq.DialectMySQL {
 		buf.WriteString("CREATE ")
 	}
-	isFulltextOrSpatial := cmd.Index.IndexType == "FULLTEXT" || cmd.Index.IndexType == "SPATIAL"
+	isFulltextOrSpatial := strings.EqualFold(cmd.Index.IndexType, "FULLTEXT") || strings.EqualFold(cmd.Index.IndexType, "SPATIAL")
 	if dialect == sq.DialectMySQL && isFulltextOrSpatial {
 		buf.WriteString(cmd.Index.IndexType + " ")
 	} else if cmd.Index.IsUnique {
