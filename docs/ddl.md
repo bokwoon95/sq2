@@ -47,7 +47,7 @@ CREATE TABLE actor (
 <br>
 
 Modifiers may have values associated with them on the right hand side of an equals '=' sign. No spaces are allowed around the '=' sign, since a space would start a new modifier.
-Notice how the value for the `default` modifier `DATETIME('now')` has no spaces, so no {brace quoting} is necessary.
+Notice how the modifier value `DATETIME('now')` has no spaces, so no {brace quoting} is necessary.
 
 ```go
 type ACTOR struct {
@@ -115,7 +115,11 @@ CREATE TABLE actor (
 );
 ```
 
-For a complete list of supported modifiers, see the [struct tag reference](#).
+A {braced quoted} string string on the right hand side of '=' can either be
+1. a modifier value containing spaces (e.g. [`default`](#))
+2. a modifier value followed by submodifiers (e.g. [`references`](#))
+
+Which one it is depends on the modifier itself. For a complete list of supported modifiers, see the [struct tag reference](#).
 
 ## Dialect-specific modifiers
 
@@ -136,7 +140,7 @@ type FILM struct {
 }
 ```
 ```sql
--- One struct maps to idiomatic tables for three different dialects
+-- One struct maps to three different tables for three different dialects
 
 -- sqlite
 CREATE TABLE film (
@@ -206,9 +210,9 @@ CREATE INDEX lorem_ipsum_dolor_sit_amet ON film (description);
 
 ## How to specify multiple columns for an index or constraint?
 
-The `primarykey`, `unique` and `index` modifiers each accept a submodifier `cols` which takes in a comma-separated list of columns participating in the constraint or index.
-Usually this is not needed when the struct tag is defined on a table field, as the field would implicitly be used for `cols`. But if multiple columns are needed, the `cols` submodifier must be defined explicitly defined.
-In this case, the modifier can be defined in the sq.TableInfo struct tag (although any other struct tag would also work):
+The `primarykey`, `unique` and `index` modifiers accept a submodifier `cols` which takes in a comma separated list of columns participating in the constraint or index.
+Usually this is not needed when the modifier is defined in the struct tag of a column field, as the field would be implicitly used for `cols`. But if multiple columns are needed, the `cols` submodifier must be defined explicitly defined.
+When this happens, the modifier can be defined in the struct tag of sq.TableInfo (although any other struct tag would also work):
 
 ```go
 type FILM_ACTOR struct {
@@ -259,7 +263,7 @@ CREATE UNIQUE INDEX film_actor_film_id_actor_id_idx ON film_actor (film_id, acto
 ## DDL struct tag reference
 
 ### `type`
-Value: the column type. Any value passed in is literally passed to the database.
+Value: the column type. Any value passed in is literally passed to the database, spaces and all.
 
 ```go
 type FILM struct {
@@ -428,7 +432,7 @@ CREATE TABLE actor (
 ### `stored`
 Value: N.A.
 
-Marks the column's generated expression as STORED. It does nothing if the column does not have a generated expression.
+Marks the column's generated expression as STORED. It does nothing if the column is not a generated expression.
 
 ```go
 type ACTOR struct {
@@ -451,7 +455,7 @@ Applies when defined on a column (i.e. not sq.TableInfo). For the other definiti
 
 Value: N.A.
 
-Marks the column's generated expression as VIRTUAL. It does nothing if the column does not have a generated expression.
+Marks the column's generated expression as VIRTUAL. It does nothing if the column is not a generated expression.
 
 ```go
 type ACTOR struct {
@@ -474,9 +478,11 @@ NOTE: Postgres does not support `VIRTUAL` generated columns. Even if you mark a 
 ### `virtual` (table)
 Applies when defined on a table (i.e. sq.TableInfo). For the other definition when defined on a column, see [`virtual`](#).
 
-Value: The name of an SQLite virtual table module (e.g. FTS5).
+Value: The name of an SQLite [virtual table module](https://www.sqlite.org/vtab.html) (e.g. [FTS5](https://www.sqlite.org/fts5.html)).
 
-SQLite only. Module arguments can be supplied after the module name (delimited by spaces). When the module specified is 'fts5' (case insensitive), the table struct columns will also be passed in as module arguments.
+SQLite only. Module arguments can be supplied after the module name (delimited by spaces).
+
+If the module name is 'fts5' (case insensitive), the table struct columns will be passed in as module arguments as well.
 
 ```go
 type FILM_TEXT struct {
@@ -514,7 +520,7 @@ CREATE TABLE film_actor_review (
 ### `default`
 Value: the column default.
 
-If the column default is anything other than a string, number, `TRUE`, `FALSE`, `CURRENT_DATE`, `CURRENT_TIME` or `CURRENT_TIMESTAMP`, it will be considered an SQL expression. For SQlite and MySQL, `ddl` will automatically wrap expressions in (brackets). This does not happen for Postgres, since Postgres does not have this restriction.
+If the column default is anything other than a string, number, `TRUE`, `FALSE`, `CURRENT_DATE`, `CURRENT_TIME` or `CURRENT_TIMESTAMP`, it will be considered an SQL expression. For SQLite and MySQL, `ddl` will automatically wrap expressions in brackets. This does not happen for Postgres (which does not have this restriction).
 
 ```go
 type FILM struct {
@@ -534,59 +540,220 @@ CREATE TABLE film (
 );
 ```
 
-### `primarykey`
-Value: the name of the primary key constraint. If the name is omitted, the [default name](#) will be used instead.
+### `ignore`
 
 ```go
 ```
 ```sql
+```
+
+### `primarykey`
+Value: the name of the primary key constraint. If the name is omitted or is a period `.`, the [default name](#) will be used instead.
+
+The PRIMARY KEY constraint is usually defined in its own line in the CREATE TABLE statement, to accomodate multicolumn primary keys. However for SQLite when there is only one primary key column it will be defined inline, to allow for the [`INTEGER PRIMARY KEY` autoincrementing behaviour](http://www.sqlite.org/autoinc.html). For MySQL, the primary key constraint name is never used: MySQL hardcodes all primary key constraint names to be `PRIMARY`, regardless of whether you supplied a constraint name or not.
+
+```go
+type ACTOR struct {
+    sq.TableInfo
+    ACTOR_ID sq.NumberField `ddl:"type=INTEGER primarykey"`
+}
+```
+```sql
+-- sqlite
+CREATE TABLE actor (
+    actor_id INTEGER PRIMARY KEY
+);
+
+-- postgres
+CREATE TABLE actor (
+    actor_id INTEGER
+
+    ,CONSTRAINT actor_actor_id_pkey PRIMARY KEY (actor_id)
+);
+
+-- mysql
+CREATE TABLE actor (
+    actor_id INTEGER
+
+    ,PRIMARY KEY (actor_id)
+);
 ```
 
 ### `primarykey.cols`
 
+Value: a comma separated list of columns in the primary key. If this is omitted, the column field that the struct tag belongs to is used.
+
 ```go
+type ACTOR struct {
+    sq.TableInfo
+    ACTOR_ID sq.NumberField `ddl:"primarykey"`
+}
+
+type FILM struct {
+    sq.TableInfo `ddl:"primarykey={. cols=film_id}"`
+    FILM_ID      sq.NumberField
+}
+
+type FILM_ACTOR struct {
+    sq.TableInfo `ddl:"primarykey={my_multicolumn_pk cols=film_id,actor_id}"`
+    FILM_ID      sq.NumberField
+    ACTOR_ID     sq.NumberField
+}
 ```
 ```sql
+CREATE TABLE actor (
+    actor_id INT
+
+    ,CONSTRAINT actor_actor_id_pkey PRIMARY KEY (actor_id)
+);
+
+CREATE TABLE film (
+    film_id INT
+
+    ,CONSTRAINT film_film_id_pkey PRIMARY KEY (film_id)
+);
+
+CREATE TABLE film_actor (
+    film_id INT
+    ,actor_id INT
+
+    ,CONSTRAINT my_multicolumn_pk PRIMARY KEY (film_id, actor_id)
+);
 ```
 
 ### `primarykey.deferrable`
 
+Value: N.A.
+
+Postgres only. Sets the primary key constraint to `DEFERRABLE`.
+
 ```go
+type ACTOR struct {
+    sq.TableInfo
+    ACTOR_ID sq.NumberField `ddl:"primarykey={. deferrable}"`
+}
 ```
 ```sql
+CREATE TABLE actor (
+    actor_id INT
+
+    ,CONSTRAINT actor_actor_id_pkey PRIMARY KEY (actor_id) DEFERRABLE
+);
 ```
 
 ### `primarykey.deferred`
 
+Value: N.A.
+
+Postgres only. Sets the primary key constraint to `DEFERRABLE INITIALLY DEFERRED`.
+
 ```go
+type ACTOR struct {
+    sq.TableInfo
+    ACTOR_ID sq.NumberField `ddl:"primarykey={. deferred}"`
+}
 ```
 ```sql
+CREATE TABLE actor (
+    actor_id INT
+
+    ,CONSTRAINT actor_actor_id_pkey PRIMARY KEY (actor_id) DEFERRABLE INITIALLY DEFERRED
+);
 ```
 
 ### `primarykey.ignore`
 
+Value: a comma separated list of dialects. For these dialects, the primary key constraint will be ignored. If the value is empty, all dialects will be ignored.
+
 ```go
+type ACTOR struct {
+    sq.TableInfo
+    ACTOR_ID sq.NumberField `ddl:"primarykey={. ignored=sqlite,mysql}"`
+}
 ```
 ```sql
+-- sqlite
+CREATE TABLE actor (
+    actor_id INT
+);
+
+-- postgres
+CREATE TABLE actor (
+    actor_id INT
+
+    ,CONSTRAINT actor_actor_id PRIMARY KEY (actor_id)
+);
+
+-- mysql
+CREATE TABLE actor (
+    actor_id INT
+);
 ```
 
 ### `references`
-Value: the name of the referenced column(s).
+
+Value: the name of the referenced column(s). It can take one of two forms
+1. `<table>.<column(s)>`
+2. `<schema>.<table>.<column(s)>` e.g. cross-schema foreign keys
+
+If there are multiple columns referenced by the foreign key, the column names are comma separated. Note that whenever multiple columns are referenced, the foreign key itself must also have multiple columns (via the [`cols`](#) submodifier).
 
 ```go
+type FILM_ACTOR struct {
+    sq.TableInfo `ddl:"primarykey={. cols=film_id,actor_id}"`
+    FILM_ID      sq.NumberField `ddl:"references=film.film_id"`
+    ACTOR_ID     sq.NumberField `ddl:"references=actor.actor_id"`
+}
+
+type FILM_ACTOR_REVIEW struct {
+    sq.TableInfo `ddl:"references={film_actor.film_id,actor_id cols=film_id,actor_id}"`
+    FILM_ID      sq.NumberField
+    ACTOR_ID     sq.NumberField
+    REVIEW_BODY  sq.StringField
+}
 ```
 ```sql
+CREATE TABLE film_actor (
+    film_id INT
+    ,actor_id INT
+
+    ,CONSTRAINT film_actor_film_id_actor_id_pkey PRIMARY KEY (film_id, actor_id)
+    ,CONSTRAINT film_actor_film_id_fkey FOREIGN KEY film_id REFERENCES film (film_id)
+    ,CONSTRAINT film_actor_actor_id_fkey FOREIGN KEY actor_id REFERENCES actor (actor_id)
+);
+
+CREATE TABLE film_actor_review (
+    film_id INT
+    ,actor_id INT
+    ,review_body TEXT
+
+    ,CONSTRAINT film_actor_review_film_id_actor_id_fkey FOREIGN KEY (film_id, actor_id) REFERENCES film_review (film_id, actor_id)
+);
 ```
 
 ### `references.name`
 Value: the name of the foreign key constraint.
 
 ```go
+type FILM_ACTOR struct {
+    sq.TableInfo
+    FILM_ID  sq.NumberField `ddl:"references=film.film_id"`
+    ACTOR_ID sq.NumberField `ddl:"references={actor.actor_id name=actor_ref}"`
+}
 ```
 ```sql
+CREATE TABLE film_actor (
+    film_id INT
+    ,actor_id INT
+
+    ,CONSTRAINT film_actor_film_id_fkey FOREIGN KEY film_id REFERENCES film (film_id)
+    ,CONSTRAINT actor_ref FOREIGN KEY actor_id REFERENCES actor (actor_id)
+);
 ```
 
 ### `references.cols`
+
+Value: a comma separated list of columns in the foreign key.
 
 ```go
 ```
@@ -694,13 +861,6 @@ Value: the name of the index.
 ```
 
 ### `index.ignore`
-
-```go
-```
-```sql
-```
-
-### `ignore`
 
 ```go
 ```
