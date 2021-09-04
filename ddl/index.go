@@ -38,6 +38,10 @@ func (cmd CreateIndexCommand) AppendSQL(dialect string, buf *bytes.Buffer, args 
 		buf.WriteString("CREATE ")
 	}
 	isFulltextOrSpatial := strings.EqualFold(cmd.Index.IndexType, "FULLTEXT") || strings.EqualFold(cmd.Index.IndexType, "SPATIAL")
+	var indexType string
+	if cmd.Index.IndexType != "" && !isFulltextOrSpatial && !strings.EqualFold(cmd.Index.IndexType, "BTREE") {
+		indexType = cmd.Index.IndexType
+	}
 	if dialect == sq.DialectMySQL && isFulltextOrSpatial {
 		buf.WriteString(cmd.Index.IndexType + " ")
 	} else if cmd.Index.IsUnique {
@@ -57,6 +61,9 @@ func (cmd CreateIndexCommand) AppendSQL(dialect string, buf *bytes.Buffer, args 
 		buf.WriteString("IF NOT EXISTS ")
 	}
 	buf.WriteString(sq.QuoteIdentifier(dialect, cmd.Index.IndexName))
+	if dialect == sq.DialectMySQL && indexType != "" {
+		buf.WriteString(" USING " + indexType)
+	}
 	if dialect != sq.DialectMySQL {
 		buf.WriteString(" ON ")
 		if cmd.Index.TableSchema != "" {
@@ -64,11 +71,8 @@ func (cmd CreateIndexCommand) AppendSQL(dialect string, buf *bytes.Buffer, args 
 		}
 		buf.WriteString(sq.QuoteIdentifier(dialect, cmd.Index.TableName))
 	}
-	if cmd.Index.IndexType != "" && !isFulltextOrSpatial && !strings.EqualFold(cmd.Index.IndexType, "BTREE") {
-		if dialect != sq.DialectPostgres && dialect != sq.DialectMySQL {
-			return fmt.Errorf("%s does not support index types", dialect)
-		}
-		buf.WriteString(" USING " + cmd.Index.IndexType)
+	if dialect == sq.DialectPostgres && indexType != "" {
+		buf.WriteString(" USING " + indexType)
 	}
 	buf.WriteString(" (")
 	for i, column := range cmd.Index.Columns {

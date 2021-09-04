@@ -118,10 +118,8 @@ func Test_CreateIndexCommnd(t *testing.T) {
 				Columns:   []string{"my_column"},
 			},
 		}
-		_, _, _, err := sq.ToSQL(tt.dialect, tt.item)
-		if err == nil {
-			t.Fatal(testutil.Callers(), "expected error but got nil")
-		}
+		tt.wantQuery = `CREATE INDEX my_index ON my_table (my_column)`
+		assert(t, tt)
 	})
 
 	t.Run("(dialect != postgres) INCLUDE", func(t *testing.T) {
