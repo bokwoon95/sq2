@@ -1036,7 +1036,7 @@ CREATE TABLE film (
     ,description TEXT
 );
 CREATE INDEX ix_title ON film (title);
-CREATE INDEX film_description_idx ON film (title);
+CREATE INDEX film_description_idx ON film (description);
 ```
 
 ### `index.cols`
@@ -1082,34 +1082,117 @@ CREATE UNIQUE INDEX customer_email_idx ON customer (email);
 
 ### `index.using`
 
-Value: the index type. Whatever value is literally copied over to the `USING` clause of a `CREATE INDEX` statement.
+Value: the index type.
 
-Postgres and MySQL only. For MySQL, `CREATE FULLTEXT INDEX` and `CREATE SPATIAL INDEX` are defined with `using=fulltext` and `using=spatial` respectively.
+Postgres and MySQL only. Postgres supports `btree`, `hash`, `gist`, `gin`. MySQL supports `btree`, `hash`, `fulltext`, `spatial`.
 
 ```go
+type FILM struct {
+    sq.TableInfo `mysql:index={. cols=title,description using=fulltext}`
+    TITLE        sq.StringField
+    DESCRIPTION  sq.StringField
+    FULLTEXT     sq.CustomField `ddl:"ignore=mysql type=TSVECTOR postgres:index={. using=gist}"`
+}
 ```
 ```sql
+-- postgres
+CREATE TABLE film (
+    title TEXT
+    ,description TEXT
+    ,fulltext TSVECTOR
+);
+CREATE INDEX film_fulltext_idx ON film USING gist (fulltext);
+
+-- mysql
+CREATE TABLE film (
+    ,title VARCHAR(255)
+    ,description VARCHAR(255)
+);
+CREATE FULLTEXT INDEX film_title_description_idx ON film (title, description);
 ```
 
 ### `index.where`
 
+Value: a predicate expression.
+
+SQLite and Postgres only. Sets the WHERE clause for the index (i.e. a partial index).
+
 ```go
+type FILM struct {
+    sq.TableInfo
+    TITLE sq.StringField `ddl:"index={. where={title IS NOT NULL AND LENGTH(title) > 5}}"`
+}
 ```
 ```sql
+CREATE TABLE film (
+    title TEXT
+);
+CREATE INDEX film_title_idx ON film (title) WHERE title IS NOT NULL AND LENGTH(title) > 5;
 ```
 
 ### `index.include`
 
+Value: a comma separated list of columns.
+
+Postgres only. Sets the INCLUDE clause for the index.
+
 ```go
+type CUSTOMER struct {
+    sq.TableInfo
+    FIRST_NAME sq.StringField
+    LAST_NAME  sq.StringField
+    EMAIL      sq.StringField `ddl:"index={. unique include=first_name,last_name}"`
+}
 ```
 ```sql
+CREATE TABLE customer (
+    first_name TEXT
+    ,last_name TEXT
+    ,email TEXT
+);
+CREATE UNIQUE INDEX customer_email_idx ON customer (email) INCLUDE (first_name, last_name);
 ```
 
 ### `index.ignore`
 
+Value: a comma separated list of dialects. For these dialects, the index will be ignored. If the value is empty, all dialects will be ignored.
+
 ```go
+type CUSTOMER struct {
+    sq.TableInfo `ddl:"index={. cols=first_name,last_name ignore=sqlite,mysql}"`
+    FIRST_NAME   sq.StringField
+    LAST_NAME    sq.StringField
+    EMAIL        sq.StringField `ddl:"index={. ignore=postgres}"`
+}
 ```
 ```sql
+-- sqlite
+CREATE TABLE customer (
+    first_name TEXT
+    ,last_name TEXT
+    ,email TEXT
+);
+CREATE INDEX customer_email_idx ON customer (email);
+
+-- postgres
+CREATE TABLE customer (
+    first_name TEXT
+    ,last_name TEXT
+    ,email TEXT
+);
+CREATE INDEX customer_first_name_last_name_idx ON customer (first_name, last_name);
+
+-- mysql
+CREATE TABLE customer (
+    first_name VARCHAR(255)
+    ,last_name VARCHAR(255)
+    ,email VARCHAR(255)
+);
+CREATE INDEX customer_email_idx ON customer (email);
 ```
 
-note: why aren't sequences supported? I don't think sequences are ever used explicitly, they're almost always created as an implementation side effect of using auto incremented values. If you have a need for defining sequences explicitly and would like to see it in this package, please file an issue detailing why you use them and what you want the API to look like.
+# FAQ
+
+## Why aren't sequences supported?
+
+I've never used sequences, so I don't know how to design this feature. If you have a need for creating sequences with this package, please file an issue detailing what your ideal API would look like.
