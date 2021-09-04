@@ -27,15 +27,12 @@ type Actor struct {
 	LastUpdate time.Time
 }
 
-var (
-	now    = time.Now()
-	actors = []Actor{
-		{ActorID: 1, FirstName: "PENELOPE", LastName: "GUINESS", LastUpdate: now},
-		{ActorID: 2, FirstName: "NICK", LastName: "WAHLBERG", LastUpdate: now},
-		{ActorID: 3, FirstName: "ED", LastName: "CHASE", LastUpdate: now},
-		{ActorID: 4, FirstName: "JENNIFER", LastName: "DAVIS", LastUpdate: now},
-	}
-)
+var actors = []Actor{
+	{ActorID: 1, FirstName: "PENELOPE", LastName: "GUINESS"},
+	{ActorID: 2, FirstName: "NICK", LastName: "WAHLBERG"},
+	{ActorID: 3, FirstName: "ED", LastName: "CHASE"},
+	{ActorID: 4, FirstName: "JENNIFER", LastName: "DAVIS"},
+}
 
 func main() {
 	// open database
@@ -62,7 +59,6 @@ func main() {
 				col.SetInt(ACTOR.ACTOR_ID, actor.ActorID)
 				col.SetString(ACTOR.FIRST_NAME, actor.FirstName)
 				col.SetString(ACTOR.LAST_NAME, actor.LastName)
-				col.SetTime(ACTOR.LAST_UPDATE, actor.LastUpdate)
 			}
 			return nil
 		}),

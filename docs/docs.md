@@ -3,26 +3,25 @@
 `sq` is a type-safe query builder and data mapper for Go. It supports the **SQLite**, **Postgres** and **MySQL** dialects. Among its features are:
 
 - **Type-safety**
-    - Every table gets a struct type.
-    - Every column gets a struct field.
+    - Every table is represented by a struct.
+    - Every column is represented by a struct field.
     - You no longer have to hardcode tables and columns as raw strings (even [ORMs](https://gorm.io/docs/query.html#Conditions) are guilty of this).
 - **Bidirectional schema definition**
     - Code-generate table structs from your database (database-first).
-    - Generate SQL commands (DDL) from your table structs (code-first).
+    - Generate DDL commands (`CREATE TABLE`, etc) from your table structs (code-first).
         - DDL generation is idempotent, missing tables and columns are added as needed.
-    - What is supported: schemas, tables, columns, constraints, indexes, (materialized) views, triggers, functions, extensions, enums
+    - Supported features: schemas, tables, columns, constraints, indexes, (materialized) views, triggers, functions, extensions, enums
 - **Uses Go generics for data fetching**
     - Data mapping is built on [callback mapper functions](#) which can return any type.
     - Whatever type a mapper functions returns, it is automatically returned by the generic functions [FetchOne and FetchSlice](#).
 - **Faithful emulation of each SQL dialect**
-    - Each dialect has its own query builder that can leverage dialect-specific syntax.
-    - This does not mean that queries are not portable: queries are as portable as the SQL that you write.
+    - Each dialect has its own query builder, so you can use the SQL dialect you are familiar with.
+    - Queries are portable if you stick with ANSI SQL.
     - `sq` comes with its own [tricks](#) to help with writing queries that can target multiple dialects.
 - **Application-side Row Level Security (i.e. multitenancy support)**
-    - Variables can be associated with a query via a `map[string]interface{}`.
-    - Based on those variables, tables implementing the [PredicateInjector](#) interface can inject additional predicates into a query whenever they are invoked.
-    - This emulates Postgres' [Row Level Security](#), but without needing to mess around with `current_user` or session-level variables.
-    - Since it's implemented application-side, MySQL and SQLite can use Row Level Security too.
+    - Tables implementing the [PredicateInjector](#) interface can inject additional predicates into a query (whenever they are invoked).
+    - This emulates Postgres' [Row Level Security](#), but works entirely application side.
+    - [more info](#).
 - **And many more**
     - Multiple schemas, Generated Columns, Full Text Search, JSON, Collations.
 
@@ -58,15 +57,12 @@ type Actor struct {
     LastUpdate time.Time
 }
 
-var (
-    now    = time.Now()
-    actors = []Actor{
-        {ActorID: 1, FirstName: "PENELOPE", LastName: "GUINESS", LastUpdate: now},
-        {ActorID: 2, FirstName: "NICK", LastName: "WAHLBERG", LastUpdate: now},
-        {ActorID: 3, FirstName: "ED", LastName: "CHASE", LastUpdate: now},
-        {ActorID: 4, FirstName: "JENNIFER", LastName: "DAVIS", LastUpdate: now},
-    }
-)
+var actors = []Actor{
+    {ActorID: 1, FirstName: "PENELOPE", LastName: "GUINESS"},
+    {ActorID: 2, FirstName: "NICK", LastName: "WAHLBERG"},
+    {ActorID: 3, FirstName: "ED", LastName: "CHASE"},
+    {ActorID: 4, FirstName: "JENNIFER", LastName: "DAVIS"},
+}
 
 func main() {
     // open database
@@ -93,7 +89,6 @@ func main() {
                 col.SetInt(ACTOR.ACTOR_ID, actor.ActorID)
                 col.SetString(ACTOR.FIRST_NAME, actor.FirstName)
                 col.SetString(ACTOR.LAST_NAME, actor.LastName)
-                col.SetTime(ACTOR.LAST_UPDATE, actor.LastUpdate)
             }
             return nil
         }),
