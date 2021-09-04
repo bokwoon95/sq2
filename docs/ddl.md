@@ -1086,8 +1086,6 @@ Value: the index type. Whatever value is literally copied over to the `USING` cl
 
 Postgres and MySQL only. For MySQL, `CREATE FULLTEXT INDEX` and `CREATE SPATIAL INDEX` are defined with `using=fulltext` and `using=spatial` respectively.
 
-TODO: what the hell is USING GIST(geom)? GIST(geom gist\_geometry\_ops)? How many GIST indexes accept an argument?
-
 ```go
 ```
 ```sql
