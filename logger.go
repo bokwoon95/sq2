@@ -81,22 +81,25 @@ type Logger interface {
 	GetLogSettings() LogSettings
 }
 
-// TODO: LoggerDB should no longer be a struct because I want users to be able
-// to pass in their own database wrappers that implement logging.
-type LoggerDB struct {
+type LoggerDB interface {
+	Logger
+	DB
+}
+
+type loggerDB struct {
 	Logger
 	DB
 }
 
 type logger struct {
-	log          *log.Logger
+	logger       *log.Logger
 	logflag      int
 	resultsLimit int
 }
 
 func NewLogger(out io.Writer, logflag int, resultsLimit int) Logger {
 	return logger{
-		log:          log.New(os.Stdout, "", log.LstdFlags),
+		logger:       log.New(os.Stdout, "", log.LstdFlags),
 		logflag:      logflag,
 		resultsLimit: resultsLimit,
 	}
@@ -108,11 +111,11 @@ var (
 )
 
 func Log(db DB) LoggerDB {
-	return LoggerDB{Logger: defaultLogger, DB: db}
+	return loggerDB{Logger: defaultLogger, DB: db}
 }
 
 func VerboseLog(db DB) LoggerDB {
-	return LoggerDB{Logger: verboseLogger, DB: db}
+	return loggerDB{Logger: verboseLogger, DB: db}
 }
 
 func (l logger) GetLogSettings() LogSettings {
@@ -189,6 +192,6 @@ func (l logger) LogQueryStats(ctx context.Context, stats QueryStats) {
 		buf.WriteString(stats.QueryResults)
 	}
 	if buf.Len() > 0 {
-		l.log.Println(buf.String())
+		l.logger.Println(buf.String())
 	}
 }

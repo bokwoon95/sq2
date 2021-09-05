@@ -35,6 +35,17 @@ The most amazing thing about embedding *sql.DB in the logger DB is that the
 loggerDB struct has access to the database and can run EXPLAIN ANALYZE if the
 timeTaken is too slow. Wow!
 
+// LiteralValue will interpolate the value into the query. To make repeatedly
+// invoking easier, it helps to define a type alias to to right before using.
+type LiteralValue interface{}
+type val = sq.LiteralValue
+sq.Fieldf("jsonb_build_object({})", []interface{
+    val("name"), USER.NAME,
+    val("age"), USER.AGE,
+    val("score"), USER.SCORE,
+})
+// jsonb_build_object('name', user.name, 'age', user.age, 'score', user.score)
+
 err := sq.Tx(func(tx *sql.Tx) error {
 })
 

@@ -42,9 +42,9 @@ func fetchContext(ctx context.Context, db DB, q Query, rowmapper func(*Row), ski
 	var stats QueryStats
 	var logSettings LogSettings
 	var logQueryStats func(ctx context.Context, stats QueryStats)
-	if db, ok := db.(LoggerDB); ok {
-		logQueryStats = db.LogQueryStats
-		logSettings = db.GetLogSettings()
+	if loggerDB, ok := db.(LoggerDB); ok {
+		logQueryStats = loggerDB.LogQueryStats
+		logSettings = loggerDB.GetLogSettings()
 	}
 	if logQueryStats != nil && logSettings.GetCallerInfo {
 		stats.CallerFile, stats.CallerLine, stats.CallerFunction = caller(skip)
@@ -252,9 +252,9 @@ func fetchExistsContext(ctx context.Context, db DB, q Query, skip int) (exists b
 	var stats QueryStats
 	var logQueryStats func(ctx context.Context, stats QueryStats)
 	var logSettings LogSettings
-	if db, ok := db.(LoggerDB); ok {
-		logQueryStats = db.LogQueryStats
-		logSettings = db.GetLogSettings()
+	if loggerDB, ok := db.(LoggerDB); ok {
+		logQueryStats = loggerDB.LogQueryStats
+		logSettings = loggerDB.GetLogSettings()
 	}
 	if logQueryStats != nil && logSettings.GetCallerInfo {
 		stats.CallerFile, stats.CallerLine, stats.CallerFunction = caller(skip)
