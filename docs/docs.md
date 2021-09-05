@@ -21,6 +21,8 @@
 - **Application-side Row Level Security (i.e. multitenancy support)**
     - Tables implementing the [PredicateInjector](#) interface can inject additional predicates into a query (whenever they are invoked).
     - This emulates Postgres' [Row Level Security](#), but works entirely application side.
+    - (only works for SELECT, UPDATE, DELETE. Does not work for checking INSERT, UPDATE, DELETE operations because this is an application-side only feature)
+        - For comparison: [SQL Server's article on Row Level Security](https://cloudblogs.microsoft.com/sqlserver/2016/01/21/limiting-access-to-data-using-row-level-security/)
     - [more info](#).
 - **And many more**
     - Multiple schemas, Generated Columns, Full Text Search, JSON, Collations.
