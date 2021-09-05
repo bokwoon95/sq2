@@ -20,6 +20,21 @@ tasks:
     - This means that indexes can also utilize ASC/DESC NULLS FIRST/NULLS LAST without obscuring the field name
 - Postgres indexed expressions apparently don't need enclosing brackets. Remove them and check if the tests break.
 
+LoggerDB should no longer be a struct, it should be an interface combining sq.DB and sq.Logger. 
+That way the user can craft his own struct like:
+type DB struct {
+    *sql.DB
+    // some other logger state, maybe a redis connection
+}
+db := &DB{}
+db.Query(query, args...) // works
+db.Tx() // works
+db.GetLogSettings() // works
+db.LogQuerySettings() // works
+The most amazing thing about embedding *sql.DB in the logger DB is that the
+loggerDB struct has access to the database and can run EXPLAIN ANALYZE if the
+timeTaken is too slow. Wow!
+
 err := sq.Tx(func(tx *sql.Tx) error {
 })
 

@@ -12,6 +12,10 @@ migration_commands.go
 
 implement WriteStructs(*WriteStructOptions)
 
+mysql_sakila_introspect is wrong:
+rating ENUM('G','PG','PG-13','R','NC-17') NOT NULL DEFAULT G
+should be DEFAULT 'G'
+
 migrationDir support
 
 bah gawd. types. domains. enums.
