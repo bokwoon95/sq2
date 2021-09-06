@@ -190,26 +190,26 @@ func NewDatabaseMetadata(dialect string, opts ...DatabaseMetadataOption) (Databa
 }
 
 func WithDB(db sq.DB, defaultFilter *Filter) DatabaseMetadataOption {
-	return func(c *DatabaseMetadata) error {
-		dbi, err := NewDatabaseIntrospector(c.Dialect, db, defaultFilter)
+	return func(dbm *DatabaseMetadata) error {
+		dbi, err := NewDatabaseIntrospector(dbm.Dialect, db, defaultFilter)
 		if err != nil {
 			return fmt.Errorf("NewDatabaseIntrospector: %w", err)
 		}
 		ctx := context.Background()
-		c.VersionNums, err = dbi.GetVersionNums(ctx)
+		dbm.VersionNums, err = dbi.GetVersionNums(ctx)
 		if err != nil {
 			return fmt.Errorf("GetVersionNums: %w", err)
 		}
-		c.DatabaseName, err = dbi.GetDatabaseName(ctx)
+		dbm.DatabaseName, err = dbi.GetDatabaseName(ctx)
 		if err != nil {
 			return fmt.Errorf("GetDatabaseName: %w", err)
 		}
-		c.CurrentSchema, err = dbi.GetCurrentSchema(ctx)
+		dbm.CurrentSchema, err = dbi.GetCurrentSchema(ctx)
 		if err != nil {
 			return fmt.Errorf("GetCurrentSchema: %w", err)
 		}
-		if c.Dialect == sq.DialectPostgres {
-			c.Extensions, err = dbi.GetExtensions(ctx, nil)
+		if dbm.Dialect == sq.DialectPostgres {
+			dbm.Extensions, err = dbi.GetExtensions(ctx, nil)
 			if err != nil {
 				return fmt.Errorf("GetExtensions: %w", err)
 			}
@@ -224,67 +224,67 @@ func WithDB(db sq.DB, defaultFilter *Filter) DatabaseMetadataOption {
 		for _, tbl := range tbls {
 			schemaTableCount[tbl.TableSchema]++
 		}
-		c.Schemas = make([]Schema, 0, len(schemaTableCount))
+		dbm.Schemas = make([]Schema, 0, len(schemaTableCount))
 		for _, tbl := range tbls {
-			n := c.CachedSchemaPosition(tbl.TableSchema)
+			n := dbm.CachedSchemaPosition(tbl.TableSchema)
 			if n < 0 {
-				n = c.AppendSchema(Schema{
+				n = dbm.AppendSchema(Schema{
 					SchemaName: tbl.TableSchema,
 					Tables:     make([]Table, 0, schemaTableCount[tbl.TableSchema]),
 				})
 			}
-			c.Schemas[n].AppendTable(tbl)
+			dbm.Schemas[n].AppendTable(tbl)
 		}
 		views, err := dbi.GetViews(ctx, nil)
 		if err != nil {
 			return fmt.Errorf("GetViews: %w", err)
 		}
 		for _, view := range views {
-			n := c.CachedSchemaPosition(view.ViewSchema)
+			n := dbm.CachedSchemaPosition(view.ViewSchema)
 			if n < 0 {
-				n = c.AppendSchema(Schema{SchemaName: view.ViewSchema})
+				n = dbm.AppendSchema(Schema{SchemaName: view.ViewSchema})
 			}
-			c.Schemas[n].AppendView(view)
+			dbm.Schemas[n].AppendView(view)
 		}
 		columns, err := dbi.GetColumns(ctx, nil)
 		if err != nil {
 			return fmt.Errorf("GetColumns: %w", err)
 		}
 		for _, column := range columns {
-			n1 := c.CachedSchemaPosition(column.TableSchema)
+			n1 := dbm.CachedSchemaPosition(column.TableSchema)
 			if n1 < 0 {
 				continue
 			}
-			n2 := c.Schemas[n1].CachedTablePosition(column.TableName)
+			n2 := dbm.Schemas[n1].CachedTablePosition(column.TableName)
 			if n2 < 0 {
 				continue
 			}
-			c.Schemas[n1].Tables[n2].AppendColumn(column)
+			dbm.Schemas[n1].Tables[n2].AppendColumn(column)
 		}
 		constraints, err := dbi.GetConstraints(ctx, nil)
 		if err != nil {
 			return fmt.Errorf("GetConstraints: %w", err)
 		}
 		for _, constraint := range constraints {
-			n1 := c.CachedSchemaPosition(constraint.TableSchema)
+			n1 := dbm.CachedSchemaPosition(constraint.TableSchema)
 			if n1 < 0 {
 				continue
 			}
-			n2 := c.Schemas[n1].CachedTablePosition(constraint.TableName)
+			n2 := dbm.Schemas[n1].CachedTablePosition(constraint.TableName)
 			if n2 < 0 {
 				continue
 			}
-			c.Schemas[n1].Tables[n2].AppendConstraint(constraint)
+			dbm.Schemas[n1].Tables[n2].AppendConstraint(constraint)
 			if len(constraint.Columns) == 1 && (constraint.ConstraintType == PRIMARY_KEY || constraint.ConstraintType == UNIQUE) {
-				n3 := c.Schemas[n1].Tables[n2].CachedColumnPosition(constraint.Columns[0])
+				n3 := dbm.Schemas[n1].Tables[n2].CachedColumnPosition(constraint.Columns[0])
 				if n3 < 0 {
 					continue
 				}
 				switch constraint.ConstraintType {
 				case PRIMARY_KEY:
-					c.Schemas[n1].Tables[n2].Columns[n3].IsPrimaryKey = true
+					dbm.Schemas[n1].Tables[n2].Columns[n3].IsPrimaryKey = true
 				case UNIQUE:
-					c.Schemas[n1].Tables[n2].Columns[n3].IsUnique = true
+					dbm.Schemas[n1].Tables[n2].Columns[n3].IsUnique = true
 				}
 			}
 		}
@@ -293,11 +293,11 @@ func WithDB(db sq.DB, defaultFilter *Filter) DatabaseMetadataOption {
 			return fmt.Errorf("GetConstraints: %w", err)
 		}
 		for _, index := range indexes {
-			if n1 := c.CachedSchemaPosition(index.TableSchema); n1 >= 0 {
-				if n2 := c.Schemas[n1].CachedTablePosition(index.TableName); n2 >= 0 {
-					c.Schemas[n1].Tables[n2].AppendIndex(index)
-				} else if n3 := c.Schemas[n1].CachedViewPosition(index.TableName); n3 >= 0 {
-					c.Schemas[n1].Views[n3].AppendIndex(index)
+			if n1 := dbm.CachedSchemaPosition(index.TableSchema); n1 >= 0 {
+				if n2 := dbm.Schemas[n1].CachedTablePosition(index.TableName); n2 >= 0 {
+					dbm.Schemas[n1].Tables[n2].AppendIndex(index)
+				} else if n3 := dbm.Schemas[n1].CachedViewPosition(index.TableName); n3 >= 0 {
+					dbm.Schemas[n1].Views[n3].AppendIndex(index)
 				}
 			}
 		}
@@ -307,11 +307,11 @@ func WithDB(db sq.DB, defaultFilter *Filter) DatabaseMetadataOption {
 				return fmt.Errorf("GetFunctions: %w", err)
 			}
 			for _, function := range functions {
-				n1 := c.CachedSchemaPosition(function.FunctionSchema)
+				n1 := dbm.CachedSchemaPosition(function.FunctionSchema)
 				if n1 < 0 {
-					n1 = c.AppendSchema(Schema{SchemaName: function.FunctionSchema})
+					n1 = dbm.AppendSchema(Schema{SchemaName: function.FunctionSchema})
 				}
-				c.Schemas[n1].AppendFunction(function)
+				dbm.Schemas[n1].AppendFunction(function)
 			}
 		}
 		triggers, err := dbi.GetTriggers(ctx, nil)
@@ -319,12 +319,12 @@ func WithDB(db sq.DB, defaultFilter *Filter) DatabaseMetadataOption {
 			return fmt.Errorf("GetTriggers: %w", err)
 		}
 		for _, trigger := range triggers {
-			if n1 := c.CachedSchemaPosition(trigger.TableSchema); n1 >= 0 {
-				if n2 := c.Schemas[n1].CachedTablePosition(trigger.TableName); n2 >= 0 {
-					c.Schemas[n1].Tables[n2].AppendTrigger(trigger)
+			if n1 := dbm.CachedSchemaPosition(trigger.TableSchema); n1 >= 0 {
+				if n2 := dbm.Schemas[n1].CachedTablePosition(trigger.TableName); n2 >= 0 {
+					dbm.Schemas[n1].Tables[n2].AppendTrigger(trigger)
 				}
-				if n3 := c.Schemas[n1].CachedViewPosition(trigger.TableName); n3 >= 0 {
-					c.Schemas[n1].Views[n3].AppendTrigger(trigger)
+				if n3 := dbm.Schemas[n1].CachedViewPosition(trigger.TableName); n3 >= 0 {
+					dbm.Schemas[n1].Views[n3].AppendTrigger(trigger)
 				}
 			}
 		}
@@ -333,16 +333,16 @@ func WithDB(db sq.DB, defaultFilter *Filter) DatabaseMetadataOption {
 }
 
 func WithExtensions(extensions ...string) DatabaseMetadataOption {
-	return func(c *DatabaseMetadata) error {
-		c.Extensions = extensions
+	return func(dbm *DatabaseMetadata) error {
+		dbm.Extensions = extensions
 		return nil
 	}
 }
 
 func WithTables(tables ...sq.SchemaTable) DatabaseMetadataOption {
-	return func(c *DatabaseMetadata) error {
+	return func(dbm *DatabaseMetadata) error {
 		for i, table := range tables {
-			err := c.loadTable(table)
+			err := dbm.loadTable(table)
 			if err != nil {
 				return fmt.Errorf("WithTables table #%d: %w", i+1, err)
 			}
@@ -352,9 +352,9 @@ func WithTables(tables ...sq.SchemaTable) DatabaseMetadataOption {
 }
 
 func WithDDLViews(ddlViews ...DDLView) DatabaseMetadataOption {
-	return func(c *DatabaseMetadata) error {
+	return func(dbm *DatabaseMetadata) error {
 		for i, ddlView := range ddlViews {
-			err := c.loadDDLView(ddlView)
+			err := dbm.loadDDLView(ddlView)
 			if err != nil {
 				return fmt.Errorf("WithDDLViews view #%d: %w", i+1, err)
 			}
@@ -364,13 +364,13 @@ func WithDDLViews(ddlViews ...DDLView) DatabaseMetadataOption {
 }
 
 func WithFunctions(functions ...Function) DatabaseMetadataOption {
-	return func(c *DatabaseMetadata) error {
+	return func(dbm *DatabaseMetadata) error {
 		for i, function := range functions {
-			err := function.populateFunctionInfo(c.Dialect)
+			err := function.populateFunctionInfo(dbm.Dialect)
 			if err != nil {
 				return fmt.Errorf("WithFunctions function #%d: %w", i+1, err)
 			}
-			err = c.loadFunction(function)
+			err = dbm.loadFunction(function)
 			if err != nil {
 				return fmt.Errorf("WithFunctions function #%d: %w", i+1, err)
 			}
