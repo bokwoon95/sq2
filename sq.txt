@@ -49,6 +49,8 @@ sq.Fieldf("jsonb_build_object({})", []interface{
 err := sq.Tx(func(tx *sql.Tx) error {
 })
 
+make it clear that embedding a type is not covered by backwards compatibility, as new fields and methods may be added.
+
 I think each dialect can get its own query builder
 - pgsq
 - mysq

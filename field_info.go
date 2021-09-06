@@ -24,6 +24,7 @@ type FieldInfo struct {
 	FieldAlias  string
 	Formats     [][2]string
 	Values      []interface{}
+	Collation   string
 	Descending  sql.NullBool
 	NullsFirst  sql.NullBool
 	Err         error
@@ -77,6 +78,14 @@ func (f FieldInfo) AppendSQLExclude(dialect string, buf *bytes.Buffer, args *[]i
 			buf.WriteString(QuoteIdentifier(dialect, tableQualifier) + ".")
 		}
 		buf.WriteString(QuoteIdentifier(dialect, f.FieldName))
+	}
+	if f.Collation != "" {
+		buf.WriteString(" COLLATE ")
+		if dialect == DialectPostgres {
+			buf.WriteString(`"` + EscapeQuote(f.Collation, '"') + `"`)
+		} else {
+			buf.WriteString(QuoteIdentifier(dialect, f.Collation))
+		}
 	}
 	if f.Descending.Valid {
 		if f.Descending.Bool {

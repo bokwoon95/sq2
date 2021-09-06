@@ -37,6 +37,11 @@ func (f StringField) As(alias string) StringField {
 	return f
 }
 
+func (f StringField) Collate(collation string) StringField {
+	f.info.Collation = collation
+	return f
+}
+
 func (f StringField) Asc() StringField {
 	f.info.Descending.Valid = true
 	f.info.Descending.Bool = false
