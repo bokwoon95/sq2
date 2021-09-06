@@ -20,6 +20,11 @@ FROM (
         information_schema.statistics
     WHERE
         index_name <> 'PRIMARY'
+        AND NOT EXISTS (
+            SELECT 1
+            FROM information_schema.table_constraints
+            WHERE table_constraints.constraint_name = statistics.index_name
+        )
         {{ if not .IncludeSystemCatalogs }}AND table_schema NOT IN ('mysql', 'information_schema', 'performance_schema', 'sys'){{ end }}
         {{ if .WithSchemas }}AND table_schema IN ({{ printList .WithSchemas }}){{ end }}
         {{ if .WithoutSchemas }}AND table_schema NOT IN ({{ printList .WithoutSchemas }}){{ end }}
