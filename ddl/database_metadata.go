@@ -108,26 +108,31 @@ func (dbm *DatabaseMetadata) loadTable(table sq.SchemaTable) error {
 	if tableName == "" {
 		return fmt.Errorf("table name is empty")
 	}
-	var schema Schema
-	if n := dbm.CachedSchemaPosition(tableSchema); n >= 0 {
-		schema = dbm.Schemas[n]
-		defer func() { dbm.Schemas[n] = schema }()
-	} else {
-		schema = Schema{SchemaName: tableSchema}
-		defer func() { dbm.AppendSchema(schema) }()
+	schema := Schema{SchemaName: tableSchema}
+	n1 := dbm.CachedSchemaPosition(tableSchema)
+	if n1 >= 0 {
+		schema = dbm.Schemas[n1]
 	}
-	var tbl Table
-	if n := schema.CachedTablePosition(tableName); n >= 0 {
-		tbl = schema.Tables[n]
-		defer func() { schema.Tables[n] = tbl }()
-	} else {
-		tbl = Table{
-			TableSchema: tableSchema,
-			TableName:   tableName,
-		}
-		defer func() { schema.AppendTable(tbl) }()
+	tbl := Table{TableSchema: tableSchema, TableName: tableName}
+	n2 := schema.CachedTablePosition(tableName)
+	if n2 >= 0 {
+		tbl = schema.Tables[n2]
 	}
-	return tbl.LoadTable(dbm.Dialect, table)
+	err := tbl.LoadTable(dbm.Dialect, table)
+	if err != nil {
+		return err
+	}
+	if n2 >= 0 {
+		schema.Tables[n2] = tbl
+	} else {
+		n2 = schema.AppendTable(tbl)
+	}
+	if n1 >= 0 {
+		dbm.Schemas[n1] = schema
+	} else {
+		n1 = dbm.AppendSchema(schema)
+	}
+	return nil
 }
 
 func (dbm *DatabaseMetadata) loadDDLView(ddlView DDLView) error {
