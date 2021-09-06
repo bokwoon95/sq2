@@ -489,7 +489,7 @@ func (dbi *DatabaseIntrospector) GetConstraints(ctx context.Context, filter *Fil
 				&constraint.MatchOption,
 				&constraint.CheckExpr,
 				&rawOperators,
-				&constraint.ExclusionIndex,
+				&constraint.ExclusionIndexType,
 				&constraint.Predicate,
 				&constraint.IsDeferrable,
 				&constraint.IsInitiallyDeferred,

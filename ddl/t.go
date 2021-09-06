@@ -261,7 +261,7 @@ func createOrUpdateConstraint(dialect string, tbl *Table, constraintType, constr
 	return constraintPosition, nil
 }
 
-func createOrUpdateExclusionConstraint(dialect string, tbl *Table, constraintName, exclusionIndex string, fields []sq.Field, operators []string) (constraintPosition int, err error) {
+func createOrUpdateExclusionConstraint(dialect string, tbl *Table, constraintName, exclusionIndexType string, fields []sq.Field, operators []string) (constraintPosition int, err error) {
 	if dialect != sq.DialectPostgres {
 		return -1, fmt.Errorf("%s does not support exclusion constraints", dialect)
 	}
@@ -280,7 +280,7 @@ func createOrUpdateExclusionConstraint(dialect string, tbl *Table, constraintNam
 		constraint.Columns = columnNames
 		constraint.Exprs = exprs
 		constraint.ExclusionOperators = operators
-		constraint.ExclusionIndex = exclusionIndex
+		constraint.ExclusionIndexType = exclusionIndexType
 		tbl.Constraints[constraintPosition] = constraint
 	} else {
 		constraintPosition = tbl.AppendConstraint(Constraint{
@@ -291,7 +291,7 @@ func createOrUpdateExclusionConstraint(dialect string, tbl *Table, constraintNam
 			Columns:            columnNames,
 			Exprs:              exprs,
 			ExclusionOperators: operators,
-			ExclusionIndex:     exclusionIndex,
+			ExclusionIndexType: exclusionIndexType,
 		})
 	}
 	return constraintPosition, nil

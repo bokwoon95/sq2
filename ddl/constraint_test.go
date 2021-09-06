@@ -138,7 +138,7 @@ func Test_AddConstraintCommnd(t *testing.T) {
 			Constraint: Constraint{
 				ConstraintName:     "customer_email_excl",
 				ConstraintType:     EXCLUDE,
-				ExclusionIndex:     "GIST",
+				ExclusionIndexType: "GIST",
 				Columns:            []string{"email", ""},
 				Exprs:              []string{"", "LOWER(email)"},
 				ExclusionOperators: []string{"ILIKE", "="},
@@ -237,7 +237,7 @@ func Test_AddConstraintCommnd(t *testing.T) {
 			Constraint: Constraint{
 				ConstraintName:     "customer_email_excl",
 				ConstraintType:     EXCLUDE,
-				ExclusionIndex:     "GIST",
+				ExclusionIndexType: "GIST",
 				Columns:            []string{"email", ""},
 				Exprs:              []string{"", "LOWER(email)"},
 				ExclusionOperators: []string{"ILIKE", "="},
@@ -280,7 +280,7 @@ func Test_AddConstraintCommnd(t *testing.T) {
 			Constraint: Constraint{
 				ConstraintName:     "customer_email_excl",
 				ConstraintType:     EXCLUDE,
-				ExclusionIndex:     "GIST",
+				ExclusionIndexType: "GIST",
 				Columns:            []string{""},
 				Exprs:              []string{""},
 				ExclusionOperators: []string{"="},
@@ -300,7 +300,7 @@ func Test_AddConstraintCommnd(t *testing.T) {
 			Constraint: Constraint{
 				ConstraintName:     "customer_email_excl",
 				ConstraintType:     EXCLUDE,
-				ExclusionIndex:     "GIST",
+				ExclusionIndexType: "GIST",
 				Columns:            []string{"email"},
 				ExclusionOperators: []string{""},
 			},

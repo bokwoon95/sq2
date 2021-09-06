@@ -23,7 +23,7 @@ type Constraint struct {
 	MatchOption         string   `json:",omitempty"`
 	CheckExpr           string   `json:",omitempty"`
 	ExclusionOperators  []string `json:",omitempty"`
-	ExclusionIndex      string   `json:",omitempty"`
+	ExclusionIndexType  string   `json:",omitempty"`
 	Predicate           string   `json:",omitempty"`
 	IsDeferrable        bool     `json:",omitempty"`
 	IsInitiallyDeferred bool     `json:",omitempty"`
@@ -115,11 +115,11 @@ func writeConstraintDefinition(dialect string, buf *bytes.Buffer, constraint Con
 		if dialect != sq.DialectPostgres {
 			return fmt.Errorf("%s does not support EXCLUDE constraints", dialect)
 		}
-		if constraint.ExclusionIndex == "" {
+		if constraint.ExclusionIndexType == "" {
 			return fmt.Errorf("postgres EXCLUDE constraint requires an index")
 		}
-		if constraint.ExclusionIndex != "" {
-			buf.WriteString("EXCLUDE USING " + constraint.ExclusionIndex)
+		if constraint.ExclusionIndexType != "" {
+			buf.WriteString("EXCLUDE USING " + constraint.ExclusionIndexType)
 		}
 		buf.WriteString(" (")
 		for i := range constraint.Columns {

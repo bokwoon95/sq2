@@ -182,7 +182,7 @@ SELECT
     ,'' AS match_option
     ,'' AS check_expr
     ,string_agg(operator, ',' ORDER BY seq) AS operators
-    ,exclusion_index
+    ,exclusion_index_type
     ,COALESCE(pg_get_expr(predicate_oid, table_oid, TRUE), '') AS predicate
     ,is_deferrable
     ,is_initially_deferred
@@ -193,7 +193,7 @@ FROM (
         ,pg_constraint.conname AS constraint_name
         ,COALESCE(columns.attname, '') AS column_name
         ,pg_operator.oprname AS operator
-        ,UPPER(pg_am.amname) AS exclusion_index
+        ,UPPER(pg_am.amname) AS exclusion_index_type
         ,pg_constraint.condeferrable AS is_deferrable
         ,pg_constraint.condeferred AS is_initially_deferred
         ,pg_index.indrelid AS table_oid
@@ -223,7 +223,7 @@ GROUP BY
     table_schema
     ,table_name
     ,constraint_name
-    ,exclusion_index
+    ,exclusion_index_type
     ,is_deferrable
     ,is_initially_deferred
     ,table_oid
