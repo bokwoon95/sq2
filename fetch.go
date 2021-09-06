@@ -43,8 +43,14 @@ func fetchContext(ctx context.Context, db DB, q Query, rowmapper func(*Row), ski
 	var logSettings LogSettings
 	var logQueryStats func(ctx context.Context, stats QueryStats)
 	if loggerDB, ok := db.(LoggerDB); ok {
-		logQueryStats = loggerDB.LogQueryStats
-		logSettings = loggerDB.GetLogSettings()
+		logSettings, err = loggerDB.GetLogSettings()
+		if err != nil {
+			if errors.Is(err, ErrLoggerUnsupported) {
+				return rowCount, err
+			}
+		} else {
+			logQueryStats = loggerDB.LogQueryStats
+		}
 	}
 	if logQueryStats != nil && logSettings.GetCallerInfo {
 		stats.CallerFile, stats.CallerLine, stats.CallerFunction = caller(skip)
@@ -253,8 +259,14 @@ func fetchExistsContext(ctx context.Context, db DB, q Query, skip int) (exists b
 	var logQueryStats func(ctx context.Context, stats QueryStats)
 	var logSettings LogSettings
 	if loggerDB, ok := db.(LoggerDB); ok {
-		logQueryStats = loggerDB.LogQueryStats
-		logSettings = loggerDB.GetLogSettings()
+		logSettings, err = loggerDB.GetLogSettings()
+		if err != nil {
+			if errors.Is(err, ErrLoggerUnsupported) {
+				return exists, err
+			}
+		} else {
+			logQueryStats = loggerDB.LogQueryStats
+		}
 	}
 	if logQueryStats != nil && logSettings.GetCallerInfo {
 		stats.CallerFile, stats.CallerLine, stats.CallerFunction = caller(skip)

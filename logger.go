@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -78,8 +79,10 @@ type LogSettings struct {
 
 type Logger interface {
 	LogQueryStats(ctx context.Context, stats QueryStats)
-	GetLogSettings() LogSettings
+	GetLogSettings() (LogSettings, error)
 }
+
+var ErrLoggerUnsupported = errors.New("Logger is not supported")
 
 type LoggerDB interface {
 	Logger
@@ -118,11 +121,11 @@ func VerboseLog(db DB) LoggerDB {
 	return loggerDB{Logger: verboseLogger, DB: db}
 }
 
-func (l logger) GetLogSettings() LogSettings {
+func (l logger) GetLogSettings() (LogSettings, error) {
 	return LogSettings{
 		ResultsLimit:  l.resultsLimit,
 		GetCallerInfo: Lcaller&l.logflag != 0,
-	}
+	}, nil
 }
 
 func (l logger) LogQueryStats(ctx context.Context, stats QueryStats) {

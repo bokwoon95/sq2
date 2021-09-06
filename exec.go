@@ -25,9 +25,15 @@ func execContext(ctx context.Context, db DB, q Query, skip int) (rowsAffected, l
 	var stats QueryStats
 	var logQueryStats func(ctx context.Context, stats QueryStats)
 	var logSettings LogSettings
-	if db, ok := db.(LoggerDB); ok {
-		logQueryStats = db.LogQueryStats
-		logSettings = db.GetLogSettings()
+	if loggerDB, ok := db.(LoggerDB); ok {
+		logSettings, err = loggerDB.GetLogSettings()
+		if err != nil {
+			if errors.Is(err, ErrLoggerUnsupported) {
+				return 0, 0, err
+			}
+		} else {
+			logQueryStats = loggerDB.LogQueryStats
+		}
 	}
 	if logQueryStats != nil && logSettings.GetCallerInfo {
 		stats.CallerFile, stats.CallerLine, stats.CallerFunction = caller(skip)
