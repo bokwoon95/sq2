@@ -259,7 +259,6 @@ func WithDB(db sq.DB, defaultFilter *Filter) DatabaseMetadataOption {
 		if err != nil {
 			return fmt.Errorf("GetConstraints: %w", err)
 		}
-		constraintNames := make(map[[3]string]struct{})
 		for _, constraint := range constraints {
 			n1 := c.CachedSchemaPosition(constraint.TableSchema)
 			if n1 < 0 {
@@ -269,7 +268,6 @@ func WithDB(db sq.DB, defaultFilter *Filter) DatabaseMetadataOption {
 			if n2 < 0 {
 				continue
 			}
-			constraintNames[[3]string{constraint.TableSchema, constraint.TableName, constraint.ConstraintName}] = struct{}{}
 			c.Schemas[n1].Tables[n2].AppendConstraint(constraint)
 			if len(constraint.Columns) == 1 && (constraint.ConstraintType == PRIMARY_KEY || constraint.ConstraintType == UNIQUE) {
 				n3 := c.Schemas[n1].Tables[n2].CachedColumnPosition(constraint.Columns[0])
@@ -290,9 +288,6 @@ func WithDB(db sq.DB, defaultFilter *Filter) DatabaseMetadataOption {
 		}
 		for _, index := range indexes {
 			if n1 := c.CachedSchemaPosition(index.TableSchema); n1 >= 0 {
-				if _, ok := constraintNames[[3]string{index.TableSchema, index.TableName, index.IndexName}]; ok {
-					continue
-				}
 				if n2 := c.Schemas[n1].CachedTablePosition(index.TableName); n2 >= 0 {
 					c.Schemas[n1].Tables[n2].AppendIndex(index)
 				} else if n3 := c.Schemas[n1].CachedViewPosition(index.TableName); n3 >= 0 {
