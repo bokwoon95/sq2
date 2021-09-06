@@ -45,7 +45,7 @@ func fetchContext(ctx context.Context, db DB, q Query, rowmapper func(*Row), ski
 	if loggerDB, ok := db.(LoggerDB); ok {
 		logSettings, err = loggerDB.GetLogSettings()
 		if err != nil {
-			if errors.Is(err, ErrLoggerUnsupported) {
+			if !errors.Is(err, ErrLoggerUnsupported) {
 				return rowCount, err
 			}
 		} else {
@@ -261,7 +261,7 @@ func fetchExistsContext(ctx context.Context, db DB, q Query, skip int) (exists b
 	if loggerDB, ok := db.(LoggerDB); ok {
 		logSettings, err = loggerDB.GetLogSettings()
 		if err != nil {
-			if errors.Is(err, ErrLoggerUnsupported) {
+			if !errors.Is(err, ErrLoggerUnsupported) {
 				return exists, err
 			}
 		} else {

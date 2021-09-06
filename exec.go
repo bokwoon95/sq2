@@ -28,7 +28,7 @@ func execContext(ctx context.Context, db DB, q Query, skip int) (rowsAffected, l
 	if loggerDB, ok := db.(LoggerDB); ok {
 		logSettings, err = loggerDB.GetLogSettings()
 		if err != nil {
-			if errors.Is(err, ErrLoggerUnsupported) {
+			if !errors.Is(err, ErrLoggerUnsupported) {
 				return 0, 0, err
 			}
 		} else {
