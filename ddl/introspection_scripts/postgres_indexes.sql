@@ -30,7 +30,11 @@ FROM (
         CROSS JOIN unnest(pg_index.indkey) WITH ORDINALITY AS c(oid, seq)
         LEFT JOIN pg_attribute AS columns ON columns.attrelid = pg_index.indrelid AND columns.attnum = c.oid
     WHERE
-        TRUE
+        NOT EXISTS (
+            SELECT 1
+            FROM pg_constraint
+            WHERE pg_constraint.conname = indexes.relname
+        )
         {{ if not .IncludeSystemCatalogs }}AND schemas.nspname <> 'information_schema' AND schemas.nspname NOT LIKE 'pg_%'{{ end }}
         {{ if .WithSchemas }}AND schemas.nspname IN ({{ printList .WithSchemas }}){{ end }}
         {{ if .WithoutSchemas }}AND schemas.nspname NOT IN ({{ printList .WithoutSchemas }}){{ end }}
