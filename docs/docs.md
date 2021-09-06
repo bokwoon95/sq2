@@ -289,3 +289,5 @@ For more information about type mapping, see the [documentation for ddl](#)
 ## How do I handle migrations?
 
 See [migrations](#).
+
+Do you use pgx? You can write your own Fetch that makes uses of pgx's custom DB type. Or maybe you don't want to be saddled with database/sql's interface, instead preferring a higher performance sqlite driver to interact with the DB. You can also do the same. You can really just use sq as a query builder.
