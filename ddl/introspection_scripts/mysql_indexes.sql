@@ -19,8 +19,7 @@ FROM (
     FROM
         information_schema.statistics
     WHERE
-        index_name <> 'PRIMARY'
-        AND NOT EXISTS (
+        NOT EXISTS (
             SELECT 1
             FROM information_schema.table_constraints
             WHERE table_constraints.constraint_name = statistics.index_name
