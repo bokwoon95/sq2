@@ -20,6 +20,8 @@ rename 'db' to 'sakila' (d'oh this was so obvious)
 
 shower thought: I could probably exclude all the constraint indexes at the query level by simply adding a NOT EXISTS predicate checking if the index name matches a constraint name.
 
+get rid of the fancy defer func for the create or update workflow. Refer to dbm.loadTable for what the new workflow should look like.
+
 migrationDir support
 
 bah gawd. types. domains. enums.
