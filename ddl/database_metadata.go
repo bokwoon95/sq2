@@ -218,6 +218,8 @@ func WithDB(db sq.DB, defaultFilter *Filter) DatabaseMetadataOption {
 		if err != nil {
 			return fmt.Errorf("GetTables: %w", err)
 		}
+		// len(schemaTableCount) is the number of schemas
+		// schemaTableCount[schema] is the number of tables in a schema
 		schemaTableCount := make(map[string]int)
 		for _, tbl := range tbls {
 			schemaTableCount[tbl.TableSchema]++
@@ -249,11 +251,15 @@ func WithDB(db sq.DB, defaultFilter *Filter) DatabaseMetadataOption {
 			return fmt.Errorf("GetColumns: %w", err)
 		}
 		for _, column := range columns {
-			if n1 := c.CachedSchemaPosition(column.TableSchema); n1 >= 0 {
-				if n2 := c.Schemas[n1].CachedTablePosition(column.TableName); n2 >= 0 {
-					c.Schemas[n1].Tables[n2].AppendColumn(column)
-				}
+			n1 := c.CachedSchemaPosition(column.TableSchema)
+			if n1 < 0 {
+				continue
 			}
+			n2 := c.Schemas[n1].CachedTablePosition(column.TableName)
+			if n2 < 0 {
+				continue
+			}
+			c.Schemas[n1].Tables[n2].AppendColumn(column)
 		}
 		constraints, err := dbi.GetConstraints(ctx, nil)
 		if err != nil {
