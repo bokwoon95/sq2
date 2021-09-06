@@ -16,6 +16,8 @@ mysql_sakila_introspect is wrong:
 rating ENUM('G','PG','PG-13','R','NC-17') NOT NULL DEFAULT G
 should be DEFAULT 'G'
 
+rename 'db' to 'sakila' (d'oh this was so obvious)
+
 migrationDir support
 
 bah gawd. types. domains. enums.
