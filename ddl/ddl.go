@@ -10,7 +10,7 @@ import (
 	"github.com/bokwoon95/sq"
 )
 
-//go:embed sql testdata
+//go:embed introspection_scripts testdata
 var embeddedFiles embed.FS
 
 var (
