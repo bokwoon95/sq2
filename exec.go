@@ -91,9 +91,14 @@ func execContext(ctx context.Context, db DB, q Query, skip int) (rowsAffected, l
 		return 0, 0, err
 	}
 	stats.Query = buf.String()
-	start := time.Now()
+	var start time.Time
+	if logSettings.TimeQuery {
+		start = time.Now()
+	}
 	result, err := db.ExecContext(ctx, stats.Query, stats.Args...)
-	stats.TimeTaken = time.Since(start)
+	if logSettings.TimeQuery {
+		stats.TimeTaken = time.Since(start)
+	}
 	if err != nil {
 		return 0, 0, err
 	}

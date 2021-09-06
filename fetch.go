@@ -109,9 +109,14 @@ func fetchContext(ctx context.Context, db DB, q Query, rowmapper func(*Row), ski
 		return 0, err
 	}
 	stats.Query = buf.String()
-	start := time.Now()
+	var start time.Time
+	if logSettings.TimeQuery {
+		start = time.Now()
+	}
 	rows, err := db.QueryContext(ctx, stats.Query, stats.Args...)
-	stats.TimeTaken = time.Since(start)
+	if logSettings.TimeQuery {
+		stats.TimeTaken = time.Since(start)
+	}
 	if err != nil {
 		return 0, err
 	}
@@ -321,9 +326,14 @@ func fetchExistsContext(ctx context.Context, db DB, q Query, skip int) (exists b
 	}
 	buf.WriteString(")")
 	stats.Query = buf.String()
-	start := time.Now()
+	var start time.Time
+	if logSettings.TimeQuery {
+		start = time.Now()
+	}
 	rows, err := db.QueryContext(ctx, stats.Query, stats.Args...)
-	stats.TimeTaken = time.Since(start)
+	if logSettings.TimeQuery {
+		stats.TimeTaken = time.Since(start)
+	}
 	if err != nil {
 		return false, err
 	}

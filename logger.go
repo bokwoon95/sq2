@@ -20,6 +20,8 @@ const (
 	LinterpolateVerbose             // Show the query before and after interpolation
 	Lcaller                         // Show caller information i.e. filename, line number, function name
 	Lcolor                          // Colorize log output
+	Ltime                           // Show time taken
+	Lasync                          // log asynchronously
 )
 
 var (
@@ -75,6 +77,7 @@ type LogSettings struct {
 	ResultsLimit  int
 	GetCallerInfo bool
 	AsyncLogging  bool
+	TimeQuery     bool
 }
 
 type Logger interface {
@@ -109,8 +112,8 @@ func NewLogger(out io.Writer, logflag int, resultsLimit int) Logger {
 }
 
 var (
-	defaultLogger = NewLogger(os.Stdout, Lcaller|Lcolor|Linterpolate, 0)
-	verboseLogger = NewLogger(os.Stdout, Lcaller|Lcolor|LinterpolateVerbose, 5)
+	defaultLogger = NewLogger(os.Stdout, Ltime|Lcaller|Lcolor|Linterpolate, 0)
+	verboseLogger = NewLogger(os.Stdout, Ltime|Lcaller|Lcolor|LinterpolateVerbose, 5)
 )
 
 func Log(db DB) LoggerDB {
@@ -125,6 +128,8 @@ func (l logger) GetLogSettings() (LogSettings, error) {
 	return LogSettings{
 		ResultsLimit:  l.resultsLimit,
 		GetCallerInfo: Lcaller&l.logflag != 0,
+		AsyncLogging:  Lasync&l.logflag != 0,
+		TimeQuery:     Ltime&l.logflag != 0,
 	}, nil
 }
 
@@ -164,7 +169,9 @@ func (l logger) LogQueryStats(ctx context.Context, stats QueryStats) {
 		}
 		buf.WriteString(" |")
 	}
-	buf.WriteString(blue + " timeTaken" + reset + "=" + stats.TimeTaken.String())
+	if stats.TimeTaken > 0 {
+		buf.WriteString(blue + " timeTaken" + reset + "=" + stats.TimeTaken.String())
+	}
 	if stats.Exists.Valid {
 		buf.WriteString(blue + " exists" + reset + "=" + strconv.FormatBool(stats.Exists.Bool))
 	}
