@@ -47,3 +47,5 @@ func GetDDLViewQuery(ddlView DDLView) sq.Query
 consider adding ability to tag constraints, indexes, triggers, views, functions
 with a versionID. This would open the path for automatically dropping and
 recreating them if the versionID changes.
+
+autodetection of dialect within AutoMigrate is impossible because it depends on running SELECT queries that may potentially fail (i.e. no such function 'sqlite_version()'), making them unsuitable to be run in a transaction (which AutoMigrate expressly sets out to support).
