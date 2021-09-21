@@ -89,7 +89,7 @@ func defaultColumnType(dialect string, field sq.Field) (columnType string) {
 		return "INT"
 	case sq.StringField:
 		switch dialect {
-		case sq.DialectPostgres, sq.DialectSQLite:
+		case sq.DialectSQLite, sq.DialectPostgres:
 			return "TEXT"
 		default:
 			return "VARCHAR(255)"
@@ -100,6 +100,13 @@ func defaultColumnType(dialect string, field sq.Field) (columnType string) {
 			return "TIMESTAMPTZ"
 		default:
 			return "DATETIME"
+		}
+	case sq.UUIDField:
+		switch dialect {
+		case sq.DialectSQLite, sq.DialectPostgres:
+			return "UUID"
+		default:
+			return "BINARY(16)"
 		}
 	}
 	return "VARCHAR(255)"
