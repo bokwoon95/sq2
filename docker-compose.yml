@@ -25,6 +25,7 @@ services:
       MYSQL_USER: 'mysql'
       MYSQL_PASSWORD: 'mysql'
       MYSQL_DATABASE: 'db'
+    platform: 'linux/amd64'
 
   # mssql:
   #   container_name: 'sq_mssql'
