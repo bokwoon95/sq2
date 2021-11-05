@@ -21,9 +21,6 @@ type ACTOR struct {
 	FULL_NAME          sq.StringField `ddl:"expr={first_name || ' ' || last_name} mysql:expr={CONCAT(first_name, ' ', last_name)}"`
 	FULL_NAME_REVERSED sq.StringField `ddl:"storedexpr={last_name || ' ' || first_name} mysql:storedexpr={CONCAT(last_name, ' ', first_name)}"`
 	LAST_UPDATE        sq.TimeField   `ddl:"notnull default=CURRENT_TIMESTAMP onupdatecurrenttimestamp"`
-
-	_ struct{} `ddl:"primarykey={. cols=actor_id}"`
-	_ struct{} `ddl:"primarykey={. cols=actor_id}"`
 }
 
 func NEW_ACTOR(alias string) ACTOR {
@@ -95,7 +92,7 @@ type CITY struct {
 	sq.TableInfo
 	CITY_ID     sq.NumberField `ddl:"sqlite:type=INTEGER primarykey auto_increment identity"`
 	CITY        sq.StringField `ddl:"notnull mysql:type=VARCHAR(50)"`
-	COUNTRY_ID  sq.NumberField `ddl:"notnull references={country.country_id onupdate=cascade ondelete=restrict} index"`
+	COUNTRY_ID  sq.NumberField `ddl:"notnull references={country onupdate=cascade ondelete=restrict} index"`
 	LAST_UPDATE sq.TimeField   `ddl:"notnull default=CURRENT_TIMESTAMP onupdatecurrenttimestamp"`
 }
 
