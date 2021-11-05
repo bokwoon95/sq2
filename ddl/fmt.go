@@ -70,6 +70,9 @@ func tokenizeModifiers(s string) (modifiers [][2]string, modifierPositions map[s
 		if err != nil {
 			return nil, modifierPositions, err
 		}
+		if token == "" {
+			continue
+		}
 		key, value := token, ""
 		if j := strings.Index(token, "="); j >= 0 {
 			key, value = token[:j], token[j+1:]
