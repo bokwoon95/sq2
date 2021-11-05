@@ -182,6 +182,8 @@ where the suffix is one of the following:
 
 Constraint names cannot be generated for CHECK or EXCLUDE constraints, because they involve SQL expressions and it is not possible to determine (on `ddl`'s side) what columns are participating in an expression. Therefore constraint names must always be explicitly specified for CHECK and EXCLUDE. In fact, it is impossible to define CHECK and EXCLUDE constraints using struct tags because I haven't figured out what the it should look like. They can only be defined through the [`DDLTable` interface](#).
 
+EDIT: TODO: I have figured out how to define a CHECK constraint in struct tags. Simply autogenerate the name as _check1, _check2, _check3 just like how postgres does it. or maybe use a uuid so that I don't have to keep count.
+
 To use a custom constraint or index name, pass it in as a value to the `primarykey`, `unique` or `index` modifier.
 
 ```go
