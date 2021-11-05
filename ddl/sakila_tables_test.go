@@ -374,7 +374,7 @@ func (tbl STAFF) DDL(dialect string, t *T) {
 type STORE struct {
 	sq.TableInfo
 	STORE_ID         sq.NumberField `ddl:"sqlite:type=INTEGER primarykey auto_increment identity"`
-	MANAGER_STAFF_ID sq.NumberField `ddl:"notnull references={staff.staff_id onupdate=cascade ondelete=restrict} index={. unique}"`
+	MANAGER_STAFF_ID sq.NumberField `ddl:"notnull references={staff.staff_id onupdate=cascade ondelete=restrict index={. unique}}"`
 	ADDRESS_ID       sq.NumberField `ddl:"notnull references={address onupdate=cascade ondelete=restrict}"`
 	LAST_UPDATE      sq.TimeField   `ddl:"notnull default=CURRENT_TIMESTAMP onupdatecurrenttimestamp"`
 }
