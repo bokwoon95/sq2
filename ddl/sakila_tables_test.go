@@ -18,8 +18,8 @@ type ACTOR struct {
 	ACTOR_ID           sq.NumberField `ddl:"sqlite:type=INTEGER primarykey auto_increment autoincrement identity"`
 	FIRST_NAME         sq.StringField `ddl:"mysql:type=VARCHAR(45) notnull"`
 	LAST_NAME          sq.StringField `ddl:"mysql:type=VARCHAR(45) notnull index"`
-	FULL_NAME          sq.StringField `ddl:"generated={first_name || ' ' || last_name} mysql:generated={CONCAT(first_name, ' ', last_name)} virtual"`
-	FULL_NAME_REVERSED sq.StringField `ddl:"generated={last_name || ' ' || first_name} mysql:generated={CONCAT(last_name, ' ', first_name)} stored"`
+	FULL_NAME          sq.StringField `ddl:"expr={first_name || ' ' || last_name} mysql:expr={CONCAT(first_name, ' ', last_name)}"`
+	FULL_NAME_REVERSED sq.StringField `ddl:"storedexpr={last_name || ' ' || first_name} mysql:storedexpr={CONCAT(last_name, ' ', first_name)}"`
 	LAST_UPDATE        sq.TimeField   `ddl:"notnull default=CURRENT_TIMESTAMP onupdatecurrenttimestamp"`
 
 	_ struct{} `ddl:"primarykey={. cols=actor_id}"`

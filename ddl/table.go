@@ -427,19 +427,15 @@ func (tbl *Table) loadColumnConfig(dialect, columnName, columnType, config strin
 			if dialect == sq.DialectMySQL {
 				column.OnUpdateCurrentTimestamp = true
 			}
-		// TODO: generated={} and generatedstored={}
-		// instead of the virtual (field) and virtual (table) mess
-		case "generated":
+		case "expr":
 			column.GeneratedExpr = modifier[1]
+			column.GeneratedExprStored = false
 			if dialect == sq.DialectPostgres {
 				column.GeneratedExprStored = true
 			}
-		case "stored":
+		case "storedexpr":
+			column.GeneratedExpr = modifier[1]
 			column.GeneratedExprStored = true
-		case "virtual":
-			if dialect != sq.DialectPostgres {
-				column.GeneratedExprStored = false
-			}
 		case "collate":
 			column.CollationName = modifier[1]
 		case "default":
