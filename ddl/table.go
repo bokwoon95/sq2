@@ -365,6 +365,11 @@ func (tbl *Table) loadConstraintConfig(dialect, constraintType, tableSchema, tab
 					}
 				}
 			}
+		case "index":
+			err = tbl.loadIndexConfig(dialect, tableSchema, tableName, constraint.ReferencesColumns, modifier[1])
+			if err != nil {
+				return err
+			}
 		default:
 			return fmt.Errorf("invalid modifier 'check.%s'", modifier[0])
 		}

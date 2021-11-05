@@ -92,7 +92,7 @@ type CITY struct {
 	sq.TableInfo
 	CITY_ID     sq.NumberField `ddl:"sqlite:type=INTEGER primarykey auto_increment identity"`
 	CITY        sq.StringField `ddl:"notnull mysql:type=VARCHAR(50)"`
-	COUNTRY_ID  sq.NumberField `ddl:"notnull references={country onupdate=cascade ondelete=restrict} index"`
+	COUNTRY_ID  sq.NumberField `ddl:"notnull references={country onupdate=cascade ondelete=restrict index}"`
 	LAST_UPDATE sq.TimeField   `ddl:"notnull default=CURRENT_TIMESTAMP onupdatecurrenttimestamp"`
 }
 
