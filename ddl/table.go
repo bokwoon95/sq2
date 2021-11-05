@@ -195,18 +195,19 @@ func (tbl *Table) RefreshTriggerCache() {
 }
 
 func (tbl *Table) loadIndexConfig(dialect, tableSchema, tableName string, columns []string, config string) error {
-	indexName, modifiers, modifierPositions, err := tokenizeValue(config)
+	columnNames, modifiers, modifierPositions, err := tokenizeValue(config)
 	if err != nil {
 		return err
 	}
-	if n, ok := modifierPositions["cols"]; ok {
-		columns = strings.Split(modifiers[n][1], ",")
+	var indexName string
+	if n, ok := modifierPositions["name"]; ok {
+		indexName = modifiers[n][1]
+	}
+	if columnNames != "." && columnNames != "" {
+		columns = strings.Split(columnNames, ",")
 	}
 	if len(columns) == 0 {
-		return nil
-	}
-	if indexName == "." {
-		indexName = ""
+		return fmt.Errorf("%s.%s no index columns provided: %s", tableSchema, tableName, config)
 	}
 	if indexName == "" && len(columns) > 0 {
 		indexName = generateName(INDEX, tableName, columns...)
@@ -261,22 +262,14 @@ func (tbl *Table) loadConstraintConfig(dialect, constraintType, tableSchema, tab
 		return err
 	}
 	var constraintName string
-	if constraintType == PRIMARY_KEY || constraintType == UNIQUE {
-		constraintName = value
+	if n, ok := modifierPositions["name"]; ok {
+		constraintName = modifiers[n][1]
 	}
-	if constraintType == FOREIGN_KEY {
-		if n, ok := modifierPositions["name"]; ok {
-			constraintName = modifiers[n][1]
-		}
-	}
-	if n, ok := modifierPositions["cols"]; ok {
-		columns = strings.Split(modifiers[n][1], ",")
+	if constraintType != FOREIGN_KEY && value != "." && value != "" {
+		columns = strings.Split(value, ",")
 	}
 	if len(columns) == 0 {
-		return nil
-	}
-	if constraintName == "." {
-		constraintName = ""
+		return fmt.Errorf("%s.%s no constraint columns provided: %s", tableSchema, tableName, config)
 	}
 	if constraintName == "" && len(columns) > 0 {
 		constraintName = generateName(constraintType, tableName, columns...)

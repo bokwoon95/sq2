@@ -233,7 +233,7 @@ END`)
 }
 
 type FILM_TEXT struct {
-	sq.TableInfo `ddl:"ignore=postgres virtual={fts5 content='film' content_rowid='film_id'} mysql:index={. cols=title,description using=FULLTEXT}"`
+	sq.TableInfo `ddl:"ignore=postgres virtual={fts5 content='film' content_rowid='film_id'} mysql:index={title,description using=FULLTEXT}"`
 	FILM_ID      sq.NumberField `ddl:"ignore=sqlite notnull primarykey"`
 	TITLE        sq.StringField `ddl:"mysql:type=VARCHAR(255)"`
 	DESCRIPTION  sq.StringField `ddl:"mysql:type=TEXT"`
@@ -246,7 +246,7 @@ func NEW_FILM_TEXT(alias string) FILM_TEXT {
 }
 
 type FILM_ACTOR struct {
-	sq.TableInfo `ddl:"index={. cols=actor_id,film_id unique}"`
+	sq.TableInfo `ddl:"index={actor_id,film_id unique}"`
 	FILM_ID      sq.NumberField `ddl:"notnull references={film.film_id onupdate=cascade ondelete=restrict} index"`
 	ACTOR_ID     sq.NumberField `ddl:"notnull references={actor.actor_id onupdate=cascade ondelete=restrict}"`
 	LAST_UPDATE  sq.TimeField   `ddl:"notnull default=CURRENT_TIMESTAMP onupdatecurrenttimestamp"`
@@ -395,7 +395,7 @@ func (tbl STORE) DDL(dialect string, t *T) {
 }
 
 type CUSTOMER struct {
-	sq.TableInfo `ddl:"unique={. cols=email,first_name,last_name}"`
+	sq.TableInfo `ddl:"unique={email,first_name,last_name}"`
 	CUSTOMER_ID  sq.NumberField  `ddl:"sqlite:type=INTEGER primarykey auto_increment identity"`
 	STORE_ID     sq.NumberField  `ddl:"notnull index"`
 	FIRST_NAME   sq.StringField  `ddl:"mysql:type=VARCHAR(45) notnull"`
@@ -424,7 +424,7 @@ func (tbl CUSTOMER) DDL(dialect string, t *T) {
 }
 
 type INVENTORY struct {
-	sq.TableInfo `ddl:"index={. cols=store_id,film_id}"`
+	sq.TableInfo `ddl:"index={store_id,film_id}"`
 	INVENTORY_ID sq.NumberField `ddl:"sqlite:type=INTEGER primarykey auto_increment identity"`
 	FILM_ID      sq.NumberField `ddl:"notnull references={film.film_id onupdate=cascade ondelete=restrict}"`
 	STORE_ID     sq.NumberField `ddl:"notnull references={store.store_id onupdate=cascade ondelete=restrict}"`
@@ -447,7 +447,7 @@ func (tbl INVENTORY) DDL(dialect string, t *T) {
 }
 
 type RENTAL struct {
-	sq.TableInfo `ddl:"index={. cols=rental_date,inventory_id,customer_id unique}"`
+	sq.TableInfo `ddl:"index={rental_date,inventory_id,customer_id unique}"`
 	RENTAL_ID    sq.NumberField `ddl:"sqlite:type=INTEGER primarykey auto_increment identity"`
 	RENTAL_DATE  sq.TimeField   `ddl:"notnull"`
 	INVENTORY_ID sq.NumberField `ddl:"notnull index references={inventory.inventory_id onupdate=cascade ondelete=restrict}"`
