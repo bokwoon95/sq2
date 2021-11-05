@@ -549,6 +549,11 @@ func (tbl *Table) loadTableConfig(dialect, qualifiedTable, tableModifiers string
 			if err != nil {
 				return fmt.Errorf("%s: %s", qualifiedTable, err.Error())
 			}
+		case "foreignkey":
+			err = tbl.loadConstraintConfig(dialect, FOREIGN_KEY, tbl.TableSchema, tbl.TableName, nil, modifier[1])
+			if err != nil {
+				return fmt.Errorf("%s: %s", qualifiedTable, err.Error())
+			}
 		case "unique":
 			err = tbl.loadConstraintConfig(dialect, UNIQUE, tbl.TableSchema, tbl.TableName, nil, modifier[1])
 			if err != nil {
