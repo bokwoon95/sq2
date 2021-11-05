@@ -1,0 +1,1501 @@
+{
+  "Dialect": "postgres",
+  "Schemas": [
+    {
+      "Tables": [
+        {
+          "TableName": "pm_site",
+          "Columns": [
+            {
+              "TableName": "pm_site",
+              "ColumnName": "site_id",
+              "ColumnType": "UUID",
+              "IsPrimaryKey": true
+            },
+            {
+              "TableName": "pm_site",
+              "ColumnName": "domain",
+              "ColumnType": "TEXT",
+              "IsNotNull": true
+            },
+            {
+              "TableName": "pm_site",
+              "ColumnName": "subdomain",
+              "ColumnType": "TEXT",
+              "IsNotNull": true
+            },
+            {
+              "TableName": "pm_site",
+              "ColumnName": "tilde_prefix",
+              "ColumnType": "TEXT",
+              "IsNotNull": true
+            },
+            {
+              "TableName": "pm_site",
+              "ColumnName": "is_primary",
+              "ColumnType": "BOOLEAN",
+              "IsUnique": true,
+              "ColumnDefault": "NULL"
+            }
+          ],
+          "Constraints": [
+            {
+              "TableName": "pm_site",
+              "ConstraintName": "pm_site_site_id_pkey",
+              "ConstraintType": "PRIMARY KEY",
+              "Columns": [
+                "site_id"
+              ]
+            },
+            {
+              "TableName": "pm_site",
+              "ConstraintName": "pm_site_domain_subdomain_tilde_prefix_key",
+              "ConstraintType": "UNIQUE",
+              "Columns": [
+                "domain",
+                "subdomain",
+                "tilde_prefix"
+              ]
+            },
+            {
+              "TableName": "pm_site",
+              "ConstraintName": "pm_site_is_primary_key",
+              "ConstraintType": "UNIQUE",
+              "Columns": [
+                "is_primary"
+              ]
+            }
+          ]
+        },
+        {
+          "TableName": "pm_plugin",
+          "Columns": [
+            {
+              "TableName": "pm_plugin",
+              "ColumnName": "plugin",
+              "ColumnType": "TEXT",
+              "IsPrimaryKey": true
+            },
+            {
+              "TableName": "pm_plugin",
+              "ColumnName": "url",
+              "ColumnType": "TEXT",
+              "IsNotNull": true
+            },
+            {
+              "TableName": "pm_plugin",
+              "ColumnName": "version",
+              "ColumnType": "TEXT",
+              "IsNotNull": true
+            }
+          ],
+          "Constraints": [
+            {
+              "TableName": "pm_plugin",
+              "ConstraintName": "pm_plugin_plugin_pkey",
+              "ConstraintType": "PRIMARY KEY",
+              "Columns": [
+                "plugin"
+              ]
+            },
+            {
+              "TableName": "pm_plugin",
+              "ConstraintName": "pm_plugin_url_version_key",
+              "ConstraintType": "UNIQUE",
+              "Columns": [
+                "url",
+                "version"
+              ]
+            }
+          ]
+        },
+        {
+          "TableName": "pm_handler",
+          "Columns": [
+            {
+              "TableName": "pm_handler",
+              "ColumnName": "plugin",
+              "ColumnType": "TEXT"
+            },
+            {
+              "TableName": "pm_handler",
+              "ColumnName": "handler",
+              "ColumnType": "TEXT"
+            }
+          ],
+          "Constraints": [
+            {
+              "TableName": "pm_handler",
+              "ConstraintName": "pm_handler_plugin_handler_pkey",
+              "ConstraintType": "PRIMARY KEY",
+              "Columns": [
+                "plugin",
+                "handler"
+              ]
+            },
+            {
+              "TableName": "pm_handler",
+              "ConstraintName": "pm_handler_plugin_fkey",
+              "ConstraintType": "FOREIGN KEY",
+              "Columns": [
+                "plugin"
+              ],
+              "ReferencesTable": "pm_plugin",
+              "ReferencesColumns": [
+                "plugin"
+              ],
+              "UpdateRule": "CASCADE"
+            }
+          ],
+          "Indexes": [
+            {
+              "TableName": "pm_handler",
+              "IndexName": "pm_handler_plugin_idx",
+              "Columns": [
+                "plugin"
+              ]
+            }
+          ]
+        },
+        {
+          "TableName": "pm_capability",
+          "Columns": [
+            {
+              "TableName": "pm_capability",
+              "ColumnName": "plugin",
+              "ColumnType": "TEXT"
+            },
+            {
+              "TableName": "pm_capability",
+              "ColumnName": "capability",
+              "ColumnType": "TEXT"
+            }
+          ],
+          "Constraints": [
+            {
+              "TableName": "pm_capability",
+              "ConstraintName": "pm_capability_plugin_capability_pkey",
+              "ConstraintType": "PRIMARY KEY",
+              "Columns": [
+                "plugin",
+                "capability"
+              ]
+            },
+            {
+              "TableName": "pm_capability",
+              "ConstraintName": "pm_capability_plugin_fkey",
+              "ConstraintType": "FOREIGN KEY",
+              "Columns": [
+                "plugin"
+              ],
+              "ReferencesTable": "pm_plugin",
+              "ReferencesColumns": [
+                "plugin"
+              ],
+              "UpdateRule": "CASCADE"
+            }
+          ],
+          "Indexes": [
+            {
+              "TableName": "pm_capability",
+              "IndexName": "pm_capability_plugin_idx",
+              "Columns": [
+                "plugin"
+              ]
+            }
+          ]
+        },
+        {
+          "TableName": "pm_allowed_plugin",
+          "Columns": [
+            {
+              "TableName": "pm_allowed_plugin",
+              "ColumnName": "plugin",
+              "ColumnType": "TEXT"
+            },
+            {
+              "TableName": "pm_allowed_plugin",
+              "ColumnName": "site_id",
+              "ColumnType": "UUID"
+            }
+          ],
+          "Constraints": [
+            {
+              "TableName": "pm_allowed_plugin",
+              "ConstraintName": "pm_allowed_plugin_plugin_site_id_pkey",
+              "ConstraintType": "PRIMARY KEY",
+              "Columns": [
+                "plugin",
+                "site_id"
+              ]
+            },
+            {
+              "TableName": "pm_allowed_plugin",
+              "ConstraintName": "pm_allowed_plugin_plugin_fkey",
+              "ConstraintType": "FOREIGN KEY",
+              "Columns": [
+                "plugin"
+              ],
+              "ReferencesTable": "pm_plugin",
+              "ReferencesColumns": [
+                "plugin"
+              ],
+              "UpdateRule": "CASCADE"
+            },
+            {
+              "TableName": "pm_allowed_plugin",
+              "ConstraintName": "pm_allowed_plugin_site_id_fkey",
+              "ConstraintType": "FOREIGN KEY",
+              "Columns": [
+                "site_id"
+              ],
+              "ReferencesTable": "pm_site",
+              "ReferencesColumns": [
+                "site_id"
+              ],
+              "UpdateRule": "CASCADE"
+            }
+          ],
+          "Indexes": [
+            {
+              "TableName": "pm_allowed_plugin",
+              "IndexName": "pm_allowed_plugin_plugin_idx",
+              "Columns": [
+                "plugin"
+              ]
+            },
+            {
+              "TableName": "pm_allowed_plugin",
+              "IndexName": "pm_allowed_plugin_site_id_idx",
+              "Columns": [
+                "site_id"
+              ]
+            }
+          ]
+        },
+        {
+          "TableName": "pm_denied_plugin",
+          "Columns": [
+            {
+              "TableName": "pm_denied_plugin",
+              "ColumnName": "plugin",
+              "ColumnType": "TEXT"
+            },
+            {
+              "TableName": "pm_denied_plugin",
+              "ColumnName": "site_id",
+              "ColumnType": "UUID"
+            }
+          ],
+          "Constraints": [
+            {
+              "TableName": "pm_denied_plugin",
+              "ConstraintName": "pm_denied_plugin_plugin_site_id_pkey",
+              "ConstraintType": "PRIMARY KEY",
+              "Columns": [
+                "plugin",
+                "site_id"
+              ]
+            },
+            {
+              "TableName": "pm_denied_plugin",
+              "ConstraintName": "pm_denied_plugin_plugin_fkey",
+              "ConstraintType": "FOREIGN KEY",
+              "Columns": [
+                "plugin"
+              ],
+              "ReferencesTable": "pm_plugin",
+              "ReferencesColumns": [
+                "plugin"
+              ],
+              "UpdateRule": "CASCADE"
+            },
+            {
+              "TableName": "pm_denied_plugin",
+              "ConstraintName": "pm_denied_plugin_site_id_fkey",
+              "ConstraintType": "FOREIGN KEY",
+              "Columns": [
+                "site_id"
+              ],
+              "ReferencesTable": "pm_site",
+              "ReferencesColumns": [
+                "site_id"
+              ],
+              "UpdateRule": "CASCADE"
+            }
+          ],
+          "Indexes": [
+            {
+              "TableName": "pm_denied_plugin",
+              "IndexName": "pm_denied_plugin_plugin_idx",
+              "Columns": [
+                "plugin"
+              ]
+            },
+            {
+              "TableName": "pm_denied_plugin",
+              "IndexName": "pm_denied_plugin_site_id_idx",
+              "Columns": [
+                "site_id"
+              ]
+            }
+          ]
+        },
+        {
+          "TableName": "pm_allowed_handler",
+          "Columns": [
+            {
+              "TableName": "pm_allowed_handler",
+              "ColumnName": "plugin",
+              "ColumnType": "TEXT"
+            },
+            {
+              "TableName": "pm_allowed_handler",
+              "ColumnName": "handler",
+              "ColumnType": "TEXT"
+            },
+            {
+              "TableName": "pm_allowed_handler",
+              "ColumnName": "site_id",
+              "ColumnType": "UUID"
+            }
+          ],
+          "Constraints": [
+            {
+              "TableName": "pm_allowed_handler",
+              "ConstraintName": "pm_allowed_handler_plugin_handler_site_id_pkey",
+              "ConstraintType": "PRIMARY KEY",
+              "Columns": [
+                "plugin",
+                "handler",
+                "site_id"
+              ]
+            },
+            {
+              "TableName": "pm_allowed_handler",
+              "ConstraintName": "pm_allowed_handler_site_id_fkey",
+              "ConstraintType": "FOREIGN KEY",
+              "Columns": [
+                "site_id"
+              ],
+              "ReferencesTable": "pm_site",
+              "ReferencesColumns": [
+                "site_id"
+              ],
+              "UpdateRule": "CASCADE"
+            },
+            {
+              "TableName": "pm_allowed_handler",
+              "ConstraintName": "pm_allowed_handler_plugin_handler_fkey",
+              "ConstraintType": "FOREIGN KEY",
+              "Columns": [
+                "plugin",
+                "handler"
+              ],
+              "ReferencesTable": "pm_handler",
+              "ReferencesColumns": [
+                "plugin",
+                "handler"
+              ],
+              "UpdateRule": "CASCADE"
+            }
+          ],
+          "Indexes": [
+            {
+              "TableName": "pm_allowed_handler",
+              "IndexName": "pm_allowed_handler_site_id_idx",
+              "Columns": [
+                "site_id"
+              ]
+            },
+            {
+              "TableName": "pm_allowed_handler",
+              "IndexName": "pm_allowed_handler_plugin_handler_idx",
+              "Columns": [
+                "plugin",
+                "handler"
+              ]
+            }
+          ]
+        },
+        {
+          "TableName": "pm_denied_handler",
+          "Columns": [
+            {
+              "TableName": "pm_denied_handler",
+              "ColumnName": "plugin",
+              "ColumnType": "TEXT"
+            },
+            {
+              "TableName": "pm_denied_handler",
+              "ColumnName": "handler",
+              "ColumnType": "TEXT"
+            },
+            {
+              "TableName": "pm_denied_handler",
+              "ColumnName": "site_id",
+              "ColumnType": "UUID"
+            }
+          ],
+          "Constraints": [
+            {
+              "TableName": "pm_denied_handler",
+              "ConstraintName": "pm_denied_handler_plugin_handler_site_id_pkey",
+              "ConstraintType": "PRIMARY KEY",
+              "Columns": [
+                "plugin",
+                "handler",
+                "site_id"
+              ]
+            },
+            {
+              "TableName": "pm_denied_handler",
+              "ConstraintName": "pm_denied_handler_site_id_fkey",
+              "ConstraintType": "FOREIGN KEY",
+              "Columns": [
+                "site_id"
+              ],
+              "ReferencesTable": "pm_site",
+              "ReferencesColumns": [
+                "site_id"
+              ],
+              "UpdateRule": "CASCADE"
+            },
+            {
+              "TableName": "pm_denied_handler",
+              "ConstraintName": "pm_denied_handler_plugin_handler_fkey",
+              "ConstraintType": "FOREIGN KEY",
+              "Columns": [
+                "plugin",
+                "handler"
+              ],
+              "ReferencesTable": "pm_handler",
+              "ReferencesColumns": [
+                "plugin",
+                "handler"
+              ],
+              "UpdateRule": "CASCADE"
+            }
+          ],
+          "Indexes": [
+            {
+              "TableName": "pm_denied_handler",
+              "IndexName": "pm_denied_handler_site_id_idx",
+              "Columns": [
+                "site_id"
+              ]
+            },
+            {
+              "TableName": "pm_denied_handler",
+              "IndexName": "pm_denied_handler_plugin_handler_idx",
+              "Columns": [
+                "plugin",
+                "handler"
+              ]
+            }
+          ]
+        },
+        {
+          "TableName": "pm_role",
+          "Columns": [
+            {
+              "TableName": "pm_role",
+              "ColumnName": "site_id",
+              "ColumnType": "UUID"
+            },
+            {
+              "TableName": "pm_role",
+              "ColumnName": "plugin",
+              "ColumnType": "TEXT"
+            },
+            {
+              "TableName": "pm_role",
+              "ColumnName": "role",
+              "ColumnType": "TEXT"
+            }
+          ],
+          "Constraints": [
+            {
+              "TableName": "pm_role",
+              "ConstraintName": "pm_role_site_id_plugin_role_pkey",
+              "ConstraintType": "PRIMARY KEY",
+              "Columns": [
+                "site_id",
+                "plugin",
+                "role"
+              ]
+            },
+            {
+              "TableName": "pm_role",
+              "ConstraintName": "pm_role_site_id_fkey",
+              "ConstraintType": "FOREIGN KEY",
+              "Columns": [
+                "site_id"
+              ],
+              "ReferencesTable": "pm_site",
+              "ReferencesColumns": [
+                "site_id"
+              ],
+              "UpdateRule": "CASCADE"
+            },
+            {
+              "TableName": "pm_role",
+              "ConstraintName": "pm_role_plugin_fkey",
+              "ConstraintType": "FOREIGN KEY",
+              "Columns": [
+                "plugin"
+              ],
+              "ReferencesTable": "pm_plugin",
+              "ReferencesColumns": [
+                "plugin"
+              ],
+              "UpdateRule": "CASCADE"
+            }
+          ],
+          "Indexes": [
+            {
+              "TableName": "pm_role",
+              "IndexName": "pm_role_site_id_idx",
+              "Columns": [
+                "site_id"
+              ]
+            },
+            {
+              "TableName": "pm_role",
+              "IndexName": "pm_role_plugin_idx",
+              "Columns": [
+                "plugin"
+              ]
+            }
+          ]
+        },
+        {
+          "TableName": "pm_tag",
+          "Columns": [
+            {
+              "TableName": "pm_tag",
+              "ColumnName": "site_id",
+              "ColumnType": "UUID"
+            },
+            {
+              "TableName": "pm_tag",
+              "ColumnName": "plugin",
+              "ColumnType": "TEXT"
+            },
+            {
+              "TableName": "pm_tag",
+              "ColumnName": "tag",
+              "ColumnType": "TEXT"
+            }
+          ],
+          "Constraints": [
+            {
+              "TableName": "pm_tag",
+              "ConstraintName": "pm_tag_site_id_plugin_tag_pkey",
+              "ConstraintType": "PRIMARY KEY",
+              "Columns": [
+                "site_id",
+                "plugin",
+                "tag"
+              ]
+            },
+            {
+              "TableName": "pm_tag",
+              "ConstraintName": "pm_tag_site_id_fkey",
+              "ConstraintType": "FOREIGN KEY",
+              "Columns": [
+                "site_id"
+              ],
+              "ReferencesTable": "pm_site",
+              "ReferencesColumns": [
+                "site_id"
+              ],
+              "UpdateRule": "CASCADE"
+            },
+            {
+              "TableName": "pm_tag",
+              "ConstraintName": "pm_tag_plugin_fkey",
+              "ConstraintType": "FOREIGN KEY",
+              "Columns": [
+                "plugin"
+              ],
+              "ReferencesTable": "pm_plugin",
+              "ReferencesColumns": [
+                "plugin"
+              ],
+              "UpdateRule": "CASCADE"
+            }
+          ],
+          "Indexes": [
+            {
+              "TableName": "pm_tag",
+              "IndexName": "pm_tag_site_id_idx",
+              "Columns": [
+                "site_id"
+              ]
+            },
+            {
+              "TableName": "pm_tag",
+              "IndexName": "pm_tag_plugin_idx",
+              "Columns": [
+                "plugin"
+              ]
+            }
+          ]
+        },
+        {
+          "TableName": "pm_role_capability",
+          "Columns": [
+            {
+              "TableName": "pm_role_capability",
+              "ColumnName": "site_id",
+              "ColumnType": "UUID"
+            },
+            {
+              "TableName": "pm_role_capability",
+              "ColumnName": "plugin",
+              "ColumnType": "TEXT"
+            },
+            {
+              "TableName": "pm_role_capability",
+              "ColumnName": "role",
+              "ColumnType": "TEXT"
+            },
+            {
+              "TableName": "pm_role_capability",
+              "ColumnName": "capability",
+              "ColumnType": "TEXT"
+            }
+          ],
+          "Constraints": [
+            {
+              "TableName": "pm_role_capability",
+              "ConstraintName": "pm_role_capability_site_id_plugin_role_capability_pkey",
+              "ConstraintType": "PRIMARY KEY",
+              "Columns": [
+                "site_id",
+                "plugin",
+                "role",
+                "capability"
+              ]
+            },
+            {
+              "TableName": "pm_role_capability",
+              "ConstraintName": "pm_role_capability_site_id_plugin_role_fkey",
+              "ConstraintType": "FOREIGN KEY",
+              "Columns": [
+                "site_id",
+                "plugin",
+                "role"
+              ],
+              "ReferencesTable": "pm_role",
+              "ReferencesColumns": [
+                "site_id",
+                "plugin",
+                "role"
+              ],
+              "UpdateRule": "CASCADE"
+            },
+            {
+              "TableName": "pm_role_capability",
+              "ConstraintName": "pm_role_capability_plugin_capability_fkey",
+              "ConstraintType": "FOREIGN KEY",
+              "Columns": [
+                "plugin",
+                "capability"
+              ],
+              "ReferencesTable": "pm_capability",
+              "ReferencesColumns": [
+                "plugin",
+                "capability"
+              ],
+              "UpdateRule": "CASCADE"
+            }
+          ],
+          "Indexes": [
+            {
+              "TableName": "pm_role_capability",
+              "IndexName": "pm_role_capability_site_id_plugin_role_idx",
+              "Columns": [
+                "site_id",
+                "plugin",
+                "role"
+              ]
+            },
+            {
+              "TableName": "pm_role_capability",
+              "IndexName": "pm_role_capability_plugin_capability_idx",
+              "Columns": [
+                "plugin",
+                "capability"
+              ]
+            }
+          ]
+        },
+        {
+          "TableName": "pm_tag_capability",
+          "Columns": [
+            {
+              "TableName": "pm_tag_capability",
+              "ColumnName": "site_id",
+              "ColumnType": "UUID"
+            },
+            {
+              "TableName": "pm_tag_capability",
+              "ColumnName": "plugin",
+              "ColumnType": "TEXT"
+            },
+            {
+              "TableName": "pm_tag_capability",
+              "ColumnName": "tag",
+              "ColumnType": "TEXT"
+            },
+            {
+              "TableName": "pm_tag_capability",
+              "ColumnName": "role",
+              "ColumnType": "TEXT"
+            },
+            {
+              "TableName": "pm_tag_capability",
+              "ColumnName": "capability",
+              "ColumnType": "TEXT",
+              "IsNotNull": true
+            }
+          ],
+          "Constraints": [
+            {
+              "TableName": "pm_tag_capability",
+              "ConstraintName": "pm_tag_capability_site_id_plugin_tag_role_pkey",
+              "ConstraintType": "PRIMARY KEY",
+              "Columns": [
+                "site_id",
+                "plugin",
+                "tag",
+                "role"
+              ]
+            },
+            {
+              "TableName": "pm_tag_capability",
+              "ConstraintName": "pm_tag_capability_site_id_plugin_tag_fkey",
+              "ConstraintType": "FOREIGN KEY",
+              "Columns": [
+                "site_id",
+                "plugin",
+                "tag"
+              ],
+              "ReferencesTable": "pm_tag",
+              "ReferencesColumns": [
+                "site_id",
+                "plugin",
+                "tag"
+              ],
+              "UpdateRule": "CASCADE"
+            },
+            {
+              "TableName": "pm_tag_capability",
+              "ConstraintName": "pm_tag_capability_site_id_plugin_role_fkey",
+              "ConstraintType": "FOREIGN KEY",
+              "Columns": [
+                "site_id",
+                "plugin",
+                "role"
+              ],
+              "ReferencesTable": "pm_role",
+              "ReferencesColumns": [
+                "site_id",
+                "plugin",
+                "role"
+              ],
+              "UpdateRule": "CASCADE"
+            },
+            {
+              "TableName": "pm_tag_capability",
+              "ConstraintName": "pm_tag_capability_plugin_capability_fkey",
+              "ConstraintType": "FOREIGN KEY",
+              "Columns": [
+                "plugin",
+                "capability"
+              ],
+              "ReferencesTable": "pm_capability",
+              "ReferencesColumns": [
+                "plugin",
+                "capability"
+              ],
+              "UpdateRule": "CASCADE"
+            }
+          ],
+          "Indexes": [
+            {
+              "TableName": "pm_tag_capability",
+              "IndexName": "pm_tag_capability_site_id_plugin_tag_idx",
+              "Columns": [
+                "site_id",
+                "plugin",
+                "tag"
+              ]
+            },
+            {
+              "TableName": "pm_tag_capability",
+              "IndexName": "pm_tag_capability_site_id_plugin_role_idx",
+              "Columns": [
+                "site_id",
+                "plugin",
+                "role"
+              ]
+            },
+            {
+              "TableName": "pm_tag_capability",
+              "IndexName": "pm_tag_capability_plugin_capability_idx",
+              "Columns": [
+                "plugin",
+                "capability"
+              ]
+            }
+          ]
+        },
+        {
+          "TableName": "pm_tag_owner",
+          "Columns": [
+            {
+              "TableName": "pm_tag_owner",
+              "ColumnName": "site_id",
+              "ColumnType": "UUID"
+            },
+            {
+              "TableName": "pm_tag_owner",
+              "ColumnName": "plugin",
+              "ColumnType": "TEXT"
+            },
+            {
+              "TableName": "pm_tag_owner",
+              "ColumnName": "tag",
+              "ColumnType": "TEXT"
+            },
+            {
+              "TableName": "pm_tag_owner",
+              "ColumnName": "role",
+              "ColumnType": "TEXT"
+            }
+          ],
+          "Constraints": [
+            {
+              "TableName": "pm_tag_owner",
+              "ConstraintName": "pm_tag_owner_site_id_plugin_tag_role_pkey",
+              "ConstraintType": "PRIMARY KEY",
+              "Columns": [
+                "site_id",
+                "plugin",
+                "tag",
+                "role"
+              ]
+            },
+            {
+              "TableName": "pm_tag_owner",
+              "ConstraintName": "pm_tag_owner_site_id_plugin_tag_fkey",
+              "ConstraintType": "FOREIGN KEY",
+              "Columns": [
+                "site_id",
+                "plugin",
+                "tag"
+              ],
+              "ReferencesTable": "pm_tag",
+              "ReferencesColumns": [
+                "site_id",
+                "plugin",
+                "tag"
+              ],
+              "UpdateRule": "CASCADE"
+            },
+            {
+              "TableName": "pm_tag_owner",
+              "ConstraintName": "pm_tag_owner_site_id_plugin_role_fkey",
+              "ConstraintType": "FOREIGN KEY",
+              "Columns": [
+                "site_id",
+                "plugin",
+                "role"
+              ],
+              "ReferencesTable": "pm_role",
+              "ReferencesColumns": [
+                "site_id",
+                "plugin",
+                "role"
+              ],
+              "UpdateRule": "CASCADE"
+            }
+          ],
+          "Indexes": [
+            {
+              "TableName": "pm_tag_owner",
+              "IndexName": "pm_tag_owner_site_id_plugin_tag_idx",
+              "Columns": [
+                "site_id",
+                "plugin",
+                "tag"
+              ]
+            },
+            {
+              "TableName": "pm_tag_owner",
+              "IndexName": "pm_tag_owner_site_id_plugin_role_idx",
+              "Columns": [
+                "site_id",
+                "plugin",
+                "role"
+              ]
+            }
+          ]
+        },
+        {
+          "TableName": "pm_user",
+          "Columns": [
+            {
+              "TableName": "pm_user",
+              "ColumnName": "site_id",
+              "ColumnType": "UUID"
+            },
+            {
+              "TableName": "pm_user",
+              "ColumnName": "user_id",
+              "ColumnType": "UUID"
+            },
+            {
+              "TableName": "pm_user",
+              "ColumnName": "name",
+              "ColumnType": "TEXT"
+            },
+            {
+              "TableName": "pm_user",
+              "ColumnName": "username",
+              "ColumnType": "TEXT",
+              "IsNotNull": true
+            },
+            {
+              "TableName": "pm_user",
+              "ColumnName": "email",
+              "ColumnType": "TEXT",
+              "IsNotNull": true
+            },
+            {
+              "TableName": "pm_user",
+              "ColumnName": "password_hash",
+              "ColumnType": "TEXT"
+            },
+            {
+              "TableName": "pm_user",
+              "ColumnName": "reset_password_token",
+              "ColumnType": "TEXT"
+            },
+            {
+              "TableName": "pm_user",
+              "ColumnName": "reset_password_sent_at",
+              "ColumnType": "TIMESTAMPTZ"
+            }
+          ],
+          "Constraints": [
+            {
+              "TableName": "pm_user",
+              "ConstraintName": "pm_user_site_id_user_id_pkey",
+              "ConstraintType": "PRIMARY KEY",
+              "Columns": [
+                "site_id",
+                "user_id"
+              ]
+            },
+            {
+              "TableName": "pm_user",
+              "ConstraintName": "pm_user_site_id_username_key",
+              "ConstraintType": "UNIQUE",
+              "Columns": [
+                "site_id",
+                "username"
+              ]
+            },
+            {
+              "TableName": "pm_user",
+              "ConstraintName": "pm_user_site_id_email_key",
+              "ConstraintType": "UNIQUE",
+              "Columns": [
+                "site_id",
+                "email"
+              ]
+            },
+            {
+              "TableName": "pm_user",
+              "ConstraintName": "pm_user_site_id_fkey",
+              "ConstraintType": "FOREIGN KEY",
+              "Columns": [
+                "site_id"
+              ],
+              "ReferencesTable": "pm_site",
+              "ReferencesColumns": [
+                "site_id"
+              ],
+              "UpdateRule": "CASCADE"
+            }
+          ],
+          "Indexes": [
+            {
+              "TableName": "pm_user",
+              "IndexName": "pm_user_site_id_idx",
+              "Columns": [
+                "site_id"
+              ]
+            }
+          ]
+        },
+        {
+          "TableName": "pm_user_role",
+          "Columns": [
+            {
+              "TableName": "pm_user_role",
+              "ColumnName": "site_id",
+              "ColumnType": "UUID"
+            },
+            {
+              "TableName": "pm_user_role",
+              "ColumnName": "user_id",
+              "ColumnType": "UUID"
+            },
+            {
+              "TableName": "pm_user_role",
+              "ColumnName": "plugin",
+              "ColumnType": "TEXT"
+            },
+            {
+              "TableName": "pm_user_role",
+              "ColumnName": "role",
+              "ColumnType": "TEXT"
+            }
+          ],
+          "Constraints": [
+            {
+              "TableName": "pm_user_role",
+              "ConstraintName": "pm_user_role_site_id_user_id_plugin_role_pkey",
+              "ConstraintType": "PRIMARY KEY",
+              "Columns": [
+                "site_id",
+                "user_id",
+                "plugin",
+                "role"
+              ]
+            },
+            {
+              "TableName": "pm_user_role",
+              "ConstraintName": "pm_user_role_site_id_user_id_fkey",
+              "ConstraintType": "FOREIGN KEY",
+              "Columns": [
+                "site_id",
+                "user_id"
+              ],
+              "ReferencesTable": "pm_user",
+              "ReferencesColumns": [
+                "site_id",
+                "user_id"
+              ],
+              "UpdateRule": "CASCADE"
+            },
+            {
+              "TableName": "pm_user_role",
+              "ConstraintName": "pm_user_role_site_id_plugin_role_fkey",
+              "ConstraintType": "FOREIGN KEY",
+              "Columns": [
+                "site_id",
+                "plugin",
+                "role"
+              ],
+              "ReferencesTable": "pm_role",
+              "ReferencesColumns": [
+                "site_id",
+                "plugin",
+                "role"
+              ],
+              "UpdateRule": "CASCADE"
+            }
+          ],
+          "Indexes": [
+            {
+              "TableName": "pm_user_role",
+              "IndexName": "pm_user_role_site_id_user_id_idx",
+              "Columns": [
+                "site_id",
+                "user_id"
+              ]
+            },
+            {
+              "TableName": "pm_user_role",
+              "IndexName": "pm_user_role_site_id_plugin_role_idx",
+              "Columns": [
+                "site_id",
+                "plugin",
+                "role"
+              ]
+            }
+          ]
+        },
+        {
+          "TableName": "pm_session",
+          "Columns": [
+            {
+              "TableName": "pm_session",
+              "ColumnName": "site_id",
+              "ColumnType": "UUID"
+            },
+            {
+              "TableName": "pm_session",
+              "ColumnName": "session_hash",
+              "ColumnType": "BYTEA"
+            },
+            {
+              "TableName": "pm_session",
+              "ColumnName": "user_id",
+              "ColumnType": "UUID",
+              "IsNotNull": true
+            }
+          ],
+          "Constraints": [
+            {
+              "TableName": "pm_session",
+              "ConstraintName": "pm_session_site_id_session_hash_pkey",
+              "ConstraintType": "PRIMARY KEY",
+              "Columns": [
+                "site_id",
+                "session_hash"
+              ]
+            },
+            {
+              "TableName": "pm_session",
+              "ConstraintName": "pm_session_site_id_user_id_fkey",
+              "ConstraintType": "FOREIGN KEY",
+              "Columns": [
+                "site_id",
+                "user_id"
+              ],
+              "ReferencesTable": "pm_user",
+              "ReferencesColumns": [
+                "site_id",
+                "user_id"
+              ],
+              "UpdateRule": "CASCADE"
+            }
+          ],
+          "Indexes": [
+            {
+              "TableName": "pm_session",
+              "IndexName": "pm_session_site_id_user_id_idx",
+              "Columns": [
+                "site_id",
+                "user_id"
+              ]
+            }
+          ]
+        },
+        {
+          "TableName": "pm_url",
+          "Columns": [
+            {
+              "TableName": "pm_url",
+              "ColumnName": "site_id",
+              "ColumnType": "UUID"
+            },
+            {
+              "TableName": "pm_url",
+              "ColumnName": "urlpath",
+              "ColumnType": "TEXT"
+            },
+            {
+              "TableName": "pm_url",
+              "ColumnName": "plugin",
+              "ColumnType": "TEXT"
+            },
+            {
+              "TableName": "pm_url",
+              "ColumnName": "handler",
+              "ColumnType": "TEXT"
+            },
+            {
+              "TableName": "pm_url",
+              "ColumnName": "config",
+              "ColumnType": "TEXT"
+            }
+          ],
+          "Constraints": [
+            {
+              "TableName": "pm_url",
+              "ConstraintName": "pm_url_site_id_urlpath_pkey",
+              "ConstraintType": "PRIMARY KEY",
+              "Columns": [
+                "site_id",
+                "urlpath"
+              ]
+            },
+            {
+              "TableName": "pm_url",
+              "ConstraintName": "pm_url_site_id_fkey",
+              "ConstraintType": "FOREIGN KEY",
+              "Columns": [
+                "site_id"
+              ],
+              "ReferencesTable": "pm_site",
+              "ReferencesColumns": [
+                "site_id"
+              ],
+              "UpdateRule": "CASCADE"
+            },
+            {
+              "TableName": "pm_url",
+              "ConstraintName": "pm_url_plugin_handler_fkey",
+              "ConstraintType": "FOREIGN KEY",
+              "Columns": [
+                "plugin",
+                "handler"
+              ],
+              "ReferencesTable": "pm_handler",
+              "ReferencesColumns": [
+                "plugin",
+                "handler"
+              ],
+              "UpdateRule": "CASCADE"
+            }
+          ],
+          "Indexes": [
+            {
+              "TableName": "pm_url",
+              "IndexName": "pm_url_site_id_idx",
+              "Columns": [
+                "site_id"
+              ]
+            },
+            {
+              "TableName": "pm_url",
+              "IndexName": "pm_url_plugin_handler_idx",
+              "Columns": [
+                "plugin",
+                "handler"
+              ]
+            }
+          ]
+        },
+        {
+          "TableName": "pm_url_role_capability",
+          "Columns": [
+            {
+              "TableName": "pm_url_role_capability",
+              "ColumnName": "site_id",
+              "ColumnType": "UUID"
+            },
+            {
+              "TableName": "pm_url_role_capability",
+              "ColumnName": "urlpath",
+              "ColumnType": "TEXT"
+            },
+            {
+              "TableName": "pm_url_role_capability",
+              "ColumnName": "plugin",
+              "ColumnType": "TEXT"
+            },
+            {
+              "TableName": "pm_url_role_capability",
+              "ColumnName": "role",
+              "ColumnType": "TEXT"
+            },
+            {
+              "TableName": "pm_url_role_capability",
+              "ColumnName": "capability",
+              "ColumnType": "TEXT"
+            }
+          ],
+          "Constraints": [
+            {
+              "TableName": "pm_url_role_capability",
+              "ConstraintName": "pm_url_role_capability_site_id_urlpath_plugin_role_capabil_pkey",
+              "ConstraintType": "PRIMARY KEY",
+              "Columns": [
+                "site_id",
+                "urlpath",
+                "plugin",
+                "role",
+                "capability"
+              ]
+            },
+            {
+              "TableName": "pm_url_role_capability",
+              "ConstraintName": "pm_url_role_capability_site_id_plugin_role_fkey",
+              "ConstraintType": "FOREIGN KEY",
+              "Columns": [
+                "site_id",
+                "plugin",
+                "role"
+              ],
+              "ReferencesTable": "pm_role",
+              "ReferencesColumns": [
+                "site_id",
+                "plugin",
+                "role"
+              ],
+              "UpdateRule": "CASCADE"
+            },
+            {
+              "TableName": "pm_url_role_capability",
+              "ConstraintName": "pm_url_role_capability_plugin_capability_fkey",
+              "ConstraintType": "FOREIGN KEY",
+              "Columns": [
+                "plugin",
+                "capability"
+              ],
+              "ReferencesTable": "pm_capability",
+              "ReferencesColumns": [
+                "plugin",
+                "capability"
+              ],
+              "UpdateRule": "CASCADE"
+            }
+          ],
+          "Indexes": [
+            {
+              "TableName": "pm_url_role_capability",
+              "IndexName": "pm_url_role_capability_site_id_plugin_role_idx",
+              "Columns": [
+                "site_id",
+                "plugin",
+                "role"
+              ]
+            },
+            {
+              "TableName": "pm_url_role_capability",
+              "IndexName": "pm_url_role_capability_plugin_capability_idx",
+              "Columns": [
+                "plugin",
+                "capability"
+              ]
+            }
+          ]
+        },
+        {
+          "TableName": "pm_url_tag",
+          "Columns": [
+            {
+              "TableName": "pm_url_tag",
+              "ColumnName": "site_id",
+              "ColumnType": "UUID"
+            },
+            {
+              "TableName": "pm_url_tag",
+              "ColumnName": "urlpath",
+              "ColumnType": "TEXT"
+            },
+            {
+              "TableName": "pm_url_tag",
+              "ColumnName": "plugin",
+              "ColumnType": "TEXT"
+            },
+            {
+              "TableName": "pm_url_tag",
+              "ColumnName": "tag",
+              "ColumnType": "TEXT"
+            }
+          ],
+          "Constraints": [
+            {
+              "TableName": "pm_url_tag",
+              "ConstraintName": "pm_url_tag_site_id_urlpath_plugin_tag_pkey",
+              "ConstraintType": "PRIMARY KEY",
+              "Columns": [
+                "site_id",
+                "urlpath",
+                "plugin",
+                "tag"
+              ]
+            },
+            {
+              "TableName": "pm_url_tag",
+              "ConstraintName": "pm_url_tag_site_id_plugin_tag_fkey",
+              "ConstraintType": "FOREIGN KEY",
+              "Columns": [
+                "site_id",
+                "plugin",
+                "tag"
+              ],
+              "ReferencesTable": "pm_tag",
+              "ReferencesColumns": [
+                "site_id",
+                "plugin",
+                "tag"
+              ],
+              "UpdateRule": "CASCADE"
+            }
+          ],
+          "Indexes": [
+            {
+              "TableName": "pm_url_tag",
+              "IndexName": "pm_url_tag_site_id_plugin_tag_idx",
+              "Columns": [
+                "site_id",
+                "plugin",
+                "tag"
+              ]
+            }
+          ]
+        },
+        {
+          "TableName": "pm_template_data",
+          "Columns": [
+            {
+              "TableName": "pm_template_data",
+              "ColumnName": "site_id",
+              "ColumnType": "UUID"
+            },
+            {
+              "TableName": "pm_template_data",
+              "ColumnName": "langcode",
+              "ColumnType": "TEXT"
+            },
+            {
+              "TableName": "pm_template_data",
+              "ColumnName": "data_file",
+              "ColumnType": "TEXT"
+            },
+            {
+              "TableName": "pm_template_data",
+              "ColumnName": "data",
+              "ColumnType": "JSONB"
+            }
+          ],
+          "Constraints": [
+            {
+              "TableName": "pm_template_data",
+              "ConstraintName": "pm_template_data_site_id_langcode_data_file_pkey",
+              "ConstraintType": "PRIMARY KEY",
+              "Columns": [
+                "site_id",
+                "langcode",
+                "data_file"
+              ]
+            },
+            {
+              "TableName": "pm_template_data",
+              "ConstraintName": "pm_template_data_site_id_fkey",
+              "ConstraintType": "FOREIGN KEY",
+              "Columns": [
+                "site_id"
+              ],
+              "ReferencesTable": "pm_site",
+              "ReferencesColumns": [
+                "site_id"
+              ],
+              "UpdateRule": "CASCADE"
+            }
+          ],
+          "Indexes": [
+            {
+              "TableName": "pm_template_data",
+              "IndexName": "pm_template_data_site_id_idx",
+              "Columns": [
+                "site_id"
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

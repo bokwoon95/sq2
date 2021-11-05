@@ -466,6 +466,7 @@ func Migrate(mode MigrationMode, gotDBMetadata, wantDBMetadata DatabaseMetadata)
 	return m, nil
 }
 
+// TODO: this function is broken, check got_metadata.json and want_metadata.json and make sure it works
 func diffColumn(dialect string, gotColumn, wantColumn Column) (alterColumnCmd AlterColumnCommand, isDifferent bool) {
 	// do we SET DATA TYPE?
 	if !strings.EqualFold(gotColumn.ColumnType, wantColumn.ColumnType) {
