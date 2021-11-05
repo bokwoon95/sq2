@@ -741,14 +741,6 @@ func (tbl *Table) LoadTable(dialect string, table sq.SchemaTable) (err error) {
 	if tbl.TableSchema != "" {
 		qualifiedTable = tbl.TableSchema + "." + tbl.TableName
 	}
-	tableModifiers := tableType.Field(0).Tag.Get("ddl")
-	err = tbl.loadTableConfig(dialect, qualifiedTable, tableModifiers)
-	if err != nil {
-		return err
-	}
-	if tbl.Ignore {
-		return nil
-	}
 	for i := 0; i < tableValue.NumField(); i++ {
 		fieldValue := tableValue.Field(i)
 		if !fieldValue.CanInterface() {
@@ -756,10 +748,20 @@ func (tbl *Table) LoadTable(dialect string, table sq.SchemaTable) (err error) {
 			if err != nil {
 				return err
 			}
+			if tbl.Ignore {
+				return nil
+			}
 			continue
 		}
 		field, ok := tableValue.Field(i).Interface().(sq.Field)
 		if !ok {
+			err = tbl.loadTableConfig(dialect, qualifiedTable, tableType.Field(i).Tag.Get("ddl"))
+			if err != nil {
+				return err
+			}
+			if tbl.Ignore {
+				return nil
+			}
 			continue
 		}
 		columnName := field.GetName()
