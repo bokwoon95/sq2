@@ -129,7 +129,8 @@ func needsExpressionBrackets(s string) bool {
 		strings.EqualFold(s, "FALSE") ||
 		strings.EqualFold(s, "CURRENT_DATE") ||
 		strings.EqualFold(s, "CURRENT_TIME") ||
-		strings.EqualFold(s, "CURRENT_TIMESTAMP") {
+		strings.EqualFold(s, "CURRENT_TIMESTAMP") ||
+		strings.EqualFold(s, "NULL") {
 		return false
 	} else if _, err := strconv.ParseInt(s, 10, 64); err == nil {
 		return false
@@ -149,7 +150,8 @@ func toExpr(dialect, s string) string {
 		strings.EqualFold(s, "FALSE") ||
 		strings.EqualFold(s, "CURRENT_DATE") ||
 		strings.EqualFold(s, "CURRENT_TIME") ||
-		strings.EqualFold(s, "CURRENT_TIMESTAMP") {
+		strings.EqualFold(s, "CURRENT_TIMESTAMP") ||
+		strings.EqualFold(s, "NULL") {
 		return s
 	} else if _, err := strconv.ParseInt(s, 10, 64); err == nil {
 		return s
