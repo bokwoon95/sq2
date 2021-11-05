@@ -730,6 +730,10 @@ func (tbl *Table) LoadTable(dialect string, table sq.SchemaTable) (err error) {
 	}
 	tableValue := reflect.ValueOf(table)
 	tableType := tableValue.Type()
+	if tableType.Kind() == reflect.Ptr {
+		tableValue = tableValue.Elem()
+		tableType = tableValue.Type()
+	}
 	if tableType.Kind() != reflect.Struct {
 		return fmt.Errorf("table is not a struct")
 	}

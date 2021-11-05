@@ -97,6 +97,8 @@ func ReflectTable(table Table, alias string) error {
 			v.Set(reflect.ValueOf(NewStringField(fieldName, tableInfo)))
 		case TimeField:
 			v.Set(reflect.ValueOf(NewTimeField(fieldName, tableInfo)))
+		case UUIDField:
+			v.Set(reflect.ValueOf(NewUUIDField(fieldName, tableInfo)))
 		}
 	}
 	return nil
