@@ -316,6 +316,19 @@ func (tbl *Table) loadConstraintConfig(dialect, constraintType, tableSchema, tab
 		switch modifier[0] {
 		case "name", "cols":
 			continue
+		case "references":
+			switch parts := strings.SplitN(modifier[1], ".", 3); len(parts) {
+			case 1:
+				constraint.ReferencesTable = parts[0]
+				constraint.ReferencesColumns = columns
+			case 2:
+				constraint.ReferencesTable = parts[0]
+				constraint.ReferencesColumns = strings.Split(parts[1], ",")
+			case 3:
+				constraint.ReferencesSchema = parts[0]
+				constraint.ReferencesTable = parts[1]
+				constraint.ReferencesColumns = strings.Split(parts[2], ",")
+			}
 		case "onupdate":
 			switch modifier[1] {
 			case "cascade":
@@ -459,6 +472,11 @@ func (tbl *Table) loadColumnConfig(dialect, columnName, columnType, config strin
 			}
 		case "references":
 			err = tbl.loadConstraintConfig(dialect, "references", column.TableSchema, column.TableName, []string{column.ColumnName}, modifier[1])
+			if err != nil {
+				return fmt.Errorf("%s: %s", qualifiedColumn, err.Error())
+			}
+		case "foreignkey":
+			err = tbl.loadConstraintConfig(dialect, FOREIGN_KEY, column.TableSchema, column.TableName, []string{column.ColumnName}, modifier[1])
 			if err != nil {
 				return fmt.Errorf("%s: %s", qualifiedColumn, err.Error())
 			}
