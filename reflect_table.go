@@ -57,6 +57,9 @@ func ReflectTable(table Table, alias string) error {
 	value.Field(0).Set(reflect.ValueOf(tableInfo))
 	for i := 1; i < value.NumField(); i++ {
 		v := value.Field(i)
+		if !v.CanInterface() {
+			continue
+		}
 		fieldValue, ok := v.Interface().(Field)
 		if !ok {
 			continue

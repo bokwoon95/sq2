@@ -246,7 +246,8 @@ func NEW_FILM_TEXT(alias string) FILM_TEXT {
 }
 
 type FILM_ACTOR struct {
-	sq.TableInfo `ddl:"index={actor_id,film_id unique}"`
+	sq.TableInfo
+	_            struct{}       `ddl:"index={actor_id,film_id unique}"`
 	FILM_ID      sq.NumberField `ddl:"notnull references={film onupdate=cascade ondelete=restrict index}"`
 	ACTOR_ID     sq.NumberField `ddl:"notnull references={actor onupdate=cascade ondelete=restrict}"`
 	LAST_UPDATE  sq.TimeField   `ddl:"notnull default=CURRENT_TIMESTAMP onupdatecurrenttimestamp"`
