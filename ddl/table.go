@@ -359,7 +359,7 @@ func (tbl *Table) loadConstraintConfig(dialect, constraintType, tableSchema, tab
 				}
 			}
 		case "index":
-			err = tbl.loadIndexConfig(dialect, tableSchema, tableName, constraint.ReferencesColumns, modifier[1])
+			err = tbl.loadIndexConfig(dialect, tableSchema, tableName, columns, modifier[1])
 			if err != nil {
 				return err
 			}

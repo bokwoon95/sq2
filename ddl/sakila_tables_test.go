@@ -92,7 +92,7 @@ type CITY struct {
 	sq.TableInfo
 	CITY_ID     sq.NumberField `ddl:"sqlite:type=INTEGER primarykey auto_increment identity"`
 	CITY        sq.StringField `ddl:"notnull mysql:type=VARCHAR(50)"`
-	COUNTRY_ID  sq.NumberField `ddl:"notnull references={country onupdate=cascade ondelete=restrict index}"`
+	COUNTRY_ID  sq.NumberField `ddl:"notnull references={country.country_id onupdate=cascade ondelete=restrict index}"`
 	LAST_UPDATE sq.TimeField   `ddl:"notnull default=CURRENT_TIMESTAMP onupdatecurrenttimestamp"`
 }
 
@@ -117,7 +117,7 @@ type ADDRESS struct {
 	ADDRESS     sq.StringField `ddl:"notnull mysql:type=VARCHAR(50)"`
 	ADDRESS2    sq.StringField `ddl:"mysql:type=VARCHAR(50)"`
 	DISTRICT    sq.StringField `ddl:"notnull mysql:type=VARCHAR(20)"`
-	CITY_ID     sq.NumberField `ddl:"notnull references={city.city_id onupdate=cascade ondelete=restrict} index"`
+	CITY_ID     sq.NumberField `ddl:"notnull references={city.city_id onupdate=cascade ondelete=restrict index}"`
 	POSTAL_CODE sq.StringField `ddl:"mysql:type=VARCHAR(10)"`
 	PHONE       sq.StringField `ddl:"notnull mysql:type=VARCHAR(20)"`
 	LAST_UPDATE sq.TimeField   `ddl:"notnull default=CURRENT_TIMESTAMP onupdatecurrenttimestamp"`
@@ -166,8 +166,8 @@ type FILM struct {
 	TITLE                sq.StringField `ddl:"notnull index"`
 	DESCRIPTION          sq.StringField `ddl:"type=TEXT"`
 	RELEASE_YEAR         sq.NumberField
-	LANGUAGE_ID          sq.NumberField `ddl:"notnull references={language.language_id onupdate=cascade ondelete=restrict} index"`
-	ORIGINAL_LANGUAGE_ID sq.NumberField `ddl:"references={language.language_id onupdate=cascade ondelete=restrict} index"`
+	LANGUAGE_ID          sq.NumberField `ddl:"notnull references={language onupdate=cascade ondelete=restrict index}"`
+	ORIGINAL_LANGUAGE_ID sq.NumberField `ddl:"references={language.language_id onupdate=cascade ondelete=restrict index}"`
 	RENTAL_DURATION      sq.NumberField `ddl:"default=3 notnull"`
 	RENTAL_RATE          sq.NumberField `ddl:"type=DECIMAL(4,2) default=4.99 notnull"`
 	LENGTH               sq.NumberField
@@ -247,8 +247,8 @@ func NEW_FILM_TEXT(alias string) FILM_TEXT {
 
 type FILM_ACTOR struct {
 	sq.TableInfo `ddl:"index={actor_id,film_id unique}"`
-	FILM_ID      sq.NumberField `ddl:"notnull references={film.film_id onupdate=cascade ondelete=restrict} index"`
-	ACTOR_ID     sq.NumberField `ddl:"notnull references={actor.actor_id onupdate=cascade ondelete=restrict}"`
+	FILM_ID      sq.NumberField `ddl:"notnull references={film onupdate=cascade ondelete=restrict index}"`
+	ACTOR_ID     sq.NumberField `ddl:"notnull references={actor onupdate=cascade ondelete=restrict}"`
 	LAST_UPDATE  sq.TimeField   `ddl:"notnull default=CURRENT_TIMESTAMP onupdatecurrenttimestamp"`
 }
 
@@ -321,8 +321,8 @@ func (tbl FILM_ACTOR_REVIEW) DDL(dialect string, t *T) {
 
 type FILM_CATEGORY struct {
 	sq.TableInfo
-	FILM_ID     sq.NumberField `ddl:"notnull references={film.film_id onupdate=cascade ondelete=restrict}"`
-	CATEGORY_ID sq.NumberField `ddl:"notnull references={category.category_id onupdate=cascade ondelete=restrict}"`
+	FILM_ID     sq.NumberField `ddl:"notnull references={film onupdate=cascade ondelete=restrict}"`
+	CATEGORY_ID sq.NumberField `ddl:"notnull references={category onupdate=cascade ondelete=restrict}"`
 	LAST_UPDATE sq.TimeField   `ddl:"notnull default=CURRENT_TIMESTAMP onupdatecurrenttimestamp"`
 }
 
@@ -346,9 +346,9 @@ type STAFF struct {
 	STAFF_ID    sq.NumberField  `ddl:"sqlite:type=INTEGER primarykey auto_increment identity"`
 	FIRST_NAME  sq.StringField  `ddl:"mysql:type=VARCHAR(45) notnull"`
 	LAST_NAME   sq.StringField  `ddl:"mysql:type=VARCHAR(45) notnull"`
-	ADDRESS_ID  sq.NumberField  `ddl:"notnull references={address.address_id onupdate=cascade ondelete=restrict}"`
+	ADDRESS_ID  sq.NumberField  `ddl:"notnull references={address onupdate=cascade ondelete=restrict}"`
 	EMAIL       sq.StringField  `ddl:"mysql:type=VARCHAR(50)"`
-	STORE_ID    sq.NumberField  `ddl:"references=store.store_id"`
+	STORE_ID    sq.NumberField  `ddl:"references=store"`
 	ACTIVE      sq.BooleanField `ddl:"default=TRUE notnull"`
 	USERNAME    sq.StringField  `ddl:"mysql:type=VARCHAR(16) notnull"`
 	PASSWORD    sq.StringField  `ddl:"mysql:type=VARCHAR(40)"`
@@ -375,7 +375,7 @@ type STORE struct {
 	sq.TableInfo
 	STORE_ID         sq.NumberField `ddl:"sqlite:type=INTEGER primarykey auto_increment identity"`
 	MANAGER_STAFF_ID sq.NumberField `ddl:"notnull references={staff.staff_id onupdate=cascade ondelete=restrict} index={. unique}"`
-	ADDRESS_ID       sq.NumberField `ddl:"notnull references={address.address_id onupdate=cascade ondelete=restrict}"`
+	ADDRESS_ID       sq.NumberField `ddl:"notnull references={address onupdate=cascade ondelete=restrict}"`
 	LAST_UPDATE      sq.TimeField   `ddl:"notnull default=CURRENT_TIMESTAMP onupdatecurrenttimestamp"`
 }
 
@@ -401,7 +401,7 @@ type CUSTOMER struct {
 	FIRST_NAME   sq.StringField  `ddl:"mysql:type=VARCHAR(45) notnull"`
 	LAST_NAME    sq.StringField  `ddl:"mysql:type=VARCHAR(45) notnull index"`
 	EMAIL        sq.StringField  `ddl:"mysql:type=VARCHAR(50) unique"`
-	ADDRESS_ID   sq.NumberField  `ddl:"notnull references={address.address_id onupdate=cascade ondelete=restrict} index"`
+	ADDRESS_ID   sq.NumberField  `ddl:"notnull references={address onupdate=cascade ondelete=restrict index}"`
 	ACTIVE       sq.BooleanField `ddl:"default=TRUE notnull"`
 	DATA         sq.JSONField
 	CREATE_DATE  sq.TimeField `ddl:"notnull default=CURRENT_TIMESTAMP"`
@@ -424,10 +424,10 @@ func (tbl CUSTOMER) DDL(dialect string, t *T) {
 }
 
 type INVENTORY struct {
-	sq.TableInfo `ddl:"index={store_id,film_id}"`
+	sq.TableInfo `ddl:"index=store_id,film_id"`
 	INVENTORY_ID sq.NumberField `ddl:"sqlite:type=INTEGER primarykey auto_increment identity"`
-	FILM_ID      sq.NumberField `ddl:"notnull references={film.film_id onupdate=cascade ondelete=restrict}"`
-	STORE_ID     sq.NumberField `ddl:"notnull references={store.store_id onupdate=cascade ondelete=restrict}"`
+	FILM_ID      sq.NumberField `ddl:"notnull references={film onupdate=cascade ondelete=restrict}"`
+	STORE_ID     sq.NumberField `ddl:"notnull references={store onupdate=cascade ondelete=restrict}"`
 	LAST_UPDATE  sq.TimeField   `ddl:"notnull default=CURRENT_TIMESTAMP onupdatecurrenttimestamp"`
 }
 
@@ -450,10 +450,10 @@ type RENTAL struct {
 	sq.TableInfo `ddl:"index={rental_date,inventory_id,customer_id unique}"`
 	RENTAL_ID    sq.NumberField `ddl:"sqlite:type=INTEGER primarykey auto_increment identity"`
 	RENTAL_DATE  sq.TimeField   `ddl:"notnull"`
-	INVENTORY_ID sq.NumberField `ddl:"notnull index references={inventory.inventory_id onupdate=cascade ondelete=restrict}"`
-	CUSTOMER_ID  sq.NumberField `ddl:"notnull index references={customer.customer_id onupdate=cascade ondelete=restrict}"`
+	INVENTORY_ID sq.NumberField `ddl:"notnull index references={inventory onupdate=cascade ondelete=restrict}"`
+	CUSTOMER_ID  sq.NumberField `ddl:"notnull index references={customer onupdate=cascade ondelete=restrict}"`
 	RETURN_DATE  sq.TimeField
-	STAFF_ID     sq.NumberField `ddl:"notnull index references={staff.staff_id onupdate=cascade ondelete=restrict}"`
+	STAFF_ID     sq.NumberField `ddl:"notnull index references={staff onupdate=cascade ondelete=restrict}"`
 	LAST_UPDATE  sq.TimeField   `ddl:"notnull default=CURRENT_TIMESTAMP onupdatecurrenttimestamp"`
 }
 
@@ -479,9 +479,9 @@ func (tbl RENTAL) DDL(dialect string, t *T) {
 type PAYMENT struct {
 	sq.TableInfo
 	PAYMENT_ID   sq.NumberField `ddl:"sqlite:type=INTEGER primarykey auto_increment identity"`
-	CUSTOMER_ID  sq.NumberField `ddl:"notnull index references={customer.customer_id onupdate=cascade ondelete=restrict}"`
-	STAFF_ID     sq.NumberField `ddl:"notnull index references={staff.staff_id onupdate=cascade ondelete=restrict}"`
-	RENTAL_ID    sq.NumberField `ddl:"references={rental.rental_id onupdate=cascade ondelete=restrict}"`
+	CUSTOMER_ID  sq.NumberField `ddl:"notnull index references={customer onupdate=cascade ondelete=restrict}"`
+	STAFF_ID     sq.NumberField `ddl:"notnull index references={staff onupdate=cascade ondelete=restrict}"`
+	RENTAL_ID    sq.NumberField `ddl:"references={rental onupdate=cascade ondelete=restrict}"`
 	AMOUNT       sq.NumberField `ddl:"type=DECIMAL(5,2) notnull"`
 	PAYMENT_DATE sq.TimeField   `ddl:"notnull"`
 }
