@@ -50,21 +50,28 @@ func generateName(nameType string, tableName string, columnNames ...string) stri
 	for _, columnName := range columnNames {
 		buf.WriteString("_" + strings.ReplaceAll(columnName, " ", "_"))
 	}
+	var suffix string
 	switch nameType {
 	case PRIMARY_KEY:
-		buf.WriteString("_pkey")
+		suffix = "_pkey"
 	case FOREIGN_KEY:
-		buf.WriteString("_fkey")
+		suffix = "_fkey"
 	case UNIQUE:
-		buf.WriteString("_key")
+		suffix = "_key"
 	case INDEX:
-		buf.WriteString("_idx")
+		suffix = "_idx"
 	case CHECK:
-		buf.WriteString("_check")
+		suffix = "_check"
 	case EXCLUDE:
-		buf.WriteString("_excl")
+		suffix = "_excl"
 	}
-	return buf.String()
+	excessLength := buf.Len() + len(suffix) - 63
+	if excessLength > 0 {
+		trimmedPrefix := buf.String()
+		trimmedPrefix = trimmedPrefix[:len(trimmedPrefix)-excessLength]
+		return trimmedPrefix + suffix
+	}
+	return buf.String() + suffix
 }
 
 func defaultColumnType(dialect string, field sq.Field) (columnType string) {
