@@ -427,6 +427,8 @@ func (tbl *Table) loadColumnConfig(dialect, columnName, columnType, config strin
 			if dialect == sq.DialectMySQL {
 				column.OnUpdateCurrentTimestamp = true
 			}
+		// TODO: generated={} and generatedstored={}
+		// instead of the virtual (field) and virtual (table) mess
 		case "generated":
 			column.GeneratedExpr = modifier[1]
 			if dialect == sq.DialectPostgres {

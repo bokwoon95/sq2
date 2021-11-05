@@ -21,6 +21,9 @@ type ACTOR struct {
 	FULL_NAME          sq.StringField `ddl:"generated={first_name || ' ' || last_name} mysql:generated={CONCAT(first_name, ' ', last_name)} virtual"`
 	FULL_NAME_REVERSED sq.StringField `ddl:"generated={last_name || ' ' || first_name} mysql:generated={CONCAT(last_name, ' ', first_name)} stored"`
 	LAST_UPDATE        sq.TimeField   `ddl:"notnull default=CURRENT_TIMESTAMP onupdatecurrenttimestamp"`
+
+	_ struct{} `ddl:"primarykey={. cols=actor_id}"`
+	_ struct{} `ddl:"primarykey={. cols=actor_id}"`
 }
 
 func NEW_ACTOR(alias string) ACTOR {

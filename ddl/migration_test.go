@@ -90,6 +90,7 @@ func Test_SakilaSQLite(t *testing.T) {
 	if err != nil {
 		t.Fatal(testutil.Callers(), err)
 	}
+	// TODO: why did I return a *Migration pointer here again? Make it a Migration.
 	upMigration, err := Migrate(CreateMissing|UpdateExisting, DatabaseMetadata{}, wantDBMetadata)
 	if err != nil {
 		t.Fatal(testutil.Callers(), err)

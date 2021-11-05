@@ -742,6 +742,73 @@ func (tbl *Table) LoadTable(dialect string, table sq.SchemaTable) (err error) {
 		qualifiedTable = tbl.TableSchema + "." + tbl.TableName
 	}
 	tableModifiers := tableType.Field(0).Tag.Get("ddl")
+	err = tbl.loadTableConfig(dialect, qualifiedTable, tableModifiers)
+	if err != nil {
+		return err
+	}
+	if tbl.Ignore {
+		return nil
+	}
+	for i := 0; i < tableValue.NumField(); i++ {
+		fieldValue := tableValue.Field(i)
+		if !fieldValue.CanInterface() {
+			err = tbl.loadTableConfig(dialect, qualifiedTable, tableType.Field(i).Tag.Get("ddl"))
+			if err != nil {
+				return err
+			}
+			continue
+		}
+		field, ok := tableValue.Field(i).Interface().(sq.Field)
+		if !ok {
+			continue
+		}
+		columnName := field.GetName()
+		if columnName == "" {
+			return fmt.Errorf("table %s field #%d has no name", tbl.TableName, i)
+		}
+		columnType := defaultColumnType(dialect, field)
+		config := tableType.Field(i).Tag.Get("ddl")
+		err = tbl.loadColumnConfig(dialect, columnName, columnType, config)
+		if err != nil {
+			return err
+		}
+	}
+	defer func() {
+		if strings.EqualFold(tbl.VirtualTable, "FTS5") {
+			var columnNames []string
+			for _, column := range tbl.Columns {
+				if column.Ignore {
+					continue
+				}
+				if strings.EqualFold(column.ColumnType, "TEXT") {
+					columnNames = append(columnNames, column.ColumnName)
+				}
+			}
+			tbl.VirtualTableArgs = append(columnNames, tbl.VirtualTableArgs...)
+		}
+		for _, constraint := range tbl.Constraints {
+			if len(constraint.Columns) != 1 {
+				continue
+			}
+			n := tbl.CachedColumnPosition(constraint.Columns[0])
+			if n < 0 {
+				continue
+			}
+			switch constraint.ConstraintType {
+			case PRIMARY_KEY:
+				tbl.Columns[n].IsPrimaryKey = true
+			case UNIQUE:
+				tbl.Columns[n].IsUnique = true
+			}
+		}
+	}()
+	if ddlTable, ok := table.(DDLTable); ok {
+		ddlTable.DDL(dialect, &T{dialect: dialect, tbl: tbl})
+	}
+	return nil
+}
+
+func (tbl *Table) loadTableConfig(dialect, qualifiedTable, tableModifiers string) error {
 	modifiers, _, err := tokenizeModifiers(tableModifiers)
 	if err != nil {
 		return fmt.Errorf("%s: %s", qualifiedTable, err.Error())
@@ -806,57 +873,6 @@ func (tbl *Table) LoadTable(dialect string, table sq.SchemaTable) (err error) {
 		default:
 			return fmt.Errorf("%s: unknown modifier '%s'", qualifiedTable, modifier[0])
 		}
-	}
-	if tbl.Ignore {
-		return nil
-	}
-	for i := 0; i < tableValue.NumField(); i++ {
-		field, ok := tableValue.Field(i).Interface().(sq.Field)
-		if !ok {
-			continue
-		}
-		columnName := field.GetName()
-		if columnName == "" {
-			return fmt.Errorf("table %s field #%d has no name", tbl.TableName, i)
-		}
-		columnType := defaultColumnType(dialect, field)
-		config := tableType.Field(i).Tag.Get("ddl")
-		err = tbl.loadColumnConfig(dialect, columnName, columnType, config)
-		if err != nil {
-			return err
-		}
-	}
-	defer func() {
-		if strings.EqualFold(tbl.VirtualTable, "FTS5") {
-			var columnNames []string
-			for _, column := range tbl.Columns {
-				if column.Ignore {
-					continue
-				}
-				if strings.EqualFold(column.ColumnType, "TEXT") {
-					columnNames = append(columnNames, column.ColumnName)
-				}
-			}
-			tbl.VirtualTableArgs = append(columnNames, tbl.VirtualTableArgs...)
-		}
-		for _, constraint := range tbl.Constraints {
-			if len(constraint.Columns) != 1 {
-				continue
-			}
-			n := tbl.CachedColumnPosition(constraint.Columns[0])
-			if n < 0 {
-				continue
-			}
-			switch constraint.ConstraintType {
-			case PRIMARY_KEY:
-				tbl.Columns[n].IsPrimaryKey = true
-			case UNIQUE:
-				tbl.Columns[n].IsUnique = true
-			}
-		}
-	}()
-	if ddlTable, ok := table.(DDLTable); ok {
-		ddlTable.DDL(dialect, &T{dialect: dialect, tbl: tbl})
 	}
 	return nil
 }

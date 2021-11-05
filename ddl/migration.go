@@ -19,7 +19,8 @@ const (
 	UpdateExisting
 	DropExtraneous
 	DropCascade
-	ValidateColumnReferences // TODO: validate indexes, pkey, unique, fkey, excl
+	ValidateColRef // NOTE: this is a good function name though, maybe rename this option to sth else
+	SetPkeyNotNull
 )
 
 type Migration struct {
@@ -51,6 +52,9 @@ func AutoMigrate(dialect string, db sq.DB, migrationMode MigrationMode, database
 	wantDBMetadata, err := NewDatabaseMetadata(dialect, databaseMetadataOpts...)
 	if err != nil {
 		return fmt.Errorf("building db metadata: %w", err)
+	}
+	if migrationMode&ValidateColRef != 0 {
+		// TODO: validate indexes, pkey, unique, fkey, excl
 	}
 	migration, err := Migrate(migrationMode, gotDBMetadata, wantDBMetadata)
 	if err != nil {
