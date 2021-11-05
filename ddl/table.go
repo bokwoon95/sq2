@@ -261,7 +261,7 @@ func (tbl *Table) loadConstraintConfig(dialect, constraintType, tableSchema, tab
 		return err
 	}
 	var constraintName string
-	if constraintType == PRIMARY_KEY || constraintType == UNIQUE || constraintType == CHECK {
+	if constraintType == PRIMARY_KEY || constraintType == UNIQUE {
 		constraintName = value
 	}
 	if constraintType == FOREIGN_KEY {
