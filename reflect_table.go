@@ -83,7 +83,7 @@ func ReflectTable(table Table, alias string) error {
 			fieldName = strings.ToLower(fieldType.Name)
 		}
 		switch fieldValue.(type) {
-		case BlobField:
+		case BinaryField:
 			v.Set(reflect.ValueOf(NewBlobField(fieldName, tableInfo)))
 		case BooleanField:
 			v.Set(reflect.ValueOf(NewBooleanField(fieldName, tableInfo)))

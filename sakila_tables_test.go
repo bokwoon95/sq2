@@ -212,7 +212,7 @@ type xSTAFF struct {
 	USERNAME    StringField
 	PASSWORD    StringField
 	LAST_UPDATE TimeField
-	PICTURE     BlobField
+	PICTURE     BinaryField
 }
 
 func xNEW_STAFF(alias string) xSTAFF {

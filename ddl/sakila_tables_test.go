@@ -354,7 +354,7 @@ type STAFF struct {
 	USERNAME    sq.StringField  `ddl:"mysql:type=VARCHAR(16) notnull"`
 	PASSWORD    sq.StringField  `ddl:"mysql:type=VARCHAR(40)"`
 	LAST_UPDATE sq.TimeField    `ddl:"notnull default=CURRENT_TIMESTAMP onupdatecurrenttimestamp"`
-	PICTURE     sq.BlobField
+	PICTURE     sq.BinaryField
 }
 
 func NEW_STAFF(alias string) STAFF {

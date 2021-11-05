@@ -76,7 +76,7 @@ func generateName(nameType string, tableName string, columnNames ...string) stri
 
 func defaultColumnType(dialect string, field sq.Field) (columnType string) {
 	switch field.(type) {
-	case sq.BlobField:
+	case sq.BinaryField:
 		switch dialect {
 		case sq.DialectPostgres:
 			return "BYTEA"
