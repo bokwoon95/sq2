@@ -265,7 +265,16 @@ func (tbl *Table) loadConstraintConfig(dialect, constraintType, tableSchema, tab
 	if n, ok := modifierPositions["name"]; ok {
 		constraintName = modifiers[n][1]
 	}
-	if constraintType != FOREIGN_KEY && value != "." && value != "" {
+	var isReferences bool
+	if constraintType == "references" {
+		isReferences = true
+		constraintType = FOREIGN_KEY
+	}
+	// "references" modifier is treated different from the rest
+	// ("primarykey", "foreignkey", "unique") because the value refers to
+	// columns of another table instead of columns of the current table. So
+	// we must exclude "references" from this block of code.
+	if !isReferences && value != "." && value != "" {
 		columns = strings.Split(value, ",")
 	}
 	if len(columns) == 0 {
@@ -289,7 +298,7 @@ func (tbl *Table) loadConstraintConfig(dialect, constraintType, tableSchema, tab
 		}
 		defer func() { tbl.AppendConstraint(constraint) }()
 	}
-	if constraintType == FOREIGN_KEY {
+	if isReferences {
 		switch parts := strings.SplitN(value, ".", 3); len(parts) {
 		case 1:
 			constraint.ReferencesTable = parts[0]
@@ -449,7 +458,7 @@ func (tbl *Table) loadColumnConfig(dialect, columnName, columnType, config strin
 				return fmt.Errorf("%s: %s", qualifiedColumn, err.Error())
 			}
 		case "references":
-			err = tbl.loadConstraintConfig(dialect, FOREIGN_KEY, column.TableSchema, column.TableName, []string{column.ColumnName}, modifier[1])
+			err = tbl.loadConstraintConfig(dialect, "references", column.TableSchema, column.TableName, []string{column.ColumnName}, modifier[1])
 			if err != nil {
 				return fmt.Errorf("%s: %s", qualifiedColumn, err.Error())
 			}
@@ -518,7 +527,7 @@ func (tbl *Table) loadTableConfig(dialect, qualifiedTable, tableModifiers string
 				return fmt.Errorf("%s: %s", qualifiedTable, err.Error())
 			}
 		case "references":
-			err = tbl.loadConstraintConfig(dialect, FOREIGN_KEY, tbl.TableSchema, tbl.TableName, nil, modifier[1])
+			err = tbl.loadConstraintConfig(dialect, "references", tbl.TableSchema, tbl.TableName, nil, modifier[1])
 			if err != nil {
 				return fmt.Errorf("%s: %s", qualifiedTable, err.Error())
 			}
