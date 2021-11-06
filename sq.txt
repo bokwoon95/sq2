@@ -22,6 +22,7 @@ tasks:
 - work on merging files together. All select queries can go under select.go -- I don't want to bloat my file count everytime I add a new dialect.
 - sq.SQLite.Dialect("mysql").Select() allow users to define dialect overrides inline
     - this will also allow sq.SQLiteEnv(m).Dialect("mysql")
+    - (IMPORTANT) define SQLiteQueryBuilder.Dialect(dialect string) as a value receiver method, so that it will not affect the global 'SQLite' variable
 
 consider changing the long ugly signature of SQLExclude to a single struct pointer. This means you are tightly coupling the interface to sq, but the upside is you have flexibility for adding new fields in the future (i.e. more stuff to cascade down). It also means you are only passing a single pointer down, not copying every argument on function invocation.
 
